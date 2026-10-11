@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrowserAI update</title>
+<link rel="stylesheet" href="page.css">
+</head>
+<body data-page="update" data-tab="1" data-unanswered="BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.">
+<nav><a href="status.html">Status</a> <a href="sessions.html">Sessions</a> <a href="update.html" aria-current="page">Update</a> <a href="changelog.html">Changelog</a></nav>
+<p id="banner" hidden></p>
+<main>
+<h1>Update</h1>
+<p>BrowserAI 1.2.1 is downloaded and ready to install. It installs by itself once BrowserAI has been idle.</p>
+<p class="wait">It installs in <span class="countdown" data-ends-at="1760185920000">48:05</span>, at about 14:30, if nothing uses BrowserAI before then.</p>
+<section id="hidden"><h2>Hidden browser sessions</h2>
+<ul class="holders">
+<li><strong>reproducing the rounding error in the checkout total</strong><br><code>C:\Code\acme-shop\.work\checkout-rounding</code><br>Closes in <span class="countdown" data-ends-at="1760183547000">7:12</span> if no call names it.</li>
+<li><strong>checking that the sign-in survives a reload</strong><br><code>C:\Code\acme-shop\.work\login-flow-check</code><br>Closes in <span class="countdown" data-ends-at="1760183335000">3:40</span> if no call names it.</li>
+</ul>
+</section>
+<section id="windows"><h2>Visible windows</h2>
+<ul class="holders">
+<li><strong>comparing the three pricing pages side by side</strong><br><code>C:\Code\market-notes\.work\pricing-compare</code><br><span class="warning">Close this to let the update proceed.</span> Closes by itself in <span class="countdown" data-ends-at="1760185920000">48:05</span> if no call names it and nobody types or clicks in it.</li>
+</ul>
+</section>
+<section id="agents"><h2>Agents</h2>
+<p>An agent holds the update for ten minutes after its client last sent BrowserAI anything but a ping. Every connection ends when the update installs, whether it holds the update or not.</p>
+<ul class="holders">
+<li class="window"><p><strong>VS Code window on acme-shop</strong></p>
+<ul class="holders">
+<li><strong>"Fix the checkout total rounding"</strong>, claude-code 2.1.300 in <code>C:\Code\acme-shop</code><br>A call is running now, so it holds the update.<br>After the update it reconnects by itself.</li>
+<li><strong>unnamed conversation in acme-shop</strong>, claude-code 2.1.300<br>Holds the update for <span class="countdown" data-ends-at="1760183365000">4:10</span> more if its client sends nothing but pings.<br>After the update it reconnects by itself.</li>
+</ul></li>
+<li><strong>"Compare pricing pages"</strong>, claude-code 2.1.300 in <code>C:\Code\market-notes</code><br>Holds the update for <span class="countdown" data-ends-at="1760183626000">8:31</span> more if its client sends nothing but pings.<br><span class="warning">After the update, run /mcp in that terminal, choose BrowserAI, then Reconnect.</span></li>
+<li><strong>"Update the install guide screenshots"</strong>, codex-mcp-client 0.165.0 in <code>C:\Code\docs-site</code><br>Idle: it no longer holds the update.<br><span class="warning">After the update, BrowserAI is back only in a new conversation.</span></li>
+</ul>
+</section>
+<section id="install-now"><h2>Install now</h2>
+<p>Installing now does not wait for any of the above:</p>
+<ul>
+<li>Every browser session is closed cleanly, and each comes back where it was with browserai_resume.</li>
+<li>Every visible window closes, with what is open in it.</li>
+<li>Every agent's connection to BrowserAI ends. Claude Code in VS Code reconnects by itself. For Claude Code in a terminal, run /mcp there, choose BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.</li>
+<li>BrowserAI starts again by itself once 1.2.1 is installed.</li>
+</ul>
+<p><button type="button" data-action="install-now" data-version="1.2.1">Install BrowserAI 1.2.1 now</button></p>
+</section>
+
+</main>
+<footer><a href="https://github.com/SixFive7/BrowserAI#readme" target="_blank" rel="noopener noreferrer">How BrowserAI works</a></footer>
+</body>
+</html>

@@ -6,12 +6,26 @@ using System.Threading.Channels;
 namespace BrowserAI.App.Page;
 
 /// <summary>Which page a tab is showing.</summary>
+/// <remarks>
+/// <b>40 a, F, the maintainer's choice of 2026-10-11</b>: direction A's home of cards,
+/// each leading to a page of its own with a way back, and C's map as the conversations
+/// page. The four names a toast, <c>--sessions</c> or a start hands out keep their routes,
+/// so every address handed out before lands on the page that now holds what it held.
+/// </remarks>
 internal enum PageKind
 {
-    /// <summary>The status page: the version, the update and where things are.</summary>
+    /// <summary>
+    /// The home: what needs the person, what runs now, the update, Claude Code and Codex,
+    /// the session folders and this install, each a card. <i>Until 2026-10-11 the status
+    /// page</i>, whose address it keeps.
+    /// </summary>
     Status,
 
-    /// <summary>BrowserAI's own sessions page.</summary>
+    /// <summary>
+    /// Conversations and browsers: the map of every conversation, BrowserAI and every
+    /// session, or the same as a list. <i>Until 2026-10-11 the sessions page</i>, whose
+    /// address it keeps.
+    /// </summary>
     Sessions,
 
     /// <summary>
@@ -25,12 +39,24 @@ internal enum PageKind
     /// installed version. The installed toast's <i>Changelog</i> opens it.
     /// </summary>
     Changelog,
+
+    /// <summary>One session: its browser, the conversation that uses it, its folder and its size.</summary>
+    Session,
+
+    /// <summary>Claude Code and Codex: how each is set up, and the buttons that change it.</summary>
+    Setup,
+
+    /// <summary>Every session folder BrowserAI knows of, with its size.</summary>
+    Storage,
+
+    /// <summary>This install: its folders, its version, its background and where its updates come from.</summary>
+    Install,
 }
 
 /// <summary>Each page's name, which is its route and what its tab's stream says it shows.</summary>
 internal static class PageNames
 {
-    /// <summary>The page's name: <c>status</c>, <c>sessions</c>, <c>update</c> or <c>changelog</c>.</summary>
+    /// <summary>The page's name, which is its route but for the home's.</summary>
     /// <param name="kind">The page.</param>
     /// <returns>Its name.</returns>
     public static string Of(PageKind kind) => kind switch
@@ -38,15 +64,19 @@ internal static class PageNames
         PageKind.Sessions => "sessions",
         PageKind.Update => "update",
         PageKind.Changelog => "changelog",
+        PageKind.Session => "session",
+        PageKind.Setup => "setup",
+        PageKind.Storage => "storage",
+        PageKind.Install => "install",
         _ => "status",
     };
 
-    /// <summary>The page's route under the listener's root: the status page is the root itself.</summary>
+    /// <summary>The page's route under the listener's root: the home is the root itself.</summary>
     /// <param name="kind">The page.</param>
     /// <returns>The route.</returns>
     public static string RouteOf(PageKind kind) => kind is PageKind.Status ? string.Empty : Of(kind);
 
-    /// <summary>The page a name names; anything else is the status page.</summary>
+    /// <summary>The page a name names; anything else is the home.</summary>
     /// <param name="name">The name.</param>
     /// <returns>The page.</returns>
     public static PageKind Parse(string? name) => name switch
@@ -54,7 +84,27 @@ internal static class PageNames
         "sessions" => PageKind.Sessions,
         "update" => PageKind.Update,
         "changelog" => PageKind.Changelog,
+        "session" => PageKind.Session,
+        "setup" => PageKind.Setup,
+        "storage" => PageKind.Storage,
+        "install" => PageKind.Install,
         _ => PageKind.Status,
+    };
+
+    /// <summary>The page a route names, or <see langword="null"/> for a route that is no page.</summary>
+    /// <param name="route">What follows the token, up to the query.</param>
+    /// <returns>The page.</returns>
+    public static PageKind? OfRoute(string route) => route switch
+    {
+        "" => PageKind.Status,
+        "sessions" => PageKind.Sessions,
+        "update" => PageKind.Update,
+        "changelog" => PageKind.Changelog,
+        "session" => PageKind.Session,
+        "setup" => PageKind.Setup,
+        "storage" => PageKind.Storage,
+        "install" => PageKind.Install,
+        _ => null,
     };
 }
 
@@ -66,8 +116,12 @@ internal sealed record PageEvent(string Name, string Data);
 /// <summary>One open event stream: one tab, as the listener sees it.</summary>
 /// <param name="tab">The tab's number, as its address carried it.</param>
 /// <param name="page">Which page it shows.</param>
-internal sealed class TabStream(int tab, PageKind page)
+/// <param name="subject">The opaque name of the session a session page shows, or <see langword="null"/>.</param>
+internal sealed class TabStream(int tab, PageKind page, string? subject = null)
 {
+    /// <summary>The opaque name of the session a session page shows, or <see langword="null"/>.</summary>
+    public string? Subject { get; } = subject;
+
     private readonly Channel<PageEvent> _events = Channel.CreateUnbounded<PageEvent>(new UnboundedChannelOptions
     {
         SingleReader = true,
@@ -265,10 +319,11 @@ internal sealed class PageTabs : IDisposable
     /// <summary>Registers one tab's stream as it opens.</summary>
     /// <param name="tab">The number its address carried, zero for none.</param>
     /// <param name="page">Which page it shows.</param>
+    /// <param name="subject">The session a session page shows, or <see langword="null"/>.</param>
     /// <returns>The stream, or <see langword="null"/> once the coordinator is stopping.</returns>
-    public TabStream? Connect(int tab, PageKind page)
+    public TabStream? Connect(int tab, PageKind page, string? subject = null)
     {
-        var stream = new TabStream(tab, page);
+        var stream = new TabStream(tab, page, subject);
         List<TabStream> replaced = [];
 
         lock (_gate)

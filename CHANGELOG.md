@@ -41,13 +41,20 @@ release body; nothing else depends on it.
 ### Added
 
 - ✨ **A Start Menu click opens BrowserAI's page in your own browser.**
-  The status page shows the installed version, the install, data and log folders, the command a
-  client starts, whether an update is waiting, and how BrowserAI is registered with Claude Code
-  and with Codex, with buttons to register or unregister for all your projects, register in a
-  project or remove BrowserAI from one. A second page lists the sessions BrowserAI holds and the
-  clients connected to it. Nothing changes until you click something, and the page lives at an
+  Its home says first whatever needs you, then what runs now: each conversation in Claude Code
+  or Codex that uses BrowserAI, the browsers it opened, and whether one is a window on your
+  screen. Cards beside it say when a waiting update installs, how Claude Code and Codex are set
+  up, how much the session folders take and which are not open now, and where BrowserAI is
+  installed, when it started and where its updates come from; each card leads to a page of its
+  own with a way back. The setup page sets up Claude Code and Codex each on its own, or removes
+  BrowserAI from one, for all your projects or in a project you choose. The conversations page
+  draws every conversation, BrowserAI and every
+  browser session as a map joined by lines, says what each is when you click it, and becomes a
+  list in a narrow window or on a crowded day; it and the home follow every change as it
+  happens. The page follows Windows' light or dark setting, deletes nothing, and lives at an
   address on your own machine that is made for each run and handed to nobody else.
-  [The decision](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser).
+  [The decision](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser) and
+  [the redesign](DECISIONS.md#the-dashboard-decided-2026-10-11).
 
 - ✨ **A downloaded update that has to wait says so in a toast that counts down to its install.**
   BrowserAI downloads an update by itself and installs it once nothing uses it. Until then the
@@ -285,6 +292,17 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **A relay names the background's refusal of a connection that sent no first message.**
+  It logged a frame it could not read, then the close. It logs the refusal's kind and its
+  sentence now, and goes on as before, looking for the background again.
+
+- 📦 **A fresh checkout derives its version, and a gate whose test pack fails says so.**
+  In a fresh clone or a new worktree MinVer's targets had not arrived, so the version step
+  failed and blamed the tags; the script restores first now, and tells a build that failed
+  apart from a checkout with no tags. A PowerShell gate driver whose test pack stopped with an
+  error ended with it, saying nothing and leaving the installer lock behind; it runs the
+  release script in a process of its own now, says that it stopped on the test pack and lets
+  the lock go.
 - 🐛 **Claude Code's new way of opening a connection gets BrowserAI's tools again.**
   From 2026-09-30 Claude Code opened its servers at MCP revision `2026-07-28`, which BrowserAI
   accepted and did not implement, so most sessions had no BrowserAI tool to call. BrowserAI offers

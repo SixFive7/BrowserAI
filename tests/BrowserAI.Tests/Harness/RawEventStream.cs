@@ -56,9 +56,10 @@ internal sealed class RawEventStream : IDisposable
     /// <param name="port">The listener's port.</param>
     /// <param name="token">The listener's token.</param>
     /// <param name="tab">The tab's number.</param>
-    /// <param name="page">Which page: <c>status</c> or <c>sessions</c>.</param>
+    /// <param name="page">Which page: <c>status</c>, <c>sessions</c> or another page's name.</param>
+    /// <param name="extra">More of the query, such as <c>id=...</c> for a session's page, or <see langword="null"/>.</param>
     /// <returns>The open stream, its head read.</returns>
-    public static async Task<RawEventStream> OpenAsync(int port, string token, int tab, string page = "status")
+    public static async Task<RawEventStream> OpenAsync(int port, string token, int tab, string page = "status", string? extra = null)
     {
         RawEventStream? stream = null;
 
@@ -70,7 +71,8 @@ internal sealed class RawEventStream : IDisposable
 
             await stream._socket.ConnectAsync(IPAddress.Loopback, port, bound.Token);
 
-            var request = $"GET /{token}/events?tab={tab}&page={page} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nAccept: text/event-stream\r\nSec-Fetch-Site: same-origin\r\n\r\n";
+            var more = extra is null ? string.Empty : "&" + extra;
+            var request = $"GET /{token}/events?tab={tab}&page={page}{more} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nAccept: text/event-stream\r\nSec-Fetch-Site: same-origin\r\n\r\n";
 
             _ = await stream._socket.SendAsync(Encoding.ASCII.GetBytes(request), SocketFlags.None, bound.Token);
 

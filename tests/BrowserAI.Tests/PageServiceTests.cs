@@ -34,13 +34,21 @@ internal sealed class PageServiceTests
     private static readonly DateTimeOffset Now = DateTimeOffset.UnixEpoch;
 
     /// <summary>
-    /// The status page says which BrowserAI this is and where everything is, links
-    /// out only into a new tab with no referrer, and carries no inline script or
-    /// style for the content security policy to have to stop.
+    /// The home says which BrowserAI this is and the install page where everything is,
+    /// with the command a client starts folded under its details; a link out opens a new
+    /// tab with no referrer, and no page carries an inline script or style for the
+    /// content security policy to have to stop.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-11 (previously
+    /// TheStatusPageSaysWhatIsInstalledAndWhereThingsAreAndCarriesNothingInline, which
+    /// held the version as the status page's heading and the folders and the command on
+    /// it)</i>: 40 a moved where things are behind the home's <i>This install</i> card, and
+    /// 45 a folded the command line under the details for troubleshooting.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheStatusPageSaysWhatIsInstalledAndWhereThingsAreAndCarriesNothingInline()
+    public async Task TheHomeSaysWhatIsInstalledTheInstallPageWhereThingsAreAndNeitherCarriesAnythingInline()
     {
         using var rig = new PageRig();
 
@@ -48,11 +56,21 @@ internal sealed class PageServiceTests
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
         await Assert.That(page.Header("Content-Type")).IsEqualTo("text/html; charset=utf-8");
-        await Assert.That(page.Body).Contains("<h1>BrowserAI 9.0.0</h1>");
-        await Assert.That(page.Body).Contains(PageContent.Text(rig.Facts.InstallRoot));
-        await Assert.That(page.Body).Contains(PageContent.Text(rig.Facts.DataRoot));
-        await Assert.That(page.Body).Contains(PageContent.Text(rig.Facts.LogDirectory));
-        await Assert.That(page.Body).Contains(PageContent.Text(rig.Facts.ServerCommand));
+        await Assert.That(page.Body).Contains("<span class=\"version\">9.0.0</span>");
+        await Assert.That(page.Body).Contains("<dt>Version</dt><dd>9.0.0, ");
+
+        var install = await PageRig.GetAsync(rig.Root + "install?tab=1");
+
+        await Assert.That(install.Body).Contains(PageContent.Text(rig.Facts.InstallRoot));
+        await Assert.That(install.Body).Contains(PageContent.Text(rig.Facts.DataRoot));
+        await Assert.That(install.Body).Contains(PageContent.Text(rig.Facts.LogDirectory));
+
+        var trouble = install.Body[install.Body.IndexOf("<details class=\"trouble\"", StringComparison.Ordinal)..];
+
+        await Assert.That(trouble).Contains(PageContent.Text(rig.Facts.ServerCommand));
+        await Assert.That(install.Body.IndexOf(PageContent.Text(rig.Facts.ServerCommand), StringComparison.Ordinal))
+            .IsGreaterThan(install.Body.IndexOf("<details class=\"trouble\"", StringComparison.Ordinal)).Because("the command a client starts is folded (45 a)");
+
         await Assert.That(page.Body).Contains($"href=\"{PageContent.GuideUrl}\" target=\"_blank\" rel=\"noopener noreferrer\"");
         await Assert.That(page.Body).Contains("<script src=\"page.js\" defer></script>");
         await Assert.That(page.Body).Contains("data-tab=\"1\"");
@@ -143,10 +161,10 @@ internal sealed class PageServiceTests
     // close those warnings were about.
 
     /// <summary>
-    /// The sessions page lists BrowserAI's background with every session it holds,
-    /// each kept session for what it is and what ends it, and each client connected to
-    /// it; it offers no box and no close, and a close sent anyway is refused like an
-    /// action the page does not have.
+    /// The conversations page lists each session once, under the conversation that uses
+    /// it, and the sessions BrowserAI keeps apart, with what each is; it offers no box and
+    /// no close, says no pid, and a close sent anyway is refused like an action the page
+    /// does not have.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -155,26 +173,25 @@ internal sealed class PageServiceTests
     /// the button and the close path went, because a relay ends with its client.
     /// </para>
     /// <para>
-    /// <i>Corrected 2026-10-10 (previously
-    /// TheSessionsPageShowsTheHostsKeptSessionsForWhatTheyAreAndOffersNoCloseForTheHost,
-    /// which drew the background as the session host that ends a minute after its last
-    /// client, gave each client's server a box, and closed one)</i>: #68 of the texts
-    /// review.
+    /// <i>Corrected 2026-10-11 (previously
+    /// TheSessionsPageListsTheBackgroundAndItsClientsAndOffersNoClose, which held the
+    /// background first with every session it holds and each client again with the
+    /// sessions it drives, each with its pid)</i>: 40 a draws each session once, under its
+    /// conversation, and 42 a says no pid and no client in the main view.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheSessionsPageListsTheBackgroundAndItsClientsAndOffersNoClose()
+    public async Task TheConversationsPageListsEachSessionOnceUnderItsConversationAndOffersNoClose()
     {
         using var rig = new PageRig();
 
-        var closesAt = Now.AddMinutes(7);
         var host = Description(
             900,
             ServerDescription.Roles.Host,
             [
                 new HeldSession(@"C:\sessions\driven", "reads the docs", BrowserOpen: true, DrivenBy: "claude-code", DrivenThrough: 301, IdleCloseAt: Now.AddMinutes(9)),
-                new HeldSession(@"C:\sessions\kept", "checks the shop", BrowserOpen: true, Kept: true, IdleCloseAt: closesAt),
+                new HeldSession(@"C:\sessions\kept", "checks the shop", BrowserOpen: true, Kept: true, IdleCloseAt: Now.AddMinutes(7)),
                 new HeldSession(@"C:\sessions\window", "fills the form", BrowserOpen: true, Headed: true, Kept: true),
             ]);
 
@@ -190,43 +207,38 @@ internal sealed class PageServiceTests
 
         var page = await PageRig.GetAsync(rig.HandOut(PageKind.Sessions));
         var body = page.Body;
+        var list = body[body.IndexOf("<div class=\"list-view\">", StringComparison.Ordinal)..];
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-        // ⚠️ How a connection ends is said once, here, since the texts polish of
-        // 2026-10-10, page #92 (previously in every client's entry).
-        await Assert.That(body).Contains(PageContent.Text("BrowserAI's background, every session it holds, and each client connected to it. A client's connection ends when the client closes it or exits, and when an update installs."));
+        await Assert.That(body).Contains(PageContent.Text("Every chat in Claude Code or Codex that uses BrowserAI, and the browser sessions it opened. Nothing here can be closed from this page: an agent closes its own browser, and a conversation ends when its app closes it."));
 
-        // The background comes first and says what it is: it ends with the session, an
-        // uninstall or an update, never because it is idle.
-        await Assert.That(body).Contains("<strong>BrowserAI's background</strong>, pid 900");
-        await Assert.That(body).Contains(PageContent.Text("It holds every session, and ends at sign-out, at an uninstall or for an update, never because it is idle."));
-        await Assert.That(body.IndexOf("pid 900", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 301", StringComparison.Ordinal));
+        // Each session once in the list, the driven one inside its conversation's card.
+        foreach (var name in new[] { "driven", "kept", "window" })
+        {
+            await Assert.That(list.Split($"<p class=\"sess-name\">{name}</p>").Length - 1).IsEqualTo(1).Because(name);
+        }
 
-        // Each kept session says so, and what ends it.
-        var at = closesAt.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
+        var first = list[list.IndexOf("<article class=\"card convo\" id=\"convo-c-301-1\">", StringComparison.Ordinal)..];
 
-        await Assert.That(body).Contains(PageContent.Text($"{PageContent.KeptSentence}, and its browser was left as it was. {PageContent.KeptTakeOver} Until then its idle close ends it at about {at}."));
-        await Assert.That(body).Contains(PageContent.Text($"{PageContent.KeptSentence}, and its window is still open. {PageContent.KeptTakeOver} Until then it ends when its window is closed."));
-        await Assert.That(body.Split("<li class=\"kept\">").Length - 1).IsEqualTo(2);
+        await Assert.That(first[..first.IndexOf("</article>", StringComparison.Ordinal)]).Contains("<p class=\"sess-name\">driven</p>");
 
-        // The driven one names its client and its connection under the background, and is
-        // listed under that client as well; a client that drives none says so.
-        await Assert.That(body).Contains(PageContent.Text("Driven by claude-code through its connection, pid 301."));
-        await Assert.That(body.Split("reads the docs").Length - 1).IsEqualTo(2);
-        await Assert.That(body.Split("Its client drives no session.").Length - 1).IsEqualTo(2);
+        // The two kept sessions apart, with what keeps them.
+        await Assert.That(list).Contains("Kept after their conversation ended");
+        await Assert.That(list).Contains("<h3>2 sessions with no conversation</h3>");
+        await Assert.That(list).Contains(PageContent.Text("BrowserAI keeps the browser as it was, so a conversation can pick the session up again. Its idle close ends it otherwise."));
+        await Assert.That(list).Contains("A window on your screen, set never to close by itself.");
 
-        // Each client connected, with what ends it, and no box, no warning and no close.
-        await Assert.That(body).Contains("<li class=\"server\"><p>claude-code, pid 301</p>");
-        await Assert.That(body).Contains("<li class=\"server\"><p>Codex 0.155.0, pid 302</p>");
+        // Each conversation by its app, an app that gave no name as such, and a conversation
+        // with no browser says so.
+        await Assert.That(list).Contains("<h3>Codex in work</h3>");
+        await Assert.That(list).Contains("<h3>Unnamed app in work</h3>");
+        await Assert.That(list.Split("No browser yet. This conversation is connected and has not opened a session.").Length - 1).IsEqualTo(2);
 
-        // A client that gave no name is called what the update page calls it (#85).
-        await Assert.That(body).Contains("<li class=\"server\"><p>unnamed client, pid 303</p>");
-        await Assert.That(body).DoesNotContain(PageContent.Text("It ends when its client closes it or exits"));
-        await Assert.That(body.Split("<p>Started in <code>" + PageContent.Text(@"C:\work") + "</code>.</p>").Length - 1).IsEqualTo(3);
+        // No pid, no box, no close.
+        await Assert.That(body).DoesNotContain("pid ");
+        await Assert.That(body).DoesNotContain("Driven by");
         await Assert.That(body).DoesNotContain("type=\"checkbox\"");
         await Assert.That(body).DoesNotContain("close-servers");
-        await Assert.That(body).DoesNotContain("the host holds");
-        await Assert.That(body).DoesNotContain("Codex does not start this server again");
 
         // A close sent anyway is an action the page does not have.
         var answer = await rig.ActAsync("""{"action":"close-servers","servers":["301-1"]}""");
@@ -236,9 +248,9 @@ internal sealed class PageServiceTests
     }
 
     /// <summary>
-    /// The sessions page names each client's conversation the way the person sees it,
-    /// before its client, and lists a VS Code window's tabs together under the window,
-    /// where the first of them stands.
+    /// The conversations page names each conversation the way the person sees it, with its
+    /// app after it, and lists a VS Code window's tabs together under the window, where the
+    /// first of them stands.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -248,12 +260,14 @@ internal sealed class PageServiceTests
     /// </para>
     /// <para>
     /// <b>Planted red 2026-10-10</b> against a page that drew the servers in their order
-    /// with no window and no name.
+    /// with no window and no name. <i>Corrected 2026-10-11 (previously
+    /// TheSessionsPageNamesEachConversationAndListsAWindowsTabsUnderIt, which held each name
+    /// before its client's protocol name and its pid)</i>: 42 a names the app.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheSessionsPageNamesEachConversationAndListsAWindowsTabsUnderIt()
+    public async Task TheConversationsPageNamesEachConversationAndListsAWindowsTabsUnderIt()
     {
         using var rig = new PageRig();
 
@@ -285,30 +299,27 @@ internal sealed class PageServiceTests
         };
 
         var page = await PageRig.GetAsync(rig.HandOut(PageKind.Sessions));
-        var body = page.Body;
+        var list = page.Body[page.Body.IndexOf("<div class=\"list-view\">", StringComparison.Ordinal)..];
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-        await Assert.That(body).Contains("<li class=\"server\"><p><strong>" + PageContent.Text("\"Fix the <login> bug\"") + "</strong>, claude-code 2.1.296, pid 301");
-        await Assert.That(body).Contains("<li class=\"server\"><p><strong>Claude Code in one</strong>, claude-code 2.1.296, pid 302");
-        await Assert.That(body).Contains("<li class=\"server\"><p><strong>unnamed conversation in BrowserAI</strong>, claude-code 2.1.296, pid 303");
 
-        var heading = body.IndexOf("<strong>VS Code window on BrowserAI</strong>", StringComparison.Ordinal);
+        var heading = list.IndexOf("VS Code window on BrowserAI", StringComparison.Ordinal);
+        var titled = list.IndexOf("<h3>" + PageContent.Text("\"Fix the <login> bug\"") + "</h3>", StringComparison.Ordinal);
+        var unnamed = list.IndexOf("<h3>unnamed conversation in BrowserAI</h3>", StringComparison.Ordinal);
+        var terminal = list.IndexOf("<h3>Claude Code in one</h3>", StringComparison.Ordinal);
+        var own = list.IndexOf("<h3>Claude Code in work</h3>", StringComparison.Ordinal);
 
-        await Assert.That(heading).IsGreaterThan(-1).Because(body);
-        await Assert.That(heading).IsLessThan(body.IndexOf("pid 301", StringComparison.Ordinal));
-        await Assert.That(body.IndexOf("pid 301", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 303", StringComparison.Ordinal));
-        await Assert.That(body.IndexOf("pid 303", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 302", StringComparison.Ordinal));
+        await Assert.That(new[] { heading, titled, unnamed, terminal, own }.All(at => at >= 0)).IsTrue().Because(list);
+        await Assert.That(heading).IsLessThan(titled);
+        await Assert.That(titled).IsLessThan(unnamed);
+        await Assert.That(unnamed).IsLessThan(terminal);
+        await Assert.That(terminal).IsLessThan(own);
 
-        // ⚠️ And the folder only where nothing names it already, since the texts polish of
-        // 2026-10-10, page #95 (previously "Started in <folder>." under every name): a
-        // label in BrowserAI's own words that ends with the folder's name says it, which
-        // is the update page's rule, and a title or a label naming another folder does not.
-        var own = body[body.IndexOf("pid 304", StringComparison.Ordinal)..];
-
-        await Assert.That(body).Contains("<li class=\"server\"><p><strong>Claude Code in work</strong>, claude-code 2.1.296, pid 304");
-        await Assert.That(own[..own.IndexOf("</li>", StringComparison.Ordinal)]).DoesNotContain("Started in");
-        await Assert.That(body.Split("<p>Started in <code>" + PageContent.Text(@"C:\work") + "</code>.</p>").Length - 1).IsEqualTo(3);
+        // The app after each name, a window's tab marked as VS Code's.
+        await Assert.That(list).Contains("Claude Code 2.1.296, in VS Code");
+        await Assert.That(list.Split("Claude Code 2.1.296<span class=\"sep\"").Length - 1).IsEqualTo(2);
     }
+
 
     // RETIRED 2026-10-08: AnInstallStopsTheSessionHostAfterTheServersAndBeforeTheHandOver,
     // which held the page's install stopping the session host through the

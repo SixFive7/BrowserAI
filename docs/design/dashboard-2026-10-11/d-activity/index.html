@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrowserAI</title>
+<!-- Direction D, Today: what happened, in order, beside what is running now. Mockup with invented data. -->
+<style>
+/* The mockup's own control, bottom right: not part of any design. */
+.mock-control { position: fixed; right: 12px; bottom: 12px; z-index: 9999; display: flex; flex-wrap: wrap; gap: 6px 6px; align-items: center; max-width: 620px; padding: 8px 10px; border-radius: 10px; background: rgba(17, 20, 19, 0.9); color: #eef2f0; font: 12px/1.3 "Segoe UI", system-ui, sans-serif; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25); }
+.mock-control strong { margin-right: 4px; color: #fde68a; }
+.mock-control span { margin-left: 6px; opacity: 0.7; }
+.mock-control a { color: #d6e4ff; text-decoration: none; padding: 2px 7px; border-radius: 6px; }
+.mock-control a:hover { background: rgba(255, 255, 255, 0.12); }
+.mock-control a[aria-current] { background: #34d399; color: #052e22; }
+
+:root {
+  color-scheme: light;
+  --paper: #faf8f4;
+  --paper-2: #f3f0ea;
+  --card: #ffffff;
+  --rule: #e6e1d8;
+  --rule-2: #d8d1c4;
+  --ink: #1f1c18;
+  --ink-2: #5f5a52;
+  --ink-3: #8f887d;
+  --accent: #0f7f5c;
+  --accent-soft: #e2f2ea;
+  --accent-ink: #ffffff;
+  --warn: #a2580a;
+  --warn-soft: #fcefd8;
+  --bad: #b3261e;
+  --bad-soft: #fbe4e1;
+  --blue: #2f6db0;
+  --blue-soft: #e3edf8;
+  --violet: #6247c9;
+  --violet-soft: #ece7fb;
+  --gray-soft: #efece6;
+  --serif: "Sitka Heading", "Sitka Text", Georgia, "Cambria", serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #171513;
+  --paper-2: #1f1c19;
+  --card: #211e1b;
+  --rule: #322d28;
+  --rule-2: #413a33;
+  --ink: #efe9df;
+  --ink-2: #b8afa2;
+  --ink-3: #847b70;
+  --accent: #4fd1a1;
+  --accent-soft: #173a2e;
+  --accent-ink: #072a1e;
+  --warn: #f2b84b;
+  --warn-soft: #3b2c12;
+  --bad: #f2867c;
+  --bad-soft: #3d1c19;
+  --blue: #7fb2ec;
+  --blue-soft: #1c2b3d;
+  --violet: #b4a2f5;
+  --violet-soft: #2a2442;
+  --gray-soft: #2a2622;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #171513;
+    --paper-2: #1f1c19;
+    --card: #211e1b;
+    --rule: #322d28;
+    --rule-2: #413a33;
+    --ink: #efe9df;
+    --ink-2: #b8afa2;
+    --ink-3: #847b70;
+    --accent: #4fd1a1;
+    --accent-soft: #173a2e;
+    --accent-ink: #072a1e;
+    --warn: #f2b84b;
+    --warn-soft: #3b2c12;
+    --bad: #f2867c;
+    --bad-soft: #3d1c19;
+    --blue: #7fb2ec;
+    --blue-soft: #1c2b3d;
+    --violet: #b4a2f5;
+    --violet-soft: #2a2442;
+    --gray-soft: #2a2622;
+  }
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 14.5px/1.55 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.icon { width: 16px; height: 16px; flex: none; }
+.brand-mark { width: 26px; height: 26px; flex: none; }
+code, .mono { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12.5px; overflow-wrap: anywhere; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Masthead */
+.mast { border-bottom: 1px solid var(--rule); background: var(--paper); position: sticky; top: 0; z-index: 10; }
+.mast-in { max-width: 1240px; margin: 0 auto; padding: 0 32px; height: 58px; display: flex; align-items: center; gap: 26px; }
+.mast .logo { display: flex; align-items: center; gap: 10px; font-weight: 650; color: var(--ink); text-decoration: none; font-size: 15.5px; }
+.mast nav { display: flex; gap: 2px; }
+.mast nav a { padding: 7px 12px; border-radius: 8px; color: var(--ink-2); text-decoration: none; font-weight: 550; }
+.mast nav a:hover { background: var(--paper-2); color: var(--ink); }
+.mast nav a[aria-current="page"] { background: var(--ink); color: var(--paper); }
+.mast .gap { flex: 1; }
+.mast .ver { color: var(--ink-3); font-size: 13px; }
+
+.wrap { max-width: 1240px; margin: 0 auto; padding: 30px 32px 64px; display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: start; }
+.head h1 { font-family: var(--serif); font-weight: 600; font-size: 36px; line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 8px; }
+.head .date { text-transform: uppercase; letter-spacing: 0.12em; font-size: 12px; color: var(--ink-3); font-weight: 650; margin: 0 0 8px; }
+.head p { margin: 0 0 20px; color: var(--ink-2); font-size: 16px; max-width: 680px; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+.filters button { font: inherit; font-size: 13px; padding: 5px 13px; border-radius: 999px; border: 1px solid var(--rule-2); background: var(--card); color: var(--ink-2); cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* The timeline */
+.hour { font-family: var(--serif); font-size: 15px; color: var(--ink-3); margin: 22px 0 6px 92px; font-style: italic; }
+.tl { position: relative; }
+.ev { display: grid; grid-template-columns: 56px 36px 1fr; gap: 0 14px; padding: 6px 0; position: relative; }
+.ev .t { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12.5px; color: var(--ink-3); text-align: right; padding-top: 7px; }
+.ev .rail { position: relative; display: flex; justify-content: center; }
+.ev .rail::before { content: ""; position: absolute; top: 0; bottom: -6px; width: 2px; background: var(--rule); }
+.ev:last-child .rail::before { bottom: 50%; }
+.ev .dot { position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--gray-soft); color: var(--ink-2); border: 3px solid var(--paper); }
+.ev .dot .icon { width: 15px; height: 15px; }
+.ev .dot.call { background: var(--accent-soft); color: var(--accent); }
+.ev .dot.window { background: var(--warn-soft); color: var(--warn); }
+.ev .dot.open { background: var(--accent-soft); color: var(--accent); }
+.ev .dot.connect { background: var(--violet-soft); color: var(--violet); }
+.ev .dot.update { background: var(--blue-soft); color: var(--blue); }
+.ev .dot.problem { background: var(--bad-soft); color: var(--bad); }
+.ev .body { padding: 5px 0 10px; border-bottom: 1px solid var(--rule); }
+.ev .body p { margin: 0; }
+.ev .who { font-weight: 650; }
+.ev .ctx { color: var(--ink-3); font-size: 12.5px; }
+.ev .why { margin: 6px 0 2px; font-family: var(--serif); font-size: 15.5px; font-style: italic; color: var(--ink-2); padding-left: 12px; border-left: 2px solid var(--accent); }
+.ev .acts { display: flex; gap: 12px; margin-top: 6px; font-size: 13px; }
+.ev .acts a { text-decoration: none; font-weight: 600; }
+.ev .acts a:hover { text-decoration: underline; }
+.ev.latest .t { color: var(--accent); font-weight: 700; }
+.ev.hidden-by-filter { display: none; }
+
+/* The Now column */
+.now { position: sticky; top: 82px; display: flex; flex-direction: column; gap: 14px; }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 16px 18px; }
+.box h2 { font-family: var(--serif); font-weight: 600; font-size: 18px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.box h2 .icon { width: 18px; height: 18px; color: var(--accent); }
+.box .lede { margin: 0 0 10px; color: var(--ink-2); font-size: 13px; }
+.box.warn { background: var(--warn-soft); border-color: transparent; }
+.box.warn h2, .box.warn h2 .icon { color: var(--warn); }
+.box.bad { background: var(--bad-soft); border-color: transparent; }
+.box.bad h2, .box.bad h2 .icon { color: var(--bad); }
+.line { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--rule); font-size: 13.5px; }
+.line:first-of-type { border-top: 0; }
+.line .txt { flex: 1; min-width: 0; }
+.line small { display: block; color: var(--ink-3); font-size: 12px; }
+.pill { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--gray-soft); color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pill.w { background: var(--warn-soft); color: var(--warn); }
+.pill.h { background: var(--accent-soft); color: var(--accent); }
+.pill.live { background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+.big { font-family: var(--serif); font-size: 40px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.05; color: var(--accent); }
+.count { font-variant-numeric: tabular-nums; }
+.links { display: flex; flex-direction: column; }
+.links a { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--rule); color: var(--ink); text-decoration: none; }
+.links a:first-child { border-top: 0; }
+.links a span { flex: 1; }
+.links a small { color: var(--ink-3); }
+.links .icon { color: var(--ink-3); }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--rule-2); background: var(--card); color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.btn.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn.bad { background: var(--bad); color: #fff; border-color: var(--bad); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.ava { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 10.5px; font-weight: 750; color: #fff; flex: none; }
+.ava.cc { background: #6b55d6; }
+.ava.cx { background: #3577c5; }
+
+/* Pages behind the masthead */
+.page { grid-column: 1 / -1; max-width: 920px; }
+.page h1 { font-family: var(--serif); font-weight: 600; font-size: 34px; margin: 0 0 6px; }
+.page .lede { color: var(--ink-2); font-size: 15.5px; margin: 0 0 20px; }
+.back { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); text-decoration: none; font-size: 13px; margin-bottom: 10px; }
+.sheet { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; margin-bottom: 18px; }
+.sheet .rowx { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; padding: 13px 18px; border-top: 1px solid var(--rule); }
+.sheet .rowx:first-child { border-top: 0; }
+.sheet .rowx small { display: block; color: var(--ink-3); font-size: 12.5px; }
+.sheet h3 { margin: 0; padding: 12px 18px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); background: var(--paper-2); border-bottom: 1px solid var(--rule); }
+.flag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); margin-left: 6px; }
+.empty { padding: 26px; text-align: center; color: var(--ink-2); border: 1px dashed var(--rule-2); border-radius: 14px; background: var(--card); }
+.empty b { display: block; font-family: var(--serif); font-size: 18px; color: var(--ink); margin-bottom: 4px; }
+
+@media (max-width: 1020px) {
+  .wrap { grid-template-columns: 1fr; }
+  .now { position: static; order: -1; }
+}
+@media (max-width: 560px) {
+  .mast-in, .wrap { padding-left: 16px; padding-right: 16px; }
+  .ev { grid-template-columns: 44px 30px 1fr; gap: 0 8px; }
+  .hour { margin-left: 82px; }
+  .head h1 { font-size: 28px; }
+  .mast .ver { display: none; }
+  .mast-in { gap: 10px; }
+  .mast nav { overflow-x: auto; }
+  .mast nav a { padding: 6px 9px; font-size: 13px; white-space: nowrap; }
+  .mast .logo span.word { display: none; }
+}
+
+</style>
+</head>
+<body>
+<header class="mast" id="mast"></header>
+<main class="wrap" id="wrap" tabindex="-1"></main>
+<script>
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+// Invented data for the dashboard mockups. No real conversation, path or person.
+// Four scenarios: busy (the default), quiet, attention and firstrun.
+// Times are minutes from the mockup clock, which starts at 13:41:00.
+
+const MOCK = (() => {
+  const loadedAt = Date.now();
+  const startMinutes = 13 * 60 + 41;
+  const minute = 60 * 1000;
+  const base = loadedAt;
+
+  const at = (minutesFromNow) => base + minutesFromNow * minute;
+  const clockOf = (ms) => {
+    const total = Math.floor((ms - base) / minute) + startMinutes;
+    const h = Math.floor(((total % 1440) + 1440) % 1440 / 60);
+    const m = ((total % 60) + 60) % 60;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  };
+  const nowClock = () => clockOf(Date.now() - loadedAt + base);
+  const left = (ms) => {
+    const seconds = Math.max(0, Math.ceil((ms - (Date.now() - loadedAt + base)) / 1000));
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return h > 0 ? h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') : m + ':' + String(s).padStart(2, '0');
+  };
+  const size = (mb) => mb >= 1000 ? (mb / 1024).toFixed(1) + ' GB' : Math.round(mb) + ' MB';
+
+  const install = {
+    root: 'C:\\Users\\sam\\AppData\\Local\\BrowserAI.app',
+    data: 'C:\\Users\\sam\\AppData\\Local\\BrowserAI',
+    logs: 'C:\\Users\\sam\\AppData\\Local\\BrowserAI\\logs',
+    server: '"C:\\Users\\sam\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe" --mcp',
+  };
+
+  const appsRegistered = [
+    { key: 'claude-code', name: 'Claude Code', state: 'ok', short: 'Set up for all your projects',
+      sentence: 'Every Claude Code session you start can use BrowserAI, in any folder.',
+      restart: 'A Claude Code session that was already open sees BrowserAI after it is restarted.',
+      projectFile: '.mcp.json', found: 'C:\\Users\\sam\\.local\\bin\\claude.exe' },
+    { key: 'codex', name: 'Codex', state: 'ok', short: 'Set up for all your projects',
+      sentence: 'Every new Codex conversation can use BrowserAI, in any folder.',
+      restart: 'A Codex conversation that was already open does not see BrowserAI. Start a new one.',
+      projectFile: '.codex\\config.toml', found: 'Codex desktop app' },
+  ];
+
+  const changelog = {
+    version: '1.2.0', date: '2026-10-20',
+    groups: [
+      { name: 'Added', entries: [
+        { icon: '\u2728', head: 'A Start Menu click opens this page in your own browser.', body: 'It replaces the configuration window and lives at an address on your own PC that BrowserAI makes for each run.' },
+        { icon: '\u2728', head: 'A downloaded update that has to wait says so in a notification that counts down to its install.', body: 'The notification names what holds the update and has two buttons, Install now and Wait for inactivity.' },
+        { icon: '\u2728', head: 'An agent can close a session\'s browser and keep the session.', body: 'Resuming the session opens the browser again with its logins, cookies and tabs.' },
+        { icon: '\u2728', head: 'Each conversation is named the way Claude Code or Codex shows it.', body: 'The tabs of one VS Code window are listed together under the window.' },
+      ] },
+      { name: 'Changed', entries: [
+        { icon: '\ud83d\udca5', head: 'BrowserAI is one program, BrowserAI.exe.', body: 'An update rewrites the registrations that name the old file.' },
+        { icon: '\ud83d\udca5', head: 'One BrowserAI runs in the background from sign-in to sign-out.', body: 'It holds every session, and Claude Code and Codex hand their calls to it.' },
+        { icon: '\ud83d\udd27', head: 'The texts an agent and a person read say the same things in fewer words.', body: 'The tool list an agent is handed is about 2,200 characters shorter.' },
+      ] },
+      { name: 'Fixed', entries: [
+        { icon: '\ud83d\udc1b', head: 'A Firefox started while Shift is held no longer stalls in safe mode.', body: 'Every Firefox BrowserAI starts has its safe mode key switched off.' },
+        { icon: '\ud83d\udc1b', head: 'A Claude Code terminal session is told to reconnect through /mcp after an update.', body: 'The page and the notification name each terminal session that will need it.' },
+      ] },
+    ],
+  };
+
+  const onDisk = [
+    { id: 'd1', name: 'invoice-export', purpose: 'exporting last month\'s invoices to PDF', folder: 'C:\\Code\\billing\\.work\\invoice-export', mb: 214, used: '3 days ago', flags: ['saved login'] },
+    { id: 'd2', name: 'search-slow-network', purpose: 'trying the search page on a slow network', folder: 'C:\\Code\\acme-shop\\.work\\search-slow-network', mb: 377, used: '19 days ago', flags: ['network recording'] },
+    { id: 'd3', name: 'signup-form-check', purpose: 'checking the sign-up form with a keyboard only', folder: 'C:\\Code\\acme-shop\\.work\\signup-form-check', mb: 58, used: '6 days ago', flags: [] },
+    { id: 'd4', name: 'docs-search', purpose: 'confirming the docs search finds the new pages', folder: 'C:\\Code\\docs-site\\.work\\docs-search', mb: 41, used: '2 weeks ago', flags: ['transcript'] },
+    { id: 'd5', name: 'map-tiles-zoom', purpose: 'measuring how long map tiles take at each zoom level', folder: 'C:\\Code\\atlas\\.work\\map-tiles-zoom', mb: 166, used: '5 weeks ago', flags: [] },
+    { id: 'd6', name: 'newsletter-preview', purpose: 'previewing the newsletter in a narrow window', folder: 'C:\\Code\\market-notes\\.work\\newsletter-preview', mb: 73, used: '8 days ago', flags: [] },
+    { id: 'd7', name: 'status-page-watch', purpose: 'watching the status page during the release', folder: 'C:\\Code\\atlas\\.work\\status-page-watch', mb: 29, used: '2 days ago', flags: [] },
+  ];
+
+  const browsersInstalled = [
+    { name: 'Chromium 155', mb: 441, note: 'Downloaded once, used by every Chromium session.' },
+    { name: 'Firefox 146', mb: 262, note: 'Downloaded once, used by every Firefox session.' },
+  ];
+
+  const busySessions = [
+    { id: 's1', name: 'checkout-rounding', purpose: 'reproducing the rounding error in the checkout total', folder: 'C:\\Code\\acme-shop\\.work\\checkout-rounding',
+      browser: 'Chromium', state: 'hidden', closes: at(7.2), by: 'c1', mb: 96, flags: ['transcript'], traces: 1,
+      lastWhy: 'checking whether the total updates after removing a coupon', lastAgo: 'now', running: true },
+    { id: 's2', name: 'pricing-compare', purpose: 'comparing the three pricing pages side by side', folder: 'C:\\Code\\market-notes\\.work\\pricing-compare',
+      browser: 'Chromium', state: 'window', closes: at(48.1), by: 'c3', mb: 142, flags: [], traces: 0,
+      lastWhy: 'comparing the annual prices on the second page', lastAgo: '2 min ago' },
+    { id: 's3', name: 'docs-screenshots', purpose: 'taking fresh screenshots for the install guide', folder: 'C:\\Code\\docs-site\\.work\\docs-screenshots',
+      browser: 'Firefox', state: 'closed', closes: null, by: 'c4', mb: 61, flags: [], traces: 0,
+      lastWhy: 'saving the screenshot of the settings dialog', lastAgo: '22 min ago', closedWhy: 'closed after 10 minutes without a call' },
+    { id: 's4', name: 'login-flow-check', purpose: 'checking that the sign-in survives a reload', folder: 'C:\\Code\\acme-shop\\.work\\login-flow-check',
+      browser: 'Chromium', state: 'hidden', kept: true, closes: at(17), by: null, mb: 88, flags: ['saved login'], traces: 0,
+      lastWhy: 'reloading the account page after signing in', lastAgo: '10 min ago' },
+  ];
+
+  const busyConversations = [
+    { id: 'c1', title: 'Fix the checkout total rounding', titled: true, app: 'Claude Code', place: 'VS Code', windowKey: 'w1', windowLabel: 'VS Code window on acme-shop',
+      folder: 'C:\\Code\\acme-shop', folderName: 'acme-shop', version: '2.1.300', running: true, holdsUntil: null, reconnect: 'self', sessions: ['s1'], since: '12:40' },
+    { id: 'c2', title: 'unnamed conversation in acme-shop', titled: false, app: 'Claude Code', place: 'VS Code', windowKey: 'w1', windowLabel: 'VS Code window on acme-shop',
+      folder: 'C:\\Code\\acme-shop', folderName: 'acme-shop', version: '2.1.300', running: false, holdsUntil: at(4.2), reconnect: 'self', sessions: [], since: '13:05' },
+    { id: 'c3', title: 'Compare pricing pages', titled: true, app: 'Claude Code', place: 'Terminal', windowKey: null,
+      folder: 'C:\\Code\\market-notes', folderName: 'market-notes', version: '2.1.300', running: false, holdsUntil: at(8.5), reconnect: 'mcp', sessions: ['s2'], since: '13:10' },
+    { id: 'c4', title: 'Update the install guide screenshots', titled: true, app: 'Codex', place: 'Codex', windowKey: null,
+      folder: 'C:\\Code\\docs-site', folderName: 'docs-site', version: '0.165.0', running: false, holdsUntil: null, reconnect: 'new', sessions: ['s3'], since: '12:57' },
+  ];
+
+  const busyActivity = [
+    { t: '13:41', kind: 'call', who: 'c1', session: 's1', text: 'clicked in checkout-rounding', why: 'checking whether the total updates after removing a coupon' },
+    { t: '13:39', kind: 'call', who: 'c3', session: 's2', text: 'took a screenshot in pricing-compare', why: 'comparing the annual prices on the second page' },
+    { t: '13:36', kind: 'update', text: 'Update 1.2.1 was downloaded. It installs by itself once nothing uses BrowserAI.' },
+    { t: '13:35', kind: 'update', text: 'BrowserAI checked GitHub for updates and found 1.2.1.' },
+    { t: '13:31', kind: 'kept', session: 's4', text: 'The conversation using login-flow-check ended. BrowserAI keeps the session and its hidden browser until about 13:58, in case a conversation picks it up again.' },
+    { t: '13:29', kind: 'closed', session: 's3', text: 'The Firefox of docs-screenshots closed after 10 minutes without a call. The session folder stays.' },
+    { t: '13:12', kind: 'window', who: 'c3', session: 's2', text: 'opened a Chromium window on your screen for pricing-compare' },
+    { t: '13:10', kind: 'connect', who: 'c3', text: 'connected from a terminal in market-notes' },
+    { t: '13:05', kind: 'connect', who: 'c2', text: 'connected from VS Code in acme-shop' },
+    { t: '12:58', kind: 'open', who: 'c4', session: 's3', text: 'opened a hidden Firefox for docs-screenshots' },
+    { t: '12:57', kind: 'connect', who: 'c4', text: 'connected from Codex in docs-site' },
+    { t: '12:41', kind: 'open', who: 'c1', session: 's1', text: 'opened a hidden Chromium for checkout-rounding' },
+    { t: '12:40', kind: 'connect', who: 'c1', text: 'connected from VS Code in acme-shop' },
+    { t: '08:12', kind: 'start', text: 'BrowserAI started at sign-in.' },
+  ];
+
+  const heldUpdate = (extra) => Object.assign({
+    state: 'held', version: '1.2.1', older: false, installsAt: at(48.1), wait: 'counting',
+    source: 'GitHub releases', checked: '13:35',
+  }, extra || {});
+
+  const scenarios = {
+    busy: {
+      label: 'Busy afternoon',
+      occasion: 'ordinary',
+      version: '1.2.0', since: '08:12', startedHow: 'at sign-in',
+      broken: null,
+      install,
+      update: heldUpdate(),
+      apps: appsRegistered,
+      conversations: busyConversations,
+      sessions: busySessions,
+      onDisk,
+      browsersInstalled,
+      logsMb: 18,
+      activity: busyActivity,
+      changelog,
+    },
+    quiet: {
+      label: 'Quiet, nothing running',
+      occasion: 'ordinary',
+      version: '1.2.0', since: '08:12', startedHow: 'at sign-in',
+      broken: null,
+      install,
+      update: { state: 'none', source: 'GitHub releases', checked: '13:35' },
+      apps: appsRegistered,
+      conversations: [],
+      sessions: [],
+      onDisk: onDisk.concat([
+        { id: 'd8', name: 'checkout-rounding', purpose: 'reproducing the rounding error in the checkout total', folder: 'C:\\Code\\acme-shop\\.work\\checkout-rounding', mb: 96, used: '2 hours ago', flags: ['transcript'] },
+        { id: 'd9', name: 'pricing-compare', purpose: 'comparing the three pricing pages side by side', folder: 'C:\\Code\\market-notes\\.work\\pricing-compare', mb: 142, used: '3 hours ago', flags: [] },
+      ]),
+      browsersInstalled,
+      logsMb: 18,
+      activity: [
+        { t: '13:35', kind: 'update', text: 'BrowserAI checked GitHub for updates. 1.2.0 is the newest.' },
+        { t: '11:52', kind: 'closed', text: 'The last browser closed after 10 minutes without a call. Nothing uses BrowserAI now.' },
+        { t: '08:12', kind: 'start', text: 'BrowserAI started at sign-in.' },
+      ],
+      changelog,
+    },
+    attention: {
+      label: 'Something needs you',
+      occasion: 'ordinary',
+      version: '1.2.0', since: '08:12', startedHow: 'at sign-in',
+      broken: { first: 'browser_navigate, whose description is not the one this BrowserAI was built with' },
+      install,
+      update: heldUpdate({ wait: 'window-never', installsAt: null }),
+      apps: [
+        appsRegistered[0],
+        { key: 'codex', name: 'Codex', state: 'repair', short: 'Needs repair',
+          sentence: 'Codex is set up to start a BrowserAI file that is not there any more, so Codex cannot reach BrowserAI.',
+          restart: 'After the repair, start a new Codex conversation.', projectFile: '.codex\\config.toml', found: 'Codex desktop app' },
+      ],
+      conversations: [busyConversations[2]],
+      sessions: [
+        Object.assign({}, busySessions[1], { closes: null, never: true }),
+        busySessions[3],
+      ],
+      onDisk,
+      browsersInstalled,
+      logsMb: 18,
+      activity: [
+        { t: '13:40', kind: 'problem', text: 'A session was refused: part of this install does not match the rest. Every session is refused until BrowserAI is reinstalled.' },
+        { t: '13:36', kind: 'update', text: 'Update 1.2.1 was downloaded. A window set never to close holds it.' },
+        { t: '13:12', kind: 'window', who: 'c3', session: 's2', text: 'opened a Chromium window on your screen for pricing-compare, set never to close by itself' },
+        { t: '08:12', kind: 'start', text: 'BrowserAI started at sign-in.' },
+      ],
+      changelog,
+    },
+    firstrun: {
+      label: 'Just installed',
+      occasion: 'firstrun',
+      version: '1.2.0', since: '13:40', startedHow: 'by the installer',
+      broken: null,
+      install,
+      update: { state: 'none', source: 'GitHub releases', checked: '13:40' },
+      apps: [
+        appsRegistered[0],
+        { key: 'codex', name: 'Codex', state: 'missing', short: 'Not found on this PC',
+          sentence: 'Codex is not installed on this PC, so BrowserAI did not set it up. Install Codex, then set it up here.',
+          restart: '', projectFile: '.codex\\config.toml', found: null },
+      ],
+      conversations: [],
+      sessions: [],
+      onDisk: [],
+      browsersInstalled: [],
+      logsMb: 1,
+      activity: [
+        { t: '13:40', kind: 'start', text: 'BrowserAI was installed and set itself up for Claude Code.' },
+      ],
+      changelog,
+    },
+  };
+
+  const params = new URLSearchParams(location.search);
+  const chosen = scenarios[params.get('state')] ? params.get('state') : 'busy';
+  const data = scenarios[chosen];
+
+  const sessionById = (id) => data.sessions.find((s) => s.id === id) || null;
+  const conversationById = (id) => data.conversations.find((c) => c.id === id) || null;
+  const sessionsMb = data.sessions.reduce((sum, s) => sum + s.mb, 0) + data.onDisk.reduce((sum, s) => sum + s.mb, 0);
+  const browsersMb = data.browsersInstalled.reduce((sum, b) => sum + b.mb, 0);
+  const totalMb = sessionsMb + browsersMb + data.logsMb;
+  const folderCount = data.sessions.length + data.onDisk.length;
+  const windows = data.sessions.filter((s) => s.state === 'window');
+  const hidden = data.sessions.filter((s) => s.state === 'hidden');
+  const openBrowsers = windows.length + hidden.length;
+  const attention = [];
+  if (data.broken) {
+    attention.push({ kind: 'broken', level: 'bad', title: 'BrowserAI needs reinstalling',
+      text: 'Part of this install does not match the rest, so every session is refused until BrowserAI is reinstalled. Your sessions and their files are kept.' });
+  }
+  for (const app of data.apps) {
+    if (app.state === 'repair') {
+      attention.push({ kind: 'app', level: 'warn', title: app.name + ' needs repair', text: app.sentence, app: app.key });
+    }
+  }
+  if (data.update.state === 'held' && data.update.wait === 'window-never') {
+    attention.push({ kind: 'update', level: 'warn', title: 'A window keeps the update waiting',
+      text: 'Update ' + data.update.version + ' installs once the pricing-compare window is closed, because that window is set never to close by itself.' });
+  }
+
+  const reconnectText = {
+    self: 'Reconnects by itself after an update.',
+    mcp: 'After an update, run /mcp in that terminal, choose BrowserAI, then Reconnect.',
+    new: 'After an update, BrowserAI is back only in a new conversation.',
+  };
+  const placeText = { 'VS Code': 'Claude Code in VS Code', Terminal: 'Claude Code in a terminal', Codex: 'Codex' };
+
+  function tick(root) {
+    for (const el of (root || document).querySelectorAll('[data-ends]')) {
+      el.textContent = left(Number(el.dataset.ends));
+    }
+    for (const el of (root || document).querySelectorAll('[data-clock-now]')) {
+      el.textContent = nowClock();
+    }
+  }
+
+  function startTicking() {
+    tick();
+    setInterval(() => tick(), 1000);
+  }
+
+  function esc(text) {
+    return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  }
+
+  function applyTheme() {
+    const theme = params.get('theme');
+    if (theme === 'dark' || theme === 'light') {
+      document.documentElement.dataset.theme = theme;
+    }
+  }
+
+  // The mockup's own control: which scenario and which scheme. Not part of any design.
+  function mockControl(views) {
+    if (params.has('shot')) {
+      return;
+    }
+    const box = document.createElement('div');
+    box.className = 'mock-control';
+    const states = Object.entries(scenarios).map(([key, s]) =>
+      '<a href="?state=' + key + (params.get('theme') ? '&theme=' + params.get('theme') : '') + location.hash + '"' + (key === chosen ? ' aria-current="true"' : '') + '>' + esc(s.label) + '</a>').join('');
+    const theme = params.get('theme');
+    const themeLink = (value, label) => '<a href="?state=' + chosen + (value ? '&theme=' + value : '') + location.hash + '"' + ((theme || '') === value ? ' aria-current="true"' : '') + '>' + label + '</a>';
+    box.innerHTML = '<strong>Mockup only</strong><span>Data:</span>' + states + '<span>Scheme:</span>' + themeLink('', 'System') + themeLink('light', 'Light') + themeLink('dark', 'Dark');
+    document.body.appendChild(box);
+    window.addEventListener('hashchange', () => {
+      for (const a of box.querySelectorAll('a')) {
+        a.href = a.href.split('#')[0] + location.hash;
+      }
+    });
+  }
+
+  return {
+    data, chosen, scenarios, at, clockOf, left, size, esc, tick, startTicking, applyTheme, mockControl,
+    sessionById, conversationById, sessionsMb, browsersMb, totalMb, folderCount, windows, hidden, openBrowsers,
+    attention, reconnectText, placeText,
+  };
+})();
+
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+// Simple line icons drawn for the mockups: 24 x 24, stroke in the current colour.
+// None of them copies a vendor mark. An implementation would carry them as inline SVG,
+// which the page's content security policy allows.
+const ICON = (() => {
+  const paths = {
+    home: '<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6.5H9V21H4.5a1 1 0 0 1-1-1z"/>',
+    chat: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/>',
+    window: '<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.8" r=".6" fill="currentColor"/><circle cx="8.2" cy="6.8" r=".6" fill="currentColor"/>',
+    hidden: '<path d="M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1"/><path d="M9.6 14.4a3 3 0 0 1 4.8-4.8"/><path d="M4 20 20 4"/>',
+    closed: '<rect x="3" y="4.5" width="18" height="15" rx="2" stroke-dasharray="3 2.4"/><path d="M9.5 12h5"/>',
+    folder: '<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/>',
+    update: '<path d="M12 3.5v11m0 0-4.2-4.2M12 14.5l4.2-4.2"/><path d="M4 16.5V19a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-2.5"/>',
+    plug: '<path d="M9 3v5M15 3v5"/><path d="M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0z"/><path d="M12 17v4"/>',
+    disk: '<ellipse cx="12" cy="6" rx="8" ry="2.8"/><path d="M4 6v12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8V6"/><path d="M4 12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8"/>',
+    file: '<path d="M6.5 3h7.5l4.5 4.5V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4.5h4.5M9 12.5h6M9 16h6"/>',
+    sparkle: '<path d="M12 3.5l1.9 5.2 5.1 1.8-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.8z"/><path d="M18.5 16.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
+    info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    checkCircle: '<circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/>',
+    warn: '<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5"/><circle cx="12" cy="17" r=".7" fill="currentColor"/>',
+    bad: '<circle cx="12" cy="12" r="8.5"/><path d="M9 9l6 6M15 9l-6 6"/>',
+    minus: '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h7"/>',
+    chevron: '<path d="M9.5 6l6 6-6 6"/>',
+    chevronDown: '<path d="M6 9.5l6 6 6-6"/>',
+    back: '<path d="M14.5 6l-6 6 6 6"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    map: '<path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>',
+    terminal: '<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 10l3 2.2L7 14.5M12.5 15h4.5"/>',
+    code: '<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M9.5 9.5 7 12l2.5 2.5M14.5 9.5 17 12l-2.5 2.5"/>',
+    globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.4 5.2 3.4 8.5s-1 6.1-3.4 8.5c-2.4-2.4-3.4-5.2-3.4-8.5s1-6.1 3.4-8.5z"/>',
+    external: '<path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>',
+    pulse: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    question: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/>',
+    shield: '<path d="M12 3.5 19 6v5.5c0 4.3-2.9 7.6-7 9-4.1-1.4-7-4.7-7-9V6z"/>',
+    key: '<circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5 19 4M16 7l2.5 2.5M14 9l2 2"/>',
+    list: '<path d="M9 7h11M9 12h11M9 17h11"/><circle cx="5" cy="7" r=".8" fill="currentColor"/><circle cx="5" cy="12" r=".8" fill="currentColor"/><circle cx="5" cy="17" r=".8" fill="currentColor"/>',
+    bolt: '<path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  };
+
+  const of = (name, extraClass) =>
+    '<svg class="icon' + (extraClass ? ' ' + extraClass : '') + '" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + (paths[name] || '') + '</svg>';
+
+  // BrowserAI's own icon, from assets/icon.svg.
+  const brand = (id) =>
+    '<svg class="brand-mark" viewBox="0 0 256 256" aria-hidden="true"><defs><linearGradient id="' + id + 'g" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="0.55" stop-color="#10B981"/><stop offset="1" stop-color="#0E7490"/></linearGradient><clipPath id="' + id + 'c"><circle cx="128" cy="128" r="112"/></clipPath></defs>'
+    + '<circle cx="128" cy="128" r="112" fill="url(#' + id + 'g)"/><g clip-path="url(#' + id + 'c)" fill="none" stroke="#ECFEFF" stroke-width="10" opacity="0.45" stroke-linecap="round"><path d="M6 100 Q128 82 250 100"/><path d="M6 158 Q128 176 250 158"/><path d="M128 14 Q70 128 128 242"/><path d="M128 14 Q186 128 128 242"/></g>'
+    + '<path d="M44 128 Q128 58 212 128 Q128 198 44 128 Z" fill="#F0FDFA"/><circle cx="128" cy="128" r="31" fill="#083344"/><circle cx="140" cy="116" r="9" fill="#ECFEFF"/></svg>';
+
+  return { of, brand };
+})();
+
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+(() => {
+  const M = MOCK;
+  const D = M.data;
+  const I = ICON;
+  const esc = M.esc;
+  M.applyTheme();
+
+  const root = document.getElementById('wrap');
+  const count = (ms) => '<span class="count" data-ends="' + ms + '"></span>';
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+  const ava = (app) => '<span class="ava ' + (app === 'Codex' ? 'cx' : 'cc') + '" aria-hidden="true">' + (app === 'Codex' ? 'CX' : 'CC') + '</span>';
+  const placeLabel = (c) => c.place === 'VS Code' ? 'Claude Code in VS Code' : c.place === 'Terminal' ? 'Claude Code in a terminal' : 'Codex';
+  const kinds = {
+    call: { dot: 'call', icon: 'pulse', group: ['browsers', 'conversations'] },
+    window: { dot: 'window', icon: 'window', group: ['browsers'] },
+    open: { dot: 'open', icon: 'hidden', group: ['browsers'] },
+    closed: { dot: '', icon: 'closed', group: ['browsers'] },
+    kept: { dot: '', icon: 'folder', group: ['browsers'] },
+    connect: { dot: 'connect', icon: 'chat', group: ['conversations'] },
+    update: { dot: 'update', icon: 'update', group: ['update'] },
+    start: { dot: '', icon: 'bolt', group: [] },
+    problem: { dot: 'problem', icon: 'bad', group: ['problems'] },
+  };
+
+  function event(e, first) {
+    const k = kinds[e.kind];
+    const c = e.who ? M.conversationById(e.who) : null;
+    const s = e.session ? M.sessionById(e.session) : null;
+    let body = c ? '<p><span class="who">' + esc(c.title) + '</span> ' + esc(e.text) + '.</p><p class="ctx">' + esc(placeLabel(c)) + ', ' + esc(c.folderName) + '</p>' : '<p>' + esc(e.text) + '</p>';
+    if (e.why) body += '<p class="why">' + esc(e.why) + '</p>';
+    const acts = [];
+    if (s) acts.push('<a href="#/sessions">See ' + esc(s.name) + '</a>');
+    if (e.kind === 'update') acts.push('<a href="#/update">See the update</a>');
+    if (e.kind === 'problem') acts.push('<a href="#/folders">How to fix it</a>');
+    if (acts.length) body += '<p class="acts">' + acts.join('') + '</p>';
+    return '<div class="ev' + (first ? ' latest' : '') + '" data-groups="' + k.group.join(' ') + '"><span class="t">' + esc(e.t) + '</span><span class="rail"><span class="dot ' + k.dot + '">' + I.of(k.icon) + '</span></span><div class="body">' + body + '</div></div>';
+  }
+
+  function feed() {
+    const busy = D.conversations.length;
+    const title = M.attention.length ? plural(M.attention.length, 'thing needs you', 'things need you') + ' today' : busy ? 'A busy afternoon' : D.occasion === 'firstrun' ? 'BrowserAI was just installed' : 'A quiet day so far';
+    const sum = D.occasion === 'firstrun' ? 'It set itself up for Claude Code. When an agent uses it, what it does appears here as it happens.'
+      : 'Since ' + esc(D.since) + ': ' + (busy ? plural(busy, 'conversation', 'conversations') + ' used BrowserAI. ' + plural(M.openBrowsers, 'browser is', 'browsers are') + ' open now' + (M.windows.length ? ', ' + (M.windows.length === 1 ? 'one of them a window' : M.windows.length + ' of them windows') + ' on your screen.' : ', all of them hidden.') : 'nothing has used BrowserAI for a while. It is running and ready.');
+    let html = '<section><div class="head"><p class="date">Today, ' + esc(M.clockOf(Date.now())) + '</p><h1>' + esc(title) + '</h1><p>' + sum + '</p></div>'
+      + '<div class="filters" role="group" aria-label="Show"><button type="button" aria-pressed="true" data-f="">Everything</button><button type="button" aria-pressed="false" data-f="browsers">Browsers</button><button type="button" aria-pressed="false" data-f="conversations">Conversations</button><button type="button" aria-pressed="false" data-f="update">Update</button><button type="button" aria-pressed="false" data-f="problems">Problems</button></div>'
+      + '<div class="tl" id="tl">';
+    let hour = null;
+    D.activity.forEach((e, i) => {
+      const h = e.t.slice(0, 2);
+      if (h !== hour) {
+        hour = h;
+        html += '<div class="hour">' + h + ':00</div>';
+      }
+      html += event(e, i === 0);
+    });
+    return html + '</div></section>' + nowColumn();
+  }
+
+  function nowColumn() {
+    let html = '<aside class="now" aria-label="Now">';
+    for (const a of M.attention) {
+      html += '<div class="box ' + a.level + '" role="alert"><h2>' + I.of(a.level === 'bad' ? 'bad' : 'warn') + esc(a.title) + '</h2><p class="lede">' + esc(a.text) + '</p>'
+        + (a.kind === 'broken' ? '<a class="btn dark" href="#/folders">How to reinstall</a>' : a.kind === 'app' ? '<a class="btn dark" href="#/setup">Repair</a>' : '<a class="btn dark" href="#/update">See the update</a>') + '</div>';
+    }
+    html += '<div class="box"><h2>' + I.of('window') + 'On your screen</h2>' + (M.windows.length
+      ? '<p class="lede">Browser windows an agent opened. Each closes after an hour nobody uses it.</p>' + M.windows.map((s) => '<div class="line"><div class="txt">' + esc(s.name) + '<small>' + esc(s.purpose) + '</small></div><span class="pill w">' + (s.never ? 'never closes' : count(s.closes)) + '</span></div>').join('')
+      : '<p class="lede">No BrowserAI window is on your screen. Hidden browsers are listed under Right now.</p>') + '</div>';
+    html += '<div class="box"><h2>' + I.of('pulse') + 'Right now</h2>' + (D.conversations.length || D.sessions.length
+      ? D.conversations.map((c) => '<div class="line">' + ava(c.app) + '<div class="txt">' + esc(c.title) + '<small>' + esc(placeLabel(c)) + '</small></div>' + (c.running ? '<span class="pill live">working</span>' : c.sessions.length ? (M.sessionById(c.sessions[0]).state === 'hidden' ? '<span class="pill h">hidden ' + count(M.sessionById(c.sessions[0]).closes) + '</span>' : M.sessionById(c.sessions[0]).state === 'window' ? '<span class="pill w">window</span>' : '<span class="pill">closed</span>') : '<span class="pill">no browser</span>') + '</div>').join('')
+        + D.sessions.filter((s) => s.kept).map((s) => '<div class="line">' + I.of('folder') + '<div class="txt">' + esc(s.name) + '<small>kept, its conversation ended</small></div><span class="pill h">' + count(s.closes) + '</span></div>').join('')
+      : '<p class="lede">Nothing uses BrowserAI right now.</p>') + '</div>';
+    const u = D.update;
+    html += '<div class="box"><h2>' + I.of('update') + 'Update</h2>' + (u.state === 'held'
+      ? (u.wait === 'counting' ? '<div class="big">' + count(u.installsAt) + '</div><p class="lede">until ' + esc(u.version) + ' installs by itself, at about ' + M.clockOf(u.installsAt) + ', if nothing uses BrowserAI before then.</p>' : '<p class="lede">' + esc(u.version) + ' waits for a window that never closes by itself.</p>') + '<a class="btn" href="#/update">What holds it</a>'
+      : '<p class="lede">' + esc(D.version) + ' is the newest. Checked ' + esc(u.source) + ' at ' + esc(u.checked) + '.</p>') + '</div>';
+    html += '<div class="box"><div class="links">'
+      + '<a href="#/sessions">' + I.of('globe') + '<span>Browser sessions</span><small>' + M.folderCount + '</small></a>'
+      + '<a href="#/setup">' + I.of('plug') + '<span>Claude Code and Codex</span><small>' + (D.apps.every((a) => a.state === 'ok') ? 'both set up' : 'needs a look') + '</small></a>'
+      + '<a href="#/storage">' + I.of('disk') + '<span>Storage</span><small>' + M.size(M.totalMb) + '</small></a>'
+      + '<a href="#/folders">' + I.of('folder') + '<span>Folders and logs</span><small></small></a>'
+      + '<a href="#/new">' + I.of('sparkle') + '<span>What is new in ' + esc(D.version) + '</span><small></small></a>'
+      + '</div></div>';
+    return html + '</aside>';
+  }
+
+  const back = '<a class="back" href="#/">' + I.of('back') + 'Back to today</a>';
+
+  function sessions() {
+    const open = D.sessions;
+    let html = '<div class="page">' + back + '<h1>Browser sessions</h1><p class="lede">A session is a folder an agent made for its browser work: the profile with its logins and cookies, screenshots, downloads and a log. It stays until that agent deletes it.</p>';
+    html += '<div class="sheet"><h3>Open now</h3>' + (open.map((s) => {
+      const c = s.by ? M.conversationById(s.by) : null;
+      return '<div class="rowx"><div><b>' + esc(s.name) + '</b><small>' + esc(s.purpose) + '. ' + (c ? 'Used by "' + esc(c.title) + '".' : 'Kept, its conversation ended.') + '</small></div>' + (s.state === 'window' ? '<span class="pill w">window, ' + (s.never ? 'never closes' : count(s.closes)) + '</span>' : s.state === 'hidden' ? '<span class="pill h">hidden, ' + count(s.closes) + '</span>' : '<span class="pill">closed</span>') + '<button class="btn" type="button">Open folder</button></div>';
+    }).join('') || '<div class="rowx"><div><small>No session is open.</small></div></div>') + '</div>';
+    html += '<div class="sheet"><h3>On disk</h3>' + (D.onDisk.map((s) => '<div class="rowx"><div><b>' + esc(s.name) + '</b>' + s.flags.map((f) => '<span class="flag">' + esc(f) + '</span>').join('') + '<small>' + esc(s.purpose) + ', last used ' + esc(s.used) + '</small></div><span class="pill">' + M.size(s.mb) + '</span><button class="btn" type="button">Open folder</button></div>').join('') || '<div class="rowx"><div><small>No other session folder.</small></div></div>') + '</div>';
+    return html + '</div>';
+  }
+
+  function update() {
+    const u = D.update;
+    let html = '<div class="page">' + back;
+    if (u.state !== 'held') return html + '<h1>BrowserAI is up to date</h1><p class="lede">' + esc(D.version) + ' is the newest. Checked ' + esc(u.source) + ' at ' + esc(u.checked) + '.</p></div>';
+    html += '<h1>Update ' + esc(u.version) + '</h1><p class="lede">Downloaded at 13:36. It installs by itself once nothing below uses BrowserAI, so no agent is cut off.</p>';
+    html += '<div class="sheet"><h3>Holding it</h3>'
+      + M.windows.map((s) => '<div class="rowx"><div><b>' + esc(s.name) + '</b><small>A window on your screen. Close it to let the update go ahead.</small></div><span class="pill w">' + (s.never ? 'never' : count(s.closes)) + '</span><span></span></div>').join('')
+      + M.hidden.map((s) => '<div class="rowx"><div><b>' + esc(s.name) + '</b><small>A hidden browser. It closes if no call uses it.</small></div><span class="pill h">' + count(s.closes) + '</span><span></span></div>').join('')
+      + D.conversations.map((c) => '<div class="rowx"><div><b>' + esc(c.title) + '</b><small>' + esc(M.reconnectText[c.reconnect]) + '</small></div>' + (c.running ? '<span class="pill live">working</span>' : c.holdsUntil ? '<span class="pill">' + count(c.holdsUntil) + '</span>' : '<span class="pill">idle</span>') + '<span></span></div>').join('')
+      + '</div><div class="sheet"><h3>Install now</h3><div class="rowx"><div><b>Install ' + esc(u.version) + ' now</b><small>Every browser closes cleanly, and every conversation loses BrowserAI for a moment. In a terminal, run /mcp, choose BrowserAI, then Reconnect. Codex needs a new conversation.</small></div><span></span><button class="btn bad" type="button">Install now</button></div></div>';
+    return html + '</div>';
+  }
+
+  function setup() {
+    let html = '<div class="page">' + back + '<h1>Claude Code and Codex</h1><p class="lede">Your agents reach BrowserAI through these apps. Each is set up on its own.</p>';
+    for (const a of D.apps) {
+      html += '<div class="sheet"><h3>' + esc(a.name) + '</h3><div class="rowx"><div><b>' + esc(a.short) + '</b><small>' + esc(a.sentence) + (a.restart ? ' ' + esc(a.restart) : '') + '</small></div><span></span>'
+        + (a.state === 'missing' ? '<button class="btn" type="button" disabled>Install it first</button>' : a.state === 'repair' ? '<button class="btn dark" type="button">Repair</button>' : '<button class="btn" type="button">Set up again</button>') + '</div>'
+        + (a.state !== 'missing' ? '<div class="rowx"><div><b>In one project</b><small>Writes or removes ' + esc(a.projectFile) + ' in a folder you choose, to commit with the project.</small></div><span></span><button class="btn" type="button">Choose a folder</button></div>' : '') + '</div>';
+    }
+    return html + '</div>';
+  }
+
+  function storage() {
+    return '<div class="page">' + back + '<h1>' + M.size(M.totalMb) + ' on this PC</h1><p class="lede">' + plural(M.folderCount, 'session folder', 'session folders') + ' take ' + M.size(M.sessionsMb) + ', the downloaded browsers ' + M.size(M.browsersMb) + ' and the logs ' + M.size(Math.max(1, D.logsMb)) + '. A session folder stays until its agent deletes it.</p>'
+      + '<div class="sheet"><h3>Largest session folders</h3>' + (D.onDisk.concat(D.sessions.map((s) => ({ name: s.name, mb: s.mb, used: s.lastAgo, flags: s.flags, purpose: s.purpose })))).sort((x, y) => y.mb - x.mb).slice(0, 6).map((s) => '<div class="rowx"><div><b>' + esc(s.name) + '</b><small>' + esc(s.purpose) + '</small></div><span class="pill">' + M.size(s.mb) + '</span><button class="btn" type="button">Open folder</button></div>').join('') + '</div></div>';
+  }
+
+  function folders() {
+    let html = '<div class="page">' + back + '<h1>Folders and logs</h1><p class="lede">Where BrowserAI lives on this PC.</p>';
+    if (D.broken) html += '<div class="box bad"><h2>' + I.of('bad') + 'BrowserAI needs reinstalling</h2><p class="lede">The browser server it starts for every session lists different tools from the ones this BrowserAI was built with; the first difference is ' + esc(D.broken.first) + '. Download BrowserAI.exe from the latest release and run it. It installs over this install and keeps every session.</p></div><br>';
+    const row = (t, p) => '<div class="rowx"><div><b>' + t + '</b><small><code>' + esc(p) + '</code></small></div><span></span><button class="btn" type="button">Open</button></div>';
+    return html + '<div class="sheet"><h3>On this PC</h3>' + row('Installed in', D.install.root) + row('Data', D.install.data) + row('Logs', D.install.logs) + '</div><div class="sheet"><h3>For troubleshooting</h3><div class="rowx"><div><b>What Claude Code and Codex start</b><small><code>' + esc(D.install.server) + '</code></small></div></div></div></div>';
+  }
+
+  function whatsNew() {
+    const c = D.changelog;
+    return '<div class="page">' + back + '<h1>What is new in ' + esc(c.version) + '</h1><p class="lede">Released ' + esc(c.date) + '.</p>' + c.groups.map((g) => '<div class="sheet"><h3>' + esc(g.name) + '</h3>' + g.entries.map((e) => '<div class="rowx"><div><b>' + e.icon + ' ' + esc(e.head) + '</b><small>' + esc(e.body) + '</small></div></div>').join('') + '</div>').join('') + '</div>';
+  }
+
+  const routes = { '': feed, sessions, update, setup, storage, folders, new: whatsNew };
+  const navs = [['', 'Today', 'clock'], ['sessions', 'Sessions', 'globe'], ['setup', 'Claude Code and Codex', 'plug'], ['storage', 'Storage', 'disk']];
+
+  function render() {
+    const name = location.hash.replace(/^#\/?/, '').split('/')[0];
+    root.innerHTML = (routes[name] || feed)();
+    for (const a of document.querySelectorAll('.mast nav a')) {
+      if (a.dataset.key === (routes[name] ? name : '')) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    }
+    M.tick(root);
+    window.scrollTo(0, 0);
+  }
+
+  document.getElementById('mast').innerHTML = '<div class="mast-in"><a class="logo" href="#/">' + I.brand('m') + '<span class="word">BrowserAI</span></a><nav aria-label="Views">'
+    + navs.map((n) => '<a href="#/' + n[0] + '" data-key="' + n[0] + '"><span>' + esc(n[1]) + '</span></a>').join('') + '</nav><span class="gap"></span><span class="ver">' + esc(D.version) + ', running since ' + esc(D.since) + '</span></div>';
+
+  document.addEventListener('click', (e) => {
+    const f = e.target.closest('[data-f]');
+    if (!f) return;
+    for (const b of document.querySelectorAll('[data-f]')) b.setAttribute('aria-pressed', String(b === f));
+    for (const ev of document.querySelectorAll('.ev')) {
+      ev.classList.toggle('hidden-by-filter', f.dataset.f !== '' && !ev.dataset.groups.split(' ').includes(f.dataset.f));
+    }
+  });
+  window.addEventListener('hashchange', render);
+  render();
+  M.startTicking();
+  M.mockControl();
+})();
+
+</script>
+</body>
+</html>

@@ -53,6 +53,31 @@ internal interface IPageSessions
     /// <param name="cancellationToken">Ends the read.</param>
     /// <returns>The snapshot.</returns>
     Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The same, with no conversation named, so that no client's records are read: what
+    /// the once-a-second watch compares to tell whether to send the tabs a new state.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11, the maintainer's 46 a</b>: the conversations and sessions views
+    /// are live. A name is read when a state is drawn, the way the update page's names are
+    /// (1.3 c), and never once a second.
+    /// </remarks>
+    /// <returns>The snapshot, every relay's conversation left unread.</returns>
+    SessionsSnapshot Peek();
+}
+
+/// <summary>What the page reads of the session folders BrowserAI knows of.</summary>
+/// <remarks>
+/// <b>Added 2026-10-11, the maintainer's 43 b</b>: each session folder's size, and the
+/// folders not open now, which the background passes to the page. A measurement walks
+/// every folder, so the page asks for one on the thread pool and never under its lock.
+/// </remarks>
+internal interface IPageFolders
+{
+    /// <summary>Finds every session folder and weighs each one.</summary>
+    /// <returns>The measurement.</returns>
+    FolderMeasure Measure();
 }
 
 /// <summary>
@@ -91,13 +116,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     private readonly TimeProvider _clock;
     private readonly TimeSpan _linger;
     private readonly ILogger _logger;
-    private readonly Dictionary<PageKind, PageNote?> _notes = new()
-    {
-        [PageKind.Status] = null,
-        [PageKind.Sessions] = null,
-        [PageKind.Update] = null,
-        [PageKind.Changelog] = null,
-    };
+    private readonly Dictionary<PageKind, PageNote?> _notes = NoNotes();
 
     private Served? _current;
     private readonly Occasion _firstOccasion;
@@ -110,6 +129,23 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     private bool _installingNow;
     private string? _holdsSignature;
 
+    /// <summary>What the watch last saw of the sessions, every name left out (46 a).</summary>
+    private string? _sessionsSignature;
+
+    /// <summary>The folders of the sessions held when the watch last looked, which a measurement follows (43 b).</summary>
+    private string? _heldFolders;
+
+    /// <summary>The last measurement of the session folders, or <see langword="null"/> before the first.</summary>
+    private FolderMeasure? _folders;
+
+    /// <summary>Whether a measurement is running, and whether another was asked for while it ran.</summary>
+    private bool _measureRunning;
+
+    private bool _measureAgain;
+
+    /// <summary>Whether the person asked for the running measurement, which the storage page says while it runs.</summary>
+    private bool _measuring;
+
     /// <summary>What holds a downloaded update, and the person's install-now: the background's update core.</summary>
     /// <remarks>
     /// <i>Required since 2026-10-10</i> (#73 of the texts review): the one background
@@ -117,6 +153,9 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// does not exist, and a snapshot the page does not have is a read that failed.
     /// </remarks>
     internal required IUpdateHolds Holds { get; init; }
+
+    /// <summary>The session folders BrowserAI knows of, and what each weighs (43 b, 2026-10-11).</summary>
+    internal required IPageFolders Folders { get; init; }
 
     /// <summary>The installed version's section of the changelog shipped in the build, or <see langword="null"/>.</summary>
     internal ChangelogSection? Changelog { get; init; }
@@ -225,9 +264,10 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
                 // must find this listener and not start another.
                 _current = new Served(this, _clock, _linger, _wake, _logger)
                 {
-                    // While a listener is up, what holds the update is read once a
-                    // second, and every tab is sent a new state when it has changed.
-                    HoldsWatch = _clock.CreateTimer(_ => WatchHolds(), null, HoldsWatchPeriod, HoldsWatchPeriod),
+                    // While a listener is up, what holds the update and what the
+                    // sessions are are read once a second, and every tab is sent a new
+                    // state when either has changed (46 a).
+                    HoldsWatch = _clock.CreateTimer(_ => Watch(), null, HoldsWatchPeriod, HoldsWatchPeriod),
                 };
             }
 
@@ -302,17 +342,27 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     public void InstallHealthChanged() => Push();
 
     /// <summary>Everything the page would show now.</summary>
+    /// <param name="kind">Which page.</param>
+    /// <param name="subject">The session a session's page is about, by its opaque name, or <see langword="null"/>.</param>
     /// <returns>The view.</returns>
-    public PageView View(PageKind kind)
+    public PageView View(PageKind kind, string? subject = null)
     {
-        // Read outside the lock: the background answers it from its own memory, and
-        // a page that waited on the background under its own lock would wait twice.
-        // The status page reads it too, for its update section.
-        var holds = kind is PageKind.Update or PageKind.Status ? ReadHolds() : null;
+        // Read outside the lock: the background answers both from its own memory, and a
+        // page that waited on the background under its own lock would wait twice. The
+        // home, the conversations page's BrowserAI and the install page say them too.
+        var holds = kind is PageKind.Update or PageKind.Status or PageKind.Sessions ? ReadHolds() : null;
+        var updates = kind is PageKind.Update or PageKind.Status or PageKind.Sessions or PageKind.Install ? ReadWatch() : UpdateWatch.Unreported;
 
         lock (_gate)
         {
-            return new PageView(_facts, _snapshot, _notes[kind], _registration, _registering, holds, Changelog, Install?.Difference);
+            return new PageView(_facts, _snapshot, _notes[kind], _registration, _registering, holds, Changelog, Install?.Difference)
+            {
+                Subject = subject,
+                Updates = updates,
+                Folders = _folders,
+                Measuring = _measuring,
+                Now = _clock.GetUtcNow(),
+            };
         }
     }
 
@@ -325,28 +375,18 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         var get = string.Equals(context.Request.Method, "GET", StringComparison.Ordinal);
 
+        // 40 a, 2026-10-11: every page has a route of its own, and the four that were
+        // handed out before keep theirs: the home is the status page's, the conversations
+        // page the sessions page's.
+        if (get && PageNames.OfRoute(route) is { } kind)
+        {
+            await BeforeDrawingAsync(kind, context.RequestAborted).ConfigureAwait(false);
+            await WriteAsync(context, "text/html; charset=utf-8", Page(kind, query)).ConfigureAwait(false);
+            return true;
+        }
+
         switch (route)
         {
-            case "" when get:
-                // The registration is read again for every page load, the way the window
-                // read it each time it opened, and arrives through the stream when it is in.
-                StartRegistrationRead();
-                await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Status, query)).ConfigureAwait(false);
-                return true;
-
-            case "sessions" when get:
-                await RefreshSessionsAsync(context.RequestAborted).ConfigureAwait(false);
-                await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Sessions, query)).ConfigureAwait(false);
-                return true;
-
-            case "update" when get:
-                await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Update, query)).ConfigureAwait(false);
-                return true;
-
-            case "changelog" when get:
-                await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Changelog, query)).ConfigureAwait(false);
-                return true;
-
             case "page.css" when get:
                 await WriteAsync(context, "text/css; charset=utf-8", PageAssets.Css).ConfigureAwait(false);
                 return true;
@@ -384,11 +424,28 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     }
 
     /// <summary>
-    /// How often a listener reads what holds the update, to send the tabs a new
-    /// state when it has changed: <b>once a second</b>, the unit the countdowns count
-    /// in. The countdowns themselves run in the page's script.
+    /// How often a listener reads what holds the update and what the sessions are, to
+    /// send the tabs a new state when either has changed: <b>once a second</b>, the unit
+    /// the countdowns count in. The countdowns themselves run in the page's script.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-11 (previously "reads what holds the update" alone)</i>: the
+    /// maintainer's 46 a made the conversations and sessions views live on the same watch.
+    /// </remarks>
     internal static TimeSpan HoldsWatchPeriod { get; } = ProcessBounds.PageHoldsWatchPeriod;
+
+    /// <summary>A table with every page and no note on any of them.</summary>
+    private static Dictionary<PageKind, PageNote?> NoNotes()
+    {
+        var notes = new Dictionary<PageKind, PageNote?>();
+
+        foreach (var kind in Enum.GetValues<PageKind>())
+        {
+            notes[kind] = null;
+        }
+
+        return notes;
+    }
 
     /// <summary>Stops the listener, waiting on the calling thread.</summary>
     public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
@@ -431,7 +488,42 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     {
         var tab = TabOf(query);
 
-        return PageContent.Document(View(kind), kind, tab, OccasionFor(tab), _clock.GetUtcNow());
+        return PageContent.Document(View(kind, SubjectOf(kind, query)), kind, tab, OccasionFor(tab), _clock.GetUtcNow());
+    }
+
+    /// <summary>The session a session's page is about, as its address names it.</summary>
+    private static string? SubjectOf(PageKind kind, string query) => kind is PageKind.Session ? PageGate.QueryValue(query, "id") : null;
+
+    /// <summary>
+    /// What a page is drawn from, read before it is drawn: the sessions with their
+    /// conversations named, the setup of Claude Code and Codex, and the session folders'
+    /// sizes, each for the pages that show it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The registration and the measurement arrive through the stream</b>: both are read
+    /// on the thread pool and the page is drawn without waiting for them, the way the status
+    /// page read the registration for every load. The sessions are read before the draw,
+    /// because a page without them would say nothing runs.
+    /// </remarks>
+    /// <param name="kind">The page about to be drawn.</param>
+    /// <param name="cancellationToken">Ends the read.</param>
+    /// <returns>The read.</returns>
+    private async Task BeforeDrawingAsync(PageKind kind, CancellationToken cancellationToken)
+    {
+        if (kind is PageKind.Status or PageKind.Setup)
+        {
+            _ = StartRegistrationRead();
+        }
+
+        if (kind is PageKind.Status or PageKind.Sessions or PageKind.Session or PageKind.Storage)
+        {
+            StartMeasure(asked: false);
+        }
+
+        if (kind is not (PageKind.Changelog or PageKind.Setup or PageKind.Update))
+        {
+            await RefreshSessionsAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private Occasion OccasionFor(int tab)
@@ -447,7 +539,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     private PageEvent StateFor(TabStream stream) =>
         new(PageEvents.State, Json(writer => writer.WriteString(
             "html",
-            PageContent.Fragment(View(stream.Page), stream.Page, stream.Tab, OccasionFor(stream.Tab), _clock.GetUtcNow()))));
+            PageContent.Fragment(View(stream.Page, stream.Subject), stream.Page, stream.Tab, OccasionFor(stream.Tab), _clock.GetUtcNow()))));
 
     /// <summary>Sends every tab what it shows now.</summary>
     private void Push() => Tabs?.Broadcast(StateFor);
@@ -457,7 +549,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         var tabs = Tabs;
         var page = PageNames.Parse(PageGate.QueryValue(query, "page"));
 
-        if (tabs?.Connect(TabOf(query), page) is not { } stream)
+        if (tabs?.Connect(TabOf(query), page, SubjectOf(page, query)) is not { } stream)
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             return;
@@ -522,6 +614,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
             "open-session" => OpenSession(String(request, "session")),
             "open-trace" => OpenTrace(String(request, "trace")),
             "refresh-sessions" => Run(RefreshSessionsAsync(CancellationToken.None)),
+            "measure-sessions" => MeasureAsked(),
             "read-registration" => StartRegistrationRead(),
             "register" or "unregister" or "register-in-project" or "unregister-from-project" or "unregister-from-a-project" =>
                 StartRegistration(String(request, "client"), action),
@@ -554,23 +647,175 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         }
     }
 
-    /// <summary>One second of the watch: a new state for every tab when what holds the update has changed.</summary>
-    private void WatchHolds()
+    /// <summary>Where the updates come from and when BrowserAI last checked, or nothing reported where the read failed.</summary>
+    /// <returns>The watch.</returns>
+    private UpdateWatch ReadWatch()
     {
-        var signature = UpdatePageContent.Signature(ReadHolds(), _clock.GetUtcNow());
-        bool changed;
+        try
+        {
+            return Holds.Watch();
+        }
+#pragma warning disable CA1031 // A read that failed is a page that says nothing of it, never a background that stops.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            PageServiceLog.HoldsUnread(_logger, failure);
+            return UpdateWatch.Unreported;
+        }
+    }
+
+    /// <summary>The sessions with no conversation named, or <see langword="null"/> where the read failed.</summary>
+    /// <returns>The snapshot.</returns>
+    private SessionsSnapshot? PeekSessions()
+    {
+        try
+        {
+            return _sessions.Peek();
+        }
+#pragma warning disable CA1031 // A read that failed changes nothing the watch sends; the next second reads again.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            PageServiceLog.SessionsUnpeeked(_logger, failure);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// One second of the watch: a new state for every tab when what holds the update or
+    /// what the sessions are has changed, and a measurement when the sessions held have.
+    /// </summary>
+    /// <remarks>
+    /// <b>46 a, the maintainer's choice of 2026-10-11</b>: the conversations and sessions
+    /// views are live, pushed on every change, as the update page already was. The watch
+    /// compares the sessions with every conversation's name left out, so a second reads no
+    /// client's records; a change is read again with the names, and that read is what the
+    /// tabs are sent. A session that opens or goes is a folder to weigh (43 b).
+    /// </remarks>
+    private void Watch()
+    {
+        var holds = UpdatePageContent.Signature(ReadHolds(), _clock.GetUtcNow());
+        var peeked = PeekSessions();
+        var sessions = peeked is null ? null : ConversationsContent.Signature(peeked);
+        var held = peeked is null ? null : ConversationsContent.HeldFolders(peeked);
+        bool holdsChanged;
+        bool sessionsChanged;
+        bool heldChanged;
 
         lock (_gate)
         {
-            changed = !string.Equals(signature, _holdsSignature, StringComparison.Ordinal);
-            _holdsSignature = signature;
+            holdsChanged = !string.Equals(holds, _holdsSignature, StringComparison.Ordinal);
+            _holdsSignature = holds;
+            sessionsChanged = sessions is not null && !string.Equals(sessions, _sessionsSignature, StringComparison.Ordinal);
+            _sessionsSignature = sessions ?? _sessionsSignature;
+            heldChanged = held is not null && !string.Equals(held, _heldFolders, StringComparison.Ordinal);
+            _heldFolders = held ?? _heldFolders;
         }
 
-        if (changed)
+        if (heldChanged)
+        {
+            StartMeasure(asked: false);
+        }
+
+        if (sessionsChanged)
+        {
+            // The read pushes once it is in, and with it whatever else changed.
+            _ = RefreshSessionsAsync(CancellationToken.None);
+        }
+        else if (holdsChanged)
         {
             Push();
         }
     }
+
+    /// <summary>
+    /// Weighs every session folder on the thread pool, unless a measurement is running,
+    /// in which case one more runs after it.
+    /// </summary>
+    /// <param name="asked">
+    /// Whether the person asked, which the storage page says while it runs; a measurement
+    /// nobody asked for sends the tabs a new state only when it found something new.
+    /// </param>
+    private void StartMeasure(bool asked)
+    {
+        lock (_gate)
+        {
+            _measuring |= asked;
+
+            if (_measureRunning)
+            {
+                _measureAgain = true;
+                return;
+            }
+
+            _measureRunning = true;
+        }
+
+        if (asked)
+        {
+            Push();
+        }
+
+        _ = Task.Run(RunMeasurements, CancellationToken.None);
+    }
+
+    /// <summary>The storage page's <i>Measure again</i>: a measurement the person asked for.</summary>
+    /// <returns>Always <see langword="true"/>: the request was taken.</returns>
+    private bool MeasureAsked()
+    {
+        StartMeasure(asked: true);
+        return true;
+    }
+
+    /// <summary>Measures, and once more for every measurement asked for while one ran.</summary>
+    private void RunMeasurements()
+    {
+        while (true)
+        {
+            FolderMeasure? measured;
+
+            try
+            {
+                measured = Folders.Measure();
+            }
+#pragma warning disable CA1031 // A measurement that failed leaves the last one standing and is logged; the background keeps running.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                PageServiceLog.FoldersUnmeasured(_logger, failure);
+                measured = null;
+            }
+
+            bool changed;
+            bool again;
+
+            lock (_gate)
+            {
+                changed = _measuring || (measured is not null && !SameFolders(_folders, measured));
+                _folders = measured ?? _folders;
+                again = _measureAgain;
+                _measureAgain = false;
+                _measureRunning = again;
+                _measuring &= again;
+            }
+
+            if (changed)
+            {
+                Push();
+            }
+
+            if (!again)
+            {
+                return;
+            }
+        }
+    }
+
+    /// <summary>Whether two measurements found the same folders with the same sizes.</summary>
+    private static bool SameFolders(FolderMeasure? before, FolderMeasure after) =>
+        before is not null
+        && before.Folders.Count == after.Folders.Count
+        && before.Folders.Zip(after.Folders).All(static pair => pair.First == pair.Second);
 
     /// <summary>The update page's install button: the person's install-now, through the background.</summary>
     /// <param name="version">The version the page showed.</param>
@@ -590,7 +835,10 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
             }
 
             _installingNow = true;
-            _notes[PageKind.Update] = new PageNote($"Closing every session and connection, then installing BrowserAI {version}.");
+
+            // Corrected 2026-10-11 (previously "Closing every session and connection, then
+            // installing ..."), 42 a: a browser closes, and a session is a folder that stays.
+            _notes[PageKind.Update] = new PageNote($"Closing every browser and ending every connection, then installing BrowserAI {version}.");
         }
 
         Push();
@@ -671,21 +919,29 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         return true;
     }
 
+    /// <summary>Opens a session's folder in Explorer, named by the opaque name the page was given.</summary>
+    /// <remarks>
+    /// <b>A folder not open now is found by the measurement</b>, the storage page's rows
+    /// since 2026-10-11 (43 b); a name neither the sessions nor the measurement holds opens
+    /// nothing, the way a path sent in its place never has. Opening is all it does (41 a).
+    /// </remarks>
+    /// <param name="id">The session's opaque name.</param>
+    /// <returns>Whether the request was taken.</returns>
     private bool OpenSession(string? id)
     {
-        SessionEntry? session;
+        string? directory;
 
         lock (_gate)
         {
-            session = id is null ? null : _snapshot.SessionById(id);
+            directory = id is null ? null : _snapshot.SessionById(id)?.Directory ?? _folders?.ById(id)?.Directory;
         }
 
-        if (session is null)
+        if (directory is null)
         {
             return false;
         }
 
-        _host.OpenFolder(session.Directory);
+        _host.OpenFolder(directory);
         return true;
     }
 
@@ -703,9 +959,10 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
             return false;
         }
 
+        // A trace is opened from its session's page since 2026-10-11 (40 a), which says so.
         if (_host.OpenTrace(trace.Path) is { } refused)
         {
-            Note(PageKind.Sessions, new PageNote("The trace viewer did not open.", refused));
+            Note(PageKind.Session, new PageNote("The trace viewer did not open.", refused));
         }
 
         return true;
@@ -808,13 +1065,18 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         _ => false,
     };
 
+    /// <summary>What the setup page says while one action runs.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-11 (previously "Registering BrowserAI with {name}.")</i>, the
+    /// maintainer's 42 a: an app is set up.
+    /// </remarks>
     private static string Working(ClientState client, string action)
     {
         var name = client.Client.DisplayName;
 
         return action switch
         {
-            "register" => $"Registering BrowserAI with {name}.",
+            "register" => $"Setting up BrowserAI in {name}.",
             "unregister" => $"Removing BrowserAI from {name}.",
             "unregister-from-project" => $"Removing BrowserAI from the project at {client.ProjectDirectory} for {name}.",
             _ => $"Windows' folder picker is open for {name}. If it is not in front, it is behind this browser window.",
@@ -849,10 +1111,11 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         {
             _registering = null;
 
-            // A picker closed without a choice changes nothing and says nothing.
+            // A picker closed without a choice changes nothing and says nothing. The note
+            // is the setup page's, where the buttons are since 2026-10-11 (40 a).
             if (note is not null)
             {
-                _notes[PageKind.Status] = note;
+                _notes[PageKind.Setup] = note;
             }
         }
 
@@ -862,8 +1125,10 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
     private async Task<PageNote?> InProjectAsync(AppState state, RegistrationClient who, bool register)
     {
+        // Corrected 2026-10-11 (previously "Choose the folder to register BrowserAI in for
+        // ..."), 42 a: the picker says what the button said.
         var picked = await _host.PickFolderAsync(register
-            ? $"Choose the folder to register BrowserAI in for {who.DisplayName}. A {who.ProjectFileName} is written under it, to be committed with the project."
+            ? $"Choose the folder to set up BrowserAI in for {who.DisplayName}. A {who.ProjectFileName} is written under it, to be committed with the project."
             : $"Choose the project folder to remove BrowserAI from for {who.DisplayName}. Only an entry this install wrote in its {who.ProjectFileName} is removed.").ConfigureAwait(false);
 
         if (picked.Outcome is FolderPickOutcome.Failed)
@@ -906,7 +1171,19 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            Note(PageKind.Sessions, new PageNote("BrowserAI could not read its running servers.", failure.Message));
+            // Corrected 2026-10-11 (previously "BrowserAI could not read its running
+            // servers.", on the sessions page alone), 42 a and 40 a: every page that shows
+            // them says it.
+            var note = new PageNote("BrowserAI could not read its conversations and sessions.", failure.Message);
+
+            lock (_gate)
+            {
+                _notes[PageKind.Sessions] = note;
+                _notes[PageKind.Status] = note;
+                _notes[PageKind.Session] = note;
+            }
+
+            Push();
             return;
         }
 
@@ -946,7 +1223,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         public PageTabs Tabs { get; }
 
-        /// <summary>The once-a-second read of what holds the update, or <see langword="null"/> where nothing reports it.</summary>
+        /// <summary>The once-a-second read of what holds the update and what the sessions are, or <see langword="null"/> before it is set.</summary>
         public ITimer? HoldsWatch { get; init; }
 
         public void Dispose()
@@ -968,5 +1245,11 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         [LoggerMessage(EventId = 7014, Level = LogLevel.Warning, Message = "What holds the update could not be read for the page.")]
         public static partial void HoldsUnread(ILogger logger, Exception failure);
+
+        [LoggerMessage(EventId = 7015, Level = LogLevel.Warning, Message = "The page's watch could not read the sessions this second, so it compares them again the next.")]
+        public static partial void SessionsUnpeeked(ILogger logger, Exception failure);
+
+        [LoggerMessage(EventId = 7016, Level = LogLevel.Warning, Message = "The session folders could not be measured for the page, so it shows the last measurement.")]
+        public static partial void FoldersUnmeasured(ILogger logger, Exception failure);
     }
 }

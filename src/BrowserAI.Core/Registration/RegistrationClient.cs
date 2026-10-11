@@ -61,6 +61,11 @@ internal sealed record RegistrationClient
     /// <c>docs/evidence/2026-09-23-client-reconnect</c>), while a new thread in the
     /// same process dialled fresh 3/3 (N1-N3). Telling a Codex user to restart a
     /// session is telling them to do something their client has no word for.
+    /// <i>Corrected 2026-10-11 (previously Claude Code's "session" and Codex's "thread"),
+    /// the maintainer's 42 a</i>: the page says <i>conversation</i> for both, as the mockups
+    /// did, because a <i>session</i> on BrowserAI's page is the folder an agent made. The
+    /// difference in what to do is kept: Claude Code's is started again, and Codex needs a new
+    /// one. Only the page says these sentences.
     /// </remarks>
     public required string RestartHint { get; init; }
 
@@ -176,9 +181,9 @@ internal sealed record RegistrationClient
         ToolId = "claude-code",
         Executable = "claude.exe",
         RestartHint =
-            "Claude Code reads its MCP configuration when a session starts. Sessions already open will not see this change until they are restarted.",
+            "Claude Code reads this when a conversation starts, so a conversation already open sees the change only after it is started again.",
         ProjectHint =
-            "Claude Code will ask you to approve this server the first time you open a session in that folder.",
+            "Claude Code asks you to approve BrowserAI the first time you open a conversation in that folder.",
         ProjectFileName = ".mcp.json",
 
         // ⚠️ THE BARE NAME, AS CODEX'S IS, since 2026-10-10: the maintainer's 30 that day,
@@ -205,7 +210,7 @@ internal sealed record RegistrationClient
         ToolId = "codex",
         Executable = "codex.exe",
         RestartHint =
-            "Codex does not pick up this change in a thread that is already open. Start a new thread to use it.",
+            "Codex does not pick up this change in a conversation that is already open. Start a new conversation to use it.",
         ProjectHint =
             "Codex reads a project's own configuration only in a project you have trusted, so this entry does nothing in a folder Codex has not been trusted in.",
         ProjectFileName = Path.Combine(".codex", "config.toml"),

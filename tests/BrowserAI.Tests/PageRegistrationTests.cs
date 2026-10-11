@@ -12,8 +12,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The browser tab's registration section: what it says about each client, which
-/// buttons it offers, and what each button does, both clients at both scopes.
+/// The page that says how Claude Code and Codex are set up: what it says about each app,
+/// which buttons it offers, and what each button does, both apps at both scopes.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -30,6 +30,13 @@ namespace BrowserAI.Tests;
 /// scratch install and a state the arm built, which is the seam the window's session
 /// had. The picker is a stand-in that opens nothing, and every request goes through
 /// the page's own listener and gate over raw HTTP.
+/// </para>
+/// <para>
+/// <i>Corrected 2026-10-11 throughout, by the maintainer's 40 a and 42 a (previously the
+/// status page's registration section, in the words "registered" and "Register")</i>: the
+/// section is the page behind the home's <i>Claude Code and Codex</i> card, an app is set up,
+/// and what the registrar concluded is under <i>Show details</i> beside the page's own
+/// sentence. The arms' names keep the registration they are about.
 /// </para>
 /// </remarks>
 internal sealed class PageRegistrationTests
@@ -78,26 +85,29 @@ internal sealed class PageRegistrationTests
 
         var address = rig.HandOut();
 
-        using var stream = await rig.StreamAsync(address, 1);
-
+        // The tab the installer opens is the home, which says the apps were set up and
+        // leads to the page that says how.
         var page = await PageRig.GetAsync(address);
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
         await Assert.That(page.Body).Contains(PageContent.Text(PageContent.FirstRunSentence));
+        await Assert.That(page.Body).Contains("href=\"setup?tab=1\"");
         await Assert.That(page.Body).DoesNotContain("has registered itself");
 
-        var html = await StateContainingAsync(stream, "Registered for all your Claude Code projects.");
+        using var stream = await rig.StreamAsync(address, 1, "setup");
+
+        var html = await StateContainingAsync(stream, "Every new Claude Code conversation can use BrowserAI, in any folder.");
 
         await Assert.That(html).IsNotNull();
-        await Assert.That(html!).Contains("Not registered for your Codex projects.");
+        await Assert.That(html!).Contains("BrowserAI is not set up for your Codex projects.");
 
-        // The register button's label follows the state, and each names its client.
-        await Assert.That(html).Contains(Button("register", "claude-code", "Register again for all my Claude Code projects"));
-        await Assert.That(html).Contains(Button("unregister", "claude-code", "Unregister from Claude Code"));
+        // The set-up button's label follows the state, and each names its app.
+        await Assert.That(html).Contains(Button("register", "claude-code", "Set up again for all my Claude Code projects"));
+        await Assert.That(html).Contains(Button("unregister", "claude-code", "Remove BrowserAI from Claude Code"));
         await Assert.That(html).Contains(Button("unregister-from-project", "claude-code", "Remove BrowserAI from that project for Claude Code"));
         await Assert.That(html).Contains(PageContent.Text(RegistrationClient.ClaudeCode.ProjectFileIn(project.Path)));
-        await Assert.That(html).Contains(Button("register", "codex", "Register for all my Codex projects"));
-        await Assert.That(html).Contains(Button("register-in-project", "codex", "Register in a project for Codex"));
+        await Assert.That(html).Contains(Button("register", "codex", "Set up for all my Codex projects"));
+        await Assert.That(html).Contains(Button("register-in-project", "codex", "Set up in a project for Codex"));
         await Assert.That(html).Contains(Button("unregister-from-a-project", "codex", "Remove from a project for Codex"));
         await Assert.That(html).DoesNotContain("data-action=\"unregister\" data-client=\"codex\"");
         await Assert.That(html).DoesNotContain("data-action=\"unregister-from-project\" data-client=\"codex\"");
@@ -137,7 +147,7 @@ internal sealed class PageRegistrationTests
 
         await Assert.That((await rig.ActAsync("""{"action":"read-registration"}""")).Status).IsEqualTo(204);
 
-        html = await StateContainingAsync(stream, "Another BrowserAI is registered with Claude Code");
+        html = await StateContainingAsync(stream, "Another BrowserAI is set up in Claude Code");
 
         await Assert.That(html).IsNotNull();
         await Assert.That(html!).Contains("is not readable TOML");
@@ -149,10 +159,10 @@ internal sealed class PageRegistrationTests
 
         await Assert.That((await rig.ActAsync("""{"action":"read-registration"}""")).Status).IsEqualTo(204);
 
-        html = await StateContainingAsync(stream, "BrowserAI could not read how it is registered.");
+        html = await StateContainingAsync(stream, "BrowserAI could not read how it is set up.");
 
         await Assert.That(html).IsNotNull();
-        await Assert.That(html!).Contains("<details><summary>Show details</summary><pre>The registration could not be read.</pre></details>");
+        await Assert.That(html!).Contains("<summary id=\"d-read-s\">Show details</summary><pre>The registration could not be read.</pre></details>");
     }
 
     /// <summary>
@@ -188,12 +198,12 @@ internal sealed class PageRegistrationTests
 
         using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
 
-        var address = rig.HandOut();
+        var address = rig.HandOut(PageKind.Setup);
 
-        using var stream = await rig.StreamAsync(address, 1);
+        using var stream = await rig.StreamAsync(address, 1, "setup");
 
         _ = await PageRig.GetAsync(address);
-        await Assert.That(await StateContainingAsync(stream, "Registered for all your Claude Code projects.")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "Every new Claude Code conversation can use BrowserAI, in any folder.")).IsNotNull();
 
         // Nothing runs until a button is clicked.
         await Assert.That(tool.Calls.Where(call => call[0] is "register" or "unregister")).IsEmpty();
@@ -202,10 +212,12 @@ internal sealed class PageRegistrationTests
         // with the explicit flag that rewrites an entry of ours (Q347 a).
         await Assert.That((await rig.ActAsync("""{"action":"register","client":"codex"}""")).Status).IsEqualTo(204);
 
-        var html = await StateContainingAsync(stream, "Registered 'browserai' with Codex");
+        var html = await StateContainingAsync(stream, "BrowserAI is set up for all your Codex projects.");
 
         await Assert.That(html).IsNotNull();
         await Assert.That(html!).Contains(PageContent.Text(RegistrationClient.Codex.RestartHint));
+        // What the registrar said is under Show details, beside the page's own sentence.
+        await Assert.That(html).Contains(PageContent.Text("Registered 'browserai' with Codex"));
 
         var register = tool.Calls.Single(call => call[0] is "register");
 
@@ -217,7 +229,7 @@ internal sealed class PageRegistrationTests
 
         // Claude Code, removed: Codex's entry is not touched.
         await Assert.That((await rig.ActAsync("""{"action":"unregister","client":"claude-code"}""")).Status).IsEqualTo(204);
-        await Assert.That(await StateContainingAsync(stream, "Removed 'browserai' from Claude Code")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "BrowserAI is no longer set up in Claude Code.")).IsNotNull();
         await Assert.That(tool.UserEntry("claude-code")).IsNull();
         await Assert.That(tool.UserEntry("codex")).IsEqualTo(server);
 
@@ -226,10 +238,10 @@ internal sealed class PageRegistrationTests
 
         await Assert.That((await rig.ActAsync("""{"action":"register","client":"codex"}""")).Status).IsEqualTo(204);
 
-        html = await StateContainingAsync(stream, "BrowserAI could not register itself with Codex.");
+        html = await StateContainingAsync(stream, "BrowserAI could not set itself up in Codex.");
 
         await Assert.That(html).IsNotNull();
-        await Assert.That(html!).Contains("<details><summary>Show details</summary><pre>");
+        await Assert.That(html!).Contains("<summary id=\"d-note-s\">Show details</summary><pre>");
         await Assert.That(html).Contains(PageContent.Text("codex mcp add browserai"));
 
         // A client the page was not shown, an action the state does not offer, and a
@@ -259,7 +271,7 @@ internal sealed class PageRegistrationTests
         tool.Failing.Clear();
 
         await Assert.That((await rig.ActAsync(refused[4])).Status).IsEqualTo(204);
-        await Assert.That(await StateContainingAsync(stream, "Registered 'browserai' with Claude Code")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "BrowserAI is set up for all your Claude Code projects.")).IsNotNull();
         await Assert.That(FakeRegisterAi.Command(tool.Calls[^1])).IsEqualTo(server);
     }
 
@@ -310,12 +322,12 @@ internal sealed class PageRegistrationTests
 
         using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
 
-        var address = rig.HandOut();
+        var address = rig.HandOut(PageKind.Setup);
 
-        using var stream = await rig.StreamAsync(address, 1);
+        using var stream = await rig.StreamAsync(address, 1, "setup");
 
         _ = await PageRig.GetAsync(address);
-        await Assert.That(await StateContainingAsync(stream, "Registered for all your Codex projects.")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "Every new Codex conversation can use BrowserAI, in any folder.")).IsNotNull();
 
         // Nothing is asked when the page loads.
         await Assert.That(rig.Host.Prompts).IsEmpty();
@@ -340,7 +352,7 @@ internal sealed class PageRegistrationTests
         // Remove from a picked project for Codex: the project's entry goes, and the
         // person's own Codex entry stays.
         await Assert.That((await rig.ActAsync("""{"action":"unregister-from-a-project","client":"codex"}""")).Status).IsEqualTo(204);
-        await Assert.That(await StateContainingAsync(stream, "from '")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "BrowserAI is no longer set up in that project for Codex.")).IsNotNull();
 
         var removed = tool.Calls[^1];
 
@@ -418,12 +430,12 @@ internal sealed class PageRegistrationTests
 
         using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
 
-        var address = rig.HandOut();
+        var address = rig.HandOut(PageKind.Setup);
 
-        using var stream = await rig.StreamAsync(address, 1);
+        using var stream = await rig.StreamAsync(address, 1, "setup");
 
         _ = await PageRig.GetAsync(address);
-        await Assert.That(await StateContainingAsync(stream, "Register in a project for Claude Code")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "Set up in a project for Claude Code")).IsNotNull();
 
         var open = new TaskCompletionSource<FolderPick>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -458,7 +470,7 @@ internal sealed class PageRegistrationTests
         // One more click once nothing is running, so that anything the refused
         // clicks had started would have finished by the time the count is read.
         await Assert.That((await rig.ActAsync("""{"action":"register","client":"codex"}""")).Status).IsEqualTo(204);
-        await Assert.That(await StateContainingAsync(stream, "Registered 'browserai' with Codex")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "BrowserAI is set up for all your Codex projects.")).IsNotNull();
 
         var ran = Changes(tool);
 
@@ -504,15 +516,15 @@ internal sealed class PageRegistrationTests
 
         using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
 
-        var address = rig.HandOut();
+        var address = rig.HandOut(PageKind.Setup);
 
-        using var stream = await rig.StreamAsync(address, 1);
+        using var stream = await rig.StreamAsync(address, 1, "setup");
 
         _ = await PageRig.GetAsync(address);
 
         // An install whose hooks named no data root: --mcp alone.
         await Assert.That((await rig.ActAsync("""{"action":"register","client":"codex"}""")).Status).IsEqualTo(204);
-        await Assert.That(await StateContainingAsync(stream, "Registered 'browserai' with Codex")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "BrowserAI is set up for all your Codex projects.")).IsNotNull();
         await Assert.That(string.Join(" ", AfterTheCommand(Changes(tool)[^1]))).IsEqualTo("--mcp");
 
         // The hooks saved a definition naming the data root: the Repair keeps it.
@@ -521,41 +533,50 @@ internal sealed class PageRegistrationTests
             SignInTask.DefinitionFor(server, NamedPipes.CurrentUserSid(), install.Path, SignInTask.ArgumentsFor(root, null)));
 
         await Assert.That((await rig.ActAsync("""{"action":"register","client":"claude-code"}""")).Status).IsEqualTo(204);
-        await Assert.That(await StateContainingAsync(stream, "Registered 'browserai' with Claude Code")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "BrowserAI is set up for all your Claude Code projects.")).IsNotNull();
         await Assert.That(string.Join(" ", AfterTheCommand(Changes(tool)[^1]))).IsEqualTo($"--mcp --data-root {root}");
     }
 
     /// <summary>
-    /// The status page names the whole command a client starts: BrowserAI.exe with
-    /// <c>--mcp</c>, and the install's data root when it names one, as every
-    /// registration writes it. Started with no argument the same file opens the page.
+    /// The install page names the whole command Claude Code and Codex start: BrowserAI.exe
+    /// with <c>--mcp</c>, and the install's data root when it names one, as every setup
+    /// writes it. Started with no argument the same file opens the page.
     /// </summary>
     /// <remarks>
     /// <b>#67 of the texts review, 2026-10-10</b>: the page named the file alone, while
     /// the sentence after a Codex project registration says the entry names it with
-    /// <c>--mcp</c>.
+    /// <c>--mcp</c>. <i>Corrected 2026-10-11 (previously TheStatusPageNamesTheWholeCommandAClientStarts,
+    /// over the status page's "The server a client starts")</i>: the maintainer's 45 a folds
+    /// the command line under the install page's <i>Details for troubleshooting</i>.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheStatusPageNamesTheWholeCommandAClientStarts()
+    public async Task TheInstallPageNamesTheWholeCommandAnAppStarts()
     {
         const string Server = @"C:\Users\someone\AppData\Local\BrowserAI.app\current\BrowserAI.exe";
 
         await Assert.That(Where(Server, [RegistrationTarget.McpArgument]))
-            .Contains("<p>The server a client starts: <code>&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp</code></p>");
+            .Contains("Claude Code and Codex start: &quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp\n");
 
         await Assert.That(Where(Server, [RegistrationTarget.McpArgument, SignInTask.DataRootArgument, @"C:\Users\someone\BrowserAI data"]))
-            .Contains("&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp --data-root &quot;C:\\Users\\someone\\BrowserAI data&quot;</code>");
+            .Contains("&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp --data-root &quot;C:\\Users\\someone\\BrowserAI data&quot;\n");
 
         // ⚠️ AND A DATA ROOT WITH NO SPACE IN IT IS QUOTED TOO, round 2 of the texts
         // review, 2026-10-10, #89: the line a person runs by hand on the same page quotes
         // every value (RegistrationClient.Typed), so the page's own line takes that rule.
         // Planted red against the quoting of a value with a space alone.
         await Assert.That(Where(Server, [RegistrationTarget.McpArgument, SignInTask.DataRootArgument, @"C:\Users\someone\data"]))
-            .Contains("&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp --data-root &quot;C:\\Users\\someone\\data&quot;</code>");
+            .Contains("&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp --data-root &quot;C:\\Users\\someone\\data&quot;\n");
+
+        // Folded, and nowhere else on the page (45 a).
+        var page = Where(Server, [RegistrationTarget.McpArgument]);
+
+        await Assert.That(page.Split("BrowserAI.exe&quot; --mcp").Length - 1).IsEqualTo(1);
+        await Assert.That(page.IndexOf("<summary id=\"d-trouble-install-s\">Details for troubleshooting</summary>", StringComparison.Ordinal))
+            .IsLessThan(page.IndexOf("BrowserAI.exe&quot; --mcp", StringComparison.Ordinal));
     }
 
-    /// <summary>The status page's main part for a server command and its arguments.</summary>
+    /// <summary>The install page's main part for a server command and its arguments.</summary>
     private static string Where(string server, IReadOnlyList<string> arguments) =>
         PageContent.Fragment(
             new PageView(
@@ -571,7 +592,7 @@ internal sealed class PageRegistrationTests
                 },
                 SessionsSnapshot.Empty,
                 null),
-            PageKind.Status,
+            PageKind.Install,
             1,
             Occasion.Ordinary,
             DateTimeOffset.UnixEpoch);
@@ -584,13 +605,18 @@ internal sealed class PageRegistrationTests
     private static List<IReadOnlyList<string>> Changes(FakeRegisterAi tool) =>
         [.. tool.Calls.Where(call => call[0] is "register" or "unregister")];
 
-    /// <summary>The HTML of one registration button as <see cref="PageContent"/> writes it.</summary>
+    /// <summary>The end of one registration button as <see cref="PageContent"/> writes it: its action, its app's key and its label.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-11 (previously the whole button, which had no id and no
+    /// class)</i>: every control carries an id now, for the focus a new state keeps (46 a),
+    /// and a class for its look, which this arm does not hold.
+    /// </remarks>
     private static string Button(string action, string client, string label) =>
-        $"<button type=\"button\" data-action=\"{action}\" data-client=\"{client}\">{PageContent.Text(label)}</button>";
+        $" data-action=\"{action}\" data-client=\"{client}\">{PageContent.Text(label)}</button>";
 
-    /// <summary>Every registration button in a fragment: its action, its client and its label.</summary>
+    /// <summary>Every registration button in a fragment: its action, its app's key and its label.</summary>
     private static IEnumerable<(string Action, string Client, string Label)> Buttons(string html) =>
-        System.Text.RegularExpressions.Regex.Matches(html, "<button type=\"button\" data-action=\"(?<action>[a-z-]+)\" data-client=\"(?<client>[a-z-]+)\">(?<label>[^<]*)</button>")
+        System.Text.RegularExpressions.Regex.Matches(html, "<button type=\"button\" id=\"[^\"]*\" class=\"[^\"]*\" data-action=\"(?<action>[a-z-]+)\" data-client=\"(?<client>[a-z-]+)\">(?<label>[^<]*)</button>")
             .Select(match => (match.Groups["action"].Value, match.Groups["client"].Value, match.Groups["label"].Value));
 
     /// <summary>Reads states off a stream until one carries the text.</summary>

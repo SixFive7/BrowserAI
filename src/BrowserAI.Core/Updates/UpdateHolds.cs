@@ -83,7 +83,18 @@ internal sealed record HoldingRelay(
     RelayReconnect Reconnect,
     string? Conversation = null,
     ConversationName? Label = null,
-    ClientWindow? Window = null);
+    ClientWindow? Window = null)
+{
+    /// <summary>What its client put in <c>clientInfo.name</c>, or <see langword="null"/>.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 for the maintainer's 42 a</b>: the dashboard names the app,
+    /// Claude Code or Codex, where <see cref="Client"/> carries the protocol's own name.
+    /// </remarks>
+    public string? ClientName { get; init; }
+
+    /// <summary>What its client put in <c>clientInfo.version</c>, or <see langword="null"/>.</summary>
+    public string? ClientVersion { get; init; }
+}
 
 /// <summary>
 /// The downloaded update, and everything that holds it back, read at one moment.
@@ -293,6 +304,18 @@ internal interface IUpdateHolds : IUpdateHoldsReader
     /// <param name="cancellationToken">Ends the wait for the hand-over.</param>
     /// <returns><see langword="null"/> once the install has started, and otherwise why it did not, as one sentence.</returns>
     Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Where the updates come from, whether the background asks there, and when it last
+    /// did, from memory: what the dashboard says about updates beside what holds one.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 for the maintainer's 43 b.</b> A reader that is not the update
+    /// core answers <see cref="UpdateWatch.Unreported"/>, and the page says nothing it
+    /// was not told.
+    /// </remarks>
+    /// <returns>The reading.</returns>
+    UpdateWatch Watch() => UpdateWatch.Unreported;
 }
 
 /// <summary>

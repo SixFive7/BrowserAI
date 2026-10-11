@@ -1,0 +1,736 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Globalization;
+using System.Net;
+using System.Text.RegularExpressions;
+using BrowserAI.App;
+using BrowserAI.App.Page;
+using BrowserAI.Coordination;
+using BrowserAI.Proxy;
+using BrowserAI.Registration;
+using BrowserAI.Tests.Harness;
+using BrowserAI.Updates;
+
+namespace BrowserAI.Tests;
+
+/// <summary>
+/// BrowserAI's page as the maintainer chose it on 2026-10-11: a home of cards, a page
+/// behind each, the conversations as a live map or a list, and the three facts he let
+/// the background pass to it.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>40 to 46, the maintainer's answer verbatim: <i>"40-46 your recommendations"</i></b>.
+/// 40 a, F: direction A's home of cards, each leading to a page with a way back, and C's
+/// map as the conversations page. 41 a: the page deletes nothing. 42 a: the mockups'
+/// words. 43 b: three new facts, each session folder's size and the folders not open now,
+/// where updates come from and when BrowserAI last checked, and when the background
+/// started and how. 44 a: Windows' own light or dark. 45 a: pids and command lines folded
+/// under the details for troubleshooting. 46 a: the conversations and sessions views
+/// pushed on every change.
+/// </para>
+/// <para>
+/// <b>Every arm drives the product's <see cref="PageService"/> over raw HTTP and raw event
+/// streams</b>, with the background, the desktop and the measurement replaced by stand-ins
+/// and the clock a <see cref="ManualClock"/>, so nothing reaches a browser or the screen.
+/// What only a browser can show, the map's lines and the focus kept across a new state, is
+/// <see cref="PageBrowserTests"/>'.
+/// </para>
+/// </remarks>
+internal sealed class DashboardTests
+{
+    /// <summary>The instant every rig's clock starts at.</summary>
+    private static readonly DateTimeOffset Now = DateTimeOffset.UnixEpoch;
+
+    /// <summary>The actions a page may post, and nothing among them removes anything.</summary>
+    private static readonly HashSet<string> Actions = new(StringComparer.Ordinal)
+    {
+        "open-folder",
+        "open-session",
+        "measure-sessions",
+        "install-now",
+        "read-registration",
+        "register",
+        "unregister",
+        "register-in-project",
+        "unregister-from-project",
+        "unregister-from-a-project",
+    };
+
+    /// <summary>
+    /// Every address a start, a toast or <c>--sessions</c> hands out still opens, on the page
+    /// that now holds what it held: the old status page's address is the home, the sessions
+    /// page's is the conversations page, and the update and changelog pages keep theirs,
+    /// whatever tab number the address carries.
+    /// </summary>
+    /// <remarks>
+    /// <b>40 a, and the brief's constraint</b>: every address handed out before must land on
+    /// the page that now holds what it held, <c>?tab=N</c> included.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryAddressHandedOutBeforeLandsOnThePageThatNowHoldsWhatItHeld()
+    {
+        using var rig = new PageRig();
+
+        var home = rig.HandOut(PageKind.Status);
+        var sessions = rig.HandOut(PageKind.Sessions);
+        var update = rig.HandOut(PageKind.Update);
+        var changelog = rig.HandOut(PageKind.Changelog);
+
+        await Assert.That(home).IsEqualTo(rig.Root + "?tab=1");
+        await Assert.That(sessions).IsEqualTo(rig.Root + "sessions?tab=2");
+        await Assert.That(update).IsEqualTo(rig.Root + "update?tab=3");
+        await Assert.That(changelog).IsEqualTo(rig.Root + "changelog?tab=4");
+
+        var overview = await PageRig.GetAsync(home);
+
+        await Assert.That(overview.Status).IsEqualTo(200).Because(overview.Raw);
+        await Assert.That(overview.Body).Contains("<h1>All quiet</h1>");
+        await Assert.That(overview.Body).Contains("BrowserAI is running and ready. No conversation is using it right now.");
+
+        foreach (var card in new[] { "Right now", "Update", "Claude Code and Codex", "Storage", "This install" })
+        {
+            await Assert.That(overview.Body).Contains("<h2>" + card + "</h2>").Because(card);
+        }
+
+        await Assert.That(overview.Body).Contains("<span class=\"version\">9.0.0</span>");
+
+        var conversations = await PageRig.GetAsync(sessions);
+
+        await Assert.That(conversations.Body).Contains("<h1 class=\"page-title\">Conversations and browsers</h1>");
+        await Assert.That(conversations.Body).Contains(Crumbs(2));
+
+        var updatePage = await PageRig.GetAsync(update);
+
+        await Assert.That(updatePage.Body).Contains("<h1 class=\"page-title\">No update is waiting</h1>");
+        await Assert.That(updatePage.Body).Contains(Crumbs(3));
+
+        var whatIsNew = await PageRig.GetAsync(changelog);
+
+        await Assert.That(whatIsNew.Body).Contains("<h1 class=\"page-title\">What is new</h1>");
+        await Assert.That(whatIsNew.Body).Contains(Crumbs(4));
+
+        // An address an older tab kept, with another number: the same home, and every link
+        // in it keeps that number.
+        var older = await PageRig.GetAsync(rig.Root + "?tab=7");
+
+        await Assert.That(older.Body).Contains("data-tab=\"7\"");
+        await Assert.That(older.Body).Contains("<h1>All quiet</h1>");
+        await Assert.That(older.Body).Contains("href=\"sessions?tab=7\"");
+        await Assert.That(older.Body).DoesNotContain("?tab=1\"");
+
+        // And every page's name reads back as the page.
+        foreach (var kind in Enum.GetValues<PageKind>())
+        {
+            await Assert.That(PageNames.Parse(PageNames.Of(kind))).IsEqualTo(kind);
+        }
+    }
+
+    /// <summary>
+    /// The page behind each card has a route of its own and begins with the way back to the
+    /// home; a session's page is reached by the session's opaque name, a name nothing holds
+    /// says so, and a route that is no page is the gate's bare 404.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EachPageBehindACardIsServedAtItsRouteAndBeginsWithAWayBack()
+    {
+        using var rig = new PageRig();
+
+        rig.Sessions.Snapshot = Busy();
+        _ = rig.HandOut();
+
+        var checkout = CensusPageSessions.IdOf(CheckoutRounding);
+
+        (string Route, string Heading)[] pages =
+        [
+            ("setup?tab=1", "Claude Code and Codex"),
+            ("storage?tab=1", "Storage"),
+            ("install?tab=1", "This install"),
+            ($"session?tab=1&id={checkout}", "checkout-rounding"),
+            ("session?tab=1&id=0000000000000000", "No such session"),
+        ];
+
+        foreach (var (route, heading) in pages)
+        {
+            var page = await PageRig.GetAsync(rig.Root + route);
+
+            await Assert.That(page.Status).IsEqualTo(200).Because(route);
+            await Assert.That(page.Body).Contains($"<h1 class=\"page-title\">{heading}</h1>").Because(route);
+            await Assert.That(page.Body).Contains(Crumbs(1)).Because(route);
+        }
+
+        // A session's page has the conversations page between it and the home.
+        var session = await PageRig.GetAsync(rig.Root + $"session?tab=1&id={checkout}");
+
+        await Assert.That(session.Body).Contains("<a id=\"l-crumb-sessions\" href=\"sessions?tab=1\">Conversations and browsers</a>");
+        await Assert.That(session.Body).Contains("data-subject=\"" + checkout + "\"");
+
+        var nothing = await PageRig.GetAsync(rig.Root + "nonsense?tab=1");
+
+        await Assert.That(nothing.Status).IsEqualTo(404);
+        await Assert.That(nothing.Body).IsEmpty();
+    }
+
+    /// <summary>
+    /// The storage page lists every session folder BrowserAI knows of with its size, largest
+    /// first, and says which are open now and which are not; the home's card says the total
+    /// and the two parts; and a folder not open now opens in Explorer by its opaque name.
+    /// </summary>
+    /// <remarks>
+    /// <b>43 b, the first of the three facts</b>: each session folder's size, and the session
+    /// folders not open now, which the background passes to the page.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheHomeAndTheStoragePageSayEachSessionFoldersSizeAndWhichAreNotOpen()
+    {
+        const long MiB = 1024 * 1024;
+
+        using var rig = new PageRig();
+
+        const string Invoice = @"C:\Code\billing\.work\invoice-export";
+        const string Search = @"C:\Code\acme-shop\.work\search-slow-network";
+
+        rig.Sessions.Snapshot = Busy();
+        rig.Folders.Folders =
+        [
+            new SessionFolder(CensusPageSessions.IdOf(CheckoutRounding), CheckoutRounding, 96 * MiB),
+            new SessionFolder(CensusPageSessions.IdOf(Invoice), Invoice, 214 * MiB),
+            new SessionFolder(CensusPageSessions.IdOf(Search), Search, 377 * MiB),
+        ];
+
+        // The page, which asks for the measurement, and then its stream, as a browser opens it.
+        _ = await PageRig.GetAsync(rig.HandOut(PageKind.Storage));
+
+        using var storage = await rig.StreamAsync(rig.Gate.Root, 1, "storage");
+
+        var html = await StateContainingAsync(storage, "377 MB");
+
+        await Assert.That(html).IsNotNull();
+        await Assert.That(html!).Contains("687 MB").Because("the three folders together");
+        await Assert.That(html).Contains("Open now");
+        await Assert.That(html).Contains("Not open now");
+
+        // Largest first.
+        var search = html.IndexOf("search-slow-network", StringComparison.Ordinal);
+        var invoice = html.IndexOf("invoice-export", StringComparison.Ordinal);
+        var checkout = html.IndexOf("checkout-rounding", StringComparison.Ordinal);
+
+        await Assert.That(search).IsGreaterThan(-1);
+        await Assert.That(search).IsLessThan(invoice);
+        await Assert.That(invoice).IsLessThan(checkout);
+        await Assert.That(html).Contains("data-action=\"open-session\" data-session=\"" + CensusPageSessions.IdOf(Invoice) + "\"");
+
+        // A folder not open now opens by the name the page was given.
+        var opened = await rig.ActAsync($$"""{"action":"open-session","session":"{{CensusPageSessions.IdOf(Invoice)}}"}""");
+
+        await Assert.That(opened.Status).IsEqualTo(204);
+        await Assert.That(rig.Host.Opened.ToArray()).Contains(Invoice);
+
+        // And the home's card says the whole and its two parts.
+        _ = rig.HandOut();
+
+        using var home = await rig.StreamAsync(rig.Gate.Root, 2);
+
+        var card = await StateContainingAsync(home, "2 folders not open now");
+
+        await Assert.That(card).IsNotNull();
+        await Assert.That(card!).Contains("687 MB");
+        await Assert.That(card).Contains("1 folder open now");
+        await Assert.That(card).Contains("in 3 session folders on this PC");
+    }
+
+    /// <summary>
+    /// Where updates come from and when BrowserAI last checked are said on the home's card
+    /// and on the install page: GitHub's releases, a folder on this PC with the folder named,
+    /// and a source the install named and this build refused, which checks nothing.
+    /// </summary>
+    /// <remarks><b>43 b, the second of the three facts.</b></remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WhereUpdatesComeFromAndTheLastCheckAreSaidWhereTheUpdateIs()
+    {
+        var at = Now.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
+
+        using (var rig = new PageRig())
+        {
+            var home = await PageRig.GetAsync(rig.HandOut());
+
+            await Assert.That(home.Body).Contains("No update is waiting");
+            await Assert.That(home.Body).Contains($"BrowserAI last checked GitHub releases at {at}.");
+
+            var install = await PageRig.GetAsync(rig.Root + "install?tab=1");
+
+            await Assert.That(install.Body).Contains("from GitHub releases");
+            await Assert.That(install.Body).Contains($"<dt>Last check</dt><dd>{at}</dd>");
+        }
+
+        var folder = new NothingHolds { Watching = new UpdateWatch(UpdateChecks.Checking, UpdateSourceKind.Folder, @"C:\BrowserAI-feed", null, Now) };
+
+        using (var rig = new PageRig(holds: folder))
+        {
+            var home = await PageRig.GetAsync(rig.HandOut());
+
+            await Assert.That(home.Body).Contains($"BrowserAI last checked its update folder at {at}.");
+
+            var install = await PageRig.GetAsync(rig.Root + "install?tab=1");
+
+            await Assert.That(install.Body).Contains("from a folder on this PC");
+            await Assert.That(install.Body).Contains(PageContent.Text(@"C:\BrowserAI-feed"));
+        }
+
+        var refused = new NothingHolds { Watching = new UpdateWatch(UpdateChecks.SourceRefused, UpdateSourceKind.None, null, "'feed' is neither an absolute http or https URL nor a fully qualified folder path.", null) };
+
+        using (var rig = new PageRig(holds: refused))
+        {
+            var home = await PageRig.GetAsync(rig.HandOut());
+
+            await Assert.That(home.Body).Contains("BrowserAI does not check for updates, because the update source its install named was refused.");
+            await Assert.That(home.Body).DoesNotContain("last checked");
+        }
+
+        using (var rig = new PageRig(installed: false))
+        {
+            var home = await PageRig.GetAsync(rig.HandOut());
+
+            await Assert.That(home.Body).Contains(PageContent.Text(PageContent.NotInstalledSentence));
+        }
+    }
+
+    /// <summary>
+    /// When the background started and how are said: its time in the header, and on the
+    /// install page the time and the way, at sign-in or when the person opened BrowserAI.
+    /// </summary>
+    /// <remarks><b>43 b, the third of the three facts.</b></remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBackgroundsStartIsSaidAndHowItStarted()
+    {
+        var at = Now.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
+
+        using (var rig = new PageRig())
+        {
+            var home = await PageRig.GetAsync(rig.HandOut());
+
+            await Assert.That(home.Body).Contains($"Running since {at}");
+
+            var install = await PageRig.GetAsync(rig.Root + "install?tab=1");
+
+            await Assert.That(install.Body).Contains($"since {at}, started at sign-in");
+        }
+
+        using (var rig = new PageRig(facts: facts => facts with { StartedHow = BackgroundStart.Person }))
+        {
+            var install = await PageRig.GetAsync(rig.HandOut(PageKind.Install));
+
+            await Assert.That(install.Body).Contains($"since {at}, started when you opened BrowserAI");
+        }
+    }
+
+    /// <summary>How the background was started is read from what its task handed it.</summary>
+    /// <param name="startedBy">What <c>--started-by</c> carried.</param>
+    /// <param name="expected">How the page says it started.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments("$(Arg0)", BackgroundStart.SignIn)]
+    [Arguments(PersonStart.StartedByPerson, BackgroundStart.Person)]
+    [Arguments(PersonStart.StartedByTheInstaller, BackgroundStart.Installer)]
+    [Arguments(PersonStart.StartedAfterAnUpdate, BackgroundStart.AfterUpdate)]
+    [Arguments(null, BackgroundStart.Unknown)]
+    [Arguments("something-else", BackgroundStart.Unknown)]
+    public async Task HowTheBackgroundStartedIsReadFromWhatItsTaskHandedIt(string? startedBy, BackgroundStart expected) =>
+        await Assert.That(Program.BackgroundStartOf(startedBy)).IsEqualTo(expected);
+
+    /// <summary>
+    /// The conversations page and the home are sent a new state when a conversation
+    /// connects, when a session opens and when its browser closes, read by the watch once a
+    /// second; a second that changes nothing sends nothing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>46 a</b>: the conversations and sessions views are live, pushed on every change the
+    /// way the update page already is. The barrier is a change of another kind, a downloaded
+    /// version: the first state after the quiet second must be the barrier's.
+    /// </para>
+    /// <para>
+    /// <b>One tab at a time</b>, because the newest tab replaces every older one (Q337 a): the
+    /// home is a tab of its own after the conversations page's, and is sent a change of its
+    /// own.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheConversationsAndSessionsViewsArePushedOnEveryChange()
+    {
+        var holds = new ScriptedHolds();
+
+        using var rig = new PageRig(holds: holds);
+
+        // The session's folder weighs a mebibyte, so the state its measurement sends can be
+        // told from the one before it.
+        rig.Folders.Folders = [new SessionFolder(CensusPageSessions.IdOf(CheckoutRounding), CheckoutRounding, 1024 * 1024)];
+
+        _ = rig.HandOut(PageKind.Sessions);
+
+        using (var conversations = await rig.StreamAsync(rig.Gate.Root, 1, "sessions"))
+        {
+            await Assert.That(await StateContainingAsync(conversations, "No conversation is using BrowserAI")).IsNotNull();
+
+            // A conversation connects with its sessions; a session opened, so its folder is
+            // measured, and the state with its weight is the last this change sends.
+            rig.Sessions.Snapshot = Busy();
+            rig.Clock.Advance(PageService.HoldsWatchPeriod);
+
+            var connected = await StateContainingAsync(conversations, "1 MB");
+
+            await Assert.That(connected).IsNotNull();
+            await Assert.That(connected!).Contains(PageContent.Text("\"Fix the <checkout> total\""));
+            await Assert.That(connected).Contains("checkout-rounding");
+
+            // A session's browser closes.
+            rig.Sessions.Snapshot = Busy(checkoutOpen: false);
+            rig.Clock.Advance(PageService.HoldsWatchPeriod);
+
+            await Assert.That(await StateContainingAsync(conversations, "No browser open. A call that names the session opens it again.")).IsNotNull();
+
+            // A second that changes nothing sends nothing: the next state is the barrier's.
+            rig.Clock.Advance(PageService.HoldsWatchPeriod);
+
+            holds.Snapshot = new UpdateHoldSnapshot(Now, UpdateHoldState.Held, "9.9.9", [], [], []);
+            rig.Clock.Advance(PageService.HoldsWatchPeriod);
+
+            var next = await conversations.NextNamedAsync(PageEvents.State);
+
+            await Assert.That(next).IsNotNull();
+            await Assert.That(next!.Member("html")).Contains("9.9.9").Because("a second that changed nothing sent a state of its own");
+        }
+
+        // The home, in a tab of its own: every conversation ends, and the home says so.
+        _ = rig.HandOut(PageKind.Status);
+
+        using var home = await rig.StreamAsync(rig.Gate.Root, 2);
+
+        await Assert.That(await StateContainingAsync(home, "3 conversations are using BrowserAI")).IsNotNull();
+
+        rig.Sessions.Snapshot = SessionsSnapshot.Empty;
+        rig.Clock.Advance(PageService.HoldsWatchPeriod);
+
+        await Assert.That(await StateContainingAsync(home, "All quiet")).IsNotNull();
+    }
+
+    /// <summary>
+    /// No page offers to delete anything, and an action that would is refused like any the
+    /// page does not have: every button on every page posts one of the actions that open,
+    /// measure, install or set up, and every folder is where it was after all of them.
+    /// </summary>
+    /// <remarks>
+    /// <b>41 a</b>: the page deletes nothing; it shows sizes and an Open folder button, and
+    /// only the agent that made a session deletes it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePageOffersNoDeleteAndADeleteSentIsRefused()
+    {
+        using var scratch = ScratchDirectory.Create("dashboard-no-delete");
+
+        var folders = new List<SessionFolder>();
+
+        foreach (var name in new[] { "one", "two", "three" })
+        {
+            var directory = Directory.CreateDirectory(Path.Combine(scratch.Path, name)).FullName;
+
+            await File.WriteAllTextAsync(Path.Combine(directory, "browserai.data"), name);
+            folders.Add(new SessionFolder(CensusPageSessions.IdOf(directory), directory, name.Length));
+        }
+
+        using var rig = new PageRig(registration: new FakeRegistration { State = Apps() });
+
+        rig.Sessions.Snapshot = Busy();
+        rig.Folders.Folders = folders;
+        _ = rig.HandOut();
+
+        foreach (var kind in Enum.GetValues<PageKind>())
+        {
+            var route = kind is PageKind.Session ? $"session?tab=1&id={CensusPageSessions.IdOf(CheckoutRounding)}" : PageNames.RouteOf(kind) + "?tab=1";
+            var page = await PageRig.GetAsync(rig.Root + route);
+
+            foreach (Match action in Regex.Matches(page.Body, "data-action=\"(?<action>[^\"]*)\""))
+            {
+                await Assert.That(Actions).Contains(action.Groups["action"].Value).Because(route);
+            }
+
+            await Assert.That(Regex.IsMatch(page.Body, ">\\s*(Delete|Remove the folder|Clean up)", RegexOptions.IgnoreCase)).IsFalse().Because(route);
+        }
+
+        foreach (var body in new[]
+        {
+            $$"""{"action":"delete-session","session":"{{folders[0].Id}}"}""",
+            $$"""{"action":"destroy-session","session":"{{folders[1].Id}}"}""",
+            $$"""{"action":"delete-folder","folder":"{{folders[2].Id}}"}""",
+            """{"action":"clean-up"}""",
+        })
+        {
+            var answer = await rig.ActAsync(body);
+
+            await Assert.That(answer.Status).IsEqualTo(404).Because(body);
+        }
+
+        await Assert.That((await rig.ActAsync("""{"action":"measure-sessions"}""")).Status).IsEqualTo(204);
+
+        foreach (var folder in folders)
+        {
+            await Assert.That(File.Exists(Path.Combine(folder.Directory, "browserai.data"))).IsTrue().Because(folder.Directory);
+        }
+    }
+
+    /// <summary>
+    /// The conversations page draws its map for up to eight rows and twelve sessions, and
+    /// lists them past that, saying why; at any size it also carries the list a narrow
+    /// window shows in the map's place.
+    /// </summary>
+    /// <remarks>
+    /// <b>40 a, F</b>: the map becomes a list at narrow widths, and also when it would be too
+    /// crowded to read. The two limits are <see cref="ConversationsContent.MostMapRows"/> and
+    /// <see cref="ConversationsContent.MostMapSessions"/>, and the width is the stylesheet's.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheMapIsDrawnUpToItsLimitAndAListBeyondIt()
+    {
+        static SessionsSnapshot relaysOf(int count) => CensusPageSessions.Compose(
+            Now,
+            [
+                ("background", Description(900, ServerDescription.Roles.Host, [])),
+                .. Enumerable.Range(1, count).Select(index => ($"relay:{index}", Description(300 + index, ServerDescription.Roles.Relay, [], "claude-code", @"C:\Code\p" + index.ToString(CultureInfo.InvariantCulture)))),
+            ],
+            []);
+
+        using var rig = new PageRig();
+
+        rig.Sessions.Snapshot = relaysOf(8);
+
+        var drawn = (await PageRig.GetAsync(rig.HandOut(PageKind.Sessions))).Body;
+
+        await Assert.That(drawn).Contains("<div class=\"map\" id=\"map\">");
+        await Assert.That(drawn).Contains("<div class=\"list-view\">");
+        await Assert.That(drawn).DoesNotContain("too many");
+
+        rig.Sessions.Snapshot = relaysOf(9);
+
+        var listed = (await PageRig.GetAsync(rig.HandOut(PageKind.Sessions))).Body;
+
+        await Assert.That(listed).DoesNotContain("id=\"map\"");
+        await Assert.That(listed).Contains("<div class=\"list-view crowded\">");
+        await Assert.That(listed).Contains("There are too many conversations and sessions to draw as a map, so they are listed.");
+    }
+
+    /// <summary>
+    /// No page calls an app a client, says that a conversation drives a session, calls a
+    /// setup a registration or shows a pid, outside the details for troubleshooting and the
+    /// raw text under Show details.
+    /// </summary>
+    /// <remarks>
+    /// <b>42 a</b>, the mockups' words, and <b>45 a</b>, pids and command lines folded under
+    /// <i>Details for troubleshooting</i>.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoPageCallsAnAppAClientOrShowsAPidOutsideItsDetailsForTroubleshooting()
+    {
+        string[] forbidden = ["client", "pid", "driven by", "driven through", "registered", "register", "relay", "connection, pid"];
+
+        using var rig = new PageRig(registration: new FakeRegistration { State = Apps() }, holds: new ScriptedHolds { Snapshot = Held() });
+
+        rig.Sessions.Snapshot = Busy();
+        rig.Folders.Folders = [new SessionFolder(CensusPageSessions.IdOf(CheckoutRounding), CheckoutRounding, 1024)];
+        _ = rig.HandOut();
+
+        foreach (var kind in Enum.GetValues<PageKind>())
+        {
+            var route = kind is PageKind.Session ? $"session?tab=1&id={CensusPageSessions.IdOf(CheckoutRounding)}" : PageNames.RouteOf(kind) + "?tab=1";
+
+            // As a browser does: the page first, which starts what it is drawn from, then
+            // its stream.
+            _ = await PageRig.GetAsync(rig.Root + route);
+
+            using var stream = await rig.StreamAsync(rig.Gate.Root, 1, PageNames.Of(kind), kind is PageKind.Session ? "id=" + CensusPageSessions.IdOf(CheckoutRounding) : null);
+
+            // The state the stream opens with, after the registration and the measurement are in.
+            var html = await StateContainingAsync(stream, kind is PageKind.Setup ? "Read at" : string.Empty);
+
+            await Assert.That(html).IsNotNull().Because(route);
+
+            var shown = WebUtility.HtmlDecode(Regex.Replace(Regex.Replace(html!, "<details.*?</details>", " ", RegexOptions.Singleline), "<[^>]+>", " "));
+
+            foreach (var word in forbidden)
+            {
+                await Assert.That(Regex.IsMatch(shown, "\\b" + Regex.Escape(word) + "\\b", RegexOptions.IgnoreCase)).IsFalse().Because($"{route} says '{word}' outside its details: {shown}");
+            }
+        }
+    }
+
+    /// <summary>Every page carries one script, from its own origin, and no inline style or handler for the policy to refuse.</summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryPageCarriesOneScriptFromItsOwnOriginAndNothingInline()
+    {
+        using var rig = new PageRig(registration: new FakeRegistration { State = Apps() });
+
+        rig.Sessions.Snapshot = Busy();
+        _ = rig.HandOut();
+
+        foreach (var kind in Enum.GetValues<PageKind>())
+        {
+            var route = kind is PageKind.Session ? $"session?tab=1&id={CensusPageSessions.IdOf(CheckoutRounding)}" : PageNames.RouteOf(kind) + "?tab=1";
+            var page = await PageRig.GetAsync(rig.Root + route);
+
+            await Assert.That(page.Status).IsEqualTo(200).Because(route);
+            await Assert.That(page.Body.Split("<script").Length).IsEqualTo(2).Because(route);
+            await Assert.That(page.Body).Contains("<script src=\"page.js\" defer></script>").Because(route);
+            await Assert.That(Regex.IsMatch(page.Body, "\\sstyle\\s*=", RegexOptions.IgnoreCase)).IsFalse().Because(route);
+            await Assert.That(Regex.IsMatch(page.Body, "\\son[a-z]+\\s*=", RegexOptions.IgnoreCase)).IsFalse().Because(route);
+            await Assert.That(page.Body).DoesNotContain("<style").Because(route);
+        }
+    }
+
+    // ---- The rig's data -----------------------------------------------------------
+
+    /// <summary>The folder of the session the busy afternoon's first conversation uses.</summary>
+    internal const string CheckoutRounding = @"C:\Code\acme-shop\.work\checkout-rounding";
+
+    /// <summary>The way back every page but the home begins with, for one tab.</summary>
+    internal static string Crumbs(int tab) =>
+        "<nav class=\"crumbs\" aria-label=\"Where you are\"><a id=\"l-crumb-home\" href=\"./?tab=" + tab.ToString(CultureInfo.InvariantCulture) + "\">Overview</a>";
+
+    /// <summary>
+    /// A busy afternoon: three conversations, one in a VS Code window working now, one in a
+    /// terminal with a window on the screen, and a Codex one with no browser yet; and one
+    /// session kept after its conversation ended.
+    /// </summary>
+    /// <param name="checkoutOpen">Whether the first conversation's session has its browser open.</param>
+    /// <returns>The snapshot.</returns>
+    internal static SessionsSnapshot Busy(bool checkoutOpen = true)
+    {
+        var composed = CensusPageSessions.Compose(
+            Now,
+            [
+                ("background", Description(900, ServerDescription.Roles.Host,
+                [
+                    new HeldSession(CheckoutRounding, "reproducing the rounding error in the checkout total", BrowserOpen: checkoutOpen, DrivenBy: "claude-code", DrivenThrough: 301, IdleCloseAt: checkoutOpen ? Now.AddMinutes(7) : null),
+                    new HeldSession(@"C:\Code\market-notes\.work\pricing-compare", "comparing the three pricing pages side by side", BrowserOpen: true, Headed: true, DrivenBy: "claude-code", DrivenThrough: 302, IdleCloseAt: Now.AddMinutes(48)),
+                    new HeldSession(@"C:\Code\acme-shop\.work\login-flow-check", "checking that the sign-in survives a reload", BrowserOpen: true, Kept: true, IdleCloseAt: Now.AddMinutes(17)),
+                ])),
+                ("relay:a", Description(301, ServerDescription.Roles.Relay, [], "claude-code", @"C:\Code\acme-shop", inFlight: 1)),
+                ("relay:b", Description(302, ServerDescription.Roles.Relay, [], "claude-code", @"C:\Code\market-notes")),
+                ("relay:c", Description(303, ServerDescription.Roles.Relay, [], "codex-mcp-client", @"C:\Code\docs-site")),
+            ],
+            []);
+
+        var window = new ClientWindow("1200-134360600000000000", @"C:\Code\acme-shop");
+
+        return composed with
+        {
+            Servers =
+            [
+                .. composed.Servers.Select(server => server.Description.ProcessId switch
+                {
+                    301 => server with { Conversation = new ConversationName("Fix the <checkout> total", IsTitle: true), Window = window, Reconnect = RelayReconnect.None },
+                    302 => server with { Conversation = ClientFolder.Unnamed("Claude Code", @"C:\Code\market-notes"), Reconnect = RelayReconnect.McpReconnect },
+                    303 => server with { Conversation = new ConversationName("Update the install guide screenshots", IsTitle: true), Reconnect = RelayReconnect.NewConversation },
+                    _ => server,
+                }),
+            ],
+        };
+    }
+
+    /// <summary>A server's description, as the background writes one for itself or a relay.</summary>
+    internal static ServerDescription Description(int pid, string role, IReadOnlyList<HeldSession> sessions, string? client = null, string folder = @"C:\work", int inFlight = 0) =>
+        new(
+            pid,
+            0,
+            client is null ? null : new ClientIdentity(client, Title: null, client is "claude-code" ? "2.1.300" : "0.165.0"),
+            folder,
+            null,
+            inFlight,
+            sessions,
+            role);
+
+    /// <summary>Claude Code set up for all projects and Codex not set up, read as RegisterAI would answer.</summary>
+    internal static AppState Apps() =>
+        new()
+        {
+            Version = "9.0.0",
+            InstallRoot = @"C:\install",
+            DataRoot = @"C:\data",
+            ServerCommand = @"C:\install\current\BrowserAI.exe",
+            ServerRefusal = null,
+            Clients =
+            [
+                new ClientState
+                {
+                    Client = RegistrationClient.ClaudeCode,
+                    ClientPath = @"C:\Users\sam\.local\bin\claude.exe",
+                    ServerComposed = true,
+                    UserScope = new RegistrationView(RegistrationScope.User, @"C:\Users\sam\.claude.json", @"C:\install\current\BrowserAI.exe", RegistrationOwnership.OursAndPresent, null),
+                    ProjectDirectory = null,
+                    ProjectScope = null,
+                },
+                new ClientState
+                {
+                    Client = RegistrationClient.Codex,
+                    ClientPath = @"C:\Users\sam\.codex\codex.exe",
+                    ServerComposed = true,
+                    UserScope = new RegistrationView(RegistrationScope.User, @"C:\Users\sam\.codex\config.toml", null, RegistrationOwnership.Absent, null),
+                    ProjectDirectory = null,
+                    ProjectScope = null,
+                },
+            ],
+        };
+
+    /// <summary>An update held by a hidden browser, a window and a conversation in a terminal.</summary>
+    internal static UpdateHoldSnapshot Held() => new(
+        Now,
+        UpdateHoldState.Held,
+        "9.1.0",
+        [new HoldingSession(CheckoutRounding, "reproducing the rounding error in the checkout total", Now.AddMinutes(7))],
+        [new HoldingSession(@"C:\Code\market-notes\.work\pricing-compare", "comparing the three pricing pages side by side", Now.AddMinutes(48))],
+        [
+            new HoldingRelay("claude-code 2.1.300", @"C:\Code\market-notes", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.McpReconnect, "s2", ClientFolder.Unnamed("Claude Code", @"C:\Code\market-notes"))
+            {
+                ClientName = KnownClients.ClaudeCode,
+                ClientVersion = "2.1.300",
+            },
+        ]);
+
+    /// <summary>Reads states off a stream until one carries the text.</summary>
+    internal static async Task<string?> StateContainingAsync(RawEventStream stream, string text)
+    {
+        while (await stream.NextNamedAsync(PageEvents.State) is { } state)
+        {
+            var html = state.Member("html");
+
+            if (html.Contains(text, StringComparison.Ordinal) || html.Contains(PageContent.Text(text), StringComparison.Ordinal))
+            {
+                return html;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>What holds the update, as the arm sets it.</summary>
+    internal sealed class ScriptedHolds : IUpdateHolds
+    {
+        public UpdateHoldSnapshot Snapshot { get; set; } = UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
+
+        public UpdateHoldSnapshot Read() => Snapshot;
+
+        public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
+            Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");
+
+        public UpdateWatch Watch() => new(UpdateChecks.Checking, UpdateSourceKind.GitHubReleases, null, null, DateTimeOffset.UnixEpoch);
+    }
+}

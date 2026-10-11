@@ -86,7 +86,12 @@ Write-Host "installer lock held: $token"
 # refuses a pack that is not those bytes. Publish the slice before starting a
 # gate: this reads the publish and does not make it.
 $packLog = Join-Path $root '.work' 'suite' "$Tag-testpack.log"
-& (Join-Path $PSScriptRoot 'New-Release.ps1') -TestPackOnly *> $packLog
+# ⚠️ IN A PWSH OF ITS OWN, as the Git Bash drivers run it -- added 2026-10-11. The
+# release script stops with a terminating error, and run here with `&` that error
+# ended this driver as well, before the test of the exit code below and outside the
+# `finally` that lets the lock go: the log had no abort line, and the lock named a pid
+# that was gone until the next take found it stale.
+& pwsh -NoProfile -NonInteractive -File (Join-Path $PSScriptRoot 'New-Release.ps1') -TestPackOnly *> $packLog
 if ($LASTEXITCODE -ne 0) {
     Get-Content -LiteralPath $packLog -Tail 20 | Write-Host
     & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Release -HolderPid $PID | Out-Null

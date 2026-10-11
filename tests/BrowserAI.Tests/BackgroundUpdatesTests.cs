@@ -174,6 +174,83 @@ internal sealed class BackgroundUpdatesTests
         }
     }
 
+    /// <summary>
+    /// The core says where its updates come from, whether it checks there, and when its
+    /// last check began: a record of an earlier run before this run checks, and the moment
+    /// this run's own check began once it has.
+    /// </summary>
+    /// <remarks>
+    /// <b>43 b, the maintainer's choice of 2026-10-11</b>: the page may show where updates
+    /// come from and when BrowserAI last checked, which the background passes to it. The
+    /// time comes from the core's memory and the record it keeps, never a read per draw.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheWatchSaysWhereUpdatesComeFromAndWhenTheLastCheckBegan()
+    {
+        using (var rig = new BackgroundUpdateRig())
+        {
+            var earlier = rig.Clock.GetUtcNow() - TimeSpan.FromMinutes(3);
+
+            ((MemoryCheckStamp)rig.Stamp).Reading = new UpdateCheckStampReading(earlier, null);
+
+            var updates = rig.Start();
+            var watch = updates.Watch();
+
+            await Assert.That(rig.Client.Checks).IsEqualTo(0).Because("the record is inside the interval");
+            await Assert.That(watch.Checks).IsEqualTo(UpdateChecks.Checking);
+            await Assert.That(watch.Source).IsEqualTo(UpdateSourceKind.Folder);
+            await Assert.That(watch.Location).IsEqualTo(@"C:\BrowserAI-feed");
+            await Assert.That(watch.LastCheck).IsEqualTo(earlier);
+
+            // To the moment the interval since that record runs out, when this run checks.
+            rig.Clock.Advance(BackgroundUpdates.CheckInterval - TimeSpan.FromMinutes(3));
+
+            await Assert.That(rig.Client.Checks).IsEqualTo(1);
+            await Assert.That(updates.Watch().LastCheck).IsEqualTo(earlier + BackgroundUpdates.CheckInterval);
+        }
+
+        using (var rig = new BackgroundUpdateRig { Source = UpdateSource.Read([]) })
+        {
+            var watch = rig.Start().Watch();
+
+            await Assert.That(watch.Source).IsEqualTo(UpdateSourceKind.GitHubReleases);
+            await Assert.That(watch.Location).IsNull();
+            await Assert.That(watch.LastCheck).IsEqualTo(rig.Clock.GetUtcNow()).Because("no record, so it checked at once");
+        }
+
+        using (var rig = new BackgroundUpdateRig { Source = UpdateSource.Read([UpdateSource.Argument, "https://example.invalid/browserai"]) })
+        {
+            var watch = rig.Start().Watch();
+
+            await Assert.That(watch.Source).IsEqualTo(UpdateSourceKind.Url);
+            await Assert.That(watch.Location).IsEqualTo("https://example.invalid/browserai");
+        }
+
+        using (var rig = new BackgroundUpdateRig { Install = new UpdateInstall(false, null, "1.1.0") })
+        {
+            await Assert.That(rig.Start().Watch().Checks).IsEqualTo(UpdateChecks.NotInstalled);
+        }
+
+        using (var rig = new BackgroundUpdateRig { Source = UpdateSource.Read([UpdateSource.Argument, "feed"]) })
+        {
+            var watch = rig.Start().Watch();
+
+            await Assert.That(watch.Checks).IsEqualTo(UpdateChecks.SourceRefused);
+            await Assert.That(watch.Source).IsEqualTo(UpdateSourceKind.None);
+            await Assert.That(watch.Refusal).Contains("'feed'");
+        }
+
+        using (var rig = new BackgroundUpdateRig
+        {
+            Install = new UpdateInstall(true, BackgroundUpdateRig.PackId, "1.2.0-alpha.0.3"),
+            Source = UpdateSource.Read([UpdateSource.Argument, "https://example.invalid/browserai"]),
+        })
+        {
+            await Assert.That(rig.Start().Watch().Checks).IsEqualTo(UpdateChecks.PreReleaseUrl);
+        }
+    }
+
     /// <summary>A build that is not installed never checks, never holds and builds no client.</summary>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -863,13 +940,23 @@ internal sealed class BackgroundUpdatesTests
         var claude = snapshot.Relays.Single(relay => relay.ProjectFolder is @"C:\project");
         var unnamed = snapshot.Relays.Single(relay => relay.ProjectFolder is null);
 
-        await Assert.That(codex).IsEqualTo(new HoldingRelay("codex-mcp-client 0.155.0", @"C:\repo", now - TimeSpan.FromMinutes(3), false, RelayReconnect.NewConversation));
+        // The client's own name and version beside the protocol's words, for the page's
+        // app (42 a, 2026-10-11; previously the record carried the words alone).
+        await Assert.That(codex).IsEqualTo(new HoldingRelay("codex-mcp-client 0.155.0", @"C:\repo", now - TimeSpan.FromMinutes(3), false, RelayReconnect.NewConversation)
+        {
+            ClientName = "codex-mcp-client",
+            ClientVersion = "0.155.0",
+        });
 
         // Listed, and holding nothing: its countdown has run out and no call is in
         // flight, which is how a reader of the snapshot decides a relay holds.
         await Assert.That(codex.IdleAt).IsLessThanOrEqualTo(snapshot.ReadAt);
         await Assert.That(codex.CallInFlight).IsFalse();
-        await Assert.That(claude).IsEqualTo(new HoldingRelay("claude-code 2.1.300", @"C:\project", claudeIdleAt, true, RelayReconnect.Unknown));
+        await Assert.That(claude).IsEqualTo(new HoldingRelay("claude-code 2.1.300", @"C:\project", claudeIdleAt, true, RelayReconnect.Unknown)
+        {
+            ClientName = "claude-code",
+            ClientVersion = "2.1.300",
+        });
         await Assert.That(unnamed.Client).IsEqualTo("unnamed client");
         await Assert.That(unnamed.Reconnect).IsEqualTo(RelayReconnect.Unknown);
     }

@@ -24,11 +24,12 @@ internal sealed class PageRig : IDisposable
         IUpdateHolds? holds = null,
         ChangelogSection? changelog = null,
         BrokenInstallNotice? install = null,
-        bool installed = true)
+        bool installed = true,
+        Func<PageFacts, PageFacts>? facts = null)
     {
         Registration = registration ?? new FakeRegistration();
 
-        Facts = new PageFacts
+        var made = new PageFacts
         {
             Version = "9.0.0",
             InstallRoot = installed ? Directory.CreateDirectory(Path.Combine(_scratch.Path, "install")).FullName : null,
@@ -36,7 +37,11 @@ internal sealed class PageRig : IDisposable
             LogDirectory = Path.Combine(_scratch.Path, "data", "logs"),
             ServerCommand = Path.Combine(_scratch.Path, "install", "current", "BrowserAI.exe"),
             ServerRefusal = null,
+            StartedAt = DateTimeOffset.UnixEpoch,
+            StartedHow = BackgroundStart.SignIn,
         };
+
+        Facts = facts is null ? made : facts(made);
 
         Page = new PageService(
             Facts,
@@ -52,6 +57,7 @@ internal sealed class PageRig : IDisposable
             // The product's page always has the update core behind it (Program.Background),
             // so an arm that sets no holds gets one where nothing waits.
             Holds = holds ?? new NothingHolds(),
+            Folders = Folders,
             Changelog = changelog,
             Install = install,
         };
@@ -62,6 +68,9 @@ internal sealed class PageRig : IDisposable
     public ManualClock Clock { get; } = new();
 
     public FakeSessions Sessions { get; } = new();
+
+    /// <summary>The session folders and their sizes, as the arm sets them.</summary>
+    public FakeFolders Folders { get; } = new();
 
     public RecordingHost Host { get; } = new();
 
@@ -92,10 +101,10 @@ internal sealed class PageRig : IDisposable
             "Sec-Fetch-Site: same-origin",
             "Content-Type: application/json"));
 
-    public async Task<RawEventStream> StreamAsync(string address, int tab, string page = "status")
+    public async Task<RawEventStream> StreamAsync(string address, int tab, string page = "status", string? extra = null)
     {
         var uri = new Uri(address);
-        var stream = await RawEventStream.OpenAsync(uri.Port, Gate.Token, tab, page);
+        var stream = await RawEventStream.OpenAsync(uri.Port, Gate.Token, tab, page, extra);
 
         await Assert.That(stream.Status).IsEqualTo(200);
         return stream;
@@ -114,18 +123,69 @@ internal sealed class PageRig : IDisposable
 /// </summary>
 internal sealed class NothingHolds : IUpdateHolds
 {
+    /// <summary>Where the updates come from and when BrowserAI last checked, as the arm sets them.</summary>
+    public UpdateWatch Watching { get; set; } = new(UpdateChecks.Checking, UpdateSourceKind.GitHubReleases, null, null, DateTimeOffset.UnixEpoch);
+
     public UpdateHoldSnapshot Read() => UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
 
     public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
         Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");
+
+    public UpdateWatch Watch() => Watching;
 }
 
 /// <summary>The running servers, scripted.</summary>
+/// <remarks>
+/// <b>The peek is the snapshot with every conversation's name taken out</b>, as the
+/// background's own leaves the names unread, so an arm that renames a conversation and
+/// changes nothing else sends the watch nothing new.
+/// </remarks>
 internal sealed class FakeSessions : IPageSessions
 {
     public SessionsSnapshot Snapshot { get; set; } = SessionsSnapshot.Empty;
 
-    public Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken) => Task.FromResult(Snapshot);
+    /// <summary>How many named reads were asked for.</summary>
+    public int Reads => Volatile.Read(ref _reads);
+
+    private int _reads;
+
+    public Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _reads);
+        return Task.FromResult(Snapshot);
+    }
+
+    public SessionsSnapshot Peek() =>
+        Snapshot with { Servers = [.. Snapshot.Servers.Select(static server => server with { Conversation = null })] };
+}
+
+/// <summary>The session folders, scripted, and how many measurements were asked for.</summary>
+internal sealed class FakeFolders : IPageFolders
+{
+    /// <summary>The folders a measurement finds.</summary>
+    public IReadOnlyList<SessionFolder> Folders { get; set; } = [];
+
+    /// <summary>When a measurement says it was taken.</summary>
+    public DateTimeOffset At { get; set; } = DateTimeOffset.UnixEpoch;
+
+    /// <summary>
+    /// A measurement nobody has let finish yet: while it is set, every measurement waits
+    /// on it.
+    /// </summary>
+    public TaskCompletionSource? Hold { get; set; }
+
+    /// <summary>How many measurements were asked for.</summary>
+    public int Measured => Volatile.Read(ref _measured);
+
+    private int _measured;
+
+    public FolderMeasure Measure()
+    {
+        _ = Interlocked.Increment(ref _measured);
+        Hold?.Task.GetAwaiter().GetResult();
+
+        return new FolderMeasure(At, [.. Folders.OrderByDescending(static folder => folder.Bytes ?? -1)]);
+    }
 }
 
 /// <summary>A desktop that records what it was asked to open and opens nothing.</summary>

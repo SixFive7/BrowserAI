@@ -3,6 +3,7 @@
 
 using System.Text.Json.Nodes;
 using BrowserAI.App;
+using BrowserAI.App.Page;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -74,7 +75,9 @@ internal sealed class PageBrowserTests
         using var rig = new PageRig();
         using var scratch = ScratchDirectory.Create($"page-browser-{browser}");
 
-        var first = rig.HandOut();
+        // The setup page, where the button the arm clicks is since 2026-10-11 (40 a): the
+        // home's cards lead to it, and the registration moved off the home with it.
+        var first = rig.HandOut(PageKind.Setup);
         var session = Path.Combine(scratch.Path, "page-session");
 
         await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
@@ -111,7 +114,8 @@ internal sealed class PageBrowserTests
 
             // The page's own script opened its stream: the coordinator counts a tab.
             await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 1)).IsTrue();
-            await Assert.That(await evaluateAsync("() => document.querySelector('h1').textContent")).Contains("BrowserAI 9.0.0");
+            await Assert.That(await evaluateAsync("() => document.querySelector('.version').textContent")).Contains("9.0.0");
+            await Assert.That(await evaluateAsync("() => document.querySelector('h1').textContent")).Contains("Claude Code and Codex");
 
             // A button, clicked in the page, posts through the gate: the registration,
             // which the rig's first read refused, is read again, and this time it reads.
@@ -184,6 +188,133 @@ internal sealed class PageBrowserTests
 
             await SelectAsync(client, session, IndexOf(await TabsAsync(client, session), second)!.Value);
             await Assert.That(await evaluateAsync("() => document.body.dataset.tab")).Contains("2");
+        }
+        finally
+        {
+            _ = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
+            {
+                ["directory"] = session,
+                [SessionToolSurface.WhyParameter] = "the page suite finished with its session",
+            });
+        }
+    }
+
+    /// <summary>
+    /// In a real browser the conversations page draws a line for each conversation and each
+    /// session, a click on a card shows what it is beside the map, and when a new state
+    /// arrives the keyboard focus is on the card it was on and the choice is kept.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>46 a, the maintainer's choice of 2026-10-11</b>: the views are live, and the focus
+    /// stays where it was when a new state arrives. The write-up of that day found the focus
+    /// lost on every state, because the focused element was replaced with the page's main
+    /// part. <b>40 a</b>: C's map, its lines drawn by the page's script from where the cards
+    /// are, and its inspector for whatever is clicked.
+    /// </para>
+    /// <para>
+    /// <b>The new state is told from the old by a mark</b> the arm sets on the old main
+    /// part, which a replacement takes away; the change that sends it is a session's browser
+    /// closing, which the inspector it chose then says.
+    /// </para>
+    /// </remarks>
+    /// <param name="browser">The provisioned family.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments(ProvisionedBrowsers.Chromium)]
+    [Arguments(ProvisionedBrowsers.Firefox)]
+    public async Task InARealBrowserTheMapDrawsItsLinesAndANewStateKeepsTheFocusAndTheChoice(string browser)
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        if (browser is ProvisionedBrowsers.Firefox)
+        {
+            SuiteEnvironment.RequireProvisionedFirefox();
+        }
+        else
+        {
+            SuiteEnvironment.RequireProvisionedChromium();
+        }
+
+        PublishedSlice.EnsureFresh();
+
+        using var rig = new PageRig();
+        using var scratch = ScratchDirectory.Create($"page-map-{browser}");
+
+        rig.Sessions.Snapshot = DashboardTests.Busy();
+
+        var address = rig.HandOut(PageKind.Sessions);
+        var session = Path.Combine(scratch.Path, "map-session");
+        var node = "n-s-" + BrowserAI.App.Page.CensusPageSessions.IdOf(DashboardTests.CheckoutRounding);
+
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
+
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        _ = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "the suite opening BrowserAI's own map in a headless browser",
+            ["browser"] = browser,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        try
+        {
+            async Task<string> evaluateAsync(string function) =>
+                TextOf(await CallAsync(client, "browser_evaluate", new JsonObject
+                {
+                    ["function"] = function,
+                    [SessionToolSurface.SessionParameter] = session,
+                    [SessionToolSurface.WhyParameter] = "the suite reading what BrowserAI's own map shows",
+                }));
+
+            // A window wide enough for the map, which a narrower one shows as a list.
+            _ = await CallAsync(client, "browser_resize", new JsonObject
+            {
+                ["width"] = 1440,
+                ["height"] = 900,
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the suite giving the map the width it is drawn at",
+            });
+
+            _ = await CallAsync(client, "browser_navigate", new JsonObject
+            {
+                ["url"] = address,
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the suite opening BrowserAI's conversations page the way --sessions does",
+            });
+
+            await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 1)).IsTrue();
+
+            // One line from each conversation to BrowserAI and one on from it to each session
+            // and to a conversation's "No browser yet": three conversations, three sessions,
+            // one kept, and one with no browser.
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync("() => 'wires=' + document.querySelectorAll('#wires path.wire').length")).Contains("wires=7", StringComparison.Ordinal))).IsTrue();
+
+            // A click on a session's card shows what it is, and the card keeps the focus.
+            _ = await evaluateAsync($"() => {{ const card = document.getElementById('{node}'); card.focus(); card.click(); return 'clicked'; }}");
+
+            await Assert.That(await evaluateAsync($"() => 'shown=' + !document.getElementById('inspect-{node[2..]}').hidden")).Contains("shown=true");
+            await Assert.That(await evaluateAsync($"() => 'pressed=' + document.getElementById('{node}').getAttribute('aria-pressed')")).Contains("pressed=true");
+
+            // A new state: the session's browser closes.
+            _ = await evaluateAsync("() => { document.querySelector('#main > *').dataset.old = 'yes'; return 'marked'; }");
+
+            rig.Sessions.Snapshot = DashboardTests.Busy(checkoutOpen: false);
+            rig.Clock.Advance(BrowserAI.App.Page.PageService.HoldsWatchPeriod);
+
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync("() => document.querySelector('[data-old]') ? 'old' : 'replaced'")).Contains("replaced", StringComparison.Ordinal))).IsTrue();
+
+            await Assert.That(await evaluateAsync("() => 'focus=' + (document.activeElement ? document.activeElement.id : '')")).Contains($"focus={node}");
+            await Assert.That(await evaluateAsync($"() => 'shown=' + !document.getElementById('inspect-{node[2..]}').hidden")).Contains("shown=true");
+            await Assert.That(await evaluateAsync($"() => document.getElementById('inspect-{node[2..]}').textContent")).Contains("No browser open");
+            await Assert.That(await evaluateAsync("() => 'wires=' + document.querySelectorAll('#wires path.wire').length")).Contains("wires=7");
         }
         finally
         {

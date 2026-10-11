@@ -163,7 +163,10 @@ internal sealed class BrokenInstallTests
     /// anything of it.
     /// </summary>
     /// <remarks>
-    /// <b>Planted red 2026-10-10</b> against a page that rendered no notice.
+    /// <b>Planted red 2026-10-10</b> against a page that rendered no notice. <i>Corrected
+    /// 2026-10-11 (previously the four pages of that day, and a link with no id)</i>: every
+    /// page the maintainer's 40 a added says it too, and the link carries an id, as every
+    /// control does for the focus a new state keeps (46 a).
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -174,7 +177,7 @@ internal sealed class BrokenInstallTests
 
         notice.Broken(Difference);
 
-        foreach (var kind in new[] { PageKind.Status, PageKind.Sessions, PageKind.Update, PageKind.Changelog })
+        foreach (var kind in Enum.GetValues<PageKind>())
         {
             var html = PageContent.Fragment(rig.Page.View(kind), kind, 1, Occasion.Ordinary, rig.Clock.GetUtcNow());
 
@@ -183,7 +186,7 @@ internal sealed class BrokenInstallTests
             await Assert.That(html).Contains(PageContent.Text(Difference));
             // ⚠️ Both installs, since the texts polish of 2026-10-10, page #81 (previously
             // "To reinstall, download BrowserAI.exe from" the latest release alone).
-            await Assert.That(html).Contains("<p>Reinstall BrowserAI the way you installed it. For a release, download BrowserAI.exe from <a href=");
+            await Assert.That(html).Contains("<p>Reinstall BrowserAI the way you installed it. For a release, download BrowserAI.exe from <a id=\"l-releases\" href=");
             await Assert.That(html).Contains($"run BrowserAI.exe from that folder with the {UpdateConfiguration.FeedVariable} you installed it with.");
             await Assert.That(html).DoesNotContain("BROWSERAI_ROOT");
             await Assert.That(html).DoesNotContain("Setup.exe");

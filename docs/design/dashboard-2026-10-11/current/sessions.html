@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrowserAI sessions</title>
+<link rel="stylesheet" href="page.css">
+</head>
+<body data-page="sessions" data-tab="1" data-unanswered="BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.">
+<nav><a href="status.html">Status</a> <a href="sessions.html" aria-current="page">Sessions</a> <a href="update.html">Update</a> <a href="changelog.html">Changelog</a></nav>
+<p id="banner" hidden></p>
+<main>
+<h1>Sessions</h1>
+<p>BrowserAI's background, every session it holds, and each client connected to it. A client's connection ends when the client closes it or exits, and when an update installs.</p>
+<p class="muted">Read at 13:41:09. <button type="button" data-action="refresh-sessions">Refresh</button>
+</p>
+<ul class="servers">
+<li class="server host"><p><strong>BrowserAI's background</strong>, pid 21480</p>
+<p>It holds every session, and ends at sign-out, at an uninstall or for an update, never because it is idle.</p>
+<ul class="sessions">
+<li><strong>reproducing the rounding error in the checkout total</strong> <span class="muted">browser open</span><br><code>C:\Code\acme-shop\.work\checkout-rounding</code> <button type="button" data-action="open-session" data-session="3f1c0a9e5b7d2c41">Open its folder</button>
+<br>Driven by claude-code through its connection, pid 30412.<br><span class="muted">Traces in its output folder: trace-1760183402117.trace</span></li>
+<li><strong>comparing the three pricing pages side by side</strong> <span class="muted">browser open</span><br><code>C:\Code\market-notes\.work\pricing-compare</code> <button type="button" data-action="open-session" data-session="9a2e47c1d0b3f865">Open its folder</button>
+<br>Driven by claude-code through its connection, pid 28844.</li>
+<li><strong>taking fresh screenshots for the install guide</strong> <span class="muted">no browser open</span><br><code>C:\Code\docs-site\.work\docs-screenshots</code> <button type="button" data-action="open-session" data-session="c47d19e2a6b05f38">Open its folder</button>
+<br>Driven by codex-mcp-client through its connection, pid 27716.</li>
+<li class="kept"><strong>checking that the sign-in survives a reload</strong> <span class="muted">browser open</span><br><code>C:\Code\acme-shop\.work\login-flow-check</code> <button type="button" data-action="open-session" data-session="5e8b2d70c19a4f63">Open its folder</button>
+<br>Kept: its client has gone, and its browser was left as it was. A client that names this session takes it over. Until then its idle close ends it at about 13:58.</li>
+</ul>
+</li>
+<li class="window"><p><strong>VS Code window on acme-shop</strong> <code>C:\Code\acme-shop</code></p>
+<ul class="servers">
+<li class="server"><p><strong>"Fix the checkout total rounding"</strong>, claude-code 2.1.300, pid 30412</p>
+<p>Started in <code>C:\Code\acme-shop</code>.</p>
+<ul class="sessions">
+<li><strong>reproducing the rounding error in the checkout total</strong> <span class="muted">browser open</span><br><code>C:\Code\acme-shop\.work\checkout-rounding</code> <button type="button" data-action="open-session" data-session="3f1c0a9e5b7d2c41">Open its folder</button>
+<br><span class="muted">Traces in its output folder: trace-1760183402117.trace</span></li>
+</ul>
+</li>
+<li class="server"><p><strong>unnamed conversation in acme-shop</strong>, claude-code 2.1.300, pid 31090</p>
+<p class="muted">Its client drives no session.</p>
+</li>
+</ul></li>
+<li class="server"><p><strong>"Compare pricing pages"</strong>, claude-code 2.1.300, pid 28844</p>
+<p>Started in <code>C:\Code\market-notes</code>.</p>
+<ul class="sessions">
+<li><strong>comparing the three pricing pages side by side</strong> <span class="muted">browser open</span><br><code>C:\Code\market-notes\.work\pricing-compare</code> <button type="button" data-action="open-session" data-session="9a2e47c1d0b3f865">Open its folder</button>
+</li>
+</ul>
+</li>
+<li class="server"><p><strong>"Update the install guide screenshots"</strong>, codex-mcp-client 0.165.0, pid 27716</p>
+<p>Started in <code>C:\Code\docs-site</code>.</p>
+<ul class="sessions">
+<li><strong>taking fresh screenshots for the install guide</strong> <span class="muted">no browser open</span><br><code>C:\Code\docs-site\.work\docs-screenshots</code> <button type="button" data-action="open-session" data-session="c47d19e2a6b05f38">Open its folder</button>
+</li>
+</ul>
+</li>
+</ul>
+
+</main>
+<footer><a href="https://github.com/SixFive7/BrowserAI#readme" target="_blank" rel="noopener noreferrer">How BrowserAI works</a></footer>
+</body>
+</html>

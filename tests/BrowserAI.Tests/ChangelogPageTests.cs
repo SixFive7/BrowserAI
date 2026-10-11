@@ -107,8 +107,14 @@ internal sealed class ChangelogPageTests
     /// <summary>
     /// The page names the release it shows and its date, or says that a development
     /// build shows what it has over the last release, or that the build carries no
-    /// section; it is served at its own route.
+    /// section; it is served at its own route and begins with the way back.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-11 (previously the title "BrowserAI changelog", the heading
+    /// "What changed in BrowserAI 1.2.0" and the navigation's Changelog link marked as this
+    /// page)</i>: the maintainer's 40 a, direction A's <i>What is new</i> page, reached from
+    /// the home's footer and the install card and begun with a way back.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ThePageNamesWhatItShowsAndIsServedAtItsOwnRoute()
@@ -118,16 +124,17 @@ internal sealed class ChangelogPageTests
         var page = await PageRig.GetAsync(rig.HandOut(PageKind.Changelog));
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-        await Assert.That(page.Body).Contains("<title>BrowserAI changelog</title>");
-        await Assert.That(page.Body).Contains("<h1>What changed in BrowserAI 1.2.0</h1>");
-        await Assert.That(page.Body).Contains("Released 2026-10-10.");
-        await Assert.That(page.Body).Contains("<a href=\"changelog?tab=1\" aria-current=\"page\">Changelog</a>");
+        await Assert.That(page.Body).Contains("<title>What is new - BrowserAI</title>");
+        await Assert.That(page.Body).Contains(DashboardTests.Crumbs(1));
+        await Assert.That(page.Body).Contains("<span aria-current=\"page\">What is new in 1.2.0</span>");
+        await Assert.That(page.Body).Contains("<h1 class=\"page-title\">What is new in BrowserAI 1.2.0</h1>");
+        await Assert.That(page.Body).Contains("<p class=\"lede\">Released 2026-10-10. Open a line to read more.</p>");
 
         using var development = new PageRig(changelog: ChangelogPageContent.SectionFor(Sample, "9.0.1-alpha.0.3"));
 
         var unreleased = await PageRig.GetAsync(development.HandOut(PageKind.Changelog));
 
-        await Assert.That(unreleased.Body).Contains("<h1>What changed since the last release</h1>");
+        await Assert.That(unreleased.Body).Contains("<h1 class=\"page-title\">What is new since the last release</h1>");
         await Assert.That(unreleased.Body).Contains("This is a development build, 9.0.0. Below is what the changelog lists as not yet released.");
         await Assert.That(unreleased.Body).Contains("Toasts with a countdown.");
 
@@ -135,6 +142,7 @@ internal sealed class ChangelogPageTests
 
         var empty = await PageRig.GetAsync(none.HandOut(PageKind.Changelog));
 
+        await Assert.That(empty.Body).Contains("<h1 class=\"page-title\">What is new</h1>");
         await Assert.That(empty.Body).Contains("This build of BrowserAI, 9.0.0, carries no changelog section for its version.");
     }
 

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrowserAI changelog</title>
+<link rel="stylesheet" href="page.css">
+</head>
+<body data-page="changelog" data-tab="1" data-unanswered="BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.">
+<nav><a href="status.html">Status</a> <a href="sessions.html">Sessions</a> <a href="update.html">Update</a> <a href="changelog.html" aria-current="page">Changelog</a></nav>
+<p id="banner" hidden></p>
+<main>
+<h1>What changed in BrowserAI 1.2.0</h1>
+<p class="muted">Released 2026-10-20.</p>
+<h2>Added</h2>
+<div class="entries">
+<details class="entry"><summary>✨ <strong>A Start Menu click opens BrowserAI's page in your own browser.</strong></summary>
+<p>The page replaces the configuration window. It lives at an address on your own machine that BrowserAI makes for each run.</p>
+</details>
+<details class="entry"><summary>✨ <strong>A downloaded update that has to wait says so in a toast that counts down to its install.</strong></summary>
+<p>The toast names what holds the update and has two buttons, Install now and Wait for inactivity.</p>
+</details>
+<details class="entry"><summary>✨ <strong><code>browserai_close</code> closes a session's browser and keeps the session.</strong></summary>
+<p>A later <code>browserai_resume</code> opens it again with its logins, cookies and tabs.</p>
+</details>
+<details class="entry"><summary>✨ <strong>A broken install is told to the person, in a toast and on every page of the dashboard.</strong></summary>
+<p>Every session is refused until BrowserAI is reinstalled, and the page says how.</p>
+</details>
+<details class="entry"><summary>✨ <strong>The dashboard and the toast name each conversation the way its client shows it.</strong></summary>
+<p>A VS Code window's tabs are listed together under the window.</p>
+</details>
+</div>
+<h2>Changed</h2>
+<div class="entries">
+<details class="entry"><summary>💥 <strong>BrowserAI is one program, <code>BrowserAI.exe</code>, and a client starts it with <code>--mcp</code>.</strong></summary>
+<p>An update rewrites the registrations that name the old file.</p>
+</details>
+<details class="entry"><summary>💥 <strong>One BrowserAI runs in the background from sign-in, and a client's start hands its calls to it.</strong></summary>
+<p>The background holds every session and ends at sign-out, at an uninstall or for an update.</p>
+</details>
+<details class="entry"><summary>🔧 <strong>The tool descriptions, the answers, the pages and the log say the same things in fewer words.</strong></summary>
+<p>The tool list a model is handed is about 2,200 characters shorter on every prompt.</p>
+</details>
+</div>
+<h2>Fixed</h2>
+<div class="entries">
+<details class="entry"><summary>🐛 <strong>A Firefox started while Shift is held no longer stalls in safe mode.</strong></summary>
+<p>Every Firefox BrowserAI starts has its safe mode key switched off.</p>
+</details>
+<details class="entry"><summary>🐛 <strong>Playwright's own registry of browsers no longer grows without end.</strong></summary>
+<p>BrowserAI asks Playwright to tidy it at every session close.</p>
+</details>
+</div>
+
+</main>
+<footer><a href="https://github.com/SixFive7/BrowserAI#readme" target="_blank" rel="noopener noreferrer">How BrowserAI works</a></footer>
+</body>
+</html>

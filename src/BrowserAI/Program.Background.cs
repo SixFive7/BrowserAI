@@ -290,10 +290,13 @@ internal static partial class Program
         verbs.StopRequested = stop.Set;
 
         // R: written once the pipe is ours and before anything can fail, so that
-        // an end without the mark the clean ends write reads as the crash it is.
+        // an end without the mark the clean ends write reads as the crash it is. The
+        // moment is the one the page says the background started at (43 b).
+        var startedAt = clock.GetUtcNow();
+
         try
         {
-            _ = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, clock.GetUtcNow());
+            _ = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, startedAt);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -355,7 +358,8 @@ internal static partial class Program
         var tool = RegisterAiTool.Beside(Environment.ProcessPath);
 
         using var page = new PageService(
-            PageOpener.FactsFor(paths),
+            // 43 b, 2026-10-11: when the background started and how, which the page says.
+            PageOpener.FactsFor(paths) with { StartedAt = startedAt, StartedHow = BackgroundStartOf(startedBy) },
 
             // The occasion the first tab is handed out on: a person's start after an
             // install, or Velopack's restart after an update, says so through the
@@ -379,6 +383,7 @@ internal static partial class Program
             backgroundLogger)
         {
             Holds = updates,
+            Folders = new BackgroundPageFolders(new SessionIndex(paths, backgroundLogger), () => host.Sessions.Held().Select(static session => session.Directory), clock),
             Changelog = ShippedChangelog.ForThisBuild(),
             Install = install,
         };
@@ -439,6 +444,23 @@ internal static partial class Program
         : installRoot is not null
             ? "BrowserAI's background has stopped, so this page has stopped. Open BrowserAI from the Start Menu to start it again."
             : "BrowserAI's background has stopped, so this page has stopped.";
+
+    /// <summary>How the background was started, as the page says it (43 b, 2026-10-11).</summary>
+    /// <remarks>
+    /// <b>The same reading as <see cref="HowStarted"/></b>, which says it in the log, so the
+    /// page and the first log line cannot disagree about one start. A start nothing named is
+    /// <see cref="BackgroundStart.Unknown"/>, which the page leaves unsaid.
+    /// </remarks>
+    /// <param name="startedBy">What <c>--started-by</c> carried, or <see langword="null"/>.</param>
+    /// <returns>The start.</returns>
+    internal static BackgroundStart BackgroundStartOf(string? startedBy) => startedBy switch
+    {
+        SignInPlaceholder => BackgroundStart.SignIn,
+        PersonStart.StartedByPerson => BackgroundStart.Person,
+        PersonStart.StartedByTheInstaller => BackgroundStart.Installer,
+        PersonStart.StartedAfterAnUpdate => BackgroundStart.AfterUpdate,
+        _ => BackgroundStart.Unknown,
+    };
 
     /// <summary>How the background was started, in words, for its first log line.</summary>
     /// <remarks>

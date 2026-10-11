@@ -5,6 +5,7 @@ using BrowserAI.App.Page;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
 using BrowserAI.Proxy;
+using BrowserAI.Updates;
 
 namespace BrowserAI.Background;
 
@@ -47,7 +48,23 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
     public const string RelayMarkerPrefix = "relay:";
 
     /// <inheritdoc />
-    public Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken)
+    public Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken) =>
+        // Named, so the page shows each conversation as the person sees it, read from the
+        // client's records now (1.2 a, 1.3 c, 2026-10-10).
+        Task.FromResult(Compose([.. roster.Named().Select(static relay => (relay.Greeting, relay.CallInFlight, (ConversationName?)relay.Reading.Name))]));
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// <b>Reads no client's records</b>, 46 a, 2026-10-11: the watch asks this once a
+    /// second while a tab is open, and a conversation's name is read when a state is drawn.
+    /// </remarks>
+    public SessionsSnapshot Peek() =>
+        Compose([.. roster.Read().Select(static relay => (relay.Greeting, relay.CallInFlight, (ConversationName?)null))]);
+
+    /// <summary>The page's snapshot from the sessions held now and the relays given.</summary>
+    /// <param name="relays">Each relay's greeting, whether a call of its client runs, and its conversation's name when it was read.</param>
+    /// <returns>The snapshot.</returns>
+    private SessionsSnapshot Compose(IReadOnlyList<(RelayGreeting Greeting, bool CallInFlight, ConversationName? Name)> relays)
     {
         var background = new ServerDescription(
             Environment.ProcessId,
@@ -61,21 +78,15 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
 
         var answered = new List<(string Marker, ServerDescription Description)> { (BackgroundMarker, background) };
 
-        // Named, so the page shows each conversation as the person sees it, read from the
-        // client's records now (1.2 a, 1.3 c, 2026-10-10).
-        var relays = roster.Named();
-
-        foreach (var relay in relays)
+        foreach (var (greeting, callInFlight, _) in relays)
         {
-            var greeting = relay.Greeting;
-
             answered.Add((RelayMarkerPrefix + greeting.Id, new ServerDescription(
                 greeting.RelayPid,
                 CreatedFileTime: 0,
                 new ClientIdentity(greeting.ClientName, Title: null, greeting.ClientVersion),
                 greeting.Folder ?? string.Empty,
                 LastToolCall: null,
-                relay.CallInFlight ? 1 : 0,
+                callInFlight ? 1 : 0,
                 [],
                 ServerDescription.Roles.Relay)));
         }
@@ -83,14 +94,19 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
         var byMarker = relays.ToDictionary(relay => RelayMarkerPrefix + relay.Greeting.Id, StringComparer.Ordinal);
         var composed = CensusPageSessions.Compose(clock.GetUtcNow(), answered, []);
 
-        return Task.FromResult(composed with
+        return composed with
         {
             Servers =
             [
                 .. composed.Servers.Select(server => byMarker.TryGetValue(server.Marker, out var relay)
-                    ? server with { Conversation = relay.Reading.Name, Window = relay.Window }
+                    ? server with
+                    {
+                        Conversation = relay.Name,
+                        Window = relay.Greeting.Window is { Length: > 0 } key ? new ClientWindow(key, relay.Greeting.Folder) : null,
+                        Reconnect = relay.Greeting.Reconnect,
+                    }
                     : server),
             ],
-        });
+        };
     }
 }

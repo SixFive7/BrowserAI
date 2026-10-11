@@ -78,6 +78,12 @@ internal static partial class ChangelogPageContent
     }
 
     /// <summary>The changelog page's main part.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-11 (previously the headings "Changelog", "What changed in BrowserAI
+    /// {version}" and "What changed since the last release", with no way back)</i>: the
+    /// maintainer's 40 a, direction A's <i>What is new</i> page, reached from the home's footer
+    /// and its install card, begun with a way back.
+    /// </remarks>
     /// <param name="view">What is true now.</param>
     /// <returns>The HTML.</returns>
     public static string Render(PageView view)
@@ -91,33 +97,30 @@ internal static partial class ChangelogPageContent
         switch (section)
         {
             case null:
-                _ = html.Append("<h1>Changelog</h1>\n<p>")
-                    .Append(PageContent.Text($"This build of BrowserAI, {installed}, carries no changelog section for its version."))
-                    .Append("</p>\n");
-                return html.ToString();
+                return html.Append(PageContent.Crumbs(view.Tab, "What is new"))
+                    .Append(PageContent.Title("What is new", $"This build of BrowserAI, {installed}, carries no changelog section for its version."))
+                    .ToString();
 
             case { Version: { } version } released:
-                _ = html.Append("<h1>").Append(PageContent.Text($"What changed in BrowserAI {version}")).Append("</h1>\n");
-
-                if (released.Date is { Length: > 0 } date)
-                {
-                    _ = html.Append("<p class=\"muted\">").Append(PageContent.Text($"Released {date}.")).Append("</p>\n");
-                }
-
+                _ = html.Append(PageContent.Crumbs(view.Tab, $"What is new in {version}"))
+                    .Append(PageContent.Title(
+                        $"What is new in BrowserAI {version}",
+                        released.Date is { Length: > 0 } date ? $"Released {date}. Open a line to read more." : "Open a line to read more."));
                 break;
 
             default:
-                _ = html.Append("<h1>").Append(PageContent.Text("What changed since the last release")).Append("</h1>\n<p>")
-                    // The texts polish, 2026-10-10, page #135 (previously "... What it has
-                    // over the last release is what the changelog lists as not yet
-                    // released.").
-                    .Append(PageContent.Text($"This is a development build, {installed}. Below is what the changelog lists as not yet released."))
-                    .Append("</p>\n");
+                // The texts polish, 2026-10-10, page #135 (previously "... What it has over
+                // the last release is what the changelog lists as not yet released.").
+                _ = html.Append(PageContent.Crumbs(view.Tab, "What is new"))
+                    .Append(PageContent.Title(
+                        "What is new since the last release",
+                        $"This is a development build, {installed}. Below is what the changelog lists as not yet released."));
                 break;
         }
 
+        _ = html.Append("<div class=\"log-group\">\n");
         AppendBody(html, section.Markdown);
-        return html.ToString();
+        return html.Append("</div>\n").ToString();
     }
 
     /// <summary>One section's Markdown, as HTML: its group headings, and each entry folded under its headline.</summary>

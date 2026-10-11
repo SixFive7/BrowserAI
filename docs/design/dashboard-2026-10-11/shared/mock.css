@@ -1,0 +1,7 @@
+/* The mockup's own control, bottom right: not part of any design. */
+.mock-control { position: fixed; right: 12px; bottom: 12px; z-index: 9999; display: flex; flex-wrap: wrap; gap: 6px 6px; align-items: center; max-width: 620px; padding: 8px 10px; border-radius: 10px; background: rgba(17, 20, 19, 0.9); color: #eef2f0; font: 12px/1.3 "Segoe UI", system-ui, sans-serif; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25); }
+.mock-control strong { margin-right: 4px; color: #fde68a; }
+.mock-control span { margin-left: 6px; opacity: 0.7; }
+.mock-control a { color: #d6e4ff; text-decoration: none; padding: 2px 7px; border-radius: 6px; }
+.mock-control a:hover { background: rgba(255, 255, 255, 0.12); }
+.mock-control a[aria-current] { background: #34d399; color: #052e22; }

@@ -329,6 +329,26 @@ internal sealed class SessionIndex
     }
 
     /// <summary>
+    /// Every folder the index names that holds a session's <c>browserai.data</c> now,
+    /// found with no store opened and no lock probed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 for the maintainer's 43 b</b>: the page shows each session
+    /// folder's size and the folders not open now, which the background finds here. It is a
+    /// read for a page and confers nothing: it asks whether the record file is there, so a
+    /// session an agent is using right now is not touched, and it removes nothing, which
+    /// <see cref="Sweep"/> alone does.
+    /// </remarks>
+    /// <returns>Each session's folder, ordered by key.</returns>
+    public IReadOnlyList<SessionPath> Present() =>
+    [
+        .. Walk(under: null, SessionIndexDepth.Presence)
+            .Where(static entry => entry.State is SessionIndexEntryState.Session)
+            .Select(static entry => entry.Session)
+            .OfType<SessionPath>(),
+    ];
+
+    /// <summary>
     /// Removes every entry that can never be followed to a session, and this
     /// store's own rename litter.
     /// </summary>
@@ -660,6 +680,21 @@ internal sealed class SessionIndex
         if (depth is SessionIndexDepth.Guard)
         {
             return AtTheGuard(file, key, pointer, session);
+        }
+
+        // 43 b, 2026-10-11: whether the record is there, and nothing else, for the page.
+        if (depth is SessionIndexDepth.Presence)
+        {
+            return File.Exists(session.DataFile)
+                ? new SessionIndexEntry
+                {
+                    Key = key,
+                    EntryFile = file,
+                    Pointer = pointer,
+                    Session = session,
+                    State = SessionIndexEntryState.Session,
+                }
+                : Absent(file, key, pointer, session);
         }
 
         try
@@ -1044,6 +1079,13 @@ internal enum SessionIndexDepth
     /// of entries a sweep may remove is unchanged.
     /// </summary>
     Guard,
+
+    /// <summary>
+    /// Ask only whether the record file is there: no store is opened and no lock is
+    /// probed. What the page's list of session folders asks, added 2026-10-11 (43 b);
+    /// the sweep never walks at this depth, so it decides nothing.
+    /// </summary>
+    Presence,
 }
 
 /// <summary>One line of the inventory, and what following it found.</summary>

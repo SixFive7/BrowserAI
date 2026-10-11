@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrowserAI</title>
+<link rel="stylesheet" href="page.css">
+</head>
+<body data-page="status" data-tab="1" data-unanswered="BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.">
+<nav><a href="status.html" aria-current="page">Status</a> <a href="sessions.html">Sessions</a> <a href="update.html">Update</a> <a href="changelog.html">Changelog</a></nav>
+<p id="banner" hidden></p>
+<main>
+<h1>BrowserAI 1.2.0</h1>
+<section id="update"><h2>Updates</h2>
+<p>BrowserAI 1.2.1 is downloaded and ready to install. It installs by itself once BrowserAI has been idle.</p>
+<p><a href="update.html">See what holds it, or install it now</a></p>
+</section>
+<section id="registration"><h2>Registration</h2>
+<p class="muted">Read at 13:41:07. <button type="button" data-action="read-registration">Read again</button>
+</p>
+<div class="client" id="client-claude-code"><h3>Claude Code</h3>
+<p>Registered for all your Claude Code projects.</p>
+<p><button type="button" data-action="register" data-client="claude-code">Register again for all my Claude Code projects</button> <span class="muted">Rewrites the entry as BrowserAI writes it, which undoes your own edits to it.</span></p>
+<p><button type="button" data-action="unregister" data-client="claude-code">Unregister from Claude Code</button> <span class="muted">Removes that entry. BrowserAI stays installed, and your sessions and browsers are untouched.</span></p>
+<p><button type="button" data-action="register-in-project" data-client="claude-code">Register in a project for Claude Code</button> <span class="muted">Writes .mcp.json in a folder you choose, to be committed with the project.</span></p>
+<p><button type="button" data-action="unregister-from-a-project" data-client="claude-code">Remove from a project for Claude Code</button> <span class="muted">Removes BrowserAI's entry from .mcp.json in a folder you choose. An entry another install wrote is left alone.</span></p>
+<p class="muted">A Claude Code that was already running when BrowserAI was installed does not find BrowserAI in a project until it is restarted.</p>
+</div>
+<div class="client" id="client-codex"><h3>Codex</h3>
+<p>Registered for all your Codex projects.</p>
+<p><button type="button" data-action="register" data-client="codex">Register again for all my Codex projects</button> <span class="muted">Rewrites the entry as BrowserAI writes it, which undoes your own edits to it.</span></p>
+<p><button type="button" data-action="unregister" data-client="codex">Unregister from Codex</button> <span class="muted">Removes that entry. BrowserAI stays installed, and your sessions and browsers are untouched.</span></p>
+<p><button type="button" data-action="register-in-project" data-client="codex">Register in a project for Codex</button> <span class="muted">Writes .codex\config.toml in a folder you choose, to be committed with the project.</span></p>
+<p><button type="button" data-action="unregister-from-a-project" data-client="codex">Remove from a project for Codex</button> <span class="muted">Removes BrowserAI's entry from .codex\config.toml in a folder you choose. An entry another install wrote is left alone.</span></p>
+<p class="muted">A Codex that was already running when BrowserAI was installed does not find BrowserAI in a project until it is restarted.</p>
+</div>
+</section>
+<section id="where"><h2>Where things are</h2>
+<ul>
+<li>Installed in <code>C:\Users\sam\AppData\Local\BrowserAI.app</code> <button type="button" data-action="open-folder" data-folder="install">Open</button>
+</li>
+<li>Browsers, the session index and logs in <code>C:\Users\sam\AppData\Local\BrowserAI</code> <button type="button" data-action="open-folder" data-folder="data">Open</button>
+</li>
+<li>Logs in <code>C:\Users\sam\AppData\Local\BrowserAI\logs</code> <button type="button" data-action="open-folder" data-folder="logs">Open</button>
+</li>
+</ul>
+<p>The server a client starts: <code>"C:\Users\sam\AppData\Local\BrowserAI.app\current\BrowserAI.exe" --mcp</code></p>
+</section>
+
+</main>
+<footer><a href="https://github.com/SixFive7/BrowserAI#readme" target="_blank" rel="noopener noreferrer">How BrowserAI works</a></footer>
+</body>
+</html>

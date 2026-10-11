@@ -295,6 +295,60 @@ internal sealed class ReleaseScriptTests
         await Assert.That(exit).IsNotEqualTo(0);
     }
 
+    /// <summary>
+    /// A PowerShell gate driver whose test pack stops with an error says that it stopped on
+    /// the test pack, with what the pack said, lets go of the installer lock it took, and
+    /// exits 1, for the ordinary gate and the release gate alike.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found 2026-10-11</b>, in a gate taken that day in a worktree whose release script
+    /// stopped at its version step: the driver's log had no abort line, and
+    /// <c>.work\installer.lock</c> still named the driver's pid after it had gone, until the
+    /// next take found that pid dead and took the lock over. A script the driver ran in its
+    /// own process with <c>&amp;</c> ended with a terminating error, which ended the driver
+    /// with it, before its own test of the exit code and outside its <c>finally</c>.
+    /// </para>
+    /// <para>
+    /// <b>A copy of the two drivers and the lock script in a scratch tree</b>, beside a
+    /// release script that does nothing but stop with an error, so the lock is the scratch
+    /// tree's own and no pack, publish or run is started.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AGateWhoseTestPackStopsWithAnErrorSaysSoAndLetsGoOfTheLock()
+    {
+        (string Driver, string Aborted)[] drivers =
+        [
+            ("Invoke-OrdinaryGate.ps1", "ORDINARY-PS-ABORTED-ON-TEST-PACK"),
+            ("Invoke-ReleaseGate.ps1", "RELEASE-PS-ABORTED-ON-TEST-PACK"),
+        ];
+
+        foreach (var (driver, aborted) in drivers)
+        {
+            using var scratch = ScratchDirectory.Create("gate-test-pack-error");
+
+            var build = Directory.CreateDirectory(Path.Combine(scratch.Path, "build")).FullName;
+
+            foreach (var name in new[] { driver, "InstallerLock.ps1" })
+            {
+                File.Copy(Path.Combine(RepositoryLayout.Root.FullName, "build", name), Path.Combine(build, name));
+            }
+
+            await File.WriteAllTextAsync(
+                Path.Combine(build, "New-Release.ps1"),
+                "$ErrorActionPreference = 'Stop'\nWrite-Host 'The planted release script starts.'\nthrow 'The planted release script stops with an error.'\n");
+
+            var (exit, _, said) = await RunAsync(Path.Combine(build, driver));
+
+            await Assert.That(said).Contains(aborted).Because(said);
+            await Assert.That(said).Contains("The planted release script stops with an error.").Because(said);
+            await Assert.That(File.Exists(Path.Combine(scratch.Path, ".work", "installer.lock"))).IsFalse().Because($"{driver} left the lock it took: {said}");
+            await Assert.That(exit).IsEqualTo(1).Because(said);
+        }
+    }
+
     /// <summary>Runs git in one directory and waits for it.</summary>
     /// <remarks>
     /// <b><see cref="GitOracle"/> is pinned to this repository's root</b>, and this clones

@@ -37,6 +37,56 @@ internal sealed record PageFacts
 
     /// <summary>Why there is no server command, when there is not.</summary>
     public required string? ServerRefusal { get; init; }
+
+    /// <summary>When the background serving the page started, or <see langword="null"/> where nothing says.</summary>
+    /// <remarks><b>Added 2026-10-11, the maintainer's 43 b</b>: one of the three facts the page may show.</remarks>
+    public DateTimeOffset? StartedAt { get; init; }
+
+    /// <summary>How the background serving the page was started.</summary>
+    /// <remarks><b>Added 2026-10-11, the maintainer's 43 b</b>, with <see cref="StartedAt"/>.</remarks>
+    public BackgroundStart StartedHow { get; init; } = BackgroundStart.Unknown;
+}
+
+/// <summary>How the background was started, as its task's <c>$(Arg0)</c> said.</summary>
+internal enum BackgroundStart
+{
+    /// <summary>Nothing said, as for a background a developer started by hand.</summary>
+    Unknown,
+
+    /// <summary>The sign-in trigger of its task.</summary>
+    SignIn,
+
+    /// <summary>A person's start: the Start Menu, a notification's button or <c>--sessions</c>.</summary>
+    Person,
+
+    /// <summary>The installer, once, after an install.</summary>
+    Installer,
+
+    /// <summary>Velopack's restart after an update.</summary>
+    AfterUpdate,
+}
+
+/// <summary>One session folder, as the last measurement found it.</summary>
+/// <param name="Id">An opaque name for it: the same digest a held session's <see cref="SessionEntry.Id"/> is.</param>
+/// <param name="Directory">The folder.</param>
+/// <param name="Bytes">What its files weigh, or <see langword="null"/> where the folder could not be read.</param>
+/// <remarks>
+/// <b>Added 2026-10-11, the maintainer's 43 b</b>: each session folder's size, and the
+/// session folders not open now. Whether a folder is open is read when the page is drawn,
+/// from the sessions the background holds then, and never stored here.
+/// </remarks>
+internal sealed record SessionFolder(string Id, string Directory, long? Bytes);
+
+/// <summary>Every session folder BrowserAI knows of and its size, measured at one moment.</summary>
+/// <param name="MeasuredAt">When the measurement finished.</param>
+/// <param name="Folders">Each folder, largest first.</param>
+internal sealed record FolderMeasure(DateTimeOffset MeasuredAt, IReadOnlyList<SessionFolder> Folders)
+{
+    /// <summary>The folder an opaque id names, or <see langword="null"/>.</summary>
+    /// <param name="id">The id the page sent.</param>
+    /// <returns>The folder.</returns>
+    public SessionFolder? ById(string id) =>
+        Folders.FirstOrDefault(folder => string.Equals(folder.Id, id, StringComparison.Ordinal));
 }
 
 /// <summary>One trace a session holds.</summary>
@@ -120,6 +170,13 @@ internal sealed record ServerEntry(
     /// <summary>The VS Code window this relay's client is a tab of, or <see langword="null"/>.</summary>
     /// <remarks><b>Added 2026-10-10</b>, the maintainer's 1.5 a: the page groups a window's tabs under it.</remarks>
     public ClientWindow? Window { get; init; }
+
+    /// <summary>What this relay's client needs once an update has ended it, as its greeting said.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11</b>: the conversations page says it of each conversation, and
+    /// tells a terminal from VS Code by it, as the update page has since 2026-10-08.
+    /// </remarks>
+    public RelayReconnect Reconnect { get; init; } = RelayReconnect.Unknown;
 }
 
 /// <summary>Everything the sessions page shows, read at one moment.</summary>
@@ -206,4 +263,23 @@ internal sealed record PageView(
     string? Registering = null,
     UpdateHoldSnapshot? Holds = null,
     ChangelogSection? Changelog = null,
-    string? InstallBroken = null);
+    string? InstallBroken = null)
+{
+    /// <summary>The tab number every link the page draws keeps.</summary>
+    public int Tab { get; init; }
+
+    /// <summary>The opaque name of the session a session page shows, or <see langword="null"/>.</summary>
+    public string? Subject { get; init; }
+
+    /// <summary>Where the updates come from and when BrowserAI last checked (43 b, 2026-10-11).</summary>
+    public UpdateWatch Updates { get; init; } = UpdateWatch.Unreported;
+
+    /// <summary>The last measurement of the session folders, or <see langword="null"/> before the first (43 b, 2026-10-11).</summary>
+    public FolderMeasure? Folders { get; init; }
+
+    /// <summary>Whether a measurement of the session folders is running now.</summary>
+    public bool Measuring { get; init; }
+
+    /// <summary>The moment the page is drawn at.</summary>
+    public DateTimeOffset Now { get; init; }
+}

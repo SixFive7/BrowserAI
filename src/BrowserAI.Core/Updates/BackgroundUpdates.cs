@@ -82,6 +82,9 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     private bool _started;
     private bool _disposed;
 
+    /// <summary>When the last check began, as this run recorded it or found it recorded (43 b).</summary>
+    private DateTimeOffset? _lastCheck;
+
     /// <summary>Builds the core. Nothing runs until <see cref="Start"/>.</summary>
     /// <param name="install">What this build is and where it was installed from.</param>
     /// <param name="source">What the background's arguments said about the update source.</param>
@@ -334,6 +337,38 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     public UpdateHoldSnapshot Read() => Read(named: true);
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <b>43 b, the maintainer's choice of 2026-10-11</b>: where the updates come from and
+    /// when BrowserAI last checked, from what this core was started with and what it keeps
+    /// in memory; a page's draw reads no file. Whether it checks follows the same reading as
+    /// <see cref="MayCheck"/>, in the same order, without its log lines.
+    /// </remarks>
+    public UpdateWatch Watch()
+    {
+        var source = _source.Source;
+        var (kind, location) = source switch
+        {
+            null => (UpdateSourceKind.None, (string?)null),
+            { IsNamed: false } => (UpdateSourceKind.GitHubReleases, null),
+            { IsFolder: true } => (UpdateSourceKind.Folder, source.Feed.BaseUrl),
+            _ => (UpdateSourceKind.Url, source.Feed.BaseUrl),
+        };
+        var checks = !_install.IsInstalled ? UpdateChecks.NotInstalled
+            : source is null ? UpdateChecks.SourceRefused
+            : BuildVersion.HasPreReleaseSuffix(_install.Version) && !source.IsFolder ? UpdateChecks.PreReleaseUrl
+            : UpdateChecks.Checking;
+
+        DateTimeOffset? last;
+
+        lock (_gate)
+        {
+            last = _lastCheck;
+        }
+
+        return new UpdateWatch(checks, kind, location, source is null ? _source.Refusal : null, checks is UpdateChecks.Checking ? last : null);
+    }
+
+    /// <inheritdoc />
     public UpdateHoldSnapshot ReadCountdown() => Read(named: false);
 
     /// <summary>What holds the update now, each relay's conversation named or left unread.</summary>
@@ -373,7 +408,11 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         foreach (var relay in named ? _relays.ConnectedWithNames() : _relays.Connected())
         {
-            relays.Add(new HoldingRelay(ClientOf(relay), relay.ProjectFolder, relay.IdleAt, relay.CallInFlight, relay.Reconnect is RelayReconnect.Unknown ? ReconnectOf(relay.ClientName) : relay.Reconnect, relay.Conversation, relay.Label, relay.Window));
+            relays.Add(new HoldingRelay(ClientOf(relay), relay.ProjectFolder, relay.IdleAt, relay.CallInFlight, relay.Reconnect is RelayReconnect.Unknown ? ReconnectOf(relay.ClientName) : relay.Reconnect, relay.Conversation, relay.Label, relay.Window)
+            {
+                ClientName = relay.ClientName,
+                ClientVersion = relay.ClientVersion,
+            });
         }
 
         return new UpdateHoldSnapshot(
@@ -530,6 +569,12 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
             return now;
         }
 
+        // An earlier run's check is the last check until this run makes one (43 b).
+        lock (_gate)
+        {
+            _lastCheck ??= last;
+        }
+
         var due = last + CheckInterval;
 
         if (due <= now)
@@ -670,6 +715,13 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// <param name="at">When the check starts.</param>
     private void RecordCheck(DateTimeOffset at)
     {
+        // What the page says as the last check (43 b), kept whether or not the record
+        // below can be written, because the check begins either way.
+        lock (_gate)
+        {
+            _lastCheck = at;
+        }
+
         try
         {
             _stamp.Write(at);

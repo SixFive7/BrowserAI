@@ -128,24 +128,36 @@ internal sealed class RegisterAiPageRegistration(IRegisterAi tool, string? image
 /// the same sentences were its notes; the restart and project hints are the
 /// client's own members, as they were there.
 /// </para>
+/// <para>
+/// <b>Every note is the page's own sentence since 2026-10-11</b>, the maintainer's 42 a:
+/// an app is set up, never registered, on the page. What the registrar concluded is in
+/// its own words, which the installer's hooks share (<c>HookRegistration</c>), so it is folded under
+/// <i>Show details</i> after a pass that did what was asked too. <i>Corrected 2026-10-11
+/// (previously the registrar's sentence was the note of a pass that did what was
+/// asked)</i>.
+/// </para>
 /// </remarks>
 internal static class RegistrationNotes
 {
-    /// <summary>The note after a register or unregister for all of a client's projects.</summary>
+    /// <summary>The note after a set-up or a removal for all of a client's projects.</summary>
     /// <param name="report">What the pass concluded.</param>
     /// <param name="who">The client.</param>
-    /// <param name="registering">Whether it was a register.</param>
+    /// <param name="registering">Whether it was a set-up.</param>
     /// <returns>The note.</returns>
     public static PageNote For(RegistrationReport report, RegistrationClient who, bool registering)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentNullException.ThrowIfNull(who);
 
+        var app = who.DisplayName;
+
         return report.Status switch
         {
-            RegistrationStatus.Registered or RegistrationStatus.Unregistered => new PageNote($"{report.Detail} {who.RestartHint}"),
-            RegistrationStatus.AlreadyRegistered or RegistrationStatus.NothingToUnregister => new PageNote(report.Detail),
-            _ => NotDone(report, who, registering ? $"BrowserAI could not register itself with {who.DisplayName}." : $"BrowserAI could not remove itself from {who.DisplayName}."),
+            RegistrationStatus.Registered => new PageNote($"BrowserAI is set up for all your {app} projects. {who.RestartHint}", report.Detail),
+            RegistrationStatus.Unregistered => new PageNote($"BrowserAI is no longer set up in {app}. {who.RestartHint}", report.Detail),
+            RegistrationStatus.AlreadyRegistered => new PageNote($"BrowserAI was already set up for all your {app} projects, so nothing changed.", report.Detail),
+            RegistrationStatus.NothingToUnregister => new PageNote($"BrowserAI was not set up in {app}, so nothing was removed.", report.Detail),
+            _ => NotDone(report, who, registering ? $"BrowserAI could not set itself up in {app}." : $"BrowserAI could not remove itself from {app}."),
         };
     }
 
@@ -167,21 +179,27 @@ internal static class RegistrationNotes
         ArgumentNullException.ThrowIfNull(report);
         ArgumentNullException.ThrowIfNull(who);
 
+        var app = who.DisplayName;
+
         return report.Status switch
         {
             RegistrationStatus.Registered => new PageNote(
-                report.Detail + (note is { Length: > 0 } said ? " " + said : string.Empty) + " " + who.ProjectHint + " " + who.RestartHint),
-            RegistrationStatus.Unregistered => new PageNote($"{report.Detail} {who.RestartHint}"),
-            RegistrationStatus.AlreadyRegistered or RegistrationStatus.NothingToUnregister => new PageNote(report.Detail),
+                $"BrowserAI is set up in that project for {app}." + (note is { Length: > 0 } said ? " " + said : string.Empty) + " " + who.ProjectHint + " " + who.RestartHint,
+                report.Detail),
+            RegistrationStatus.Unregistered => new PageNote($"BrowserAI is no longer set up in that project for {app}. {who.RestartHint}", report.Detail),
+            RegistrationStatus.AlreadyRegistered => new PageNote($"That project already sets up BrowserAI for {app}, so nothing changed.", report.Detail),
+            RegistrationStatus.NothingToUnregister => new PageNote($"That project does not set up BrowserAI for {app}, so nothing was removed.", report.Detail),
             _ => NotDone(report, who, registering
-                ? $"BrowserAI could not register itself in that project for {who.DisplayName}."
-                : $"BrowserAI could not remove itself from that project for {who.DisplayName}."),
+                ? $"BrowserAI could not set itself up in that project for {app}."
+                : $"BrowserAI could not remove itself from that project for {app}."),
         };
     }
 
+    /// <summary>The note after a pass that did not do what was asked.</summary>
+    /// <remarks><i>Corrected 2026-10-11 (previously "... was not found on this machine, ..."), the page's word for it.</i></remarks>
     private static PageNote NotDone(RegistrationReport report, RegistrationClient who, string failed) => report.Status switch
     {
-        RegistrationStatus.ClientNotFound => new PageNote($"{who.DisplayName} was not found on this machine, so nothing was changed.", report.Detail),
+        RegistrationStatus.ClientNotFound => new PageNote($"{who.DisplayName} was not found on this PC, so nothing was changed.", report.Detail),
         RegistrationStatus.Refused => new PageNote($"BrowserAI changed nothing for {who.DisplayName}.", report.Detail),
         _ => new PageNote(failed, report.Detail),
     };

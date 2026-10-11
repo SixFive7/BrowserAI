@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Globalization;
 using System.Text;
 using BrowserAI.Updates;
 
@@ -20,12 +19,11 @@ namespace BrowserAI.App.Page;
 /// the update clearly split by browsers, relays, etc..."</i>
 /// </para>
 /// <para>
-/// <b>Three lists, each with its countdown</b>: hidden browser sessions, visible
-/// windows, each marked <i>close this to let the update proceed</i>, and the agents'
-/// connections, each with the reconnect its client will need afterwards (H1-T a).
-/// Then what installing now does, and the button that does it. <i>Added 2026-10-10:</i>
-/// each connection is named by its conversation the way the person sees it called, and
-/// a VS Code window's tabs are listed together under the window (1.2 a, 1.5 a).
+/// <b>Three lists, each with its countdown</b>: windows on the person's screen, each marked
+/// <i>close this window to let the update go ahead</i>, hidden browsers, and the
+/// conversations, each with the reconnect its app will need afterwards (H1-T a). Then what
+/// installing now does, and the button that does it. <i>Redrawn 2026-10-11 as A's update page
+/// (40 a), in the mockups' words (42 a): a conversation, never an agent's connection.</i>
 /// </para>
 /// <para>
 /// <b>Every countdown is a deadline in the page</b>, <c>data-ends-at</c> in
@@ -45,21 +43,19 @@ internal static class UpdatePageContent
     /// ⚠️ <b>The last line names the version that installs, since 2026-10-10</b>, round 2
     /// of the texts review, #118 (previously "BrowserAI starts again by itself once the new
     /// version is installed."): the version waiting can be older than the one installed,
-    /// and the page says so above it (Q308 a).
+    /// and the page says so above it (Q308 a). <i>Corrected 2026-10-11 (previously "Every
+    /// browser session is closed cleanly, and each comes back where it was with
+    /// browserai_resume.", "Every visible window closes, with what is open in it.", "Every
+    /// agent's connection to BrowserAI ends. ..." and "BrowserAI starts again by itself once
+    /// {version} is installed.")</i>, the mockups' words, 42 a.
     /// </remarks>
     /// <param name="version">The version the button installs.</param>
     /// <returns>The lines.</returns>
     public static IReadOnlyList<string> InstallNowEffects(string version) =>
     [
-        "Every browser session is closed cleanly, and each comes back where it was with browserai_resume.",
-        "Every visible window closes, with what is open in it.",
-        //
-        // The texts polish, 2026-10-10, pages #119 and #120 (previously "Claude Code in a
-        // terminal needs /mcp, then BrowserAI, then Reconnect." and "BrowserAI starts again
-        // by itself once BrowserAI {version} is installed."): the steps as the same page's
-        // agent line says them, and BrowserAI named once.
-        "Every agent's connection to BrowserAI ends. Claude Code in VS Code reconnects by itself. For Claude Code in a terminal, run /mcp there, choose BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.",
-        $"BrowserAI starts again by itself once {version} is installed.",
+        "Every browser closes cleanly, windows included, with what is open in them. Each session comes back where it was when its agent resumes it.",
+        "Every conversation loses BrowserAI for a moment. Claude Code in VS Code reconnects by itself. In a terminal, run /mcp there, choose BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.",
+        $"BrowserAI starts again by itself once {version} is installed, and a notification says so.",
     ];
 
     /// <summary>
@@ -88,38 +84,38 @@ internal static class UpdatePageContent
     {
         ArgumentNullException.ThrowIfNull(view);
 
-        var html = new StringBuilder("<h1>Update</h1>\n");
-
-        PageContent.AppendNote(html, view.Note);
+        var html = new StringBuilder(PageContent.Crumbs(view.Tab, "Update"));
 
         switch (view.Holds)
         {
             case null:
+                _ = html.Append(PageContent.Title("Update", null));
+                PageContent.AppendNote(html, view.Note);
                 AppendUnread(html, view.Facts);
                 break;
 
             case { State: UpdateHoldState.Installing, Version: { } installing }:
-                _ = html.Append("<p>")
-                    .Append(PageContent.Text($"BrowserAI {installing} is installing now. This page stops when BrowserAI closes, and BrowserAI starts again by itself."))
-                    .Append("</p>\n");
+                _ = html.Append(PageContent.Title($"Update {installing} is installing", $"BrowserAI {installing} is installing now. This page stops when BrowserAI closes, and BrowserAI starts again by itself."));
+                PageContent.AppendNote(html, view.Note);
                 break;
 
             case { State: UpdateHoldState.Held, Version: { } version } holds:
-                AppendHeld(html, holds, version, view.Facts.Version, now);
+                _ = html.Append(PageContent.Title($"Update {version} is ready to install", "It installs by itself once nothing uses BrowserAI, so no agent is cut off in the middle of its work."));
+                PageContent.AppendNote(html, view.Note);
+                AppendHeld(html, view, holds, version, now);
                 break;
 
             // #71, 2026-10-10: a background that is not installed holds nothing and says
-            // so as the status page does. The installed sentence ends at what is
-            // installed: since 2026-10-08 the status page checks for nothing itself, and
-            // whether the background checks is not something a snapshot says.
+            // so as the home does.
             case { } when view.Facts.InstallRoot is null:
-                _ = html.Append("<p>").Append(PageContent.Text(PageContent.NotInstalledSentence)).Append("</p>\n");
+                _ = html.Append(PageContent.Title("Update", PageContent.NotInstalledSentence));
+                PageContent.AppendNote(html, view.Note);
                 break;
 
             default:
-                _ = html.Append("<p>")
-                    .Append(PageContent.Text($"No downloaded update is waiting. BrowserAI {view.Facts.Version} is installed."))
-                    .Append("</p>\n");
+                _ = html.Append(PageContent.Title("No update is waiting", $"BrowserAI {view.Facts.Version} is installed. {CheckedSentence(view.Updates, now)}".TrimEnd()));
+                PageContent.AppendNote(html, view.Note);
+                _ = html.Append(PageContent.Empty("checkCircle", "Nothing is waiting", "When an update waits, this page shows what is still using BrowserAI, with a countdown for each, and a button to install it now."));
                 break;
         }
 
@@ -159,61 +155,15 @@ internal static class UpdatePageContent
         return text.ToString();
     }
 
-    /// <summary>The reconnect a client will need, said to a person.</summary>
-    /// <param name="reconnect">What the client needs.</param>
-    /// <returns>The sentence.</returns>
-    public static string ReconnectSentence(RelayReconnect reconnect) => reconnect switch
-    {
-        RelayReconnect.None => "After the update it reconnects by itself.",
-        RelayReconnect.McpReconnect => "After the update, run /mcp in that terminal, choose BrowserAI, then Reconnect.",
-        RelayReconnect.NewConversation => "After the update, BrowserAI is back only in a new conversation.",
-        _ => "After the update it may need BrowserAI reconnected: BrowserAI cannot tell whether this client reconnects by itself.",
-    };
-
-    /// <summary>The first sentence about a downloaded update that waits, the same on the status page and on this one.</summary>
-    /// <param name="version">The version waiting.</param>
-    /// <returns>The sentence.</returns>
-    public static string HeldSentence(string version) =>
-        $"BrowserAI {version} is downloaded and ready to install. It installs by itself once BrowserAI has been idle.";
-
-    /// <summary>
-    /// The status page's update section where the page checks for nothing itself and
-    /// the background reports what holds an update: what waits, and the way to this page.
-    /// </summary>
+    /// <summary>The reconnect an app will need, said to a person.</summary>
     /// <remarks>
-    /// The background builds its page with no feed of its own since 2026-10-08, and the
-    /// page's own check is deleted (2026-10-10, the maintainer's "9 a"). The section says
-    /// what the background holds; it claims nothing about checks, which a snapshot does
-    /// not carry.
+    /// <i>Corrected 2026-10-11 (previously "... BrowserAI cannot tell whether this client
+    /// reconnects by itself.")</i>, 42 a: an app, never a client; the page's one wording is
+    /// <see cref="PageWords.Reconnect"/>.
     /// </remarks>
-    /// <param name="html">Where to write.</param>
-    /// <param name="holds">What the background reports.</param>
-    /// <param name="installed">The version installed now, which an older one is said to be older than.</param>
-    /// <param name="tab">The tab the link keeps.</param>
-    internal static void AppendStatusSection(StringBuilder html, UpdateHoldSnapshot holds, string installed, int tab)
-    {
-        ArgumentNullException.ThrowIfNull(html);
-        ArgumentNullException.ThrowIfNull(holds);
-        ArgumentNullException.ThrowIfNull(installed);
-
-        _ = holds switch
-        {
-            { State: UpdateHoldState.Held, Version: { } version } => AppendOlder(html.Append("<p>").Append(PageContent.Text(HeldSentence(version))).Append("</p>\n"), holds, installed)
-                .Append("<p><a href=\"").Append(PageNames.RouteOf(PageKind.Update)).Append("?tab=").Append(tab.ToString(CultureInfo.InvariantCulture))
-                .Append("\">See what holds it, or install it now</a></p>\n"),
-            { State: UpdateHoldState.Installing, Version: { } installing } => html.Append("<p>").Append(PageContent.Text($"BrowserAI {installing} is installing now.")).Append("</p>\n"),
-            _ => html.Append("<p>No downloaded update is waiting.</p>\n"),
-        };
-    }
-
-    /// <summary>Whether BrowserAI's own words for a conversation already name its folder.</summary>
-    /// <param name="label">What the conversation is called, or <see langword="null"/>.</param>
-    /// <param name="folder">The relay's folder.</param>
-    /// <returns><see langword="true"/> for a label that is not a title and ends with the folder's name.</returns>
-    internal static bool NamesTheFolder(ConversationName? label, string folder) =>
-        label is { IsTitle: false } words
-        && ClientFolder.NameOf(folder) is { } name
-        && words.Text.EndsWith($" in {name}", StringComparison.Ordinal);
+    /// <param name="reconnect">What the app needs.</param>
+    /// <returns>The sentence.</returns>
+    public static string ReconnectSentence(RelayReconnect reconnect) => PageWords.Reconnect(reconnect);
 
     /// <summary>What the page says of a version older than the one installed, Q308 a.</summary>
     /// <param name="installed">The version installed now.</param>
@@ -221,170 +171,188 @@ internal static class UpdatePageContent
     public static string OlderSentence(string installed) =>
         $"It is older than the installed {installed}. Installing it goes back to the earlier version.";
 
-    /// <summary>
-    /// Says that the version waiting is older than the one installed, where it is: Q308 a,
-    /// the maintainer's words of 2026-10-03 verbatim, <i>"Q308 a"</i>, built again
-    /// 2026-10-10 from what the update core reads.
-    /// </summary>
-    /// <param name="html">Where to write.</param>
-    /// <param name="holds">What the background reports.</param>
-    /// <param name="installed">The version installed now.</param>
-    /// <returns>The builder, for the next append.</returns>
-    private static StringBuilder AppendOlder(StringBuilder html, UpdateHoldSnapshot holds, string installed) =>
-        holds.Older ? html.Append("<p class=\"warning\">").Append(PageContent.Text(OlderSentence(installed))).Append("</p>\n") : html;
+    /// <summary>How the wait for a held update stands, in one sentence, as the home's card says it.</summary>
+    /// <param name="wait">How the wait stands.</param>
+    /// <param name="now">The moment the page is drawn at.</param>
+    /// <returns>The HTML.</returns>
+    public static string WaitSentence(UpdateWaitReading wait, DateTimeOffset now) => wait switch
+    {
+        { Wait: UpdateWait.Counting, Ends: { } ends } =>
+            "It installs by itself in " + PageContent.Countdown(ends, now) + ", at about " + PageContent.Text(PageWords.Clock(ends)) + ", if nothing uses BrowserAI before then.",
+        { Wait: UpdateWait.WindowNeverCloses } => PageContent.Text("A window set never to close by itself holds it. It installs once you close that window and nothing else uses BrowserAI."),
+        { Wait: UpdateWait.SessionNeverCloses } => PageContent.Text("A hidden browser set never to close by itself holds it. It installs once an agent closes that session and nothing else uses BrowserAI."),
+        { Wait: UpdateWait.CallRunning } => PageContent.Text("Every countdown has run out, and a call is still running: it installs once that call has finished."),
+        { Wait: UpdateWait.Closing } => PageContent.Text("Every countdown has run out: it installs once the last browser has closed."),
+        _ => PageContent.Text("Nothing uses BrowserAI now: it installs in a moment."),
+    };
 
-    private static void AppendHeld(StringBuilder html, UpdateHoldSnapshot holds, string version, string installed, DateTimeOffset now)
+    /// <summary>When BrowserAI last checked for an update, or why it does not, as one sentence.</summary>
+    /// <remarks><b>43 b, the second of the three facts</b>, which the update core reports.</remarks>
+    /// <param name="watch">What the update core reports.</param>
+    /// <param name="now">The moment the page is drawn at.</param>
+    /// <returns>The sentence, or nothing where the core reported nothing.</returns>
+    public static string CheckedSentence(UpdateWatch watch, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+
+        return watch.Checks switch
+        {
+            UpdateChecks.Checking => watch.LastCheck is { } at
+                ? $"BrowserAI last checked {PageWords.CheckedWhere(watch)} at {PageWords.When(at, now)}."
+                : $"BrowserAI has not checked {PageWords.CheckedWhere(watch)} yet.",
+            UpdateChecks.NotInstalled => "This BrowserAI is not installed, so it does not check for updates.",
+            UpdateChecks.SourceRefused => "BrowserAI does not check for updates, because the update source its install named was refused.",
+            UpdateChecks.PreReleaseUrl => "This development build does not check for updates, because its install named a web address and it checks only a folder.",
+            _ => string.Empty,
+        };
+    }
+
+    /// <summary>Where the updates come from, as a value beside <i>Updates</i> says it.</summary>
+    /// <param name="watch">What the update core reports.</param>
+    /// <param name="facts">What does not change.</param>
+    /// <returns>The words.</returns>
+    public static string SourceWords(UpdateWatch watch, PageFacts facts)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        ArgumentNullException.ThrowIfNull(facts);
+
+        return watch.Checks switch
+        {
+            UpdateChecks.Checking => PageWords.SourceOf(watch) is { } source ? "from " + source : "from its update source",
+            UpdateChecks.NotInstalled => "none, because this BrowserAI is not installed",
+            UpdateChecks.SourceRefused => "none, because the update source its install named was refused",
+            UpdateChecks.PreReleaseUrl => "none, because a development build checks only a folder",
+            _ => facts.InstallRoot is null ? "none, because this BrowserAI is not installed" : "not reported",
+        };
+    }
+
+    /// <summary>A held update: the countdown, what holds it in three lists, and what installing now does.</summary>
+    private static void AppendHeld(StringBuilder html, PageView view, UpdateHoldSnapshot holds, string version, DateTimeOffset now)
     {
         var wait = holds.WaitAt(now);
 
-        _ = AppendOlder(html.Append("<p>").Append(PageContent.Text(HeldSentence(version))).Append("</p>\n"), holds, installed)
-            .Append("<p class=\"wait\">");
-
-        _ = wait switch
+        if (holds.Older)
         {
-            { Wait: UpdateWait.Counting, Ends: { } ends } => html.Append("It installs in ").Append(Countdown(ends, now))
-                .Append(", at about ").Append(PageContent.Text(ends.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)))
-                .Append(", if nothing uses BrowserAI before then."),
-            { Wait: UpdateWait.WindowNeverCloses } => html.Append(PageContent.Text("A visible window set never to close holds it: it installs once you close that window and nothing else uses BrowserAI.")),
-            // The texts polish, 2026-10-10, page #101 (previously "A hidden session set
-            // never to close"): the section's own words, "Hidden browser sessions".
-            { Wait: UpdateWait.SessionNeverCloses } => html.Append(PageContent.Text("A hidden browser session set never to close holds it: it installs once an agent closes that session and nothing else uses BrowserAI.")),
-            { Wait: UpdateWait.CallRunning } => html.Append(PageContent.Text("Every countdown has run out, and a call is still running: it installs once that call has finished.")),
-            { Wait: UpdateWait.Closing } => html.Append(PageContent.Text("Every countdown has run out: it installs once the last browser has closed.")),
-            _ => html.Append(PageContent.Text("Nothing uses BrowserAI now: it installs in a moment.")),
+            _ = html.Append("<p class=\"warning\">").Append(PageContent.Text(OlderSentence(view.Facts.Version))).Append("</p>\n");
+        }
+
+        var (clock, title, detail) = wait switch
+        {
+            { Wait: UpdateWait.Counting, Ends: { } ends } => (
+                PageContent.Countdown(ends, now),
+                "Installs by itself at about " + PageWords.Clock(ends),
+                "if nothing below is used before then. Each countdown starts again when it is used."),
+            { Wait: UpdateWait.WindowNeverCloses } => (PageIcons.Of("window"), "Waiting for a window", "A window set never to close by itself holds the update. It installs once you close that window and nothing else uses BrowserAI."),
+            { Wait: UpdateWait.SessionNeverCloses } => (PageIcons.Of("hidden"), "Waiting for a session", "A hidden browser set never to close by itself holds the update. It installs once an agent closes that session and nothing else uses BrowserAI."),
+            { Wait: UpdateWait.CallRunning } => (PageIcons.Of("clock"), "Waiting for a call", "Every countdown has run out, and a call is still running: it installs once that call has finished."),
+            { Wait: UpdateWait.Closing } => (PageIcons.Of("clock"), "Closing the last browser", "Every countdown has run out: it installs once the last browser has closed."),
+            _ => (PageIcons.Of("clock"), "Installing in a moment", "Nothing uses BrowserAI now: it installs in a moment."),
         };
 
-        _ = html.Append("</p>\n");
+        _ = html.Append("<div class=\"card hero\" id=\"hero\"><div class=\"clock\">").Append(clock).Append("</div>")
+            .Append("<div class=\"hero-text\"><p><b>").Append(PageContent.Text(title)).Append("</b></p><p class=\"small\">").Append(PageContent.Text(detail)).Append("</p></div>")
+            .Append("<div class=\"hero-act\">").Append(InstallButton("b-install-now-top", version))
+            .Append("<span class=\"small\">Closes every browser and ends every connection. Below is what that means.</span></div></div>\n")
+            .Append("<div class=\"grid\">\n");
 
-        AppendSessions(html, "hidden", "Hidden browser sessions", "No hidden browser session is open.", holds.HiddenSessions, now, visible: false);
-        AppendSessions(html, "windows", "Visible windows", "No visible window is open.", holds.VisibleWindows, now, visible: true);
-        AppendRelays(html, holds.Relays, now);
+        AppendSessions(html, "windows", "window", "Windows on your screen", "Each one closes by itself after its idle time, if nobody uses it.", "No window is open.", holds.VisibleWindows, now, visible: true);
+        AppendSessions(html, "hidden", "hidden", "Hidden browsers", "Each one closes by itself after its idle time, if no call uses it.", "No hidden browser is open.", holds.HiddenSessions, now, visible: false);
+        AppendConversations(html, holds.Relays, now);
 
-        _ = html.Append("<section id=\"install-now\"><h2>Install now</h2>\n<p>")
-            .Append(PageContent.Text("Installing now does not wait for any of the above:")).Append("</p>\n<ul>\n");
+        _ = html.Append("<section id=\"install-now\" class=\"card span-12\">").Append(PageContent.CardHead("bolt", "If you install it now"))
+            .Append("<p>").Append(PageContent.Text("Installing now does not wait for any of the above:")).Append("</p>\n<ul class=\"effects\">\n");
 
         foreach (var effect in InstallNowEffects(version))
         {
             _ = html.Append("<li>").Append(PageContent.Text(effect)).Append("</li>\n");
         }
 
-        _ = html.Append("</ul>\n<p><button type=\"button\" data-action=\"install-now\" data-version=\"").Append(PageContent.Text(version))
-            .Append("\">").Append(PageContent.Text($"Install BrowserAI {version} now")).Append("</button></p>\n</section>\n");
+        _ = html.Append("</ul>\n<p>").Append(InstallButton("b-install-now-bottom", version)).Append("</p>\n</section>\n</div>\n");
     }
 
-    private static void AppendSessions(StringBuilder html, string id, string heading, string none, IReadOnlyList<HoldingSession> sessions, DateTimeOffset now, bool visible)
+    private static string InstallButton(string id, string version) =>
+        PageContent.Button(id, "install-now", $"Install BrowserAI {version} now", "btn danger", null, ("version", version));
+
+    private static void AppendSessions(StringBuilder html, string id, string icon, string heading, string caption, string none, IReadOnlyList<HoldingSession> sessions, DateTimeOffset now, bool visible)
     {
-        _ = html.Append("<section id=\"").Append(id).Append("\"><h2>").Append(PageContent.Text(heading)).Append("</h2>\n");
+        _ = html.Append("<section id=\"").Append(id).Append("\" class=\"card span-4\">").Append(PageContent.CardHead(icon, heading))
+            .Append("<p class=\"caption\">").Append(PageContent.Text(caption)).Append("</p>\n");
 
         if (sessions.Count is 0)
         {
-            _ = html.Append("<p class=\"muted\">").Append(PageContent.Text(none)).Append("</p>\n</section>\n");
+            _ = html.Append("<p class=\"small\">").Append(PageContent.Text(none)).Append("</p>\n</section>\n");
             return;
         }
 
-        _ = html.Append("<ul class=\"holders\">\n");
+        _ = html.Append("<div class=\"hold-list\">\n");
 
         foreach (var session in sessions)
         {
-            _ = html.Append("<li><strong>").Append(PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded"))
-                .Append("</strong><br><code>").Append(PageContent.Text(session.Directory)).Append("</code><br>");
+            var side = session.ClosesAt is { } closes
+                ? closes > now ? "<span class=\"chip " + (visible ? "window" : "hidden") + "\">" + PageContent.Countdown(closes, now) + "</span>" : "<span class=\"chip\">Closing now</span>"
+                : "<span class=\"chip " + (visible ? "window" : "hidden") + "\">Never closes</span>";
 
-            if (visible)
-            {
-                _ = html.Append("<span class=\"warning\">Close this to let the update proceed.</span> ");
-            }
-
-            _ = session.ClosesAt is { } closes
-                ? closes > now
-                    ? html.Append(visible ? "Closes by itself in " : "Closes in ").Append(Countdown(closes, now)).Append(visible ? " if no call names it and nobody types or clicks in it." : " if no call names it.")
-                    : html.Append("Closing now.")
-                : html.Append(PageContent.Text(visible ? "Set never to close by itself." : "Set never to close: an agent has to close it."));
-
-            _ = html.Append("</li>\n");
+            _ = html.Append("<div class=\"hold-item\"><span class=\"sess-ic ").Append(visible ? "w" : "h").Append("\">").Append(PageIcons.Of(icon)).Append("</span><div>")
+                .Append("<b>").Append(PageContent.Text(PageWords.NameOf(session.Directory))).Append("</b>")
+                .Append("<p class=\"sub\">").Append(PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded")).Append("</p>")
+                .Append("<p class=\"sub\">").Append(PageContent.Text(visible
+                    ? session.ClosesAt is null ? "Set never to close by itself. Close this window to let the update go ahead." : "Close this window to let the update go ahead, or it closes by itself if nobody types, clicks or calls in it."
+                    : session.ClosesAt is null ? "Set never to close: an agent has to close it." : "Closes by itself if no call names it."))
+                .Append("</p></div>").Append(side).Append("</div>\n");
         }
 
-        _ = html.Append("</ul>\n</section>\n");
+        _ = html.Append("</div>\n</section>\n");
     }
 
-    private static void AppendRelays(StringBuilder html, IReadOnlyList<HoldingRelay> relays, DateTimeOffset now)
+    private static void AppendConversations(StringBuilder html, IReadOnlyList<HoldingRelay> relays, DateTimeOffset now)
     {
-        _ = html.Append("<section id=\"agents\"><h2>Agents</h2>\n");
+        _ = html.Append("<section id=\"conversations\" class=\"card span-4\">").Append(PageContent.CardHead("chat", "Conversations"))
+            .Append("<p class=\"caption\">").Append(PageContent.Text("Each holds the update for ten minutes after its app last sent BrowserAI anything but a ping. Every conversation loses BrowserAI when the update installs, whether it holds the update or not.")).Append("</p>\n");
 
         if (relays.Count is 0)
         {
-            _ = html.Append("<p class=\"muted\">No agent is connected to BrowserAI.</p>\n</section>\n");
+            _ = html.Append("<p class=\"small\">No conversation is connected.</p>\n</section>\n");
             return;
         }
 
-        _ = html.Append("<p>").Append(PageContent.Text("An agent holds the update for ten minutes after its client last sent BrowserAI anything but a ping. Every connection ends when the update installs, whether it holds the update or not."))
-            .Append("</p>\n<ul class=\"holders\">\n");
+        _ = html.Append("<div class=\"hold-list\">\n");
 
         // 1.5 a, 2026-10-10: a VS Code window's tabs are listed together, under the
         // window, where the first of them would stand.
         foreach (var (window, members) in PageContent.ByWindow(relays, relay => relay.Window))
         {
-            if (window is null)
+            if (window is not null)
             {
-                AppendRelay(html, members[0], now);
-                continue;
+                _ = html.Append("<p class=\"group-label\">").Append(PageIcons.Of("code")).Append(PageContent.Text(window.Label())).Append("</p>\n");
             }
-
-            _ = html.Append("<li class=\"window\"><p><strong>").Append(PageContent.Text(window.Label())).Append("</strong></p>\n<ul class=\"holders\">\n");
 
             foreach (var relay in members)
             {
-                AppendRelay(html, relay, now);
+                AppendConversation(html, relay, now);
             }
-
-            _ = html.Append("</ul></li>\n");
         }
 
-        _ = html.Append("</ul>\n</section>\n");
+        _ = html.Append("</div>\n</section>\n");
     }
 
-    private static void AppendRelay(StringBuilder html, HoldingRelay relay, DateTimeOffset now)
+    private static void AppendConversation(StringBuilder html, HoldingRelay relay, DateTimeOffset now)
     {
-        _ = html.Append("<li>");
+        // The app as the page names it (42 a), from the client's own name, which the update
+        // core passes beside the protocol's words it keeps for its log and the toast.
+        var app = PageWords.AppWithVersion(relay.ClientName, relay.ClientVersion);
+        var name = relay.Label?.Shown() ?? PageWords.ConversationOf(null, relay.ClientName, relay.ProjectFolder);
+        var side = relay.CallInFlight
+            ? "<span class=\"chip live\"><span class=\"pulse\" aria-hidden=\"true\"></span>Working</span>"
+            : relay.IdleAt > now ? "<span class=\"chip\">" + PageContent.Countdown(relay.IdleAt, now) + "</span>" : "<span class=\"chip\">Idle</span>";
+        var holding = relay.CallInFlight ? "A call is running now, so it holds the update."
+            : relay.IdleAt > now ? "Holds the update until its countdown runs out, if its app sends nothing but pings."
+            : "Idle: it no longer holds the update.";
 
-        // 1.2 a, 2026-10-10: the conversation first, as the person sees it called, and
-        // its client after it.
-        if (relay.Label is { } label)
-        {
-            _ = html.Append("<strong>").Append(PageContent.Text(label.Shown())).Append("</strong>, ").Append(PageContent.Text(relay.Client));
-        }
-        else
-        {
-            _ = html.Append("<strong>").Append(PageContent.Text(relay.Client)).Append("</strong>");
-        }
-
-        // ⚠️ THE FOLDER ONCE, round 2 of the texts review, 2026-10-10, #110 (previously the
-        // whole path after every label): BrowserAI's own words for a conversation it could
-        // not name carry the folder's name already, "Claude Code in BrowserAI", so the path
-        // after them said the folder twice. A title, which names no folder, keeps it.
-        //
-        // And a relay with no folder is a guard, which no page meets: every relay of this
-        // build sends its working directory in its greeting (RelayFacts.Folder), and the
-        // background serves a relay of its own build alone. The greeting's folder is read
-        // from the wire as optional, so the page does not assume one.
-        if (relay.ProjectFolder is { Length: > 0 } folder && !NamesTheFolder(relay.Label, folder))
-        {
-            _ = html.Append(" in <code>").Append(PageContent.Text(folder)).Append("</code>");
-        }
-
-        _ = html.Append("<br>");
-
-        _ = relay.CallInFlight
-            ? html.Append("A call is running now, so it holds the update.")
-            : relay.IdleAt > now
-                ? html.Append("Holds the update for ").Append(Countdown(relay.IdleAt, now)).Append(" more if its client sends nothing but pings.")
-                : html.Append("Idle: it no longer holds the update.");
-
-        _ = html.Append("<br>").Append(relay.Reconnect is RelayReconnect.None
-            ? PageContent.Text(ReconnectSentence(relay.Reconnect))
-            : "<span class=\"warning\">" + PageContent.Text(ReconnectSentence(relay.Reconnect)) + "</span>").Append("</li>\n");
+        _ = html.Append("<div class=\"hold-item\"><span class=\"sess-ic\">").Append(PageIcons.Of(relay.Window is not null ? "code" : relay.Reconnect is RelayReconnect.McpReconnect ? "terminal" : "chat")).Append("</span><div>")
+            .Append("<b>").Append(PageContent.Text(name)).Append("</b>")
+            .Append("<p class=\"sub\">").Append(PageContent.Text(app)).Append("</p>")
+            .Append("<p class=\"sub\">").Append(PageContent.Text(holding)).Append("</p>")
+            .Append("<p class=\"sub").Append(relay.Reconnect is RelayReconnect.None ? string.Empty : " warning").Append("\">").Append(PageContent.Text(ReconnectSentence(relay.Reconnect))).Append("</p>")
+            .Append("</div>").Append(side).Append("</div>\n");
     }
-
-    /// <summary>A countdown the page's script keeps live: the deadline in the element, the time left as its text.</summary>
-    private static string Countdown(DateTimeOffset ends, DateTimeOffset now) =>
-        string.Create(CultureInfo.InvariantCulture, $"<span class=\"countdown\" data-ends-at=\"{ends.ToUnixTimeMilliseconds()}\">{UpdateToastContent.Remaining(ends - now)}</span>");
 }
