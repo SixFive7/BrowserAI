@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using BrowserAI.TestProbe;
 using Microsoft.Win32.SafeHandles;
 
 namespace BrowserAI.Tests.Harness;
@@ -48,13 +49,17 @@ internal static partial class ParentProcess
     {
         using var process = OpenProcess(ProcessQueryLimitedInformation, inheritHandle: false, (uint)processId);
 
-        if (process.IsInvalid)
-        {
-            throw new Win32Exception(
-                Marshal.GetLastPInvokeError(),
-                $"Could not open process {processId.ToString(System.Globalization.CultureInfo.InvariantCulture)} to read its parent.");
-        }
+        return process.IsInvalid
+            ? throw CouldNotOpen(processId, Marshal.GetLastPInvokeError())
+            : ParentOf(process, processId);
+    }
 
+    /// <summary>The parent of an opened process, read from the kernel.</summary>
+    /// <param name="process">The process, opened for <c>PROCESS_QUERY_LIMITED_INFORMATION</c>.</param>
+    /// <param name="processId">Its id, for the message.</param>
+    /// <returns>The parent's process id.</returns>
+    private static int ParentOf(SafeProcessHandle process, int processId)
+    {
         var status = NtQueryInformationProcess(
             process,
             ProcessBasicInformationClass,
@@ -77,19 +82,47 @@ internal static partial class ParentProcess
     /// once no live process holds that id.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Added 2026-10-11</b> for a reading across the whole machine, whose processes
     /// can exit between the listing that found them and this read:
     /// <c>FirefoxTests.ThePreflightRefusesAHeldProfileBeforeAnyFirefoxOrWindowExists</c>
     /// went red in the first PowerShell run of the release gate at <c>1a0c0cf9</c> on
     /// <i>"Could not open process 98796 to read its parent."</i>, from <see cref="IdOf"/>.
+    /// </para>
+    /// <para>
+    /// <b>Gone is what the walk of a job already calls exited</b>,
+    /// <c>ProcessQueryVerdict.ForFailedOpen</c>: <c>ERROR_INVALID_PARAMETER</c>, which a pid
+    /// no process holds produces, and <c>ERROR_ACCESS_DENIED</c>, which over a same-user
+    /// process that is not protected means the pid was recycled by one this cannot open.
+    /// Any other failure still throws.
+    /// </para>
     /// </remarks>
     /// <param name="processId">A process id from a listing, whose process may have gone since.</param>
     /// <returns>The parent's process id, or <see langword="null"/> for a process that has gone.</returns>
     /// <exception cref="Win32Exception">The process could not be opened for another reason.</exception>
     /// <exception cref="InvalidOperationException">The query failed.</exception>
-    public static int? IdOfUnlessGone(int processId) =>
-        // Nothing behind it in this commit: the arm that holds it is watched red first.
-        IdOf(processId);
+    public static int? IdOfUnlessGone(int processId)
+    {
+        using var process = OpenProcess(ProcessQueryLimitedInformation, inheritHandle: false, (uint)processId);
+
+        if (!process.IsInvalid)
+        {
+            return ParentOf(process, processId);
+        }
+
+        var error = Marshal.GetLastPInvokeError();
+
+        return ProcessQueryVerdict.ForFailedOpen(error) is ProcessQueryVerdict.Verdict.Exited
+            ? null
+            : throw CouldNotOpen(processId, error);
+    }
+
+    /// <summary>The failure of an open, in the words <see cref="IdOf"/> has always used.</summary>
+    /// <param name="processId">The process.</param>
+    /// <param name="error">The Win32 error the open left behind.</param>
+    /// <returns>The exception.</returns>
+    private static Win32Exception CouldNotOpen(int processId, int error) =>
+        new(error, $"Could not open process {processId.ToString(System.Globalization.CultureInfo.InvariantCulture)} to read its parent.");
 
     /// <summary>
     /// The image name of the process that started <paramref name="processId"/>,

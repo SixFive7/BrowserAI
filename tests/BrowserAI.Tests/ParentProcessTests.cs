@@ -62,7 +62,6 @@ internal sealed class ParentProcessTests
             await Task.Delay(25);
         }
 
-        // Today this throws that Win32Exception, from IdOf.
         await Assert.That(ParentProcess.IdOfUnlessGone(gonePid)).IsNull()
             .Because("a process that has exited and been let go of has no parent left to read");
 

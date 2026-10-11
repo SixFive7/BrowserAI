@@ -101,6 +101,17 @@ internal sealed class FirefoxTests
     /// The preflight refuses a held profile, immediately, with no Firefox
     /// process and no window anywhere.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A Firefox that is gone before its parent can be read counts as not the
+    /// preflight's.</b> <i>Corrected 2026-10-11 (previously each machine-wide reading read
+    /// every parent with <see cref="ParentProcess.IdOf"/>, which takes a live process)</i>:
+    /// in the first PowerShell run of the release gate at <c>1a0c0cf9</c> a Firefox another
+    /// arm had started exited between the listing and the read, and this arm went red on
+    /// <i>"Could not open process 98796 to read its parent."</i> The two readings use
+    /// <see cref="ParentProcess.IdOfUnlessGone"/> since then. <b>What that weakens, plainly:</b>
+    /// a Firefox that escaped this arm's job and exited inside that window is not seen by
+    /// either reading. The job's own reading still sees everything this arm started.
+    /// </remarks>
     [Test]
     public async Task ThePreflightRefusesAHeldProfileBeforeAnyFirefoxOrWindowExists()
     {
@@ -253,7 +264,7 @@ internal sealed class FirefoxTests
         // and a number names nothing.
         var appeared = OurFirefoxProcesses()
             .Where(process => !firefoxBefore.Contains(process.ProcessId))
-            .Where(process => ParentProcess.IdOf(process.ProcessId) == Environment.ProcessId)
+            .Where(process => ParentProcess.IdOfUnlessGone(process.ProcessId) == Environment.ProcessId)
             .Select(process => $"{process.ProcessId.ToString(CultureInfo.InvariantCulture)} {process.ImagePath}")
             .ToList();
 
@@ -267,7 +278,7 @@ internal sealed class FirefoxTests
         // reintroduce the same Chromium race the reading above just lost, and
         // leaving them unscoped by parent would reintroduce the Firefox half.
         var ours = OurFirefoxProcesses()
-            .Where(process => ParentProcess.IdOf(process.ProcessId) == Environment.ProcessId)
+            .Where(process => ParentProcess.IdOfUnlessGone(process.ProcessId) == Environment.ProcessId)
             .Select(process => process.ProcessId)
             .ToHashSet();
 
