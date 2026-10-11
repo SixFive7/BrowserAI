@@ -51,7 +51,7 @@ internal sealed record RelayState(
 
     /// <summary>
     /// Which conversation of its client the relay serves, or <see langword="null"/>:
-    /// read from the client's own records by <see cref="IUpdateRelays.ConnectedWithNames"/>,
+    /// read from the client's own records by <see cref="IUpdateRelays.ConnectedWithNamesAsync"/>,
     /// and never by <see cref="IUpdateRelays.Connected"/>.
     /// </summary>
     /// <remarks>
@@ -111,7 +111,7 @@ internal interface IUpdateRelays
     /// <remarks>
     /// <para>
     /// <b>1.3 c, decided 2026-10-10</b>: the files are read when the dashboard or a
-    /// toast is drawn, which is what <see cref="IUpdateHoldsReader.Read"/> serves, and never
+    /// toast is drawn, which is what <see cref="IUpdateHoldsReader.ReadAsync"/> serves, and never
     /// held open. So the core's own decisions read <see cref="Connected"/>, which reads
     /// no file, and only the snapshot a reader draws reads this.
     /// </para>
@@ -121,7 +121,12 @@ internal interface IUpdateRelays
     /// </para>
     /// </remarks>
     /// <returns>The relays, in any order.</returns>
-    IReadOnlyList<RelayState> ConnectedWithNames() => Connected();
+    /// <remarks>
+    /// <b>Asynchronous since 2026-10-11</b>, the maintainer's decision 63: the names are
+    /// read from the clients' files with asynchronous reads. <i>Previously
+    /// <c>ConnectedWithNames</c>.</i>
+    /// </remarks>
+    Task<IReadOnlyList<RelayState>> ConnectedWithNamesAsync() => Task.FromResult(Connected());
 
     /// <summary>
     /// Asks one relay <i>ready to end?</i> for an update to <paramref name="version"/>.

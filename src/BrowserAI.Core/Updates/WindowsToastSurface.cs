@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Collections.Concurrent;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -15,11 +14,20 @@ namespace BrowserAI.Updates;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Every call runs on one thread of its own, in the multi-threaded
-/// apartment</b>, joined once when the thread starts: the background calls in from
-/// its own threads and from a timer, and the toast objects are created and used on
-/// a thread whose apartment this type chose. Calls are queued in order, which keeps
-/// the sequence numbers in the order they were given.
+/// <b>Every call runs on a thread of its own, in the multi-threaded apartment</b>,
+/// which joins the apartment for the one call and leaves it after, and the caller awaits
+/// it: Windows' notification calls are synchronous calls into the notification platform
+/// with no asynchronous form, so a call that hangs holds that thread and never a pool
+/// worker. Calls take their turn in order, which keeps the sequence numbers in the order
+/// they were given.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-10-11 (previously "Every call runs on one thread of its own ...
+/// joined once when the thread starts", a thread that parked on a queue between calls,
+/// and callers that parked on each call's task)</b>, the maintainer's decision 54, in his
+/// words verbatim: <i>"Never block a worker anywhere."</i> The apartment is kept alive
+/// between calls by <see cref="ToastInterop.CoIncrementMTAUsage"/>, so the toast objects
+/// this surface keeps stay valid from one call's thread to the next.
 /// </para>
 /// <para>
 /// <b>A call that Windows has not answered within <see cref="CallBound"/> is a
@@ -44,10 +52,10 @@ internal sealed class WindowsToastSurface : IToastSurface, IDisposable
     private static readonly StrategyBasedComWrappers Wrappers = new();
 
     private readonly string _appUserModelId;
-    private readonly BlockingCollection<Action> _work = [];
-    private readonly Lock _gate = new();
+    private readonly SemaphoreSlim _turn = new(1, 1);
+    private readonly nint _apartment;
+    private readonly bool _counted;
 
-    private Thread? _thread;
     private IToastNotifier? _notifier;
     private IToastNotificationHistory? _history;
     private IToastNotificationFactory? _factory;
@@ -58,6 +66,10 @@ internal sealed class WindowsToastSurface : IToastSurface, IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(appUserModelId);
         _appUserModelId = appUserModelId;
+
+        // The apartment stays for the surface's life, with no thread in it, so the objects
+        // one call's thread made are the next call's to use.
+        _counted = ToastInterop.CoIncrementMTAUsage(out _apartment) >= 0;
     }
 
     /// <summary>
@@ -74,25 +86,25 @@ internal sealed class WindowsToastSurface : IToastSurface, IDisposable
         ToastInterop.CurrentAppUserModelId() is { } id ? new WindowsToastSurface(id) : null;
 
     /// <inheritdoc />
-    public void Show(string tag, string group, ToastRequest toast, uint sequence)
+    public async Task ShowAsync(string tag, string group, ToastRequest toast, uint sequence)
     {
         ArgumentNullException.ThrowIfNull(toast);
 
-        _ = Run(() =>
+        _ = await RunAsync(() =>
         {
             var notification = Compose(Factory(), tag, group, toast, sequence);
 
             Notifier().Show(notification);
             return true;
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public ToastUpdateResult Update(string tag, string group, IReadOnlyDictionary<string, string> values, uint sequence)
+    public Task<ToastUpdateResult> UpdateAsync(string tag, string group, IReadOnlyDictionary<string, string> values, uint sequence)
     {
         ArgumentNullException.ThrowIfNull(values);
 
-        return Run(() =>
+        return RunAsync(() =>
         {
             using var hTag = new HString(tag);
             using var hGroup = new HString(group);
@@ -102,8 +114,8 @@ internal sealed class WindowsToastSurface : IToastSurface, IDisposable
     }
 
     /// <inheritdoc />
-    public void Remove(string tag, string group) =>
-        _ = Run(() =>
+    public Task RemoveAsync(string tag, string group) =>
+        RunAsync(() =>
         {
             using var hTag = new HString(tag);
             using var hGroup = new HString(group);
@@ -121,23 +133,15 @@ internal sealed class WindowsToastSurface : IToastSurface, IDisposable
             return true;
         });
 
-    /// <summary>Ends the thread once the calls queued before this one have run.</summary>
+    /// <summary>Lets the apartment go. A call still on its thread finishes on its own.</summary>
     public void Dispose()
     {
-        Thread? thread;
-
-        lock (_gate)
+        if (_counted)
         {
-            thread = _thread;
-            _work.CompleteAdding();
+            _ = ToastInterop.CoDecrementMTAUsage(_apartment);
         }
 
-        // A thread still inside a call it was given keeps the queue; one that left
-        // has drained it, and the queue goes with it.
-        if (thread is null || thread.Join(CallBound))
-        {
-            _work.Dispose();
-        }
+        _turn.Dispose();
     }
 
     /// <summary>
@@ -286,65 +290,75 @@ internal sealed class WindowsToastSurface : IToastSurface, IDisposable
         _history ??= Statics<IToastNotificationManagerStatics2>(ToastInterop.ToastNotificationManagerClass, ToastInterop.ToastNotificationManagerStatics2Id).GetHistory();
 
     /// <summary>Runs one call on the toast thread and waits for its answer, within <see cref="CallBound"/>.</summary>
-    private T Run<T>(Func<T> call)
+    /// <summary>Runs one call on a thread in the apartment, in its turn, and awaits it.</summary>
+    /// <typeparam name="T">What the call answers.</typeparam>
+    /// <param name="call">The call.</param>
+    /// <returns>What it answered.</returns>
+    /// <exception cref="TimeoutException">Windows did not answer within <see cref="CallBound"/>.</exception>
+    private async Task<T> RunAsync<T>(Func<T> call)
     {
-        var answer = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await _turn.WaitAsync().ConfigureAwait(false);
 
-        lock (_gate)
+        try
         {
-            _thread ??= Start();
-            _work.Add(() =>
+            var answer = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            var thread = new Thread(() =>
             {
+                var joined = TaskSchedulerInterop.CoInitializeEx(0, TaskSchedulerInterop.MultiThreaded);
+
                 try
                 {
-                    answer.SetResult(call());
+                    _ = answer.TrySetResult(call());
                 }
 #pragma warning disable CA1031 // Handed to the caller, who records it.
                 catch (Exception failure)
 #pragma warning restore CA1031
                 {
-                    answer.SetException(failure);
+                    _ = answer.TrySetException(failure);
                 }
-            });
-        }
+                finally
+                {
+                    // Only a join that took leaves; a changed-mode answer joined nothing.
+                    if (joined >= 0)
+                    {
+                        TaskSchedulerInterop.CoUninitialize();
+                    }
+                }
+            })
+            {
+                IsBackground = true,
+                Name = "BrowserAI toasts",
+            };
 
-        return answer.Task.Wait(CallBound)
-            ? answer.Task.GetAwaiter().GetResult()
-            : throw new TimeoutException(string.Create(CultureInfo.InvariantCulture, $"Windows did not answer a toast call within {CallBound.TotalSeconds:F0} s."));
-    }
-
-    private Thread Start()
-    {
-        var thread = new Thread(() =>
-        {
-            var joined = TaskSchedulerInterop.CoInitializeEx(0, TaskSchedulerInterop.MultiThreaded);
+            thread.Start();
 
             try
             {
-                foreach (var call in _work.GetConsumingEnumerable())
-                {
-                    call();
-                }
+                return await answer.Task.WaitAsync(CallBound).ConfigureAwait(false);
             }
-            finally
+            catch (TimeoutException)
             {
-                _notifier = null;
-                _history = null;
-                _factory = null;
-
-                // Only a join that took leaves; a changed-mode answer joined nothing.
-                if (joined >= 0)
-                {
-                    TaskSchedulerInterop.CoUninitialize();
-                }
+                throw new TimeoutException(string.Create(CultureInfo.InvariantCulture, $"Windows did not answer a toast call within {CallBound.TotalSeconds:F0} s."));
             }
-        })
+        }
+        finally
         {
-            IsBackground = true,
-            Name = "BrowserAI toasts",
-        };
+            Leave();
+        }
+    }
 
-        thread.Start();
-        return thread;
+    /// <summary>Gives the next call its turn.</summary>
+    private void Leave()
+    {
+        try
+        {
+            _ = _turn.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Disposed while this call was in Windows: the call has finished, and no call
+            // is left to take a turn.
+        }
     }
 }

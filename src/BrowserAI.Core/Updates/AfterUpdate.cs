@@ -157,12 +157,12 @@ internal static class AfterUpdate
     /// <param name="askForBackground">Asks the Task Scheduler for the background; called in every outcome.</param>
     /// <param name="logger">Where the outcome is recorded.</param>
     /// <returns>What the start found.</returns>
-    public static AfterUpdateOutcome Report(
+    public static async Task<AfterUpdateOutcome> ReportAsync(
         string target,
         string running,
         string velopackLog,
         IUpdateToasts toasts,
-        Action askForBackground,
+        Func<Task> askForBackground,
         ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(toasts);
@@ -177,12 +177,12 @@ internal static class AfterUpdate
             {
                 case AfterUpdateOutcome.Installed:
                     BackgroundUpdateLog.AfterUpdateInstalled(logger, target);
-                    toasts.Installed(target);
+                    await toasts.InstalledAsync(target).ConfigureAwait(false);
                     break;
 
                 case AfterUpdateOutcome.Failed:
                     BackgroundUpdateLog.AfterUpdateFailed(logger, target, running, velopackLog);
-                    toasts.Failed(target);
+                    await toasts.FailedAsync(target).ConfigureAwait(false);
                     break;
 
                 default:
@@ -197,7 +197,7 @@ internal static class AfterUpdate
             BackgroundUpdateLog.ToastFailed(logger, outcome.ToString(), failure);
         }
 
-        askForBackground();
+        await askForBackground().ConfigureAwait(false);
         return outcome;
     }
 }

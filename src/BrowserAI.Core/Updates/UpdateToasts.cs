@@ -37,7 +37,8 @@ internal interface IToastSurface
     /// <param name="group">Its group.</param>
     /// <param name="toast">What to show.</param>
     /// <param name="sequence">The sequence number of its first values, when it binds any.</param>
-    void Show(string tag, string group, ToastRequest toast, uint sequence);
+    /// <returns>The show.</returns>
+    Task ShowAsync(string tag, string group, ToastRequest toast, uint sequence);
 
     /// <summary>Gives a shown toast's bound fields new values.</summary>
     /// <param name="tag">Its tag.</param>
@@ -45,12 +46,13 @@ internal interface IToastSurface
     /// <param name="values">The values.</param>
     /// <param name="sequence">Higher than every sequence number before it, so Windows shows the newest.</param>
     /// <returns>What Windows answered.</returns>
-    ToastUpdateResult Update(string tag, string group, IReadOnlyDictionary<string, string> values, uint sequence);
+    Task<ToastUpdateResult> UpdateAsync(string tag, string group, IReadOnlyDictionary<string, string> values, uint sequence);
 
     /// <summary>Removes a toast from the screen and from the Notification Centre.</summary>
     /// <param name="tag">Its tag.</param>
     /// <param name="group">Its group.</param>
-    void Remove(string tag, string group);
+    /// <returns>The removal.</returns>
+    Task RemoveAsync(string tag, string group);
 }
 
 /// <summary>Which version the person answered <i>Wait for inactivity</i> for, kept across processes.</summary>
@@ -63,11 +65,12 @@ internal interface IUpdateToastMemory
 {
     /// <summary>The version the person last chose to wait for, or <see langword="null"/>.</summary>
     /// <returns>The version.</returns>
-    string? WaitedFor();
+    Task<string?> WaitedForAsync();
 
     /// <summary>Records that the person chose to wait for a version.</summary>
     /// <param name="version">The version.</param>
-    void Waited(string version);
+    /// <returns>The write.</returns>
+    Task WaitedAsync(string version);
 
     /// <summary>
     /// Records what the clients of the relays an update is about to end need, for the
@@ -75,12 +78,13 @@ internal interface IUpdateToastMemory
     /// </summary>
     /// <param name="version">The version being installed.</param>
     /// <param name="needs">What each relay's client needs, one entry per relay.</param>
-    void Ended(string version, IReadOnlyList<RelayReconnect> needs);
+    /// <returns>The write.</returns>
+    Task EndedAsync(string version, IReadOnlyList<RelayReconnect> needs);
 
-    /// <summary>What <see cref="Ended"/> recorded for a version, or <see langword="null"/> when it recorded nothing for it.</summary>
+    /// <summary>What <see cref="EndedAsync"/> recorded for a version, or <see langword="null"/> when it recorded nothing for it.</summary>
     /// <param name="version">The version installed.</param>
     /// <returns>What each ended relay's client needs.</returns>
-    IReadOnlyList<RelayReconnect>? EndedFor(string version);
+    Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version);
 
     /// <summary>Forgets the wait and what the ended relays needed: the update installed or failed.</summary>
     void Forget();
@@ -91,9 +95,16 @@ internal interface IUpdateToastMemory
 /// person chose to wait for, and what the relays an update ended needed.
 /// </summary>
 /// <remarks>
+/// <para>
 /// <b>The second file was added 2026-10-11 with 52 b</b>: the background that ends the
 /// relays and the after-update start that raises the installed toast are two processes, and
 /// the file holds the version and one word per relay, never a conversation's name.
+/// </para>
+/// <para>
+/// <b>Read and written asynchronously since 2026-10-11</b>, the maintainer's decision 63, in
+/// his words verbatim: <i>"convert disk writes as well. Some users have slow spinning
+/// rust."</i> <i>Previously <c>File.ReadAllText</c> and <c>File.WriteAllText</c>.</i>
+/// </para>
 /// </remarks>
 /// <param name="path">The wait's file.</param>
 internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
@@ -112,30 +123,30 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
     public static UpdateToastMemoryFile In(string dataRoot) => new(Path.Combine(dataRoot, FileName));
 
     /// <inheritdoc />
-    public string? WaitedFor() =>
-        File.Exists(path) && File.ReadAllText(path).Trim() is { Length: > 0 } version ? version : null;
+    public async Task<string?> WaitedForAsync() =>
+        File.Exists(path) && (await File.ReadAllTextAsync(path).ConfigureAwait(false)).Trim() is { Length: > 0 } version ? version : null;
 
     /// <inheritdoc />
-    public void Waited(string version)
+    public async Task WaitedAsync(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, version);
+        await File.WriteAllTextAsync(path, version).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public void Ended(string version, IReadOnlyList<RelayReconnect> needs)
+    public async Task EndedAsync(string version, IReadOnlyList<RelayReconnect> needs)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         ArgumentNullException.ThrowIfNull(needs);
 
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(EndedPath, version + "\n" + string.Join(',', needs.Select(WordOf)));
+        await File.WriteAllTextAsync(EndedPath, version + "\n" + string.Join(',', needs.Select(WordOf))).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<RelayReconnect>? EndedFor(string version)
+    public async Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
@@ -144,7 +155,7 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
             return null;
         }
 
-        var lines = File.ReadAllText(EndedPath).Split('\n');
+        var lines = (await File.ReadAllTextAsync(EndedPath).ConfigureAwait(false)).Split('\n');
 
         if (!string.Equals(lines[0].Trim(), version, StringComparison.OrdinalIgnoreCase))
         {
@@ -192,29 +203,19 @@ internal sealed class NoUpdateToasts : IUpdateToasts
     public static NoUpdateToasts Instance { get; } = new();
 
     /// <inheritdoc />
-    public void Held(string version)
-    {
-    }
+    public Task HeldAsync(string version) => Task.CompletedTask;
 
     /// <inheritdoc />
-    public void Installing(string version)
-    {
-    }
+    public Task InstallingAsync(string version) => Task.CompletedTask;
 
     /// <inheritdoc />
-    public void Installed(string version)
-    {
-    }
+    public Task InstalledAsync(string version) => Task.CompletedTask;
 
     /// <inheritdoc />
-    public void Failed(string version)
-    {
-    }
+    public Task FailedAsync(string version) => Task.CompletedTask;
 
     /// <inheritdoc />
-    public void Ending(string version, IReadOnlyList<RelayReconnect> needs)
-    {
-    }
+    public Task EndingAsync(string version, IReadOnlyList<RelayReconnect> needs) => Task.CompletedTask;
 }
 
 /// <summary>What the failed toast names, which only the process that raises it knows.</summary>
@@ -231,9 +232,9 @@ internal sealed record UpdateToastFacts(string RunningVersion, string VelopackLo
 /// <para>
 /// <b>The countdown is read from <see cref="IUpdateHoldsReader"/> every second</b>, which
 /// the background answers from its own memory, and written to the toast through
-/// <see cref="IToastSurface.Update"/> with a sequence number one higher each time.
+/// <see cref="IToastSurface.UpdateAsync"/> with a sequence number one higher each time.
 /// <i>Since 2026-10-10</i> it reads <see cref="IUpdateHoldsReader.ReadCountdown"/>, which names
-/// no conversation, and the raise reads <see cref="IUpdateHoldsReader.Read"/>, whose names the
+/// no conversation, and the raise reads <see cref="IUpdateHoldsReader.ReadAsync"/>, whose names the
 /// reconnect line carries.
 /// It stops when Windows answers that the toast is gone, which is what a person's
 /// click or dismissal leaves, and when the update stops waiting.
@@ -248,13 +249,21 @@ internal sealed record UpdateToastFacts(string RunningVersion, string VelopackLo
 /// <b>Nothing here throws into its caller.</b> A toast that Windows refuses is a
 /// log record; the background and the after-update start go on either way.
 /// </para>
+/// <para>
+/// ⚠️ <b>Asynchronous since 2026-10-11</b>, the maintainer's decisions 54 and 63: every call
+/// to Windows and to the memory files is awaited, and the gate that keeps two of them from
+/// interleaving is a <see cref="SemaphoreSlim"/> taken with <see cref="SemaphoreSlim.WaitAsync()"/>.
+/// <i>Previously a <c>Lock</c>, held across each synchronous call to the surface, whose
+/// calls parked on Windows' answer.</i> What holds the update is still read outside the
+/// gate, for the reason <see cref="HeldAsync"/> gives.
+/// </para>
 /// </remarks>
 internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
 {
     /// <summary>How often the countdown is written: <b>once a second</b>, the unit it counts in.</summary>
     public static TimeSpan Tick { get; } = UpdateBudgets.ToastTick;
 
-    private readonly Lock _gate = new();
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly IToastSurface _surface;
     private readonly IUpdateHoldsReader? _holds;
     private readonly IUpdateToastMemory _memory;
@@ -269,6 +278,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     private ITimer? _countdown;
     private CountdownTrack _track;
     private uint _sequence;
+    private int _disposed;
 
     /// <summary>The toasts for one process.</summary>
     /// <param name="surface">What shows them.</param>
@@ -307,19 +317,10 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     }
 
     /// <summary>Whether the ready toast's countdown is running.</summary>
-    public bool Counting
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _countdown is not null;
-            }
-        }
-    }
+    public bool Counting => Volatile.Read(ref _countdown) is not null;
 
     /// <inheritdoc />
-    public void Held(string version)
+    public async Task HeldAsync(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
@@ -328,22 +329,36 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
             return;
         }
 
-        lock (_gate)
+        if (!await EnterAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
+        try
         {
             if (string.Equals(_raisedFor, version, StringComparison.Ordinal))
             {
                 return;
             }
         }
+        finally
+        {
+            Leave();
+        }
 
-        // Read OUTSIDE this lock: the background answers it under a lock of its own,
+        // Read OUTSIDE the gate: the background answers it under a lock of its own,
         // and may call in here while it holds that one.
-        if (Read() is not { } holds)
+        if (await ReadNamedAsync().ConfigureAwait(false) is not { } holds)
         {
             return;
         }
 
-        lock (_gate)
+        if (!await EnterAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
+        try
         {
             if (string.Equals(_raisedFor, version, StringComparison.Ordinal))
             {
@@ -354,20 +369,31 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
             _raisedFor = version;
 
             var (values, track) = UpdateToastContent.ReadyData(holds, _clock.GetUtcNow(), _zone, default);
-            var waited = string.Equals(Remembered(), version, StringComparison.Ordinal);
+            var waited = string.Equals(await RememberedAsync().ConfigureAwait(false), version, StringComparison.Ordinal);
 
             _track = track;
             _sequence = 1;
 
-            if (!Raise(
+            if (!await RaiseAsync(
                 UpdateToastContent.ReadyTag,
                 new ToastRequest(UpdateToastContent.Ready(version, holds, _facts.RunningVersion), values, SuppressPopup: waited, ExpiresOnReboot: true),
-                _sequence))
+                _sequence).ConfigureAwait(false))
             {
                 return;
             }
 
-            _countdown = _clock.CreateTimer(_ => Count(), null, Tick, Tick);
+            Volatile.Write(ref _countdown, _clock.CreateTimer(_ => _ = CountAsync(), null, Tick, Tick));
+
+            // A dispose that ran while this raised stopped no countdown, because there was
+            // none yet: it stops this one.
+            if (Volatile.Read(ref _disposed) is not 0)
+            {
+                StopCounting();
+            }
+        }
+        finally
+        {
+            Leave();
         }
     }
 
@@ -381,61 +407,88 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     /// background that is ending, until the installed toast removed it. <i>Previously it
     /// popped up for every install.</i>
     /// </remarks>
-    public void Installing(string version)
+    public async Task InstallingAsync(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
-        lock (_gate)
+        if (!await EnterAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
+        try
         {
             StopCounting();
-            _ = Raise(UpdateToastContent.InstallingTag, new ToastRequest(UpdateToastContent.Installing(version), null, SuppressPopup: true, ExpiresOnReboot: true), 0);
+            _ = await RaiseAsync(UpdateToastContent.InstallingTag, new ToastRequest(UpdateToastContent.Installing(version), null, SuppressPopup: true, ExpiresOnReboot: true), 0).ConfigureAwait(false);
+        }
+        finally
+        {
+            Leave();
         }
     }
 
     /// <inheritdoc />
     /// <remarks>
     /// <b>It says what the relays the update ended need from their clients</b>, 52 b of
-    /// 2026-10-11: the background recorded them through <see cref="Ending"/> before it ended
-    /// them, and this start reads them back for this version and forgets them.
+    /// 2026-10-11: the background recorded them through <see cref="EndingAsync"/> before it
+    /// ended them, and this start reads them back for this version and forgets them.
     /// </remarks>
-    public void Installed(string version)
+    public async Task InstalledAsync(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
-        lock (_gate)
+        if (!await EnterAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
+        try
         {
             StopCounting();
-            var ended = EndedFor(version);
+            var ended = await EndedForAsync(version).ConfigureAwait(false);
             Forget();
-            _ = Raise(UpdateToastContent.InstalledTag, new ToastRequest(UpdateToastContent.Installed(version, ended), null, SuppressPopup: false, ExpiresOnReboot: false), 0);
+            _ = await RaiseAsync(UpdateToastContent.InstalledTag, new ToastRequest(UpdateToastContent.Installed(version, ended), null, SuppressPopup: false, ExpiresOnReboot: false), 0).ConfigureAwait(false);
+        }
+        finally
+        {
+            Leave();
         }
     }
 
     /// <inheritdoc />
-    public void Failed(string version)
+    public async Task FailedAsync(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
-        lock (_gate)
+        if (!await EnterAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
+        try
         {
             StopCounting();
             Forget();
-            _ = Raise(
+            _ = await RaiseAsync(
                 UpdateToastContent.FailedTag,
                 new ToastRequest(UpdateToastContent.Failed(version, _facts.RunningVersion, _facts.VelopackLog, _facts.BrowserAiLog), null, SuppressPopup: false, ExpiresOnReboot: false),
-                0);
+                0).ConfigureAwait(false);
+        }
+        finally
+        {
+            Leave();
         }
     }
 
     /// <inheritdoc />
-    public void Ending(string version, IReadOnlyList<RelayReconnect> needs)
+    public async Task EndingAsync(string version, IReadOnlyList<RelayReconnect> needs)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         ArgumentNullException.ThrowIfNull(needs);
 
         try
         {
-            _memory.Ended(version, needs);
+            await _memory.EndedAsync(version, needs).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A record that cannot be written costs the installed toast its reconnect line, never an update.
         catch (Exception failure)
@@ -508,34 +561,109 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     }
 
     /// <summary>Stops the countdown, and lets go of the surface when this owns it.</summary>
+    /// <remarks>
+    /// <b>It takes no gate</b>: the countdown's timer is stopped where it stands, and a call
+    /// already inside the gate finishes against a surface that may be going. A call that
+    /// arrives after this does nothing, which <see cref="EnterAsync"/> sees. <i>Previously
+    /// it stopped the countdown inside the lock, which waited for a call that held it.</i>
+    /// </remarks>
     public void Dispose()
     {
-        lock (_gate)
-        {
-            StopCounting();
-        }
-
-        _owned?.Dispose();
-    }
-
-    /// <summary>One second of the countdown.</summary>
-    private void Count()
-    {
-        string? version;
-
-        lock (_gate)
-        {
-            version = _countdown is null ? null : _raisedFor;
-        }
-
-        // Read outside the lock, for the reason Held gives, and with no conversation
-        // named: the countdown shows none, and a toast may count down for hours.
-        if (version is null || Read(countdown: true) is not { } holds)
+        if (Interlocked.Exchange(ref _disposed, 1) is not 0)
         {
             return;
         }
 
-        lock (_gate)
+        StopCounting();
+        _owned?.Dispose();
+        _gate.Dispose();
+    }
+
+    /// <summary>Takes the gate, unless this has been disposed.</summary>
+    /// <returns>Whether the gate is held.</returns>
+    private async Task<bool> EnterAsync()
+    {
+        if (Volatile.Read(ref _disposed) is not 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            await _gate.WaitAsync().ConfigureAwait(false);
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+
+        if (Volatile.Read(ref _disposed) is not 0)
+        {
+            Leave();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void Leave()
+    {
+        try
+        {
+            _ = _gate.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Disposed while this call was inside the gate: nothing is left to take it.
+        }
+    }
+
+    /// <summary>One second of the countdown.</summary>
+    private async Task CountAsync()
+    {
+        try
+        {
+            await CountOnceAsync().ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // A timer's callback: a second that failed is a log record, and an exception here would end the process.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            UpdateToastsLog.UpdateThrew(_logger, failure);
+        }
+    }
+
+    private async Task CountOnceAsync()
+    {
+        string? version;
+
+        if (!await EnterAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
+        try
+        {
+            version = _countdown is null ? null : _raisedFor;
+        }
+        finally
+        {
+            Leave();
+        }
+
+        // Read outside the gate, for the reason HeldAsync gives, and with no conversation
+        // named: the countdown shows none, and a toast may count down for hours.
+        if (version is null || ReadCountdown() is not { } holds)
+        {
+            return;
+        }
+
+        if (!await EnterAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
+        try
         {
             if (_countdown is null || !string.Equals(_raisedFor, version, StringComparison.Ordinal))
             {
@@ -548,7 +676,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
                 // replace the toast: it goes, so nothing counts down to an update that
                 // no longer waits.
                 StopCounting();
-                Remove(UpdateToastContent.ReadyTag);
+                await RemoveAsync(UpdateToastContent.ReadyTag).ConfigureAwait(false);
                 UpdateToastsLog.NoLongerWaiting(_logger, version);
                 return;
             }
@@ -568,7 +696,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
 
             try
             {
-                result = _surface.Update(UpdateToastContent.ReadyTag, UpdateToastContent.Group, values, ++_sequence);
+                result = await _surface.UpdateAsync(UpdateToastContent.ReadyTag, UpdateToastContent.Group, values, ++_sequence).ConfigureAwait(false);
             }
 #pragma warning disable CA1031 // An update Windows threw on is a log record; the next second tries again.
             catch (Exception failure)
@@ -590,22 +718,25 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
                 UpdateToastsLog.UpdateFailed(_logger, _sequence);
             }
         }
+        finally
+        {
+            Leave();
+        }
     }
 
-    /// <summary>What holds the update, or <see langword="null"/> when it could not be read.</summary>
-    /// <param name="countdown">
-    /// Whether this is a second of the countdown, which names no conversation
-    /// (<see cref="IUpdateHoldsReader.ReadCountdown"/>); otherwise the raise, whose reconnect
-    /// line names each one (<see cref="IUpdateHoldsReader.Read"/>).
-    /// </param>
+    /// <summary>
+    /// What holds the update, every conversation named, for the raise, whose reconnect line
+    /// names each one (<see cref="IUpdateHoldsReader.ReadAsync"/>); or <see langword="null"/>
+    /// when it could not be read.
+    /// </summary>
     /// <returns>The snapshot.</returns>
-    private UpdateHoldSnapshot? Read(bool countdown = false)
+    private async Task<UpdateHoldSnapshot?> ReadNamedAsync()
     {
         try
         {
-            return countdown ? _holds?.ReadCountdown() : _holds?.Read();
+            return _holds is null ? null : await _holds.ReadAsync().ConfigureAwait(false);
         }
-#pragma warning disable CA1031 // A read that failed is a toast not raised or one second without an update, never a background that stops.
+#pragma warning disable CA1031 // A read that failed is a toast not raised, never a background that stops.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
@@ -614,21 +745,42 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         }
     }
 
-    /// <summary>Removes every other update toast, then shows one. Called under the lock.</summary>
+    /// <summary>
+    /// What holds the update with no conversation named, for a second of the countdown
+    /// (<see cref="IUpdateHoldsReader.ReadCountdown"/>); or <see langword="null"/> when it
+    /// could not be read.
+    /// </summary>
+    /// <returns>The snapshot.</returns>
+    private UpdateHoldSnapshot? ReadCountdown()
+    {
+        try
+        {
+            return _holds?.ReadCountdown();
+        }
+#pragma warning disable CA1031 // A read that failed is one second without an update, never a background that stops.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            UpdateToastsLog.ReadFailed(_logger, failure);
+            return null;
+        }
+    }
+
+    /// <summary>Removes every other update toast, then shows one. Called inside the gate.</summary>
     /// <param name="tag">The toast's tag.</param>
     /// <param name="toast">What to show.</param>
     /// <param name="sequence">The sequence number of its first values.</param>
     /// <returns>Whether Windows took it.</returns>
-    private bool Raise(string tag, ToastRequest toast, uint sequence)
+    private async Task<bool> RaiseAsync(string tag, ToastRequest toast, uint sequence)
     {
         foreach (var other in UpdateToastContent.Tags.Where(other => !string.Equals(other, tag, StringComparison.Ordinal)))
         {
-            Remove(other);
+            await RemoveAsync(other).ConfigureAwait(false);
         }
 
         try
         {
-            _surface.Show(tag, UpdateToastContent.Group, toast, sequence);
+            await _surface.ShowAsync(tag, UpdateToastContent.Group, toast, sequence).ConfigureAwait(false);
             UpdateToastsLog.Shown(_logger, tag, toast.SuppressPopup);
             return true;
         }
@@ -641,11 +793,11 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         }
     }
 
-    private void Remove(string tag)
+    private async Task RemoveAsync(string tag)
     {
         try
         {
-            _surface.Remove(tag, UpdateToastContent.Group);
+            await _surface.RemoveAsync(tag, UpdateToastContent.Group).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A toast that could not be removed is a log record.
         catch (Exception failure)
@@ -655,11 +807,11 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         }
     }
 
-    private string? Remembered()
+    private async Task<string?> RememberedAsync()
     {
         try
         {
-            return _memory.WaitedFor();
+            return await _memory.WaitedForAsync().ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A memory that cannot be read means the banner shows.
         catch (Exception failure)
@@ -670,11 +822,11 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         }
     }
 
-    private IReadOnlyList<RelayReconnect>? EndedFor(string version)
+    private async Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version)
     {
         try
         {
-            return _memory.EndedFor(version);
+            return await _memory.EndedForAsync(version).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A record that cannot be read costs the installed toast its reconnect line.
         catch (Exception failure)
@@ -699,11 +851,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         }
     }
 
-    private void StopCounting()
-    {
-        _countdown?.Dispose();
-        _countdown = null;
-    }
+    private void StopCounting() => Interlocked.Exchange(ref _countdown, null)?.Dispose();
 }
 
 /// <summary>The update toasts' records.</summary>

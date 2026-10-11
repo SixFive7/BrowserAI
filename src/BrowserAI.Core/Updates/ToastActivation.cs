@@ -235,39 +235,117 @@ internal static partial class ToastActivation
     /// Registers the activator's class for this process, waits for the click COM
     /// started it for, and returns it.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>No thread waits for the click since 2026-10-11</b>, the maintainer's decision 54,
+    /// in his words verbatim: <i>"Never block a worker anywhere."</i> <i>Corrected
+    /// 2026-10-11 (previously a thread of its own initialised the multithreaded apartment,
+    /// registered the class, and stayed parked on the click's task until it came, and the
+    /// caller parked on the registration's task and then on the thread's end).</i>
+    /// </para>
+    /// <para>
+    /// <b>The apartment is kept alive by a count, not by a thread</b>:
+    /// <see cref="ToastInterop.CoIncrementMTAUsage"/> holds the process's multithreaded
+    /// apartment for as long as the registration stands, so the class is registered and
+    /// revoked each on a thread that initialises the apartment, makes the one call and
+    /// leaves, and the click is awaited in between. COM hands the click to an RPC thread of
+    /// that apartment, as it did.
+    /// </para>
+    /// </remarks>
     /// <param name="appUserModelId">The application id the toasts are raised under.</param>
     /// <param name="logger">Where the click is recorded.</param>
     /// <returns>The click, or <see langword="null"/> when none came within <see cref="ActivationBound"/>.</returns>
-    public static ToastClick? Receive(string appUserModelId, ILogger logger)
+    public static async Task<ToastClick?> ReceiveAsync(string appUserModelId, ILogger logger)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(appUserModelId);
         ArgumentNullException.ThrowIfNull(logger);
 
         var clicked = new TaskCompletionSource<ToastClick>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var registered = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
         var activator = ToastActivatorRegistration.ClassFor(appUserModelId);
+
+        var counted = ToastInterop.CoIncrementMTAUsage(out var usage);
+
+        if (counted < 0)
+        {
+            ToastActivationLog.NotRegistered(logger, counted);
+            return null;
+        }
+
+        var factory = NewFactory(clicked);
+
+        try
+        {
+            (int Answer, uint Cookie) registered;
+
+            try
+            {
+                registered = await InTheApartmentAsync(() =>
+                {
+                    var answer = ToastInterop.CoRegisterClassObject(activator, factory, ToastInterop.LocalServer, ToastInterop.SingleUse, out var cookie);
+                    return (answer, cookie);
+                }).WaitAsync(ActivationBound).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                registered = (ToastInterop.NoInterface, 0);
+            }
+
+            if (registered.Answer < 0)
+            {
+                ToastActivationLog.NotRegistered(logger, registered.Answer);
+                return null;
+            }
+
+            try
+            {
+                var click = await clicked.Task.WaitAsync(ActivationBound).ConfigureAwait(false);
+
+                ToastActivationLog.Clicked(logger, click.Action, click.Version ?? "none");
+                return click;
+            }
+            catch (TimeoutException)
+            {
+                ToastActivationLog.NoClick(logger, ActivationBound.TotalSeconds);
+                return null;
+            }
+            finally
+            {
+                _ = await InTheApartmentAsync(() => (ToastInterop.CoRevokeClassObject(registered.Cookie), 0u)).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            _ = Marshal.Release(factory);
+            _ = ToastInterop.CoDecrementMTAUsage(usage);
+        }
+    }
+
+    /// <summary>
+    /// Makes one COM call on a thread that joins the multithreaded apartment for it and
+    /// leaves after it, awaited by the caller.
+    /// </summary>
+    /// <param name="call">The call.</param>
+    /// <returns>What the call answered.</returns>
+    private static Task<(int Answer, uint Cookie)> InTheApartmentAsync(Func<(int Answer, uint Cookie)> call)
+    {
+        var answered = new TaskCompletionSource<(int Answer, uint Cookie)>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var thread = new Thread(() =>
         {
             var joined = TaskSchedulerInterop.CoInitializeEx(0, TaskSchedulerInterop.MultiThreaded);
-            var factory = NewFactory(clicked);
 
             try
             {
-                var answer = ToastInterop.CoRegisterClassObject(activator, factory, ToastInterop.LocalServer, ToastInterop.SingleUse, out var cookie);
-
-                _ = registered.TrySetResult(answer);
-
-                if (answer >= 0)
-                {
-                    _ = clicked.Task.Wait(ActivationBound);
-                    _ = ToastInterop.CoRevokeClassObject(cookie);
-                }
+                _ = answered.TrySetResult(call());
+            }
+#pragma warning disable CA1031 // The call's thread boundary: the failure goes to the caller, who awaits it.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                _ = answered.TrySetException(failure);
             }
             finally
             {
-                _ = Marshal.Release(factory);
-
                 // Only a join that took leaves; a changed-mode answer joined nothing.
                 if (joined >= 0)
                 {
@@ -281,27 +359,7 @@ internal static partial class ToastActivation
         };
 
         thread.Start();
-
-        var result = registered.Task.Wait(ActivationBound) ? registered.Task.Result : ToastInterop.NoInterface;
-
-        if (result < 0)
-        {
-            ToastActivationLog.NotRegistered(logger, result);
-            return null;
-        }
-
-        if (!clicked.Task.Wait(ActivationBound))
-        {
-            ToastActivationLog.NoClick(logger, ActivationBound.TotalSeconds);
-            return null;
-        }
-
-        _ = thread.Join(ActivationBound);
-
-        var click = clicked.Task.Result;
-
-        ToastActivationLog.Clicked(logger, click.Action, click.Version ?? "none");
-        return click;
+        return answered.Task;
     }
 
     /// <summary>The activator's class object, as the <c>IUnknown</c> COM is handed.</summary>
@@ -313,9 +371,9 @@ internal static partial class ToastActivation
     /// <summary>Does what a click asks for.</summary>
     /// <param name="click">The click.</param>
     /// <param name="memory">Where a person's wait is kept.</param>
-    /// <param name="openPage">A person's start that opens one dashboard page, by name; it returns the exit code.</param>
+    /// <param name="openPage">A person's start that opens one dashboard page, by name; it answers the exit code.</param>
     /// <returns>The exit code.</returns>
-    public static int Act(ToastClick? click, IUpdateToastMemory memory, Func<string, int> openPage)
+    public static async Task<int> ActAsync(ToastClick? click, IUpdateToastMemory memory, Func<string, Task<int>> openPage)
     {
         ArgumentNullException.ThrowIfNull(memory);
         ArgumentNullException.ThrowIfNull(openPage);
@@ -323,16 +381,16 @@ internal static partial class ToastActivation
         switch (click)
         {
             case { Action: ToastAction.UpdatePage }:
-                return openPage(UpdatePage);
+                return await openPage(UpdatePage).ConfigureAwait(false);
 
             case { Action: ToastAction.Changelog }:
-                return openPage(ChangelogPage);
+                return await openPage(ChangelogPage).ConfigureAwait(false);
 
             case { Action: ToastAction.StatusPage }:
-                return openPage(StatusPage);
+                return await openPage(StatusPage).ConfigureAwait(false);
 
             case { Action: ToastAction.Wait, Version: { Length: > 0 } version }:
-                memory.Waited(version);
+                await memory.WaitedAsync(version).ConfigureAwait(false);
                 return 0;
 
             default:

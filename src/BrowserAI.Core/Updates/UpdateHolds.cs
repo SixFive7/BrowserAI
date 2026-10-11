@@ -274,7 +274,11 @@ internal interface IUpdateHoldsReader
     /// dashboard and the ready toast are drawn from.
     /// </remarks>
     /// <returns>The snapshot.</returns>
-    UpdateHoldSnapshot Read();
+    /// <remarks>
+    /// <b>Asynchronous since 2026-10-11</b>, the maintainer's decision 63: the names are
+    /// read from the clients' files with asynchronous reads. <i>Previously <c>Read</c>.</i>
+    /// </remarks>
+    Task<UpdateHoldSnapshot> ReadAsync();
 
     /// <summary>
     /// Reads what holds the update now with no conversation named: what the ready
@@ -283,11 +287,14 @@ internal interface IUpdateHoldsReader
     /// <remarks>
     /// <b>Added 2026-10-10 with the names</b>, so that a toast left counting down for
     /// hours reads no client's records once a second; the toast's reconnect line, which
-    /// does name them, is written from <see cref="Read"/> when the toast is raised. A
-    /// reader with no names to leave out answers <see cref="Read"/>.
+    /// does name them, is written from <see cref="ReadAsync"/> when the toast is raised.
+    /// <i>Corrected 2026-10-11 (previously "A reader with no names to leave out answers
+    /// <c>Read</c>", a default this member had)</i>: the named read is asynchronous since
+    /// that day, and a read from memory cannot wait for it, so every reader answers this
+    /// one itself.
     /// </remarks>
     /// <returns>The snapshot, every relay's conversation and name left unread.</returns>
-    UpdateHoldSnapshot ReadCountdown() => Read();
+    UpdateHoldSnapshot ReadCountdown();
 }
 
 /// <summary>
@@ -342,7 +349,8 @@ internal interface IUpdateToasts
     /// still raised it.</i>
     /// </remarks>
     /// <param name="version">The version that waits.</param>
-    void Held(string version);
+    /// <returns>The raise.</returns>
+    Task HeldAsync(string version);
 
     /// <summary>The background is about to hand over to the installer an update whose ready toast it raised.</summary>
     /// <remarks>
@@ -351,7 +359,8 @@ internal interface IUpdateToasts
     /// hand over to the installer").</i>
     /// </remarks>
     /// <param name="version">The version being installed.</param>
-    void Installing(string version);
+    /// <returns>The raise.</returns>
+    Task InstallingAsync(string version);
 
     /// <summary>
     /// The background is about to end its relays for an update: keeps what each one's
@@ -364,13 +373,16 @@ internal interface IUpdateToasts
     /// </remarks>
     /// <param name="version">The version being installed.</param>
     /// <param name="needs">What each connected relay's client needs once the update has ended it.</param>
-    void Ending(string version, IReadOnlyList<RelayReconnect> needs);
+    /// <returns>The write.</returns>
+    Task EndingAsync(string version, IReadOnlyList<RelayReconnect> needs);
 
     /// <summary>The after-update start found the new version running.</summary>
     /// <param name="version">The version now installed.</param>
-    void Installed(string version);
+    /// <returns>The raise.</returns>
+    Task InstalledAsync(string version);
 
     /// <summary>The after-update start found the old version running: the install failed.</summary>
     /// <param name="version">The version that did not install.</param>
-    void Failed(string version);
+    /// <returns>The raise.</returns>
+    Task FailedAsync(string version);
 }

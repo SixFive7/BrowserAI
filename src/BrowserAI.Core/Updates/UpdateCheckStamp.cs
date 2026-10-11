@@ -28,13 +28,14 @@ internal interface IUpdateCheckStamp
 
     /// <summary>Reads the record.</summary>
     /// <returns>When the last check started, or why that is not known.</returns>
-    UpdateCheckStampReading Read();
+    Task<UpdateCheckStampReading> ReadAsync();
 
     /// <summary>Records that a check started at <paramref name="at"/>.</summary>
     /// <param name="at">When it started.</param>
+    /// <returns>The write.</returns>
     /// <exception cref="IOException">The record could not be written.</exception>
     /// <exception cref="UnauthorizedAccessException">The record could not be written.</exception>
-    void Write(DateTimeOffset at);
+    Task WriteAsync(DateTimeOffset at);
 }
 
 /// <summary>The record of the last update check, as one line in a file under the data root.</summary>
@@ -51,6 +52,11 @@ internal interface IUpdateCheckStamp
 /// person can read it and nothing has to parse more than a time. A file that does
 /// not hold one is unreadable, and the core then checks at once: the cost of a
 /// wrong answer here is one check too many, never one too few.
+/// </para>
+/// <para>
+/// <b>Read and written asynchronously since 2026-10-11</b>, the maintainer's decision 63,
+/// in his words verbatim: <i>"convert disk writes as well. Some users have slow spinning
+/// rust."</i> <i>Previously <c>File.ReadAllText</c> and <c>File.WriteAllText</c>.</i>
 /// </para>
 /// </remarks>
 /// <param name="path">The file.</param>
@@ -75,13 +81,13 @@ internal sealed class UpdateCheckStampFile(string path) : IUpdateCheckStamp
     }
 
     /// <inheritdoc />
-    public UpdateCheckStampReading Read()
+    public async Task<UpdateCheckStampReading> ReadAsync()
     {
         string text;
 
         try
         {
-            text = File.ReadAllText(path);
+            text = await File.ReadAllTextAsync(path).ConfigureAwait(false);
         }
         catch (FileNotFoundException)
         {
@@ -113,11 +119,11 @@ internal sealed class UpdateCheckStampFile(string path) : IUpdateCheckStamp
     /// line; the data root holds one background at a time, so the temporary name
     /// is never contended.
     /// </remarks>
-    public void Write(DateTimeOffset at)
+    public async Task WriteAsync(DateTimeOffset at)
     {
         var temporary = path + ".partial";
 
-        File.WriteAllText(temporary, at.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture) + "\n");
+        await File.WriteAllTextAsync(temporary, at.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture) + "\n").ConfigureAwait(false);
         File.Move(temporary, path, overwrite: true);
     }
 

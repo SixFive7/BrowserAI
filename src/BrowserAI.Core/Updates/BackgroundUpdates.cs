@@ -49,7 +49,7 @@ namespace BrowserAI.Updates;
 /// the first look that finds it waiting, where the person can see what holds it and
 /// choose Install now; when it then installs, the installing toast takes the ready
 /// one's place in the Notification Centre with no banner of its own
-/// (<see cref="UpdateToasts.Installing"/>). Until that day the ready toast went up as
+/// (<see cref="UpdateToasts.InstallingAsync"/>). Until that day the ready toast went up as
 /// soon as a package was staged and the installing toast just before every
 /// hand-over, so an update nothing held put three banners up in six seconds.
 /// </para>
@@ -71,7 +71,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     private readonly IUpdateSessions _sessions;
     private readonly IUpdateToasts _toasts;
     private readonly IUpdateCheckStamp _stamp;
-    private readonly Action _requestExit;
+    private readonly Func<Task> _requestExit;
     private readonly TimeProvider _clock;
     private readonly ILogger _logger;
     private readonly UpdateBudgets _budgets;
@@ -99,7 +99,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// <summary>When the last check began, as this run recorded it or found it recorded (43 b).</summary>
     private DateTimeOffset? _lastCheck;
 
-    /// <summary>Builds the core. Nothing runs until <see cref="Start"/>.</summary>
+    /// <summary>Builds the core. Nothing runs until <see cref="StartAsync"/>.</summary>
     /// <param name="install">What this build is and where it was installed from.</param>
     /// <param name="source">What the background's arguments said about the update source.</param>
     /// <param name="clientFor">Builds the Velopack client for a feed; called once, and only when this build may check.</param>
@@ -109,7 +109,9 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// <param name="stamp">The record of the last check.</param>
     /// <param name="requestExit">
     /// Asks the background to exit once the package is handed over. <b>It must be
-    /// gone within 60 s</b>, the longest <c>Update.exe</c> waits for it.
+    /// gone within 60 s</b>, the longest <c>Update.exe</c> waits for it. <i>Awaited since
+    /// 2026-10-11 (previously an <c>Action</c>): the background writes its record first,
+    /// asynchronously.</i>
     /// </param>
     /// <param name="clock">Every timer and every reading of the time.</param>
     /// <param name="logger">Where the core reports.</param>
@@ -125,7 +127,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         IUpdateSessions sessions,
         IUpdateToasts toasts,
         IUpdateCheckStamp stamp,
-        Action requestExit,
+        Func<Task> requestExit,
         TimeProvider clock,
         ILogger logger,
         UpdateBudgets? budgets = null)
@@ -240,7 +242,8 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// this build refused, and a pre-release build whose source is a URL. A
     /// pre-release build checks a folder (H2, decided 2026-10-08).
     /// </remarks>
-    public void Start()
+    /// <returns>The start, once the first check is armed.</returns>
+    public async Task StartAsync()
     {
         lock (_gate)
         {
@@ -268,7 +271,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         BackgroundUpdateLog.Watching(_logger, client.ManifestUrl, CheckInterval.TotalMinutes);
         HoldWhatIsOnDisk(client, atStart: true);
-        ArmCheck(FirstCheckDue());
+        ArmCheck(await FirstCheckDueAsync().ConfigureAwait(false));
     }
 
     /// <summary>
@@ -344,11 +347,11 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// <para>
     /// <b>Each relay's conversation is named</b>, added 2026-10-10: this snapshot is what
     /// the dashboard and the toast draw, so it is the read that reads the clients' own
-    /// records (1.3 c), through <see cref="IUpdateRelays.ConnectedWithNames"/>; the core's
+    /// records (1.3 c), through <see cref="IUpdateRelays.ConnectedWithNamesAsync"/>; the core's
     /// own passes and the toast's countdown read none.
     /// </para>
     /// </remarks>
-    public UpdateHoldSnapshot Read() => Read(named: true);
+    public async Task<UpdateHoldSnapshot> ReadAsync() => Snapshot(await _relays.ConnectedWithNamesAsync().ConfigureAwait(false));
 
     /// <inheritdoc />
     /// <remarks>
@@ -383,12 +386,12 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     }
 
     /// <inheritdoc />
-    public UpdateHoldSnapshot ReadCountdown() => Read(named: false);
+    public UpdateHoldSnapshot ReadCountdown() => Snapshot(_relays.Connected());
 
-    /// <summary>What holds the update now, each relay's conversation named or left unread.</summary>
-    /// <param name="named">Whether to read every relay's conversation from its client's records.</param>
+    /// <summary>What holds the update now, with the relays as they were read, named or not.</summary>
+    /// <param name="connected">The relays, each conversation named or left unread.</param>
     /// <returns>The snapshot.</returns>
-    private UpdateHoldSnapshot Read(bool named)
+    private UpdateHoldSnapshot Snapshot(IReadOnlyList<RelayState> connected)
     {
         var now = _clock.GetUtcNow();
         Phase phase;
@@ -420,7 +423,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         var relays = new List<HoldingRelay>();
 
-        foreach (var relay in named ? _relays.ConnectedWithNames() : _relays.Connected())
+        foreach (var relay in connected)
         {
             relays.Add(new HoldingRelay(ClientOf(relay), relay.ProjectFolder, relay.IdleAt, relay.CallInFlight, relay.Reconnect is RelayReconnect.Unknown ? ReconnectOf(relay.ClientName) : relay.Reconnect, relay.Conversation, relay.Label, relay.Window)
             {
@@ -560,10 +563,10 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
     /// <summary>When the first check of this run is due, said in the log with the reason.</summary>
     /// <returns>Now, or the end of the interval the last recorded check began.</returns>
-    private DateTimeOffset FirstCheckDue()
+    private async Task<DateTimeOffset> FirstCheckDueAsync()
     {
+        var reading = await _stamp.ReadAsync().ConfigureAwait(false);
         var now = _clock.GetUtcNow();
-        var reading = _stamp.Read();
 
         if (reading.Unreadable is { } why)
         {
@@ -688,7 +691,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         try
         {
-            RecordCheck(started);
+            await RecordCheckAsync(started).ConfigureAwait(false);
             await PassAsync(client).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (_ending.IsCancellationRequested)
@@ -727,7 +730,8 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// interval, and only a restart before it runs out could check early.
     /// </remarks>
     /// <param name="at">When the check starts.</param>
-    private void RecordCheck(DateTimeOffset at)
+    /// <returns>The write, which never faults on a record that cannot be written.</returns>
+    private async Task RecordCheckAsync(DateTimeOffset at)
     {
         // What the page says as the last check (43 b), kept whether or not the record
         // below can be written, because the check begins either way.
@@ -738,7 +742,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         try
         {
-            _stamp.Write(at);
+            await _stamp.WriteAsync(at).ConfigureAwait(false);
         }
         catch (IOException failure)
         {
@@ -947,7 +951,9 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         if (raise)
         {
-            Raise(static (toasts, version) => toasts.Held(version), version, "ready");
+            // Not awaited: the look goes on while Windows shows it, and the raise
+            // records its own failure.
+            _ = RaiseAsync(static (toasts, version) => toasts.HeldAsync(version), version, "ready");
         }
     }
 
@@ -956,12 +962,13 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// for the installed toast the after-update start raises (52 b).
     /// </summary>
     /// <remarks>
-    /// <b>What a relay needs is read as <see cref="Read()"/> reads it</b>: its own answer, or
+    /// <b>What a relay needs is read as <see cref="ReadAsync"/> reads it</b>: its own answer, or
     /// what its client's name tells when it gave none. Relays that could not be read hand
     /// over nothing, and the installed toast then carries no line.
     /// </remarks>
     /// <param name="version">The version that installs.</param>
-    private void KeepWhatTheRelaysNeed(string version)
+    /// <returns>The write.</returns>
+    private async Task KeepWhatTheRelaysNeedAsync(string version)
     {
         IReadOnlyList<RelayReconnect> needs;
 
@@ -977,7 +984,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
             needs = [];
         }
 
-        Raise((toasts, installing) => toasts.Ending(installing, needs), version, "installed");
+        await RaiseAsync((toasts, installing) => toasts.EndingAsync(installing, needs), version, "installed").ConfigureAwait(false);
     }
 
     /// <summary>
@@ -985,7 +992,8 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// nothing for one that installs at once (49 b).
     /// </summary>
     /// <param name="version">The version that installs.</param>
-    private void RaiseInstallingIfItWaited(string version)
+    /// <returns>The raise.</returns>
+    private async Task RaiseInstallingIfItWaitedAsync(string version)
     {
         bool waited;
 
@@ -996,7 +1004,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         if (waited)
         {
-            Raise(static (toasts, version) => toasts.Installing(version), version, "installing");
+            await RaiseAsync(static (toasts, version) => toasts.InstallingAsync(version), version, "installing").ConfigureAwait(false);
         }
     }
 
@@ -1061,11 +1069,12 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// <param name="raise">The call.</param>
     /// <param name="version">Its version.</param>
     /// <param name="which">Which toast, for the log.</param>
-    private void Raise(Action<IUpdateToasts, string> raise, string version, string which)
+    /// <returns>The raise, which never faults.</returns>
+    private async Task RaiseAsync(Func<IUpdateToasts, string, Task> raise, string version, string which)
     {
         try
         {
-            raise(_toasts, version);
+            await raise(_toasts, version).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A toast is information for the person: one that cannot be shown must not stop an update.
         catch (Exception failure)
@@ -1605,19 +1614,19 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
             // the relays ended here need (52 b), kept before they end.
             if (route is InstallRoute.Person)
             {
-                KeepWhatTheRelaysNeed(version);
+                await KeepWhatTheRelaysNeedAsync(version).ConfigureAwait(false);
                 await EndRelaysAsync(version, now: true).ConfigureAwait(false);
                 await CloseSessionsAsync().ConfigureAwait(false);
-                RaiseInstallingIfItWaited(version);
+                await RaiseInstallingIfItWaitedAsync(version).ConfigureAwait(false);
             }
             else
             {
-                RaiseInstallingIfItWaited(version);
-                KeepWhatTheRelaysNeed(version);
+                await RaiseInstallingIfItWaitedAsync(version).ConfigureAwait(false);
+                await KeepWhatTheRelaysNeedAsync(version).ConfigureAwait(false);
                 await EndRelaysAsync(version, now: false).ConfigureAwait(false);
             }
 
-            return HandOver(candidate, client);
+            return await HandOverAsync(candidate, client).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (_ending.IsCancellationRequested)
         {
@@ -1676,7 +1685,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// <param name="candidate">The package.</param>
     /// <param name="client">The Velopack client.</param>
     /// <returns><see langword="null"/> once handed over, and otherwise why it was not.</returns>
-    private string? HandOver(UpdateCandidate candidate, IBackgroundUpdateClient client)
+    private async Task<string?> HandOverAsync(UpdateCandidate candidate, IBackgroundUpdateClient client)
     {
         var version = candidate.Version;
         var arguments = AfterUpdate.RestartArguments(version);
@@ -1698,7 +1707,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
                 _phase = Phase.Idle;
             }
 
-            Raise(static (toasts, version) => toasts.Failed(version), version, "failed");
+            await RaiseAsync(static (toasts, version) => toasts.FailedAsync(version), version, "failed").ConfigureAwait(false);
             ArmCheck(_clock.GetUtcNow() + CheckInterval);
 
             return $"The update to {version} could not be handed to the installer, so nothing was installed: {failure.Message}";
@@ -1712,7 +1721,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         try
         {
-            _requestExit();
+            await _requestExit().ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // The package is handed over either way: Update.exe ends this process after its 60 s wait.
         catch (Exception failure)

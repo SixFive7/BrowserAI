@@ -17,10 +17,12 @@ internal interface IInstallHealth
 {
     /// <summary>A session's browser server listed different tools: the install is broken.</summary>
     /// <param name="difference">The first difference, as the refusal words it.</param>
-    void Broken(string difference);
+    /// <returns>The notice, which never faults.</returns>
+    Task BrokenAsync(string difference);
 
     /// <summary>A session's browser server listed the tools this binary was built with.</summary>
-    void Intact();
+    /// <returns>The notice, which never faults.</returns>
+    Task IntactAsync();
 }
 
 /// <summary>The broken install's toast: its words, its tag and what a click on it asks for.</summary>
@@ -125,7 +127,7 @@ internal sealed partial class BrokenInstallNotice : IInstallHealth, IDisposable
     }
 
     /// <inheritdoc />
-    public void Broken(string difference)
+    public async Task BrokenAsync(string difference)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(difference);
 
@@ -142,7 +144,7 @@ internal sealed partial class BrokenInstallNotice : IInstallHealth, IDisposable
         {
             try
             {
-                surface.Show(InstallToastContent.Tag, InstallToastContent.Group, new ToastRequest(InstallToastContent.Broken(), null, SuppressPopup: false, ExpiresOnReboot: false), 0);
+                await surface.ShowAsync(InstallToastContent.Tag, InstallToastContent.Group, new ToastRequest(InstallToastContent.Broken(), null, SuppressPopup: false, ExpiresOnReboot: false), 0).ConfigureAwait(false);
 
                 lock (_gate)
                 {
@@ -163,7 +165,7 @@ internal sealed partial class BrokenInstallNotice : IInstallHealth, IDisposable
     }
 
     /// <inheritdoc />
-    public void Intact()
+    public async Task IntactAsync()
     {
         bool remove;
 
@@ -183,7 +185,7 @@ internal sealed partial class BrokenInstallNotice : IInstallHealth, IDisposable
         {
             try
             {
-                surface.Remove(InstallToastContent.Tag, InstallToastContent.Group);
+                await surface.RemoveAsync(InstallToastContent.Tag, InstallToastContent.Group).ConfigureAwait(false);
             }
 #pragma warning disable CA1031 // A toast that could not be removed is a log record.
             catch (Exception failure)

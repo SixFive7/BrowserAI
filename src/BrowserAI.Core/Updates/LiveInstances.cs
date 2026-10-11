@@ -96,7 +96,7 @@ internal sealed record LiveMarkerReclaim
 /// <c>LivenessAnswer</c>, the instance this class was and its <c>OwnFile</c>,
 /// <c>StartReclaimInBackground</c>, <c>IsMarkerHeld</c>, <c>RootKeyFor</c>, and
 /// <c>LockScopes.LiveInstanceGate</c>, the wait the join and the census took. What is
-/// left is <see cref="ReclaimStaleMarkers"/>, which the stray sweep runs: a build
+/// left is <see cref="ReclaimStaleMarkersAsync"/>, which the stray sweep runs: a build
 /// from before 2026-10-08 that an update's kill pass, a crash or a kill ended left its
 /// marker behind, and the pass removes it once nothing holds it. The paragraphs below
 /// are the record of the census.
@@ -157,7 +157,7 @@ internal sealed record LiveMarkerReclaim
 /// <i>after</i> an update has been found <b>and</b> downloaded. That had never
 /// once happened on the machine this product is developed on, and
 /// <b>755 unheld markers</b> had accumulated in two days. Reclaim is now a
-/// routine of its own -- <see cref="ReclaimStaleMarkers"/> -- run from the stray
+/// routine of its own -- <see cref="ReclaimStaleMarkersAsync"/> -- run from the stray
 /// sweep and from startup, and <c>Census</c> keeps doing it as well
 /// because a census that walked past a dead marker would count it.
 /// </para>
@@ -224,7 +224,7 @@ internal static class LiveInstances
     /// <param name="installRoot">The install root, for the directory and the gate's name.</param>
     /// <param name="logger">Where the pass is recorded. Never <c>stdout</c>.</param>
     /// <returns>What the pass found and what it removed.</returns>
-    public static LiveMarkerReclaim ReclaimStaleMarkers(string installRoot, ILogger logger)
+    public static async Task<LiveMarkerReclaim> ReclaimStaleMarkersAsync(string installRoot, ILogger logger)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
         ArgumentNullException.ThrowIfNull(logger);
@@ -269,9 +269,10 @@ internal static class LiveInstances
                 };
             }
 
-            var acquisition = gate.Acquire(LockScopes.NeverWaits);
+            var hold = await gate.HoldAsync(LockScopes.NeverWaits).ConfigureAwait(false);
+            var acquisition = hold.Acquisition;
 
-            if (acquisition is MutexAcquisition.NotAcquired)
+            if (!hold.Held)
             {
                 UpdateLog.LiveMarkerReclaimSkipped(logger, mutexName);
 
@@ -324,7 +325,7 @@ internal static class LiveInstances
             }
             finally
             {
-                gate.Release();
+                await hold.DisposeAsync().ConfigureAwait(false);
             }
         }
         finally
@@ -460,7 +461,7 @@ internal static class LiveInstances
     /// cannot come to different conclusions about the same file -- which is what
     /// a second copy of the sharing-violation rule would eventually produce.
     /// <i>Corrected 2026-10-10 by addition: one caller is left,
-    /// <see cref="ReclaimStaleMarkers"/>, since the census was deleted, and the
+    /// <see cref="ReclaimStaleMarkersAsync"/>, since the census was deleted, and the
     /// census's parameter <c>own</c>, the marker it skipped by name so that it did
     /// not count itself, went with it.</i>
     /// </remarks>
@@ -539,7 +540,8 @@ internal static class LiveInstances
     {
         try
         {
-            using var probe = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+            // Opened for asynchronous I/O, and nothing is read or written: the open is the question.
+            using var probe = File.OpenHandle(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, FileOptions.Asynchronous);
             return (MarkerState.Free, null);
         }
         catch (IOException failure) when ((failure.HResult & 0xFFFF) is ErrorSharingViolation or ErrorLockViolation)
