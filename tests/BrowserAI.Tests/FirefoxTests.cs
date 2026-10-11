@@ -537,7 +537,9 @@ internal sealed class FirefoxTests
         // config with no preference and measures exactly one registration.
         var registered = browsers
             .Select(process => (process.ProcessId, process.ImagePath, Result: RestartRegistration.Of(process.ProcessId)))
-            .Where(entry => entry.Result is not RestartRegistration.NotRegistered)
+
+            // A process that has exited since it was listed is no answer either way.
+            .Where(entry => entry.Result is not (RestartRegistration.NotRegistered or RestartRegistration.Gone))
             .ToList();
 
         var offenders = registered.Select(entry =>

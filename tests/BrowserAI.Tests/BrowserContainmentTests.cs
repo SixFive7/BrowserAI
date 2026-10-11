@@ -361,7 +361,10 @@ internal sealed class BrowserContainmentTests
         // to attribute them to.
         var registered = fromOurRoot
             .Select(process => (process.ProcessId, process.ImagePath, Result: RestartRegistration.Of(process.ProcessId)))
-            .Where(entry => entry.Result is not RestartRegistration.NotRegistered)
+
+            // A process of the walk that has exited since is no answer either way:
+            // red once at async-ps-1, 2026-10-11, on a Chromium process that had gone.
+            .Where(entry => entry.Result is not (RestartRegistration.NotRegistered or RestartRegistration.Gone))
             .ToList();
 
         if (browser is "chromium")

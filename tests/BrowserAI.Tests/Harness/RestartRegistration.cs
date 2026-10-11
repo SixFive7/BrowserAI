@@ -48,7 +48,11 @@ internal static partial class RestartRegistration
     /// <param name="processId">The pid, which the caller must know is still alive.</param>
     /// <returns>
     /// The raw <c>HRESULT</c>. <see cref="NotRegistered"/> is the answer this
-    /// project requires; <c>S_OK</c> means a registration exists.
+    /// project requires; <c>S_OK</c> means a registration exists; and
+    /// <see cref="Gone"/> when the process had exited by the time it was asked, which
+    /// the call itself answers as <c>HRESULT_FROM_WIN32(ERROR_PARTIAL_COPY)</c>, read out
+    /// of an address space that is gone. <i>Gone since 2026-10-11 (previously that raw
+    /// answer, which an arm read as a registration).</i>
     /// </returns>
     /// <exception cref="InvalidOperationException">The process could not be opened.</exception>
     public static int Of(int processId)
@@ -67,9 +71,23 @@ internal static partial class RestartRegistration
         uint size = 0;
         var result = GetApplicationRestartSettings(handle, nint.Zero, ref size, out _);
 
+        // Asked of the same handle, so the answer and the exit are about one process.
+        var gone = result == PartialCopy && GetExitCodeProcess(handle, out var exitCode) && exitCode != StillActive;
+
         GC.KeepAlive(handle);
-        return result;
+        return gone ? Gone : result;
     }
+
+    /// <summary><c>HRESULT_FROM_WIN32(ERROR_PARTIAL_COPY)</c>, what an exited process answers.</summary>
+    private const int PartialCopy = unchecked((int)0x8007012B);
+
+    /// <summary><c>STILL_ACTIVE</c>, the exit code of a process that runs.</summary>
+    private const uint StillActive = 259;
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetExitCodeProcess(SafeProcessHandle hProcess, out uint lpExitCode);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]
