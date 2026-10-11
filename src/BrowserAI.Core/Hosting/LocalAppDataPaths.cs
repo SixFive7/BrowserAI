@@ -33,7 +33,7 @@ namespace BrowserAI.Hosting;
 /// one thing that supplies one is Overridden ... a stdio server has no channel but
 /// the environment -- so BROWSERAI_ROOT survives")</i>: every start is handed
 /// <c>--data-root</c>, the hooks write it from the installer's <c>BROWSERAI_ROOT</c>,
-/// read once in <c>InstallerSettings.Read</c>, and no running BrowserAI reads the
+/// read once in <c>InstallerSettings.ReadAsync</c>, and no running BrowserAI reads the
 /// variable.
 /// </para>
 /// <para>

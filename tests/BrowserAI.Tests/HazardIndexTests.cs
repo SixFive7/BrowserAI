@@ -175,7 +175,7 @@ internal sealed partial class HazardIndexTests
     {
         // The one failure this table's counting mechanism cannot describe.
         //
-        // `HazardIndex.Rows` keeps a pipe-leading line only when it splits into
+        // `HazardIndex.RowsAsync` keeps a pipe-leading line only when it splits into
         // exactly `Fields`, and drops every other one WITHOUT SAYING SO -- which
         // is right for the header, the separator and the three-column table
         // above the index, and catastrophic for a row somebody wrote a bare `|`
@@ -219,7 +219,7 @@ internal sealed partial class HazardIndexTests
         // eight and a check that can only ever come back empty is
         // indistinguishable from one that cannot look. The content is the
         // 2026-08-30 mistake verbatim.
-        const string BareRow = "| Sessions and locking | **A dump could not read a live writer's file** | - | -- | closed 2026-08-30 | `LauncherWait.Evidence` opens FileShare.ReadWrite | FileShare.Delete |";
+        const string BareRow = "| Sessions and locking | **A dump could not read a live writer's file** | - | -- | closed 2026-08-30 | `LauncherWait.EvidenceAsync` opens FileShare.ReadWrite | FileShare.Delete |";
 
         await Assert.That(HazardIndex.SplitRow(BareRow).Length).IsNotEqualTo(HazardIndex.Fields)
             .Because("the line the guard exists for has to be a line the guard can see");
@@ -233,7 +233,7 @@ internal sealed partial class HazardIndexTests
             StringComparison.Ordinal));
 
         await Assert.That(escaped.Length).IsEqualTo(HazardIndex.Fields);
-        await Assert.That(escaped[6].Trim()).IsEqualTo("`LauncherWait.Evidence` opens FileShare.ReadWrite | FileShare.Delete");
+        await Assert.That(escaped[6].Trim()).IsEqualTo("`LauncherWait.EvidenceAsync` opens FileShare.ReadWrite | FileShare.Delete");
     }
 
     /// <summary>Every symbol a row's evidence cell names, brace groups expanded.</summary>

@@ -53,7 +53,7 @@ internal static partial class Program
     /// offers to delete the data root -- so a second reader that answered
     /// differently would be offering to delete a directory nobody used.
     /// <i>Changed 2026-10-08 by step 5 of the one-binary build:</i> that method is
-    /// gone, the hooks read the variable once in <c>InstallerSettings.Read</c> and
+    /// gone, the hooks read the variable once in <c>InstallerSettings.ReadAsync</c> and
     /// hand every start <c>--data-root</c>, and no running BrowserAI reads it.
     /// </para>
     /// <para>

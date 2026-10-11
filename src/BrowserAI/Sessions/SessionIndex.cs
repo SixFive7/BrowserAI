@@ -208,8 +208,8 @@ internal sealed class SessionIndex
     /// read").*** <see cref="FollowUnderAsync"/> is the second, and it is defined in
     /// terms of this one. <b>Three callers must keep using this one</b>, and each
     /// is machine-wide by design: <see cref="SweepAsync"/>, which would otherwise
-    /// leave entries un-swept forever; <c>SessionManager.LiveSessions</c>, whose
-    /// browsers root is machine-wide; and <c>StraySweep.AttributeByProfileLock</c>,
+    /// leave entries un-swept forever; <c>SessionManager.LiveSessionsAsync</c>, whose
+    /// browsers root is machine-wide; and <c>StraySweep.AttributeByProfileLockAsync</c>,
     /// whose whole reach is the point of it.
     /// <c>HouseRuleTests.TheThreeWholeMachineIndexReadersStillTakeTheWholeMachineRead</c>
     /// asserts that, by name, instead of leaving it to a reader.
@@ -235,7 +235,7 @@ internal sealed class SessionIndex
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Added 2026-08-24. The filter used to run on the wrong side of the
-    /// parse</b>: <c>browserai_list</c> and <c>SessionManager.Beneath</c> called
+    /// parse</b>: <c>browserai_list</c> and <c>SessionManager.BeneathAsync</c> called
     /// <see cref="FollowAsync"/> and then dropped what was not under their prefix, so
     /// every session on the machine had its record opened and strictly parsed --
     /// up to 250 log entries and all their arguments -- to print the four fields
@@ -248,7 +248,7 @@ internal sealed class SessionIndex
     /// <para>
     /// ⚠️ *Corrected 2026-08-29 (previously the second caller was named "the
     /// roll-up", and it ran on <c>destroy</c> too).* The per-root roll-up file
-    /// is deleted; <c>SessionManager.Beneath</c> is the same walk under the same
+    /// is deleted; <c>SessionManager.BeneathAsync</c> is the same walk under the same
     /// prefix, now feeding only the sibling-sessions line in the
     /// <c>init</c>/<c>resume</c> answer. <b>The exposure below is unchanged on
     /// those two doors and gone from <c>destroy</c></b>, which walked the index
@@ -258,7 +258,7 @@ internal sealed class SessionIndex
     /// ⚠️ ***Corrected 2026-08-24, same day (previously the paragraph above ended
     /// there, and <c>ARCHITECTURE.md</c> said the same).*** <b>What this removed
     /// is the RECORD open, and the ENTRY-FILE open is still one per index entry
-    /// on the machine, still through <c>RenameWindow.WaitOut</c>, still carrying
+    /// on the machine, still through <c>RenameWindow.WaitOutAsync</c>, still carrying
     /// the whole 30-second budget.</b> <c>FollowOne</c> opens the entry file
     /// before it can read the pointer it filters on, so a denied or
     /// delete-pending <i>entry file</i> anywhere on the host still adds up to
@@ -297,7 +297,7 @@ internal sealed class SessionIndex
     /// drops exactly that class, so it excluded the only case where the
     /// equivalence fails; it now plants one and asserts the narrower claim.
     /// <b>Harmless in the product today</b> -- <c>SessionManager.List</c> and
-    /// <c>SessionManager.Beneath</c> both drop <c>Session is null</c> on the next
+    /// <c>SessionManager.BeneathAsync</c> both drop <c>Session is null</c> on the next
     /// line -- and the API's contract is what a later caller will read.
     /// </para>
     /// </remarks>
@@ -307,7 +307,7 @@ internal sealed class SessionIndex
     /// ⚠️ ***Corrected 2026-08-24, same day (previously "as
     /// <c>SessionManager.Subtree</c> produces it").*** There are <b>two</b>
     /// producers and the contract is the shape and not one of them:
-    /// <c>SessionManager.Subtree</c> is one, and <c>SessionManager.Beneath</c>
+    /// <c>SessionManager.Subtree</c> is one, and <c>SessionManager.BeneathAsync</c>
     /// re-derives the prefix itself -- <c>ToUpperInvariant</c> then a separator --
     /// and in particular skips <c>Subtree</c>'s <c>Path.GetFullPath</c>. That is
     /// benign today only because its input is <c>Path.GetDirectoryName</c> of an
@@ -522,7 +522,7 @@ internal sealed class SessionIndex
     /// <para>
     /// ⚠️ <b>And it is true of the PREFIX now too -- corrected 2026-08-26,
     /// previously "That is true of the PREDICATE and not of the PREFIX ...
-    /// <c>SessionManager.Beneath</c> still derives the prefix on its own ... it is
+    /// <c>SessionManager.BeneathAsync</c> still derives the prefix on its own ... it is
     /// recorded here rather than quietly fixed because collapsing it is a change
     /// to path handling".</b> That change is this one. <c>Subtree</c> and
     /// <c>Beneath</c> both call <c>CanonicalPath.PrefixOf</c>, and a tree-as-text

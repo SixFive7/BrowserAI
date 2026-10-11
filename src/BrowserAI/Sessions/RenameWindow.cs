@@ -24,7 +24,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>Both sides of the rename need this and only one side had it.</b> The
-/// writers -- <c>SessionLock.Replace</c> and <c>SessionIndex.Replace</c> -- have
+/// writers -- <c>SessionLock.Replace</c> and <c>SessionIndex.ReplaceAsync</c> -- have
 /// waited out a busy destination since 2026-08-16, each with the measured budget
 /// and the note explaining that a concurrent reader or a virus scanner is a live
 /// condition and not a bug. The readers had nothing, which made the pair
@@ -57,7 +57,7 @@ namespace BrowserAI.Sessions;
 /// </listheader>
 /// <item>
 /// <term><b>Entitled</b> -- <c>SessionLock.ReadRecordAsync</c>,
-/// <c>SessionLock.OpenHeld</c>, <c>SessionIndex.FollowOne</c></term>
+/// <c>SessionLock.OpenHeld</c>, <c>SessionIndex.FollowOneAsync</c></term>
 /// <description>
 /// It already holds whatever gives it the right to look: the per-directory
 /// mutex, or nothing more than the fact that reading a record is always allowed.
@@ -68,13 +68,13 @@ namespace BrowserAI.Sessions;
 /// <item>
 /// <term><b>Not entitled</b> -- <c>InstanceDirectory</c>'s claim,
 /// <c>LiveInstances</c>' registration (deleted 2026-10-10), <c>FirefoxProfile</c>'s probe,
-/// <c>SessionLock.ProbeForHolder</c></term>
+/// <c>SessionLock.ProbeForHolderAsync</c></term>
 /// <description>
 /// The refusal <b>is the answer</b>. Each of those opens exists precisely to
 /// find out whether something else holds the thing, and a retry would convert
 /// <i>somebody owns this</i> into <i>eventually, nobody did</i> -- which is the
 /// mechanism, inverted. <b>Never route one of those through here.</b>
-/// <c>SessionLock.ProbeForHolder</c> is the newest and the clearest case: it
+/// <c>SessionLock.ProbeForHolderAsync</c> is the newest and the clearest case: it
 /// opens <c>browserai.lock</c> in front of the per-directory gate to find out whether
 /// anyone owns it, so a denial waited out would be a live owner waited out. It
 /// is also the one that cannot decide <see cref="UnauthorizedAccessException"/>
@@ -88,7 +88,7 @@ namespace BrowserAI.Sessions;
 /// <description>
 /// It holds the per-directory gate <i>and</i> the record on disk is one it has
 /// just written or is recovering, so no other process can be the owner: becoming
-/// one means passing through <c>SessionLock.TakeOrReport</c>, which needs the
+/// one means passing through <c>SessionLock.TakeOrReportAsync</c>, which needs the
 /// gate this caller is holding. A refusal is therefore an <b>ungated transient
 /// handle</b>, not an owner, and it is waited out --
 /// <see cref="WaitOutWhereNoOwnerIsPossibleAsync"/>. <b>The precondition is the whole
@@ -105,7 +105,7 @@ namespace BrowserAI.Sessions;
 /// <see cref="IOException"/> ... a sharing violation on one of these opens means
 /// the holder opened the file in a mode that excludes us").</b> That reading is
 /// right for the two rows above it and wrong for the third, and the difference
-/// cost a lock: <c>SessionLock.ProbeForHolder</c> opens <c>browserai.lock</c>
+/// cost a lock: <c>SessionLock.ProbeForHolderAsync</c> opens <c>browserai.lock</c>
 /// <c>FileAccess.ReadWrite</c> without the gate, so its handle -- microseconds
 /// wide -- refuses a gate holder's own re-open, which then reported a record it
 /// had genuinely written as one it could not take. <b>The probe cannot be made
@@ -210,7 +210,7 @@ internal static class RenameWindow
     /// exactly three places that can.</b> Each holds
     /// <c>LockScopes.PerDirectoryGate</c> and is re-opening a record it has just
     /// written itself or is taking back after its own write failed --
-    /// <c>SessionLock.TakeOrReport</c> after <c>WriteDurably</c>,
+    /// <c>SessionLock.TakeOrReportAsync</c> after <c>WriteDurably</c>,
     /// <c>SessionLock.Rewrite</c> after the same, and <c>SessionLock.Reclaim</c>
     /// recovering from a rewrite that threw. Ownership is only ever granted
     /// under that gate, so while it is held no second owner can appear and the
@@ -218,7 +218,7 @@ internal static class RenameWindow
     /// </para>
     /// <para>
     /// <b>What is being waited out is therefore a handle and not an
-    /// owner.</b> <c>SessionLock.ProbeForHolder</c> is the one opener in the
+    /// owner.</b> <c>SessionLock.ProbeForHolderAsync</c> is the one opener in the
     /// product that asks for write access without the gate; it holds the file
     /// for the length of one <c>FileStream</c> construction and disposal, and
     /// inside that instant a gate holder's re-open is refused

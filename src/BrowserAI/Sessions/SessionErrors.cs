@@ -1263,7 +1263,7 @@ internal static class SessionErrors
     /// <b>Added 2026-10-10, the texts polish, page #56.</b> Until then a live session's
     /// browser call met <see cref="BrowserRuntimeDidNotStart"/>, which says nothing is
     /// running, while the session stays open and its browser server runs. The next
-    /// browser call starts a fresh attempt, since <c>BrowserProvisioner.Ensure</c> starts
+    /// browser call starts a fresh attempt, since <c>BrowserProvisioner.EnsureAsync</c> starts
     /// one after a failed one.
     /// </remarks>
     /// <param name="tool">The tool that was not run.</param>
@@ -1847,7 +1847,7 @@ internal static class SessionErrors
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Added 2026-08-19, because until then this case was an exception
-    /// and not a refusal.</b> <c>SessionLock.TakeOrReport</c>'s first open --
+    /// and not a refusal.</b> <c>SessionLock.TakeOrReportAsync</c>'s first open --
     /// the read of the previous record, under the per-directory gate -- caught a
     /// missing file, a sharing violation and an unparseable record, and nothing
     /// else. A permanent ACL denial arrives as

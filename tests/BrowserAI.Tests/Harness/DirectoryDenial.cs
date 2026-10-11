@@ -17,7 +17,7 @@ namespace BrowserAI.Tests.Harness;
 /// <see cref="UnauthorizedAccessException"/> from a real filesystem, and two
 /// separate tests now need one: the write-landed/write-refused pair, and the
 /// permanently-denied <c>browserai.json</c> that used to escape
-/// <c>SessionLock.TryAcquire</c> as an exception. A second copy of an ACL
+/// <c>SessionLock.TryAcquireAsync</c> as an exception. A second copy of an ACL
 /// manipulation is a second thing that can leave a scratch tree undeletable.
 /// </para>
 /// <para>

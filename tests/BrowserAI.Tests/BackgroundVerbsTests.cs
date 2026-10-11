@@ -15,7 +15,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>The background's own verbs and the holds its toasts read</b>, the two pieces
-/// <c>Program.RunTheBackground</c> builds before the page and the update core exist.
+/// <c>Program.RunTheBackgroundAsync</c> builds before the page and the update core exist.
 /// A person's start that arrives in that moment, or during an update or a stop, is
 /// told why no tab opens; a stop never turns an update into a stop, because the record
 /// written at the end says which of the two it was.

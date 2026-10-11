@@ -374,7 +374,7 @@ internal sealed class ConfigurationAppTests
     /// </summary>
     /// <remarks>
     /// <b>Two clients in every state since 2026-09-24</b>, because one is no
-    /// longer a shape the product can be in: <c>AppState.Read</c> builds a
+    /// longer a shape the product can be in: <c>AppState.ReadAsync</c> builds a
     /// <c>ClientState</c> for every member of <c>RegistrationClient.All</c>, and a
     /// helper that built one would let an arm pass against a state the product
     /// cannot be in.

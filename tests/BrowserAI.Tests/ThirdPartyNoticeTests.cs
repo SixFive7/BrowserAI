@@ -579,7 +579,7 @@ internal sealed class ThirdPartyNoticeTests
     /// </summary>
     /// <remarks>
     /// <b>The contiguous run of table lines under the sentence</b>, the way
-    /// <c>HazardIndex.TableLines</c> walks its own: a table is where it is
+    /// <c>HazardIndex.TableLinesAsync</c> walks its own: a table is where it is
     /// because of what it sits under, and taking every line in the section that
     /// starts with a pipe would fold in the redistribution table above it, whose
     /// rows make the opposite claim.

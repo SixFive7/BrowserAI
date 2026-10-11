@@ -63,7 +63,7 @@ internal sealed partial class RealInstallerTests
 
     /// <summary>
     /// The exit code of a background whose data root was refused: what
-    /// <c>Program.RunTheBackground</c> returns for every start that cannot serve.
+    /// <c>Program.RunTheBackgroundAsync</c> returns for every start that cannot serve.
     /// </summary>
     private const int RefusedExitCode = 1;
 
@@ -689,7 +689,7 @@ internal sealed partial class RealInstallerTests
     /// <b>The markers last is upstream's own order</b>: BrowserAI and Playwright read a
     /// browser as present from them alone, so a marker that arrived before the bytes
     /// under it would hand a half-copied tree to whatever looked first.
-    /// <c>FirstRunCache.SeedInto</c> keeps the same order.
+    /// <c>FirstRunCache.SeedIntoAsync</c> keeps the same order.
     /// </remarks>
     /// <param name="dataRoot">The data root.</param>
     private static async Task SeedTheProvisionedChromiumAsync(string dataRoot)

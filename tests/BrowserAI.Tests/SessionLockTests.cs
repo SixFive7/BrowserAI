@@ -593,7 +593,7 @@ internal sealed class SessionLockTests
     /// <see cref="RenameWindow.Budget"/> was raised to 30 s that day for good
     /// measured reasons; <see cref="LockScopes.PerDirectoryGate"/> was 5 s and
     /// nobody noticed the pair. <c>SessionLock.OpenHeld</c> and
-    /// <c>SessionLock.ReadRecord</c> both run <i>inside</i> the gate and both go
+    /// <c>SessionLock.ReadRecordAsync</c> both run <i>inside</i> the gate and both go
     /// through <see cref="RenameWindow"/> -- so a reader legitimately waiting out
     /// a rename could hold the gate six times longer than the gate's own
     /// timeout, and every other contender would be told <c>Busy</c>: <i>"something
@@ -1284,7 +1284,7 @@ internal sealed class SessionLockTests
     /// <para>
     /// ⚠️ <b>This test costs <see cref="RenameWindow.Budget"/> -- thirty seconds --
     /// and that is coverage and not waste.</b> The denied open runs through
-    /// <c>RenameWindow.WaitOut</c>, which exists to wait out a rename in flight;
+    /// <c>RenameWindow.WaitOutAsync</c>, which exists to wait out a rename in flight;
     /// a permanent denial is a different fault and must still be <i>reported</i>
     /// and not waited on forever. <i>Corrected 2026-08-19 (previously "This
     /// is the only test in the suite that reaches the end of that budget, so it
@@ -1868,8 +1868,8 @@ internal sealed class SessionLockTests
     /// ⚠️ <b>Retargeted 2026-08-26 (previously <c>OpenHeld</c> against
     /// <c>ReopenHeld</c>, both inside <c>SessionLock</c>).</b> Neither exists:
     /// the guard's open is <c>LockFile.Hold</c>, and there are two call sites
-    /// that follow a write -- <c>LockFile.TakeAndWrite</c> and
-    /// <c>SessionLock.TakeOrReport</c>, which writes and holds separately so that
+    /// that follow a write -- <c>LockFile.TakeAndWriteAsync</c> and
+    /// <c>SessionLock.TakeOrReportAsync</c>, which writes and holds separately so that
     /// it can tell <i>nothing was changed</i> from <i>the guard WAS written</i>.
     /// </para>
     /// </remarks>

@@ -2137,7 +2137,7 @@ internal sealed partial class ErrorCatalogueTests
         // arrived, and it is the first row here written for a condition that was
         // ALREADY REACHABLE and was answered by an exception and not by a
         // refusal: a permanently denied `browserai.json` propagated out of
-        // `SessionLock.TryAcquire`. The census could never have found it -- a
+        // `SessionLock.TryAcquireAsync`. The census could never have found it -- a
         // missing row is invisible to a check that reads the rows that exist --
         // which is the standing limit of this test and is said beside its
         // own number.

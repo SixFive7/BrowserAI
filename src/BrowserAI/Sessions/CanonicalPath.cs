@@ -152,7 +152,7 @@ internal static class CanonicalPath
     /// <para>
     /// ⚠️ <b>The one derivation, and the reason it is a member and not two
     /// lines at each call site.</b> <c>SessionManager.Subtree</c> and
-    /// <c>SessionManager.Beneath</c> each derived it -- case-fold, then append a
+    /// <c>SessionManager.BeneathAsync</c> each derived it -- case-fold, then append a
     /// separator -- while <see cref="SessionIndex"/>'s own remark forbade
     /// re-deriving the predicate in as many words. It was benign because
     /// <c>Beneath</c>'s input happened to be canonical; what makes it worth a

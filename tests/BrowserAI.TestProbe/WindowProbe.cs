@@ -406,7 +406,7 @@ internal static partial class WindowProbe
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>The rename is retried, added 2026-08-18</b>, for the reason spelled
-    /// out on <c>SessionProbe.Publish</c>: a file this process has just closed is
+    /// out on <c>SessionProbe.PublishAsync</c>: a file this process has just closed is
     /// briefly held by something outside this repository, and
     /// <c>MOVEFILE_REPLACE_EXISTING</c> is refused <c>ACCESS_DENIED</c> and not
     /// as a sharing violation. An unretried rename kills the probe and the

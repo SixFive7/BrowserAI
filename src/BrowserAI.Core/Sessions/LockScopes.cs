@@ -65,7 +65,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// ⚠️ <b>Later the same day, the better answer: stop putting the peers in the
 /// queue.</b> A process that only wants to <i>report</i> the holder is now
-/// answered by <c>SessionLock.ProbeForHolder</c> in front of the gate, because
+/// answered by <c>SessionLock.ProbeForHolderAsync</c> in front of the gate, because
 /// the sharing violation on <c>browserai.lock</c> already proves ownership and the
 /// mutex never made it more true. <b>Sizing the timeout and removing the queue
 /// are both needed and neither replaces the other</b> -- the probe is why the
@@ -158,7 +158,7 @@ internal static class LockScopes
     /// </para>
     /// <para>
     /// ⚠️ <b>And since 2026-08-18 most of that queue does not exist, because
-    /// most of it never wanted this mutex.</b> <c>SessionLock.ProbeForHolder</c>
+    /// most of it never wanted this mutex.</b> <c>SessionLock.ProbeForHolderAsync</c>
     /// opens <c>browserai.lock</c> <b>in front of</b> this gate: a sharing violation
     /// is the kernel's answer to <i>who owns this</i>, so a peer that only wants
     /// to report the holder is answered there and never creates the object. What
@@ -209,7 +209,7 @@ internal static class LockScopes
     /// <remarks>
     /// <para>
     /// <b>Three, and they are enumerable, not estimated.</b>
-    /// <c>SessionLock.TakeOrReport</c>, inside the gate: the first
+    /// <c>SessionLock.TakeOrReportAsync</c>, inside the gate: the first
     /// <c>OpenHeld</c>, then <c>WriteDurably</c>'s replace loop -- whose
     /// <c>MoveBudget</c> is this same value -- then the re-open.
     /// <c>SessionLock.Rewrite</c>, inside the gate, takes the same three in a

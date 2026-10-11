@@ -547,7 +547,7 @@ internal sealed class CanonicalPathTests
     [Test]
     public async Task ThePrefixIsDerivedInExactlyOnePlaceAndCoversAWholeVolume()
     {
-        // W8. `SessionManager.Subtree` and `SessionManager.Beneath` derived this
+        // W8. `SessionManager.Subtree` and `SessionManager.BeneathAsync` derived this
         // separately -- upper-case, then append a separator -- while
         // `SessionIndex.IsUnder`'s own remark forbade re-deriving the predicate
         // in as many words. One derivation, and a tree-as-text scan in

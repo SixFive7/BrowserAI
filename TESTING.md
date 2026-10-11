@@ -214,7 +214,7 @@ The reclaim pass runs before anything else and is idempotent:
   the rule `NeverByImageNameTests` enforces and which applies to test code with no
   exception. A PID whose creation time no longer matches is skipped, not killed.
   `SpawnRecord` is the record: `.work\spawn-record.txt`, one row per process the
-  harness starts, appended by `JobObjectScope.Launch` and `ProbeProcess`, read by
+  harness starts, appended by `JobObjectScope.LaunchAsync` and `ProbeProcess`, read by
   the pass before it touches the tree -- a live process is what holds the files a
   delete cannot take, so the other order reports a locked file and names the wrong
   cause. ⚠️ *Written 2026-08-19; before that **nothing wrote a record**, so this
@@ -254,7 +254,7 @@ The reclaim pass runs before anything else and is idempotent:
   worktree, and until that day the pass deleted everything in it, so a run in one
   worktree deleted a live gate's app roots in another: proven 2026-10-08. Each
   folder there now gets an owner record beside it, `<folder>.owner`, written before
-  the folder by `ScratchRoot.CreateUnderProfile` and naming the process that made
+  the folder by `ScratchRoot.CreateUnderProfileAsync` and naming the process that made
   it by pid and creation time, the way `.work\installer.lock` names a holder. The
   pass deletes a folder only when that process is gone, or when it has no record
   and was made more than a day ago, and every folder it deletes is a line in the
@@ -508,8 +508,8 @@ slices before starting a gate**: the step reads the publishes and does not make
 them, and the ILC check is the publish's own log.
 
 **What holds it.** The `release installer` capability is absent unless the test pack
-carries, byte for byte, the published server and app (`ReleaseLayout.TestPackMismatch`),
-and `SuiteEnvironment.RequireReleaseInstaller` then holds the publish to the tree
+carries, byte for byte, the published server and app (`ReleaseLayout.TestPackMismatchAsync`),
+and `SuiteEnvironment.RequireReleaseInstallerAsync` then holds the publish to the tree
 through `PublishedSlice.EnsureFresh`. `RealInstallerTests.TheSuitesInstallerIsTheBuildThisRunTested`
 drives the byte comparison both ways over archives it composes;
 `ReleaseScriptTests.ATestPackOnlyRunPacksTheSuitesInstallerAndItsTwinAndNothingElse`
@@ -539,7 +539,7 @@ pack leaves at the top of `Releases\`, and it asked for the `packed release` cap
 which the test pack's twin under `test-pack\twin\` satisfies, so in a fresh worktree, where
 the gate's test pack is the only pack there is, it failed on a directory with nothing at its
 top. It asks for `shipping release` now, a shipping pack's full package at the top of the
-directory (`SuiteEnvironment.RequireShippingRelease`), which reads ABSENT there and skips the
+directory (`SuiteEnvironment.RequireShippingReleaseAsync`), which reads ABSENT there and skips the
 arm loudly, naming `build/New-Release.ps1` and the main checkout's `Releases` folder; a
 release run fails on it, since a release is cut into that directory before it is gated.
 Watched red against a copy of a fresh worktree's `Releases\` holding only the twin, and
@@ -555,7 +555,7 @@ Q294 b they put its folder on the user's PATH, so two at once is the collision t
 test id exists to prevent.
 
 **The suite takes it from a session hook**, which no filter can deselect, and lets it
-go when the session ends: `InstallerLock.Take` creates the file naming the test host's
+go when the session ends: `InstallerLock.TakeAsync` creates the file naming the test host's
 pid and creation time, waits for a live holder up to `TestDefaults.InstallerLockWait`,
 and takes over from a holder that is gone. **A gate driver takes it first**, through
 [`build/InstallerLock.ps1`](build/InstallerLock.ps1), and declares the token in
@@ -630,7 +630,7 @@ invocations above force the spelling somewhere `cd` cannot reach it:
 silently fails to take is the same trap in a new coat, so
 `SuiteCoverageTests.TheRunReportsTheDriveLetterSpellingItActuallyReceived` fails
 the run when the spelling it received is not the one this run declared, and
-`SuiteEnvironment.Summary()` carries a **`drive letter`** row on every run --
+`SuiteEnvironment.SummaryAsync()` carries a **`drive letter`** row on every run --
 declared or not -- naming the spelling, the base directory it was read off, and
 whether the forcing took. Unset declares nothing and asserts nothing, which is
 what an ordinary developer run has always done; the fault is planted in both
@@ -668,7 +668,7 @@ assertion.
 **A filtered run is a CORRECT run.** Every number it prints is true of what it
 ran; the false thing is the sentence a human writes underneath it, and no test
 can read that sentence. What a test can do is make the run **state the premise**,
-so `SuiteEnvironment.Summary()` carries a **`filter`** row on every run, beside
+so `SuiteEnvironment.SummaryAsync()` carries a **`filter`** row on every run, beside
 `drive letter` and for the same reason: it is the run's claim about itself,
 not a fact about the machine.
 
@@ -854,7 +854,7 @@ scratch configuration directory is empty -- that emptiness is the whole point of
 it, and it is also, to `claude.exe`, a machine nobody has ever signed in on,
 which is the shape in which a client may run its first-run onboarding and open a
 browser window. This suite runs on the maintainer's own desktop.
-`Harness/OnboardedClientConfig.Seed` writes `hasCompletedOnboarding: true` into
+`Harness/OnboardedClientConfig.SeedAsync` writes `hasCompletedOnboarding: true` into
 `$CLAUDE_CONFIG_DIR\.claude.json` -- the client's own `plugin eval` sandbox
 recipe, quoted from the bundle, not invented here -- and all three sites go
 through it: the registration arms' `PointTheClientAt` and the two installer arms,
@@ -1218,8 +1218,8 @@ above cannot be deselected either.
 
 **A window is the suite's in three cases and no fourth**: the host's own; a process
 descending from the host by a live parent chain, each parent created before its
-child; or an image under the repository, `ScratchRoot.Path` or
-`ScratchRoot.ProfileScratch`. The machine's own browsers root is never one of
+child; or an image under the repository, `ScratchRoot.PathAsync` or
+`ScratchRoot.ProfileScratchAsync`. The machine's own browsers root is never one of
 them. The rule is `WindowWatch.Classify`, a pure function, and
 `WindowWatchTests` drives it both ways over synthetic sightings on every run.
 

@@ -201,7 +201,7 @@ internal static class BrowserAiPaths
     /// here is</b>, so a revision bump moves it. Needed by a test whose installer
     /// double is constructed <i>before</i> the rig exists and therefore cannot
     /// ask the rig's provisioner for the same answer;
-    /// <c>BrowserProvisioner.SharedComponentDirectories</c> is the product's own
+    /// <c>BrowserProvisioner.SharedComponentDirectoriesAsync</c> is the product's own
     /// route and is what the assertions read.
     /// </remarks>
     /// <param name="browsersRoot">The browsers root, absolute.</param>

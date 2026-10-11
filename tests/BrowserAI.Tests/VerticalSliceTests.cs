@@ -489,7 +489,7 @@ internal sealed class VerticalSliceTests
     /// <summary>Prints what the inline image costs, on a passing run.</summary>
     /// <remarks>
     /// A separate non-async method for the reason
-    /// <c>ModelSurfaceTests.Report</c> is one: <c>TextWriter.WriteLine</c> is a
+    /// <c>ModelSurfaceTests.ReportAsync</c> is one: <c>TextWriter.WriteLine</c> is a
     /// synchronous call and CA1849 refuses it inside an <c>async</c> method,
     /// which is right -- and awaiting a diagnostic write in the middle of an
     /// assertion sequence is the wrong fix.

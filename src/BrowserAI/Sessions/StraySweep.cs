@@ -90,7 +90,7 @@ internal sealed class StraySweep
     /// question they answer is which processes an apply's
     /// <c>force_stop_package</c> would kill. The split is passed in and not
     /// derived here so that the seam is visible at the call site
-    /// (<c>Program.CreateSweep</c>) instead of being a fact about this file.
+    /// (<c>Program.CreateSweepAsync</c>) instead of being a fact about this file.
     /// </param>
     /// <param name="reap">
     /// Playwright's own registry reaper, started detached when a pass really

@@ -102,7 +102,7 @@ internal static class SessionLayout
     /// </summary>
     /// <remarks>
     /// <b>Written once because two components read it for opposite reasons.</b>
-    /// <c>LockFile.TakeAndWrite</c> composes the name; <c>SessionIndex</c>
+    /// <c>LockFile.TakeAndWriteAsync</c> composes the name; <c>SessionIndex</c>
     /// matches it to tell <i>this directory is not a session</i> from <i>an
     /// acquisition is in flight right now</i>, which is the difference between
     /// dropping an entry and keeping it.

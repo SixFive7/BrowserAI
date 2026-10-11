@@ -242,7 +242,7 @@ internal sealed record SessionEnvironment
     /// <see langword="null"/> for the provisioner's own answer.
     /// </summary>
     /// <remarks>
-    /// <b>Null in the product</b>, where <c>BrowserProvisioner.Ensure</c> answers. Added
+    /// <b>Null in the product</b>, where <c>BrowserProvisioner.EnsureAsync</c> answers. Added
     /// 2026-10-10 with the texts polish, page #56: a failed install is told to a live
     /// session's call only when the fresh attempt that call starts fails before
     /// <c>Ensure</c> returns, which no run can arrange, so the arm that holds the answer

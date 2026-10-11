@@ -26,7 +26,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Everything behind the pipe is the product's</b>: the server, the relay link, the
 /// roster and the MCP server over the session host, exactly as
-/// <c>Program.RunTheBackground</c> composes them. What stands in is what a test cannot
+/// <c>Program.RunTheBackgroundAsync</c> composes them. What stands in is what a test cannot
 /// let the background do: <see cref="FakeBackgroundVerbs"/> answers <c>show</c> and
 /// <c>stop</c> where the background's page and its wait would, and the sessions are
 /// <see cref="RigSessionEnvironment"/>'s doubles, so no browser and no published

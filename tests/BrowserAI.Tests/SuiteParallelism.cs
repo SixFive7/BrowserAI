@@ -51,7 +51,7 @@ namespace BrowserAI.Tests;
 /// <b>Not one of them was a duration.</b> Each was a real defect that four-way
 /// parallelism had never surfaced: a rename refused <c>ERROR_ACCESS_DENIED</c> on
 /// a destination the test had just released; the <i>read</i> side of the same
-/// delete-pending window, throwing out of <c>SessionLock.ReadRecord</c> past
+/// delete-pending window, throwing out of <c>SessionLock.ReadRecordAsync</c> past
 /// every handler on the path, at the entry point that opens a session; the
 /// discovery that <c>MoveFileEx</c> leaves the destination name transiently
 /// unbound, so an owned session can read as unowned; and a two-second retry

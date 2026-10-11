@@ -175,7 +175,7 @@ internal static class RelayErrors
     /// (<see cref="Hosting.RootRefusal"/>), and a record that carries no parts, which
     /// nothing of this build writes, is answered with the log instead.
     /// ⚠️ <i>That form is a guard, said 2026-10-10 for round 2 of the texts review, #148</i>:
-    /// <c>BackgroundRecord.Refused</c> writes all four parts every time, so only a record
+    /// <c>BackgroundRecord.RefusedAsync</c> writes all four parts every time, so only a record
     /// another build wrote, or one edited by hand, reaches it; it stays so that such a
     /// record is still answered with the log, and not with the crash.
     /// <c>RelayTests.ARefusedRootIsAnsweredAtOnceWithWhatWasRefusedAndItsRemedy</c> provokes

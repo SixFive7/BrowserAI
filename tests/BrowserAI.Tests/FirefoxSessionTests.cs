@@ -20,7 +20,7 @@ namespace BrowserAI.Tests;
 /// <b>This is the half <see cref="FirefoxTests"/> never covered.</b> That class
 /// proves the locking design -- the <c>parent.lock</c> preflight, Restart Manager
 /// attribution, the restart-registration preference -- by composing a Firefox
-/// config in the test and launching the child through <c>ChildLaunch.Create</c>.
+/// config in the test and launching the child through <c>ChildLaunch.CreateAsync</c>.
 /// Every one of those assertions was true while <c>browserai_init</c> still
 /// refused <c>browser: "firefox"</c>, because none of them goes through the
 /// front door. The machinery was built and measured and had never once been

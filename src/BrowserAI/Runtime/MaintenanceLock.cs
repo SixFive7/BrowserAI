@@ -530,7 +530,7 @@ internal readonly record struct MaintenanceClaim(MaintenanceLock? Lock, Maintena
 /// <b>Left as it is, deliberately, and this is the note, not the fix.</b>
 /// It is the same trade already taken and written down for code 32 -- an AV
 /// scanner, a backup agent or an indexer holding <c>reinstall.lock</c> reads as a
-/// reinstall -- in <c>SessionManager.TheRootCouldNotBeClaimed</c>'s remarks, and
+/// reinstall -- in <c>SessionManager.TheRootCouldNotBeClaimedAsync</c>'s remarks, and
 /// the recovery a caller is given (wait, then look again) is right for a foreign
 /// holder too. What was wrong was a sentence that made the misdiagnosis
 /// impossible; naming it is what stops the next reader deriving from it.

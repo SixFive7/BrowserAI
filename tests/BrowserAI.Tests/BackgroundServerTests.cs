@@ -510,7 +510,7 @@ internal sealed class BackgroundServerTests
     /// <para>
     /// <b>The one-background rule, beside the task's own <c>IgnoreNew</c> (S a)</b>: the
     /// name is taken in the constructor, so a second background fails before it has
-    /// served anybody, and <c>Program.RunTheBackground</c> reads exactly this
+    /// served anybody, and <c>Program.RunTheBackgroundAsync</c> reads exactly this
     /// <c>HResult</c> to exit quietly.
     /// </para>
     /// <para>

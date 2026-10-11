@@ -680,7 +680,7 @@ internal sealed class SessionLock : IDisposable
     /// ⚠️ ***Corrected 2026-08-26 (previously "It opens the guard and never the
     /// store", with no subject, which read as a property of the sweep).*** <b>It
     /// was true of this method and false of the pass that calls it.</b>
-    /// <c>StraySweep.Pass</c> calls <c>SessionIndex.Sweep</c>, which followed
+    /// <c>StraySweep.PassAsync</c> calls <c>SessionIndex.Sweep</c>, which followed
     /// every entry on the machine through <see cref="ReadRecordAsync"/> -- one
     /// <c>SessionStore.OpenForReading</c> per registered session, and the index
     /// is machine-wide. <b>So one process start was one store open per session on
@@ -1534,7 +1534,7 @@ internal sealed record SessionLockRequest
     /// </para>
     /// <para>
     /// ⚠️ <b>It is asked UNDER THE GATE because the ungated ask can miss.</b>
-    /// `init`'s own pre-gate look -- `SessionManager.Existing` -- reads the store
+    /// `init`'s own pre-gate look -- `SessionManager.ExistingAsync` -- reads the store
     /// with no lock held. Under the gate the record has already been read for
     /// the reclaim path, so the same question costs nothing.
     /// </para>

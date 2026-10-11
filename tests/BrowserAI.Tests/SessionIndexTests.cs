@@ -692,7 +692,7 @@ internal sealed class SessionIndexTests
     /// </para>
     /// <para>
     /// <b>Harmless in the product today and asserted anyway.</b>
-    /// <c>SessionManager.List</c> and <c>SessionManager.Beneath</c> both drop
+    /// <c>SessionManager.List</c> and <c>SessionManager.BeneathAsync</c> both drop
     /// <c>Session is null</c> on the next line, so no caller sees the divergence;
     /// what a caller of the API sees is what this holds.
     /// </para>
@@ -833,7 +833,7 @@ internal sealed class SessionIndexTests
     /// ⚠️ <b>Until 2026-08-26 every BrowserAI startup opened the SQLite store of
     /// every session on the machine.</b> <c>Program.Main</c> starts the stray
     /// sweep, one pass calls <see cref="SessionIndex.SweepAsync"/>, and that followed
-    /// every entry through <c>SessionLock.ReadRecord</c> -- so one process start
+    /// every entry through <c>SessionLock.ReadRecordAsync</c> -- so one process start
     /// was one store open per registered session, each leaving a
     /// <c>browserai.data-shm</c> and a <c>browserai.data-wal</c> in a directory
     /// nobody had named. Measured through the published binary: a cleanly-closed

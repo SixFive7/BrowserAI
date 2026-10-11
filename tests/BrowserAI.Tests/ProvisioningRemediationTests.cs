@@ -237,7 +237,7 @@ internal sealed class ProvisioningRemediationTests
     /// <para>
     /// <b>The child is started directly and not through BrowserAI, and it
     /// has to be.</b> Through the product, an empty browsers root never reaches
-    /// upstream at all -- <c>SessionManager.ProvisioningRefusal</c> answers the
+    /// upstream at all -- <c>SessionManager.ProvisioningRefusalAsync</c> answers the
     /// call itself and starts a download, which is the correct behaviour and the
     /// reason the genuine error is unreachable from that direction. So this
     /// starts <c>node.exe</c> on the payload's own <c>cli.js</c> with
