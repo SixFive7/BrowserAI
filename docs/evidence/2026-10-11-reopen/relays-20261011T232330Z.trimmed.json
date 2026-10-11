@@ -1,0 +1,392 @@
+{
+  "when": "2026-10-11T23:23:30.5852318Z",
+  "owned": "%USERPROFILE%\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+  "stdinFileQueries": false,
+  "ancestors": [
+    {
+      "pid": 68252,
+      "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+    },
+    {
+      "pid": 113300,
+      "image": "C:\\Program Files\\Git\\usr\\bin\\timeout.exe"
+    },
+    {
+      "pid": 56636,
+      "image": "C:\\Program Files\\Git\\usr\\bin\\timeout.exe"
+    },
+    {
+      "pid": 54464,
+      "image": "\u003Cerror 31\u003E"
+    },
+    {
+      "pid": 79332,
+      "image": "C:\\Program Files\\Git\\usr\\bin\\bash.exe"
+    },
+    {
+      "pid": 119124,
+      "image": "C:\\Program Files\\Git\\bin\\bash.exe"
+    },
+    {
+      "pid": 86472,
+      "image": "%USERPROFILE%\\.vscode\\extensions\\anthropic.claude-code-2.1.296-win32-x64\\resources\\native-binary\\claude.exe"
+    },
+    {
+      "pid": 52648,
+      "image": "C:\\Program Files\\Microsoft VS Code\\Code.exe"
+    },
+    {
+      "pid": 4684,
+      "image": "C:\\Program Files\\Microsoft VS Code\\Code.exe"
+    },
+    {
+      "pid": 12752,
+      "image": "\u003Cerror 31\u003E"
+    },
+    {
+      "pid": 12684,
+      "image": "\u003Cerror 31\u003E"
+    }
+  ],
+  "processesAtTheOwnedPath": [
+    {
+      "pid": 46780,
+      "created": "2026-10-11T09:22:59.4530518Z",
+      "parentPid": 2224,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "C:\\Windows\\System32\\svchost.exe",
+      "stdin": {
+        "value": "0x0",
+        "kind": "none"
+      },
+      "stdout": {
+        "value": "0x0",
+        "kind": "none"
+      },
+      "stderr": {
+        "value": "0x0",
+        "kind": "none"
+      }
+    },
+    {
+      "pid": 33748,
+      "created": "2026-10-11T10:26:29.8971453Z",
+      "parentPid": 86472,
+      "parentIsAnAncestorOfThisProbe": true,
+      "parentImage": "%USERPROFILE%\\.vscode\\extensions\\anthropic.claude-code-2.1.296-win32-x64\\resources\\native-binary\\claude.exe",
+      "stdin": {
+        "value": "0xDAC",
+        "object": "granted access 0x16019F, handle count 2",
+        "fileType": "pipe",
+        "access": "0x16019F",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0xF6C",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "8.6 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\10-86472\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0x740",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.4 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\11-86472\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 95200,
+      "created": "2026-10-11T12:39:13.2761136Z",
+      "parentPid": 65460,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\.local\\bin\\claude.exe",
+      "stdin": {
+        "value": "0x6B4",
+        "object": "granted access 0x16019F, handle count 2",
+        "fileType": "pipe",
+        "access": "0x16019F",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0x698",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\4-65460\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0x534",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\5-65460\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 10560,
+      "created": "2026-10-11T12:44:20.8618669Z",
+      "parentPid": 71876,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\.local\\bin\\claude.exe",
+      "stdin": {
+        "value": "0x5B8",
+        "object": "granted access 0x16019F, handle count 2",
+        "fileType": "pipe",
+        "access": "0x16019F",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0x658",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.1 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\4-71876\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0x660",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.1 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\5-71876\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 28524,
+      "created": "2026-10-11T12:45:48.8925986Z",
+      "parentPid": 61112,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\.local\\bin\\claude.exe",
+      "stdin": {
+        "value": "0x6C0",
+        "object": "granted access 0x16019F, handle count 2",
+        "fileType": "pipe",
+        "access": "0x16019F",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0x6C8",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.1 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\4-61112\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0x6D0",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\5-61112\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 43668,
+      "created": "2026-10-11T12:47:15.8129810Z",
+      "parentPid": 50304,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\.local\\bin\\claude.exe",
+      "stdin": {
+        "value": "0x5C4",
+        "object": "granted access 0x16019F, handle count 2",
+        "fileType": "pipe",
+        "access": "0x16019F",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0x5BC",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\4-50304\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0x5A0",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\5-50304\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 76064,
+      "created": "2026-10-11T14:39:27.8535002Z",
+      "parentPid": 44152,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe",
+      "stdin": {
+        "value": "0xAA8",
+        "object": "granted access 0x120089, handle count 2",
+        "fileType": "pipe",
+        "access": "0x120089",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0xAB0",
+        "object": "granted access 0x120196, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.1 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x120196\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022inbound\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:57344,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022(empty: an unnamed pipe)\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0xAB8",
+        "object": "granted access 0x120196, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.1 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x120196\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022inbound\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:57344,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022(empty: an unnamed pipe)\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 96516,
+      "created": "2026-10-11T15:39:23.6751653Z",
+      "parentPid": 44112,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\.vscode\\extensions\\anthropic.claude-code-2.1.296-win32-x64\\resources\\native-binary\\claude.exe",
+      "stdin": {
+        "value": "0x7D8",
+        "object": "granted access 0x16019F, handle count 2",
+        "fileType": "pipe",
+        "access": "0x16019F",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0x9C4",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\0-44112\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0xC88",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\1-44112\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 115888,
+      "created": "2026-10-11T21:43:12.5885766Z",
+      "parentPid": 56192,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\.local\\bin\\claude.exe",
+      "stdin": {
+        "value": "0x778",
+        "object": "granted access 0x16019F, handle count 2",
+        "fileType": "pipe",
+        "access": "0x16019F",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0x598",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.4 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\4-56192\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0x78C",
+        "object": "granted access 0x16019F, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.1 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x16019F\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022full duplex\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:65536,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022\\\\uv\\\\5-56192\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 55384,
+      "created": "2026-10-11T22:49:46.7244825Z",
+      "parentPid": 44152,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe",
+      "stdin": {
+        "value": "0x520",
+        "object": "granted access 0x120089, handle count 2",
+        "fileType": "pipe",
+        "access": "0x120089",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0x12D8",
+        "object": "granted access 0x120196, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x120196\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022inbound\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:57344,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022(empty: an unnamed pipe)\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0x588",
+        "object": "granted access 0x120196, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x120196\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022inbound\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:57344,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022(empty: an unnamed pipe)\u0022}"
+        }
+      }
+    },
+    {
+      "pid": 51300,
+      "created": "2026-10-11T23:19:54.7861533Z",
+      "parentPid": 44152,
+      "parentIsAnAncestorOfThisProbe": false,
+      "parentImage": "%USERPROFILE%\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe",
+      "stdin": {
+        "value": "0xBF8",
+        "object": "granted access 0x120089, handle count 2",
+        "fileType": "pipe",
+        "access": "0x120089",
+        "file": "no call that waits behind a parked synchronous read was made"
+      },
+      "stdout": {
+        "value": "0x12F0",
+        "object": "granted access 0x120196, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x120196\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022inbound\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:57344,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022(empty: an unnamed pipe)\u0022}"
+        }
+      },
+      "stderr": {
+        "value": "0x16A0",
+        "object": "granted access 0x120196, handle count 2",
+        "file": {
+          "call": "describe",
+          "returnedWithin": "0.2 ms",
+          "result": "{\u0022fileType\u0022:\u0022pipe\u0022,\u0022mode\u0022:\u00220x20: FILE_SYNCHRONOUS_IO_NONALERT\u0022,\u0022access\u0022:\u00220x120196\u0022,\u0022pipe\u0022:{\u0022type\u0022:\u0022byte stream\u0022,\u0022configuration\u0022:\u0022inbound\u0022,\u0022maximumInstances\u0022:1,\u0022currentInstances\u0022:1,\u0022inboundQuota\u0022:65536,\u0022readDataAvailable\u0022:0,\u0022outboundQuota\u0022:65536,\u0022writeQuotaAvailable\u0022:57344,\u0022state\u0022:\u0022connected\u0022,\u0022end\u0022:\u0022client end\u0022},\u0022name\u0022:\u0022(empty: an unnamed pipe)\u0022}"
+        }
+      }
+    }
+  ]
+}

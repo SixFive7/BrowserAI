@@ -82,10 +82,15 @@ internal sealed class StdioChannel : IDisposable
     /// ⚠️ <b>Each direction is driven by a thread of its own since 2026-10-11</b>, the
     /// maintainer's decision 54, in his words verbatim: <i>"Never block a worker
     /// anywhere."</i> The handles are the client's, made by the process that started this
-    /// one, and none of them is overlapped: an anonymous pipe cannot be, and the end a
-    /// client hands its child is opened without <c>FILE_FLAG_OVERLAPPED</c>. So every read
-    /// and write on them is synchronous in the kernel, and the one choice there is, is
-    /// which thread waits in it. <i>Corrected that day (previously the read loop's
+    /// one, and none of them is overlapped: under Claude Code and under Codex alike each is
+    /// the client end of a pipe opened for synchronous I/O, and <c>ReOpenFile</c> with
+    /// <c>FILE_FLAG_OVERLAPPED</c> refuses every such end with <c>ERROR_PIPE_BUSY</c>,
+    /// measured 2026-10-11 (kb, windows/processes.md). <i>Corrected that day (previously
+    /// "an anonymous pipe cannot be, and the end a client hands its child is opened
+    /// without <c>FILE_FLAG_OVERLAPPED</c>"): an unnamed pipe can have an overlapped end,
+    /// as the end Rust's <c>child_pipe</c> keeps for itself is.</i> So every read and write
+    /// on them is synchronous in the kernel, and the one choice there is, is which thread
+    /// waits in it. <i>Corrected that day (previously the read loop's
     /// <c>ReadAsync</c> on the console stream, which <see cref="Stream"/>'s own base
     /// implementation serves by parking a pool thread in a synchronous read for as long as
     /// the client sends nothing, which is the relay's whole life, and a synchronous write

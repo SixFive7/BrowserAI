@@ -341,6 +341,73 @@ suite's child runs moved to the launcher the same day.*
 `UseShellExecute = false` and the three streams redirected, and print
 `process.StandardOutput.BaseStream.GetType()` and `((FileStream)process.StandardOutput.BaseStream).IsAsync`.
 
+### Both clients hand a server synchronous pipe ends, and no call makes them overlapped -- measured 2026-10-11
+
+**Measured 2026-10-11 on Windows 11 Pro 10.0.26300 with .NET 10.0.12**, against Claude
+Code 2.1.296, in a terminal and in its VS Code extension, and the Codex desktop app, whose
+MCP client introduces itself as `codex-mcp-client 0.162.0-alpha.17.2`. Rig:
+[`docs/probes/2026-10-11-reopen/`](../../docs/probes/2026-10-11-reopen/README.md); output:
+[`docs/evidence/2026-10-11-reopen/`](../../docs/evidence/2026-10-11-reopen/README.md).
+`[FLOATS]`
+
+**What the clients hand.** Read out of the ten relays running at the time by duplicating
+each standard handle, with no reopen and no call that waits:
+
+| Client | Relays | Each handle is | End | Mode | Access, stdin / stdout and stderr |
+|---|--:|---|---|---|---|
+| Claude Code 2.1.296 | 7 | a named pipe `\uv\<n>-<pid of claude>`, byte mode, one instance, 64 KiB each way, full duplex | client | `FILE_SYNCHRONOUS_IO_NONALERT` | `0x16019F` / `0x16019F` |
+| Codex, `codex-mcp-client 0.162.0-alpha.17.2` | 3 | an unnamed pipe, byte mode, one instance, 64 KiB, one way | client | `FILE_SYNCHRONOUS_IO_NONALERT` | `0x120089` / `0x120196` |
+
+Each relay's stdout and stderr were read in full. Its stdin was read only through the
+calls that answer at once while a synchronous read is parked on the handle, below, so the
+mode in that column is stdout's and stderr's, and stdin's is read from the call that made
+it, whose access mask is the one stdin carries. libuv's `uv__create_pipe_pair` opens the
+child's end with `FILE_FLAG_OVERLAPPED` only under `UV_NONBLOCK_PIPE`, and Bun's spawn
+passes `UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE` for descriptors 0 to 2, read
+2026-10-11 at libuv `v1.x` and Bun `main`. Rust's `child_pipe` opens the child's end with
+`FILE_SYNCHRONOUS_IO_NONALERT`, read the same day at `rust-lang/rust` `master`.
+
+**What a reopen and its neighbours do.** Each kind made the way its source makes it, in a
+process of the rig's own, and two runs agreeing on every outcome:
+
+| Kind | `ReOpenFile`, `FILE_FLAG_OVERLAPPED` | `ReOpenFile`, no flag | Opened again by name, overlapped | `CreateIoCompletionPort` | Clearing the mode in place |
+|---|---|---|---|---|---|
+| Claude Code's, for stdin and for stdout | 231 | 231 | 231 | 87 | `STATUS_INVALID_PARAMETER` |
+| The same, opened with `FILE_FLAG_OVERLAPPED`, as a control | 231 | 231 | 231 | bound | accepted |
+| Codex's, for stdin and for stdout | 231 | 231 | | 87 | `STATUS_INVALID_PARAMETER` |
+| `CreatePipe`'s read end and its write end | 231 | 231 | | 87 | `STATUS_INVALID_PARAMETER` |
+| A disk file, shared for reading and writing | **an asynchronous handle**, which read and wrote | a handle | | 87 | `STATUS_INVALID_PARAMETER` |
+| A disk file opened for writing and shared for reading only | 32 | 32 | | 87 | `STATUS_INVALID_PARAMETER` |
+| `CONIN$` and `CONOUT$` | 1168 | 1168 | | 87 | `STATUS_INVALID_PARAMETER` |
+| `NUL` | an asynchronous handle | a handle | | 87 | `STATUS_INVALID_PARAMETER` |
+
+231 is `ERROR_PIPE_BUSY`, *"All pipe instances are busy"*, and it is what opening Claude
+Code's kind again by its name answers too: each of these pipes has one instance, and the
+end the child holds is it. 87 is `ERROR_INVALID_PARAMETER`, 32 `ERROR_SHARING_VIOLATION`
+and 1168 `ERROR_NOT_FOUND`. The documentation describes the call as one that *"reopens the
+specified file system object"* (learn.microsoft.com, `ReOpenFile`, read 2026-10-11).
+`[STABLE]`
+
+**A synchronous end answers some calls only between reads.** With a read parked on
+another thread, `FileModeInformation`, `FilePipeLocalInformation` and `PeekNamedPipe` had
+not returned after 1.5 s and returned once the peer wrote; `FileAccessInformation`,
+`GetFileType` and `NtQueryObject` returned within 1 ms. On the overlapped control with a
+read pending, the first three returned within 1 ms. An `OVERLAPPED` handed to `ReadFile` on
+a synchronous end did not return until data came, 500 ms later when the peer wrote, and
+`CancelSynchronousIo` on the parked thread ended its read at once with 995,
+`ERROR_OPERATION_ABORTED`. `[STABLE]`
+
+**So a relay cannot read or write its standard handles overlapped**, under either client:
+the wait `Protocol/StdioChannel` keeps on a thread of each direction's own has no form that
+holds no thread. That place is the one of the five the maintainer's 76 b left to be
+measured before he decides ([decisions](../../DECISIONS.md#the-conversion-to-asynchronous-code-decided-2026-10-11)).
+
+**To re-establish it:** build the rig and run `reopen-probe.dll standins <directory>`,
+which makes every kind and writes one JSON file, and `reopen-probe.dll relays <directory>
+<the installed BrowserAI.exe>`, which reads every process running from that path by
+duplicating its standard handles. ⚠️ A reading of a running relay must make no call that
+waits on its stdin, because a synchronous read is parked there for the relay's whole life.
+
 ### `SW_SHOWNOACTIVATE` keeps a headed Chromium off the foreground, and Firefox never takes it -- measured 2026-08-24
 
 > ⚠️ *Corrected 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`)

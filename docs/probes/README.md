@@ -210,6 +210,15 @@ named `observe.ps1` and no file of the rig. Its one spelling of the eight,
 and selects nothing by name. **The scan would still flag eleven files, and only
 `observe.ps1` selects a process by name.**
 
+⚠️ *Added 2026-10-11.* **Thirty-nine**, counted as its subdirectories, when
+[`2026-10-11-reopen`](2026-10-11-reopen/README.md) arrived with the maintainer's 76 b.
+Its one spelling of the eight, `Process.GetProcesses` in `Program.cs`, lists every
+process to keep those whose full image path is the installed `BrowserAI.exe`, so it went
+through the real scan, its two files copied under `build/` with `observe.ps1` beside them
+as the positive control and moved out after: the scan named `observe.ps1` and no file of
+the rig. **The scan would still flag eleven files, and only `observe.ps1` selects a
+process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -291,3 +300,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-08-protocol-pin`](2026-10-08-protocol-pin/README.md) | The opening Claude Code sends since 2026-09-30, sent to a BrowserAI server by hand, and Claude Code's own logs and transcripts counted, read-only, for which opening each connection took and what came of it | |
 | [`2026-10-08-input-check`](2026-10-08-input-check/README.md) | What the visible-input check costs: each read and the product's whole check in tight loops, and the shipped coalescable timer over twelve minutes beside the same timer with no tolerance, a timer that wakes for nothing and a process with no timer | |
 | [`2026-10-08-built-in-tool-list`](2026-10-08-built-in-tool-list/README.md) | The payload's own child asked for its tools under five session configurations, its answer compared byte for byte with the snapshot BrowserAI compiles in, and an older snapshot as the control | |
+| [`2026-10-11-reopen`](2026-10-11-reopen/README.md) | Whether a relay's standard handles can be reopened overlapped: each handle kind a stdio server can be handed, made the way its source makes it, and what Claude Code and Codex hand, read out of running relays | |

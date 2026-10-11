@@ -1705,6 +1705,11 @@ latter's real command line is `-c features.code_mode_host=true app-server
   `CLAUDE_CODE_MESSAGING_SOCKET` and `CLAUDE_CODE_MESSAGING_TOKEN`, so a server that
   logs its environment logs the token.
 
+⚠️ *Added 2026-10-11 by addition*: **every one of those pipes is a synchronous client
+end**, read out of the ten relays running that day at Claude Code 2.1.296 and
+`codex-mcp-client 0.162.0-alpha.17.2`, and no reopen makes one overlapped:
+[kb](../windows/processes.md#both-clients-hand-a-server-synchronous-pipe-ends-and-no-call-makes-them-overlapped----measured-2026-10-11).
+
 **What it does not establish.** Hosts not run: the Agent SDK, the Claude desktop app,
 JetBrains and the Codex IDE extension. (2) was not driven through VS Code, because
 nothing could show a window: the extension's own 2.1.292 binary ran with the argument

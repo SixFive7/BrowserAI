@@ -1,0 +1,996 @@
+{
+  "what": "ReOpenFile with FILE_FLAG_OVERLAPPED over the handle kinds a stdio server is handed, each made the way its source makes it",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "runtime": ".NET 10.0.12",
+  "when": "2026-10-11T23:20:43.0010457Z",
+  "pid": 114420,
+  "notMade": [],
+  "arms": [
+    {
+      "id": "A1",
+      "kind": "Claude Code\u0027s stdin kind: a libuv named pipe, the client end, duplex, opened with no FILE_FLAG_OVERLAPPED",
+      "source": "libuv uv__create_stdio_pipe_pair with Bun\u0027s flags for fds 0 to 2, UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE",
+      "childUses": "reads it, as stdin",
+      "described": {
+        "fileType": "pipe",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x16019F",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "client end"
+        },
+        "name": "\\uv\\18446744073709551615-114420"
+      },
+      "peer": {
+        "fileType": "pipe",
+        "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+        "access": "0x1E019F",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "server end"
+        },
+        "name": "\\uv\\18446744073709551615-114420"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x80000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "openTheNamedPipeAgainByItsNameOverlapped": "failed, error 231: All pipe instances are busy.",
+      "withAReadPending": {
+        "queriesWhileASynchronousReadIsPending": {
+          "calls": [
+            {
+              "call": "NtQueryInformationFile FileModeInformation",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "NtQueryInformationFile FileAccessInformation",
+              "returnedWithin": "0.5 ms",
+              "result": "0x16019F"
+            },
+            {
+              "call": "GetFileType",
+              "returnedWithin": "0.3 ms",
+              "result": "3"
+            },
+            {
+              "call": "NtQueryInformationFile FilePipeLocalInformation",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "PeekNamedPipe",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "NtQueryObject ObjectBasicInformation",
+              "returnedWithin": "1 ms",
+              "result": "granted access 0x16019F, handle count 1"
+            }
+          ],
+          "peerThenWrote": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 0.2,
+            "text": null
+          },
+          "theParkedRead": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 4813.6,
+            "text": "probe-roundtrip\\n"
+          },
+          "theWaitingQueriesReturnedOnceTheReadCompleted": true
+        },
+        "anOverlappedPassedOnTheSynchronousHandle": {
+          "returnedBeforeAnyDataWasWritten": false,
+          "peerWroteAt": "500 ms",
+          "read": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 499.5,
+            "text": "probe-roundtrip\\n"
+          }
+        },
+        "cancelSynchronousIoOnTheParkedReader": {
+          "cancelSynchronousIo": "TRUE",
+          "theReadEnded": true,
+          "theRead": {
+            "ok": false,
+            "error": "error 995: The I/O operation has been aborted because of either a thread exit or an application request.",
+            "bytes": 0,
+            "timedOut": false,
+            "ms": 300.4,
+            "text": null
+          }
+        }
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A2",
+      "kind": "Claude Code\u0027s stdout kind: the same pipe kind, written by the child",
+      "source": "as A1",
+      "childUses": "writes it, as stdout",
+      "described": {
+        "fileType": "pipe",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x16019F",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "client end"
+        },
+        "name": "\\uv\\0-114420"
+      },
+      "peer": {
+        "fileType": "pipe",
+        "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+        "access": "0x1E019F",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "server end"
+        },
+        "name": "\\uv\\0-114420"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x40000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "openTheNamedPipeAgainByItsNameOverlapped": "failed, error 231: All pipe instances are busy.",
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A3",
+      "kind": "Control: a libuv client end opened WITH FILE_FLAG_OVERLAPPED, which Bun does only for extra fds",
+      "source": "libuv with UV_NONBLOCK_PIPE (UV_OVERLAPPED_PIPE)",
+      "childUses": "reads it, as stdin",
+      "described": {
+        "fileType": "pipe",
+        "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+        "access": "0x16019F",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "client end"
+        },
+        "name": "\\uv\\1-114420"
+      },
+      "peer": {
+        "fileType": "pipe",
+        "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+        "access": "0x1E019F",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "server end"
+        },
+        "name": "\\uv\\1-114420"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x80000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "openTheNamedPipeAgainByItsNameOverlapped": "failed, error 231: All pipe instances are busy.",
+      "controlOverlappedReadOnTheHandleAsHanded": {
+        "peerWrote": {
+          "ok": true,
+          "error": null,
+          "bytes": 16,
+          "timedOut": false,
+          "ms": 0,
+          "text": null
+        },
+        "read": {
+          "ok": true,
+          "error": null,
+          "bytes": 16,
+          "timedOut": false,
+          "ms": 0,
+          "text": "probe-roundtrip\\n"
+        }
+      },
+      "bindToACompletionPort": "bound",
+      "clearTheSynchronousModeInPlace": "succeeded",
+      "modeAfterwards": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag"
+    },
+    {
+      "id": "A4",
+      "kind": "Codex\u0027s stdin kind: a Rust std child pipe, unnamed, the client end, FILE_SYNCHRONOUS_IO_NONALERT",
+      "source": "rust-lang/rust library/std/src/sys/process/windows/child_pipe.rs, child_pipe(ours_readable: false)",
+      "childUses": "reads it, as stdin",
+      "described": {
+        "fileType": "pipe",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120089",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "outbound",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "client end"
+        },
+        "name": "(empty: an unnamed pipe)"
+      },
+      "peer": {
+        "fileType": "pipe",
+        "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+        "access": "0x120116",
+        "pipe": "NTSTATUS 0xC0000022",
+        "name": "(empty: an unnamed pipe)"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x80000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "withAReadPending": {
+        "queriesWhileASynchronousReadIsPending": {
+          "calls": [
+            {
+              "call": "NtQueryInformationFile FileModeInformation",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "NtQueryInformationFile FileAccessInformation",
+              "returnedWithin": "0.3 ms",
+              "result": "0x120089"
+            },
+            {
+              "call": "GetFileType",
+              "returnedWithin": "0.2 ms",
+              "result": "3"
+            },
+            {
+              "call": "NtQueryInformationFile FilePipeLocalInformation",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "PeekNamedPipe",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "NtQueryObject ObjectBasicInformation",
+              "returnedWithin": "0.2 ms",
+              "result": "granted access 0x120089, handle count 1"
+            }
+          ],
+          "peerThenWrote": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 0,
+            "text": null
+          },
+          "theParkedRead": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 4810,
+            "text": "probe-roundtrip\\n"
+          },
+          "theWaitingQueriesReturnedOnceTheReadCompleted": true
+        },
+        "anOverlappedPassedOnTheSynchronousHandle": {
+          "returnedBeforeAnyDataWasWritten": false,
+          "peerWroteAt": "500 ms",
+          "read": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 500.1,
+            "text": "probe-roundtrip\\n"
+          }
+        },
+        "cancelSynchronousIoOnTheParkedReader": {
+          "cancelSynchronousIo": "TRUE",
+          "theReadEnded": true,
+          "theRead": {
+            "ok": false,
+            "error": "error 995: The I/O operation has been aborted because of either a thread exit or an application request.",
+            "bytes": 0,
+            "timedOut": false,
+            "ms": 300.2,
+            "text": null
+          }
+        }
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A5",
+      "kind": "Codex\u0027s stdout kind: a Rust std child pipe, unnamed, the client end, FILE_SYNCHRONOUS_IO_NONALERT",
+      "source": "child_pipe(ours_readable: true)",
+      "childUses": "writes it, as stdout",
+      "described": {
+        "fileType": "pipe",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120196",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "inbound",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "client end"
+        },
+        "name": "(empty: an unnamed pipe)"
+      },
+      "peer": {
+        "fileType": "pipe",
+        "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+        "access": "0x120089",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "inbound",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 65536,
+          "readDataAvailable": 0,
+          "outboundQuota": 65536,
+          "writeQuotaAvailable": 65536,
+          "state": "connected",
+          "end": "server end"
+        },
+        "name": "(empty: an unnamed pipe)"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x40000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A6",
+      "kind": "CreatePipe\u0027s read end, a child\u0027s stdin under .NET\u0027s Process or a shell pipeline",
+      "source": "kernel32 CreatePipe",
+      "childUses": "reads it, as stdin",
+      "described": {
+        "fileType": "pipe",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120189",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 4096,
+          "readDataAvailable": 0,
+          "outboundQuota": 4096,
+          "writeQuotaAvailable": 4096,
+          "state": "connected",
+          "end": "server end"
+        },
+        "name": "(empty: an unnamed pipe)"
+      },
+      "peer": {
+        "fileType": "pipe",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120196",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 4096,
+          "readDataAvailable": 0,
+          "outboundQuota": 4096,
+          "writeQuotaAvailable": 4096,
+          "state": "connected",
+          "end": "client end"
+        },
+        "name": "(empty: an unnamed pipe)"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x80000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "withAReadPending": {
+        "queriesWhileASynchronousReadIsPending": {
+          "calls": [
+            {
+              "call": "NtQueryInformationFile FileModeInformation",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "NtQueryInformationFile FileAccessInformation",
+              "returnedWithin": "0.3 ms",
+              "result": "0x120189"
+            },
+            {
+              "call": "GetFileType",
+              "returnedWithin": "0.2 ms",
+              "result": "3"
+            },
+            {
+              "call": "NtQueryInformationFile FilePipeLocalInformation",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "PeekNamedPipe",
+              "returnedWithin": "still waiting after 1500 ms",
+              "result": null
+            },
+            {
+              "call": "NtQueryObject ObjectBasicInformation",
+              "returnedWithin": "0.3 ms",
+              "result": "granted access 0x120189, handle count 1"
+            }
+          ],
+          "peerThenWrote": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 0,
+            "text": null
+          },
+          "theParkedRead": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 4814.5,
+            "text": "probe-roundtrip\\n"
+          },
+          "theWaitingQueriesReturnedOnceTheReadCompleted": true
+        },
+        "anOverlappedPassedOnTheSynchronousHandle": {
+          "returnedBeforeAnyDataWasWritten": false,
+          "peerWroteAt": "500 ms",
+          "read": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 500.5,
+            "text": "probe-roundtrip\\n"
+          }
+        },
+        "cancelSynchronousIoOnTheParkedReader": {
+          "cancelSynchronousIo": "TRUE",
+          "theReadEnded": true,
+          "theRead": {
+            "ok": false,
+            "error": "error 995: The I/O operation has been aborted because of either a thread exit or an application request.",
+            "bytes": 0,
+            "timedOut": false,
+            "ms": 300.5,
+            "text": null
+          }
+        }
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A7",
+      "kind": "CreatePipe\u0027s write end, a child\u0027s stdout under the same",
+      "source": "kernel32 CreatePipe",
+      "childUses": "writes it, as stdout",
+      "described": {
+        "fileType": "pipe",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120196",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 4096,
+          "readDataAvailable": 0,
+          "outboundQuota": 4096,
+          "writeQuotaAvailable": 4096,
+          "state": "connected",
+          "end": "client end"
+        },
+        "name": "(empty: an unnamed pipe)"
+      },
+      "peer": {
+        "fileType": "pipe",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120189",
+        "pipe": {
+          "type": "byte stream",
+          "configuration": "full duplex",
+          "maximumInstances": 1,
+          "currentInstances": 1,
+          "inboundQuota": 4096,
+          "readDataAvailable": 0,
+          "outboundQuota": 4096,
+          "writeQuotaAvailable": 4096,
+          "state": "connected",
+          "end": "server end"
+        },
+        "name": "(empty: an unnamed pipe)"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x40000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 231: All pipe instances are busy."
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A8",
+      "kind": "A disk file opened synchronously for reading, shared for reading and writing: stdin redirected from a file",
+      "source": "CreateFileW, no flags",
+      "childUses": "reads it, as stdin",
+      "described": {
+        "fileType": "disk",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120089"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "a new handle",
+        "reopened": {
+          "fileType": "disk",
+          "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+          "access": "0x120089"
+        },
+        "roundTrip": {
+          "reopenedRead": {
+            "ok": true,
+            "error": null,
+            "bytes": 13,
+            "timedOut": false,
+            "ms": 0.4,
+            "text": "file-content\\n"
+          }
+        },
+        "originalAfterTheNewHandleClosed": "not checked"
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x80000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 32: The process cannot access the file because it is being used by another process."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "a new handle",
+        "reopened": {
+          "fileType": "disk",
+          "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+          "access": "0x120089"
+        },
+        "roundTrip": {
+          "reopenedRead": {
+            "ok": true,
+            "error": null,
+            "bytes": 13,
+            "timedOut": false,
+            "ms": 0,
+            "text": "file-content\\n"
+          }
+        },
+        "originalAfterTheNewHandleClosed": "not checked"
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A9",
+      "kind": "A disk file opened synchronously for writing, shared for reading and writing: cmd\u0027s \u003E redirect",
+      "source": "CreateFileW, no flags",
+      "childUses": "writes it, as stdout",
+      "described": {
+        "fileType": "disk",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120196"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "a new handle",
+        "reopened": {
+          "fileType": "disk",
+          "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+          "access": "0x120196"
+        },
+        "roundTrip": {
+          "reopenedWrote": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 0.1,
+            "text": null
+          }
+        },
+        "originalAfterTheNewHandleClosed": "not checked"
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x40000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 32: The process cannot access the file because it is being used by another process."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "a new handle",
+        "reopened": {
+          "fileType": "disk",
+          "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+          "access": "0x120196"
+        },
+        "roundTrip": {
+          "reopenedWrote": {
+            "ok": true,
+            "error": null,
+            "bytes": 16,
+            "timedOut": false,
+            "ms": 0,
+            "text": null
+          }
+        },
+        "originalAfterTheNewHandleClosed": "not checked"
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A10",
+      "kind": "A disk file opened synchronously for writing, shared for reading only",
+      "source": "CreateFileW, no flags",
+      "childUses": "writes it, as stdout",
+      "described": {
+        "fileType": "disk",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120196"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 32: The process cannot access the file because it is being used by another process."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x40000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 32: The process cannot access the file because it is being used by another process."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 32: The process cannot access the file because it is being used by another process."
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A11",
+      "kind": "The console\u0027s input, CONIN$: a person running the server in a terminal",
+      "source": "CreateFileW",
+      "childUses": "reads it, as stdin",
+      "described": {
+        "fileType": "char",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x12019F"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 1168: Element not found."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x80000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 1168: Element not found."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 1168: Element not found."
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A12",
+      "kind": "The console\u0027s output, CONOUT$",
+      "source": "CreateFileW",
+      "childUses": "writes it, as stdout",
+      "described": {
+        "fileType": "char",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x12019F"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "failed, error 1168: Element not found."
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x40000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "failed, error 1168: Element not found."
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x40000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "failed, error 1168: Element not found."
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    },
+    {
+      "id": "A13",
+      "kind": "NUL: a client that hands no input",
+      "source": "CreateFileW",
+      "childUses": "reads it, as stdin",
+      "described": {
+        "fileType": "char",
+        "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+        "access": "0x120089"
+      },
+      "reopenOverlappedSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x40000000",
+        "result": "a new handle",
+        "reopened": {
+          "fileType": "char",
+          "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+          "access": "0x120089"
+        },
+        "roundTrip": {
+          "reopenedRead": {
+            "ok": false,
+            "error": "error 38: Reached the end of the file.",
+            "bytes": 0,
+            "timedOut": false,
+            "ms": 0,
+            "text": null
+          }
+        },
+        "originalAfterTheNewHandleClosed": "not checked"
+      },
+      "reopenOverlappedUnshared": {
+        "access": "0x80000000",
+        "share": 0,
+        "flags": "0x40000000",
+        "result": "a new handle",
+        "reopened": {
+          "fileType": "char",
+          "mode": "0x0: asynchronous, no FILE_SYNCHRONOUS_IO flag",
+          "access": "0x120089"
+        },
+        "roundTrip": {
+          "reopenedRead": {
+            "ok": false,
+            "error": "error 38: Reached the end of the file.",
+            "bytes": 0,
+            "timedOut": false,
+            "ms": 0,
+            "text": null
+          }
+        },
+        "originalAfterTheNewHandleClosed": "not checked"
+      },
+      "reopenSynchronousSharedReadWrite": {
+        "access": "0x80000000",
+        "share": 3,
+        "flags": "0x0",
+        "result": "a new handle",
+        "reopened": {
+          "fileType": "char",
+          "mode": "0x20: FILE_SYNCHRONOUS_IO_NONALERT",
+          "access": "0x120089"
+        },
+        "roundTrip": {
+          "reopenedRead": {
+            "ok": true,
+            "error": null,
+            "bytes": 0,
+            "timedOut": false,
+            "ms": 0,
+            "text": null
+          }
+        },
+        "originalAfterTheNewHandleClosed": "not checked"
+      },
+      "bindToACompletionPort": "failed, error 87: The parameter is incorrect.",
+      "clearTheSynchronousModeInPlace": "NTSTATUS 0xC000000D (error 87: The parameter is incorrect.)",
+      "modeAfterwards": "0x20: FILE_SYNCHRONOUS_IO_NONALERT"
+    }
+  ]
+}
