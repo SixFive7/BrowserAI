@@ -644,10 +644,15 @@ internal sealed class BackgroundUpdatesTests
     // ---- The two-phase agreement ------------------------------------------------
 
     /// <summary>
-    /// When every relay says yes, the installing toast goes up, every relay ends, the
-    /// package goes to <c>Update.exe</c> with <c>--after-update</c> and its version,
-    /// and the background is asked to exit, in that order.
+    /// When every relay says yes, every relay ends, the package goes to
+    /// <c>Update.exe</c> with <c>--after-update</c> and its version, and the background
+    /// is asked to exit, in that order, and an update that never waited raises no toast.
     /// </summary>
+    /// <remarks>
+    /// <b>No toast since 2026-10-11, 49 b</b> (previously the ready toast before the
+    /// question and the installing toast after it, here): an update that installs at
+    /// once shows the after-update start's installed toast alone.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task WhenEveryRelaySaysYesTheUpdateInstallsWithTheRestartArguments()
@@ -660,22 +665,19 @@ internal sealed class BackgroundUpdatesTests
 
         var updates = rig.Start();
 
-        var ready = rig.IndexOf("toast ready 1.2.0");
         var askA = rig.IndexOf("ask a 1.2.0");
         var askB = rig.IndexOf("ask b 1.2.0");
-        var installing = rig.IndexOf("toast installing 1.2.0");
         var ended = rig.IndexOf("end relays 1.2.0");
         var applied = rig.IndexOf("apply 1.2.0 with [--after-update 1.2.0]");
         var exited = rig.IndexOf("exit");
 
         await Assert.That(applied).IsGreaterThanOrEqualTo(0).Because(string.Join(" | ", rig.Events));
-        await Assert.That(ready).IsGreaterThanOrEqualTo(0);
-        await Assert.That(askA).IsGreaterThan(ready);
-        await Assert.That(askB).IsGreaterThan(ready);
-        await Assert.That(installing).IsGreaterThan(Math.Max(askA, askB));
-        await Assert.That(ended).IsGreaterThan(installing);
+        await Assert.That(askA).IsGreaterThanOrEqualTo(0);
+        await Assert.That(askB).IsGreaterThanOrEqualTo(0);
+        await Assert.That(ended).IsGreaterThan(Math.Max(askA, askB));
         await Assert.That(applied).IsGreaterThan(ended);
         await Assert.That(exited).IsGreaterThan(applied);
+        await Assert.That(rig.EventsStartingWith("toast")).IsEmpty().Because("an update every relay agreed to at once raised a toast");
 
         await Assert.That(rig.EventsStartingWith("call off")).IsEmpty();
         await Assert.That(rig.EventsStartingWith("end relays now")).IsEmpty();
@@ -704,6 +706,10 @@ internal sealed class BackgroundUpdatesTests
         await AssertNothingEnded(rig);
         await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
         await Assert.That(rig.Logged(53)).IsTrue().Because("event 53 says what called it off");
+
+        // Called off, it waits, and only now does the ready toast go up (49 b).
+        await Assert.That(Joined(rig.EventsStartingWith("toast ready"))).IsEqualTo("toast ready 1.2.0");
+        await Assert.That(rig.IndexOf("toast ready 1.2.0")).IsGreaterThan(rig.IndexOf("call off 1.2.0"));
 
         // Not asked again one tick before the countdown b's no carried.
         rig.Clock.Advance(busyUntil - rig.Clock.GetUtcNow() - OneTick);
@@ -745,6 +751,10 @@ internal sealed class BackgroundUpdatesTests
 
         await Assert.That(Joined(rig.EventsStartingWith("call off"))).IsEqualTo("call off 1.2.0");
         await AssertNothingEnded(rig);
+
+        // Nobody answered for b, so the update waits: the ready toast goes up only now (49 b).
+        await Assert.That(Joined(rig.EventsStartingWith("toast ready"))).IsEqualTo("toast ready 1.2.0");
+        await Assert.That(rig.IndexOf("toast ready 1.2.0")).IsGreaterThan(rig.IndexOf("call off 1.2.0"));
 
         // The late yes is not read.
         _ = rig.Relays.AnswerLater("b", Yes(rig));
@@ -795,7 +805,14 @@ internal sealed class BackgroundUpdatesTests
         await AssertNothingEnded(rig);
     }
 
-    /// <summary>With no relay connected and nothing holding, the update installs without a question.</summary>
+    /// <summary>
+    /// With no relay connected and nothing holding, the update installs without a
+    /// question, and without a toast.
+    /// </summary>
+    /// <remarks>
+    /// <b>No toast since 2026-10-11, 49 b</b> (previously the installing toast before the
+    /// hand-over, here).
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task WithNoRelayConnectedTheUpdateInstallsWithoutAsking()
@@ -805,14 +822,13 @@ internal sealed class BackgroundUpdatesTests
 
         _ = rig.Start();
 
-        var installing = rig.IndexOf("toast installing 1.2.0");
         var applied = rig.IndexOf("apply 1.2.0 with [--after-update 1.2.0]");
         var exited = rig.IndexOf("exit");
 
         await Assert.That(rig.EventsStartingWith("ask")).IsEmpty();
-        await Assert.That(installing).IsGreaterThanOrEqualTo(0).Because(string.Join(" | ", rig.Events));
-        await Assert.That(applied).IsGreaterThan(installing);
+        await Assert.That(applied).IsGreaterThanOrEqualTo(0).Because(string.Join(" | ", rig.Events));
         await Assert.That(exited).IsGreaterThan(applied);
+        await Assert.That(rig.EventsStartingWith("toast")).IsEmpty().Because("an update nothing held raised a toast");
         await Assert.That(rig.Logged(55)).IsTrue().Because("event 55 says nothing held it and nobody was there to ask");
     }
 

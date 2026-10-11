@@ -97,18 +97,24 @@ internal sealed class BackgroundUpdateRig : IDisposable
     };
 
     /// <summary>Builds a core over the rig's seams and starts it, then runs what is due now.</summary>
+    /// <param name="toasts">
+    /// The toasts the core raises, or <see langword="null"/> for <see cref="Toasts"/>; an arm
+    /// that reads what Windows would have been asked hands the product's own
+    /// <see cref="UpdateToasts"/> over a recording surface.
+    /// </param>
     /// <returns>The core.</returns>
-    public BackgroundUpdates Start()
+    public BackgroundUpdates Start(IUpdateToasts? toasts = null)
     {
-        var updates = Build();
+        var updates = Build(toasts);
         updates.Start();
         Settle();
         return updates;
     }
 
     /// <summary>Builds a core over the rig's seams without starting it.</summary>
+    /// <param name="toasts">The toasts the core raises, or <see langword="null"/> for <see cref="Toasts"/>.</param>
     /// <returns>The core; the rig disposes it.</returns>
-    public BackgroundUpdates Build()
+    public BackgroundUpdates Build(IUpdateToasts? toasts = null)
     {
         var updates = new BackgroundUpdates(
             Install,
@@ -120,7 +126,7 @@ internal sealed class BackgroundUpdateRig : IDisposable
             },
             Relays,
             Sessions,
-            Toasts,
+            toasts ?? Toasts,
             Stamp,
             () => Events.Enqueue("exit"),
             Clock,

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Background;
+using BrowserAI.Proxy;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
 
@@ -122,8 +123,13 @@ internal sealed class UpdateToastsTests
     /// <summary>
     /// The installing, installed and failed toasts each remove every other update
     /// toast first and are then shown fresh under their own tag, and each stops the
-    /// countdown.
+    /// countdown; the installing toast takes the ready one's place with no banner.
     /// </summary>
+    /// <remarks>
+    /// <b>The installing toast's banner went on 2026-10-11 with 49 b</b> (previously
+    /// <c>banner=yes</c> here): it follows a ready toast and the installed toast follows
+    /// it within seconds, so the banner it put up was the second of two in that time.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task InstallingInstalledAndFailedRemoveTheOthersFirstAndStopTheCountdown()
@@ -134,7 +140,7 @@ internal sealed class UpdateToastsTests
         rig.Surface.Clear();
         rig.Toasts.Installing("1.2.0");
 
-        await Assert.That(rig.Surface.Lines()).IsEqualTo(Lines("remove ready", "remove installed", "remove failed", "show installing seq=0 banner=yes reboot=yes"));
+        await Assert.That(rig.Surface.Lines()).IsEqualTo(Lines("remove ready", "remove installed", "remove failed", "show installing seq=0 banner=no reboot=yes"));
         await Assert.That(rig.Surface.Shown[^1].Xml).Contains("Installing BrowserAI 1.2.0 now");
         await Assert.That(rig.Toasts.Counting).IsFalse();
 
@@ -165,6 +171,79 @@ internal sealed class UpdateToastsTests
         after.Toasts.Held("1.3.0");
 
         await Assert.That(after.Surface.Shown.Count(toast => toast.Xml.Contains("ready to install", StringComparison.Ordinal))).IsEqualTo(0);
+    }
+
+    /// <summary>
+    /// An update that installs at once raises no toast in the background, so the
+    /// after-update start's installed toast is the only one the person sees; one that
+    /// has to wait raises the ready toast, and when it installs the installing toast
+    /// takes its place with no banner.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>49 b, the maintainer's answer of 2026-10-11, verbatim: <i>"49 b"</i></b>. That
+    /// morning the installed BrowserAI found an update nothing used and raised the ready
+    /// and installing toasts 9 ms apart, and the after-update start raised the installed
+    /// toast six seconds later: three banners for one update that never waited.
+    /// </para>
+    /// <para>
+    /// <b>The background's own update core raises them here</b>, over
+    /// <see cref="BackgroundUpdateRig"/>'s seams and clock, through the
+    /// <see cref="UpdateToasts"/> the background builds and the indirection it hands
+    /// them, onto a surface that records what Windows would have been asked. Planted
+    /// red 2026-10-11 against the core as it stood, which raised the ready toast when a
+    /// package was staged and the installing toast, with a banner, before every
+    /// hand-over.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUpdateThatInstallsAtOnceRaisesNoToastBeforeTheInstalledOneAndOneThatWaitsRaisesTheReadyOne()
+    {
+        // Nothing holds it and its one relay agrees, or no relay is there to ask: it
+        // installs at once, and the background shows nothing.
+        foreach (var withRelay in new[] { true, false })
+        {
+            using var background = new BackgroundUpdateRig();
+            using var shown = new CoreToasts(background);
+
+            if (withRelay)
+            {
+                background.Relays.Connect(RelayIdleAt(background.Clock.GetUtcNow() - TimeSpan.FromMinutes(1)));
+                background.Relays.Answer = _ => Agrees(background);
+            }
+
+            background.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
+            shown.Start();
+
+            await Assert.That(background.IndexOf("apply 1.2.0 with [--after-update 1.2.0]")).IsGreaterThanOrEqualTo(0).Because(string.Join(" | ", background.Events));
+            await Assert.That(shown.Surface.Lines()).IsEmpty().Because(withRelay
+                ? "an update its one relay agreed to raised a toast before the installed one"
+                : "an update with no relay to ask raised a toast before the installed one");
+        }
+
+        // A relay's countdown holds it: the ready toast goes up, with a banner.
+        using var waits = new BackgroundUpdateRig();
+        using var raised = new CoreToasts(waits);
+        var idleAt = waits.Clock.GetUtcNow() + TimeSpan.FromMinutes(4);
+
+        waits.Relays.Connect(RelayIdleAt(idleAt));
+        waits.Relays.Answer = _ => Agrees(waits);
+        waits.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
+        raised.Start();
+
+        await Assert.That(waits.EventsStartingWith("apply")).IsEmpty().Because("the relay's countdown runs");
+        await Assert.That(raised.Surface.Lines().Split('\n')[^1]).StartsWith("show ready seq=1 banner=yes reboot=yes");
+
+        // Its countdown runs out and the relay agrees: the installing toast takes the
+        // ready one's place, with no banner of its own.
+        raised.Surface.Clear();
+        waits.Clock.Advance(idleAt - waits.Clock.GetUtcNow());
+
+        await Assert.That(waits.IndexOf("apply 1.2.0 with [--after-update 1.2.0]")).IsGreaterThanOrEqualTo(0).Because(string.Join(" | ", waits.Events));
+        await Assert.That(string.Join('\n', raised.Surface.Lines().Split('\n')[^4..]))
+            .IsEqualTo(Lines("remove ready", "remove installed", "remove failed", "show installing seq=0 banner=no reboot=yes"));
+        await Assert.That(raised.Surface.Shown.Count(toast => !toast.SuppressPopup)).IsEqualTo(1).Because("the ready toast is the one banner the background puts up");
     }
 
     /// <summary>
@@ -288,6 +367,56 @@ internal sealed class UpdateToastsTests
     }
 
     private static string Lines(params string[] lines) => string.Join('\n', lines);
+
+    /// <summary>A relay of the update core's rig with no call in flight, whose countdown runs out at a moment.</summary>
+    /// <param name="idleAt">The moment.</param>
+    /// <returns>The relay.</returns>
+    private static RelayState RelayIdleAt(DateTimeOffset idleAt) =>
+        new("a", KnownClients.ClaudeCode, "2.1.300", @"C:\project", idleAt, CallInFlight: false);
+
+    /// <summary>A yes, read against the rig's clock at the moment the relay answers.</summary>
+    /// <param name="rig">The rig.</param>
+    /// <returns>The answer.</returns>
+    private static RelayReadiness Agrees(BackgroundUpdateRig rig) =>
+        new(true, rig.Clock.GetUtcNow() - TimeSpan.FromMinutes(1), CallInFlight: false);
+
+    /// <summary>
+    /// The product's toasts over a recording surface, raised by an update core over a
+    /// <see cref="BackgroundUpdateRig"/> and reading its holds through
+    /// <see cref="DeferredUpdateHolds"/>, as <c>Program.Background</c> wires the two.
+    /// </summary>
+    private sealed class CoreToasts : IDisposable
+    {
+        private readonly BackgroundUpdateRig _rig;
+        private readonly DeferredUpdateHolds _holds = new();
+        private readonly UpdateToasts _toasts;
+
+        public CoreToasts(BackgroundUpdateRig rig)
+        {
+            _rig = rig;
+            _toasts = new UpdateToasts(Surface, _holds, new MemoryInProcess(), Rig.Facts, rig.Clock, TimeZoneInfo.Utc, Logs.CreateLogger("toasts"));
+        }
+
+        public RecordingSurface Surface { get; } = new();
+
+        public CapturingLoggerProvider Logs { get; } = new();
+
+        /// <summary>Builds the core with these toasts, hands the toasts its holds, and starts it.</summary>
+        public void Start()
+        {
+            var updates = _rig.Build(_toasts);
+
+            _holds.Target = updates;
+            updates.Start();
+            _rig.Settle();
+        }
+
+        public void Dispose()
+        {
+            _toasts.Dispose();
+            Logs.Dispose();
+        }
+    }
 
     /// <summary>One <see cref="UpdateToasts"/>, its recording surface, its holds and its clock.</summary>
     private sealed class Rig : IDisposable
