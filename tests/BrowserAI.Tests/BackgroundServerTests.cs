@@ -393,6 +393,11 @@ internal sealed class BackgroundServerTests
     /// waits on the machine: the arm reads the moment the background armed for the
     /// connection, and moves the clock to one tick short of it.
     /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-11</b> against the background as it was, at the commit that
+    /// added this arm and no fix: <i>"Expected to be equal to 00:02:30 but received
+    /// 00:00:10"</i>.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -443,6 +448,11 @@ internal sealed class BackgroundServerTests
     /// <b>The bound runs on the rig's clock</b>, and the arm moves it by the product's own
     /// bound, <see cref="BackgroundServer.FirstFrameBound"/>, so it holds the refusal
     /// whatever that bound is.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-11</b> against the background as it was, at the commit that
+    /// added this arm and no fix: its silent connection met <i>"The background closed this
+    /// connection with no further frame."</i>
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
