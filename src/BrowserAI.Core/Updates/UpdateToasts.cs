@@ -287,6 +287,15 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <b>With no banner</b>, straight into the Notification Centre, since 2026-10-11 (49 b,
+    /// the build's choice for the maintainer's review): the background raises it only for
+    /// an update whose ready toast it raised, and the installed toast follows within
+    /// seconds with a banner of its own. It takes the ready toast's place, which is a
+    /// reminder and would otherwise stay on screen counting down, with buttons for a
+    /// background that is ending, until the installed toast removed it. <i>Previously it
+    /// popped up for every install.</i>
+    /// </remarks>
     public void Installing(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
@@ -294,7 +303,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         lock (_gate)
         {
             StopCounting();
-            _ = Raise(UpdateToastContent.InstallingTag, new ToastRequest(UpdateToastContent.Installing(version), null, SuppressPopup: false, ExpiresOnReboot: true), 0);
+            _ = Raise(UpdateToastContent.InstallingTag, new ToastRequest(UpdateToastContent.Installing(version), null, SuppressPopup: true, ExpiresOnReboot: true), 0);
         }
     }
 

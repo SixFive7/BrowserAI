@@ -61,8 +61,9 @@ release body; nothing else depends on it.
   toast stays on screen, says what still uses BrowserAI and which conversations will need a
   reconnect afterwards, and offers **Install now** and **Wait for inactivity**. Install now opens
   the update page, which lists what holds the update, each with its countdown, and installs at
-  once when asked. Toasts follow for installing, for installed, with a button that opens the
-  release's changelog, and for an update that failed.
+  once when asked. Once an update is installed a toast says so, with a button that opens the
+  release's changelog, and an update nothing holds raises no other. A toast also says when an
+  update failed.
 
 - ✨ **`browserai_close` closes a session's browser and keeps the session.**
   The browser gets up to a minute to write what it holds to disk, and the profile with its logins

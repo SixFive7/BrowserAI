@@ -34,10 +34,24 @@ namespace BrowserAI.Updates;
 /// end</b>, each answer bounded by <see cref="ReadyToEndBound"/>. Any no, any
 /// missing answer, a relay that withdraws its yes, or a relay or a holder that
 /// appears while the question is out calls the update off for every relay, and
-/// nothing ends. Only when every relay said yes does the installing toast go up,
-/// every relay end, the package go to <c>Update.exe</c> with
-/// <see cref="AfterUpdate.RestartArguments"/>, and the background exit. With no
-/// relay connected there is nobody to ask, and it installs.
+/// nothing ends. Only when every relay said yes does every relay end, the package
+/// go to <c>Update.exe</c> with <see cref="AfterUpdate.RestartArguments"/>, and the
+/// background exit. With no relay connected there is nobody to ask, and it
+/// installs. <i>Corrected 2026-10-11 (previously "Only when every relay said yes
+/// does the installing toast go up, every relay end, ..."), by 49 b below.</i>
+/// </para>
+/// <para>
+/// <b>The ready toast goes up only once the update has to wait</b> (49 b, decided
+/// 2026-10-11 by the maintainer, in his words verbatim: <i>"49 b"</i>). An update
+/// that installs at once, because nothing holds it and every relay agrees or none
+/// is connected, raises no toast here, and the after-update start's installed toast
+/// is the only one the person sees. One that has to wait raises the ready toast at
+/// the first look that finds it waiting, where the person can see what holds it and
+/// choose Install now; when it then installs, the installing toast takes the ready
+/// one's place in the Notification Centre with no banner of its own
+/// (<see cref="UpdateToasts.Installing"/>). Until that day the ready toast went up as
+/// soon as a package was staged and the installing toast just before every
+/// hand-over, so an update nothing held put three banners up in six seconds.
 /// </para>
 /// <para>
 /// <b>The core runs on its own clock.</b> <see cref="Changed"/> and
@@ -893,12 +907,16 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         return true;
     }
 
-    /// <summary>Holds a staged package, raising the ready toast once per version.</summary>
+    /// <summary>Holds a staged package, and looks at once at whether it has to wait.</summary>
+    /// <remarks>
+    /// <b>No toast is raised here</b> (49 b): the look this schedules raises the ready
+    /// toast when the update has to wait, and an update that installs at once raises
+    /// none. <i>Corrected 2026-10-11 (previously "Holds a staged package, raising the
+    /// ready toast once per version", here).</i>
+    /// </remarks>
     /// <param name="candidate">The package.</param>
     private void Hold(UpdateCandidate candidate)
     {
-        bool raise;
-
         lock (_gate)
         {
             if (_disposed || _phase is Phase.Asking or Phase.Installing)
@@ -910,17 +928,47 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
             _phase = Phase.Held;
             _retryAt = null;
             _silent = false;
-            raise = _toasted.Add(candidate.Version);
         }
 
         BackgroundUpdateLog.Held(_logger, candidate.Version);
+        ScheduleTick();
+    }
+
+    /// <summary>Raises the ready toast for a version that has to wait, once per version in this run.</summary>
+    /// <param name="version">The version that waits.</param>
+    private void RaiseReadyOnce(string version)
+    {
+        bool raise;
+
+        lock (_gate)
+        {
+            raise = !_disposed && _toasted.Add(version);
+        }
 
         if (raise)
         {
-            Raise(static (toasts, version) => toasts.Held(version), candidate.Version, "ready");
+            Raise(static (toasts, version) => toasts.Held(version), version, "ready");
+        }
+    }
+
+    /// <summary>
+    /// Raises the installing toast for an update whose ready toast this run raised, and
+    /// nothing for one that installs at once (49 b).
+    /// </summary>
+    /// <param name="version">The version that installs.</param>
+    private void RaiseInstallingIfItWaited(string version)
+    {
+        bool waited;
+
+        lock (_gate)
+        {
+            waited = _toasted.Contains(version);
         }
 
-        ScheduleTick();
+        if (waited)
+        {
+            Raise(static (toasts, version) => toasts.Installing(version), version, "installing");
+        }
     }
 
     /// <summary>
@@ -1175,6 +1223,13 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     }
 
     /// <summary>Looks at what holds the update, and asks or installs when nothing does.</summary>
+    /// <remarks>
+    /// <b>A look that finds the update waiting raises the ready toast</b>, once per
+    /// version (49 b): something holds it, a relay's no carried a countdown still
+    /// running, or a relay did not answer. A look that asks the relays raises nothing
+    /// yet, because their agreement installs at once, and a no comes back to a look
+    /// that finds the update waiting.
+    /// </remarks>
     private void Evaluate()
     {
         lock (_gate)
@@ -1194,6 +1249,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         var holding = Holding.Of(now, sessions, relays);
         var lookAgain = Timeout.InfiniteTimeSpan;
         var calledOff = false;
+        string? waiting = null;
         UpdateCandidate? unasked = null;
         IBackgroundUpdateClient? client = null;
         Attempt? asking = null;
@@ -1209,16 +1265,19 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
                 if (holding.Any)
                 {
                     lookAgain = holding.Deadline is { } deadline ? deadline - now : CheckInterval;
+                    waiting = _held.Version;
                 }
                 else if (_retryAt is { } retry && retry > now)
                 {
                     lookAgain = retry - now;
+                    waiting = _held.Version;
                 }
                 else if (_silent)
                 {
                     // A relay did not answer: the next change the background reports,
                     // or the next check, asks again. Asking again at once would keep
                     // every other relay holding its client's messages for nothing.
+                    waiting = _held.Version;
                 }
                 else if (relays.Count is 0)
                 {
@@ -1244,6 +1303,11 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         if (lookAgain != Timeout.InfiniteTimeSpan)
         {
             WakeAt(now + (lookAgain < CheckInterval ? lookAgain : CheckInterval));
+        }
+
+        if (waiting is not null)
+        {
+            RaiseReadyOnce(waiting);
         }
 
         if (unasked is not null && client is not null)
@@ -1507,15 +1571,17 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         try
         {
+            // The installing toast only for an update that waited (49 b): one that
+            // installs at once shows the installed toast alone.
             if (route is InstallRoute.Person)
             {
                 await EndRelaysAsync(version, now: true).ConfigureAwait(false);
                 await CloseSessionsAsync().ConfigureAwait(false);
-                Raise(static (toasts, version) => toasts.Installing(version), version, "installing");
+                RaiseInstallingIfItWaited(version);
             }
             else
             {
-                Raise(static (toasts, version) => toasts.Installing(version), version, "installing");
+                RaiseInstallingIfItWaited(version);
                 await EndRelaysAsync(version, now: false).ConfigureAwait(false);
             }
 

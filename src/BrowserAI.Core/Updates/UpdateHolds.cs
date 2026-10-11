@@ -332,13 +332,24 @@ internal interface IUpdateHolds : IUpdateHoldsReader
 internal interface IUpdateToasts
 {
     /// <summary>
-    /// A downloaded update is held: raises the ready toast and keeps its countdown
+    /// A downloaded update has to wait: raises the ready toast and keeps its countdown
     /// live, once per version.
     /// </summary>
+    /// <remarks>
+    /// <b>Not for an update that installs at once</b> (49 b, 2026-10-11): the background
+    /// calls it from the first look that finds the update waiting. <i>Corrected that day
+    /// (previously "A downloaded update is held"), when a held update that nothing held
+    /// still raised it.</i>
+    /// </remarks>
     /// <param name="version">The version that waits.</param>
     void Held(string version);
 
-    /// <summary>The background is about to hand over to the installer.</summary>
+    /// <summary>The background is about to hand over to the installer an update whose ready toast it raised.</summary>
+    /// <remarks>
+    /// <b>Not for an update that installs at once</b> (49 b, 2026-10-11), which shows the
+    /// installed toast alone. <i>Corrected that day (previously "The background is about to
+    /// hand over to the installer").</i>
+    /// </remarks>
     /// <param name="version">The version being installed.</param>
     void Installing(string version);
 
