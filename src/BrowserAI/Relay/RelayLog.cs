@@ -163,11 +163,16 @@ internal static partial class RelayLog
     public static partial void ClassifyFailed(ILogger logger, string exceptionType, int hresult);
 
     /// <summary>The background refused this connection because its first message did not come in time (47 b, 2026-10-11).</summary>
+    /// <remarks>
+    /// <b>26, and not the next number of this class</b>: 23 and 24 are <c>FinderLog</c>'s and 25 is
+    /// <c>RelayModeLog</c>'s, which write under the same category, and <c>ProcessLogTests</c> holds every line of the
+    /// relay's category to an id of its own. The gate of 2026-10-11 found the 23 this line first took.
+    /// </remarks>
     /// <param name="logger">Where to log.</param>
     /// <param name="refusal">The refusal's kind, <see cref="RelayProtocol.RefusedForNoFirstMessage"/>.</param>
     /// <param name="sentence">The background's sentence.</param>
     [LoggerMessage(
-        EventId = 23,
+        EventId = 26,
         Level = LogLevel.Warning,
         Message = "Relay: the background refused this connection, for the reason it calls {Refusal}, and closes it: {Sentence}")]
     public static partial void ClosedForNoFirstMessage(ILogger logger, string refusal, string sentence);

@@ -154,7 +154,12 @@ internal sealed partial class RealInstallerTests
         var page = await RawHttp.SendAsync(uri.Port, RawHttp.Get(uri.Port, uri.PathAndQuery, $"Host: 127.0.0.1:{uri.Port}", "Sec-Fetch-Site: none"));
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-        await Assert.That(page.Body).Contains("<h1>BrowserAI ");
+
+        // The home since 2026-10-11, the maintainer's 40 a (previously the status page,
+        // whose heading was "BrowserAI <version>"): its header names BrowserAI and its
+        // version, and its headline answers what this machine holds, which no arm fixes.
+        await Assert.That(page.Body).Contains("data-page=\"status\"").Because(page.Raw);
+        await Assert.That(page.Body).Contains("<span>BrowserAI</span> <span class=\"version\">");
 
         // A tab connects and closes: the listener's minute starts here.
         using (var tab = await RawEventStream.OpenAsync(uri.Port, uri.AbsolutePath.Trim('/'), tab: 1))
