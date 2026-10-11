@@ -912,7 +912,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         if (_sessions.Find(session) is not { } live)
         {
             ProxyLog.UnknownSession(_logger, tool, session);
-            await RefuseAsync(caller, request.Id, SessionManager.ExplainUnknownSession(tool, session), cancellationToken).ConfigureAwait(false);
+            await RefuseAsync(caller, request.Id, await SessionManager.ExplainUnknownSessionAsync(tool, session).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -938,7 +938,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
             case SessionClaim.Releasing:
                 ProxyLog.UnknownSession(_logger, tool, session);
-                await RefuseAsync(caller, request.Id, SessionManager.ExplainUnknownSession(tool, session), cancellationToken).ConfigureAwait(false);
+                await RefuseAsync(caller, request.Id, await SessionManager.ExplainUnknownSessionAsync(tool, session).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
                 return;
 
             case SessionClaim.TakenOver:
@@ -1048,7 +1048,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // the call for the same reason the liveness decision does: a browser tool
         // forwarded now would block inside the child's own launch for the whole
         // download and answer with upstream's `npx` advice at the end of it.
-        if (_sessions.ProvisioningRefusal(tool, live) is { } notYet)
+        if (await _sessions.ProvisioningRefusalAsync(tool, live).ConfigureAwait(false) is { } notYet)
         {
             Refused(live, tool, why, notYet);
             await RefuseAsync(caller, request.Id, notYet, cancellationToken).ConfigureAwait(false);
@@ -1314,7 +1314,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             if (outcome is SessionStore.Successful
                 && string.Equals(tool, ScreenshotLimit.ScreenshotTool, StringComparison.Ordinal)
                 && !BrowserConfiguration.IsFirefox(live.Config.Browser)
-                && ScreenshotLimit.Refusal(answer.Response?.Result, Path.Combine(live.Location.FullPath, SessionLayout.OutputFolderName)) is { } repeated)
+                && await ScreenshotLimit.RefusalAsync(answer.Response?.Result, Path.Combine(live.Location.FullPath, SessionLayout.OutputFolderName)).ConfigureAwait(false) is { } repeated)
             {
                 ProxyLog.ScreenshotPastChromiumsLimit(live.Logger, tool, live.Location.FullPath);
 

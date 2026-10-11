@@ -50,7 +50,8 @@ namespace BrowserAI.Sessions;
 /// <i>held, by X</i> may refuse immediately. Anything else -- a lock file that
 /// opened, no lock file at all, a denied open -- <b>must</b> fall through to the
 /// unchanged <see cref="MachineMutex.Create"/> →
-/// <c>Acquire(PerDirectoryGate)</c> → <c>TakeOrReport</c> path.
+/// <c>HoldAsync(PerDirectoryGate)</c> → <c>TakeOrReportAsync</c> path (<c>Acquire</c> and
+/// <c>TakeOrReport</c> until 2026-10-11, when the gate's wait became asynchronous).
 /// [The adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
 /// D, is why the constraint is absolute: with the gate skipped on the free path
 /// the rename retry loop becomes the serialiser, and a retry loop is not a lock
@@ -188,11 +189,15 @@ internal sealed class SessionLock : IDisposable
     /// <param name="logger">Where the acquisition is recorded.</param>
     /// <returns>The outcome, the lock when there is one, and a sentence for the caller.</returns>
     /// <remarks>
-    /// Synchronous, and that is not an oversight: a named mutex is owned by the
-    /// thread that waited on it, and a continuation resuming elsewhere makes
-    /// the release throw about "an unsynchronized block of code".
+    /// <b>Asynchronous since 2026-10-11</b>, the maintainer's decision 54, in his words
+    /// verbatim: <i>"Never block a worker anywhere."</i> <i>Corrected that day
+    /// (previously "Synchronous, and that is not an oversight: a named mutex is owned by
+    /// the thread that waited on it, and a continuation resuming elsewhere makes the
+    /// release throw about 'an unsynchronized block of code'")</i>: the mutex is taken and
+    /// released by a thread of its own since that day (<see cref="MachineMutex.HoldAsync"/>),
+    /// so the section inside it may await, and no pool thread waits at the gate.
     /// </remarks>
-    public static SessionLockResult TryAcquire(SessionPath location, SessionLockRequest request, ILogger logger)
+    public static async Task<SessionLockResult> TryAcquireAsync(SessionPath location, SessionLockRequest request, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(location);
         ArgumentNullException.ThrowIfNull(request);
@@ -217,7 +222,7 @@ internal sealed class SessionLock : IDisposable
         // ⚠️ IN FRONT OF THE GATE, NEVER INSTEAD OF IT. Everything below this
         // line is unchanged, and that is the design, not caution -- see
         // this type's own remarks.
-        if (ProbeForHolder(location, logger) is { } refusal)
+        if (await ProbeForHolderAsync(location, logger).ConfigureAwait(false) is { } refusal)
         {
             return refusal;
         }
@@ -253,37 +258,37 @@ internal sealed class SessionLock : IDisposable
             // A non-null alias, because `gate` itself is set to null on transfer
             // and the release below must still find the object it waited on.
             var owned = gate;
-            var acquisition = owned.Acquire(LockScopes.PerDirectoryGate);
-
-            if (acquisition is MutexAcquisition.NotAcquired)
-            {
-                // ⚠️ The old sentence here asserted "that section takes
-                // milliseconds, so something is wrong that waiting longer will
-                // not fix", and it was measured false on 2026-08-18: at 200
-                // processes released together against one directory, 73 refusals
-                // of 796 arrived here purely because each peer enters this gate
-                // in turn to discover the file is held. Waiting longer was the
-                // whole remedy.
-                return new SessionLockResult(
-                    SessionLockOutcome.Busy,
-                    $"'{location.FullPath}' is being opened or closed by another BrowserAI, and the queue for it did not clear within {LockScopes.PerDirectoryGate.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. " +
-                    "Only processes trying to TAKE this directory queue here -- one that merely wanted to know who holds it would already have been told -- so either a process is wedged inside create-or-take, or more BrowserAI processes are opening this one directory at once than that will serve. Nothing was changed. " +
-                    "Wait and call again, or give this session a directory of its own, which is the arrangement this design expects and which never queues at all.");
-            }
-
-            if (acquisition is MutexAcquisition.AcquiredAbandoned)
-            {
-                // R3. The wait SUCCEEDED and this thread owns the mutex; what
-                // the exception reported is that a previous holder died inside
-                // create-or-take. Proceeding is mandatory -- letting it escape
-                // disables locking permanently after the first crash, and
-                // nothing reports it.
-                SessionLog.GateWasAbandoned(logger, location.MutexName, location.FullPath);
-            }
+            var held = await owned.HoldAsync(LockScopes.PerDirectoryGate).ConfigureAwait(false);
 
             try
             {
-                var result = TakeOrReport(location, request, logger, owned, acquisition is MutexAcquisition.AcquiredAbandoned);
+                if (held.Acquisition is MutexAcquisition.NotAcquired)
+                {
+                    // ⚠️ The old sentence here asserted "that section takes
+                    // milliseconds, so something is wrong that waiting longer will
+                    // not fix", and it was measured false on 2026-08-18: at 200
+                    // processes released together against one directory, 73 refusals
+                    // of 796 arrived here purely because each peer enters this gate
+                    // in turn to discover the file is held. Waiting longer was the
+                    // whole remedy.
+                    return new SessionLockResult(
+                        SessionLockOutcome.Busy,
+                        $"'{location.FullPath}' is being opened or closed by another BrowserAI, and the queue for it did not clear within {LockScopes.PerDirectoryGate.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. " +
+                        "Only processes trying to TAKE this directory queue here -- one that merely wanted to know who holds it would already have been told -- so either a process is wedged inside create-or-take, or more BrowserAI processes are opening this one directory at once than that will serve. Nothing was changed. " +
+                        "Wait and call again, or give this session a directory of its own, which is the arrangement this design expects and which never queues at all.");
+                }
+
+                if (held.Acquisition is MutexAcquisition.AcquiredAbandoned)
+                {
+                    // R3. The wait SUCCEEDED and the gate's own thread owns the mutex;
+                    // what the exception reported is that a previous holder died
+                    // inside create-or-take. Proceeding is mandatory -- letting it
+                    // escape disables locking permanently after the first crash, and
+                    // nothing reports it.
+                    SessionLog.GateWasAbandoned(logger, location.MutexName, location.FullPath);
+                }
+
+                var result = await TakeOrReportAsync(location, request, logger, owned, held.Acquisition is MutexAcquisition.AcquiredAbandoned).ConfigureAwait(false);
 
                 if (result.Taken)
                 {
@@ -296,7 +301,7 @@ internal sealed class SessionLock : IDisposable
             {
                 // Held for the create-or-take section only -- single
                 // milliseconds -- whether or not it was taken.
-                owned.Release();
+                await held.DisposeAsync().ConfigureAwait(false);
             }
         }
         finally
@@ -538,7 +543,7 @@ internal sealed class SessionLock : IDisposable
     /// removed while it is.</b> Windows will not unlink a file this process is
     /// holding open, so <c>browserai.lock</c> -- and therefore the directory
     /// above it -- can only go after the handle does. The instant between is
-    /// exactly the instant a peer's <see cref="TryAcquire"/> reclaims the
+    /// exactly the instant a peer's <see cref="TryAcquireAsync"/> reclaims the
     /// directory and launches a browser into a tree that is about to be
     /// deleted. Every BrowserAI takes the per-directory gate before
     /// create-or-take, so holding it across the release makes that instant
@@ -567,20 +572,34 @@ internal sealed class SessionLock : IDisposable
     /// inside create-or-take while it does.
     /// </param>
     /// <exception cref="ObjectDisposedException">This lock has already been released.</exception>
-    public void ReleaseAndDelete(Action delete)
+    /// <returns>The release and the delete.</returns>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The gate is taken before the in-process lock since 2026-10-11, and the lock
+    /// is marked released before either</b>, the maintainer's decision 54: the gate is
+    /// awaited (<see cref="MachineMutex.HoldAsync"/>), and nothing awaits inside a lock.
+    /// <i>Corrected that day (previously the in-process lock was held around the whole
+    /// body, the gate's wait included).</i> B4 stays closed by the same two facts: no
+    /// writer takes the gate, so the order holds nothing a writer waits for; and a writer
+    /// already inside the in-process lock finishes before the store is disposed, while
+    /// one that arrives after the mark is refused, as it was. <see cref="Dispose"/> leaves
+    /// a lock this has marked to this.
+    /// </para>
+    /// </remarks>
+    public async Task ReleaseAndDeleteAsync(Action delete)
     {
         ArgumentNullException.ThrowIfNull(delete);
 
-        // Both disposal paths take this, not just Dispose: a per-session lock
+        // Both disposal paths mark this, not just Dispose: a per-session lock
         // that covered only one of them would close half of B4 and leave the
         // half that unlinks the directory. See _inProcess.
-        lock (_inProcess)
+        ObjectDisposedException.ThrowIf(Interlocked.CompareExchange(ref _disposed, Releasing, 0) is not 0, this);
+
+        var held = await _gate.HoldAsync(LockScopes.PerDirectoryGate).ConfigureAwait(false);
+
+        try
         {
-            ObjectDisposedException.ThrowIf(Interlocked.Exchange(ref _disposed, 1) is not 0, this);
-
-            var acquisition = _gate.Acquire(LockScopes.PerDirectoryGate);
-
-            try
+            lock (_inProcess)
             {
                 SessionLog.Released(Logger, Location.FullPath);
 
@@ -591,18 +610,18 @@ internal sealed class SessionLock : IDisposable
                 _hold.Dispose();
                 delete();
             }
-            finally
-            {
-                if (acquisition is not MutexAcquisition.NotAcquired)
-                {
-                    _gate.Release();
-                }
+        }
+        finally
+        {
+            await held.DisposeAsync().ConfigureAwait(false);
 
-                _logScope?.Dispose();
-                _gate.Dispose();
-            }
+            _logScope?.Dispose();
+            _gate.Dispose();
         }
     }
+
+    /// <summary>The <see cref="_disposed"/> a <see cref="ReleaseAndDeleteAsync"/> sets before it awaits the gate.</summary>
+    private const int Releasing = 2;
 
     /// <summary>
     /// Releases the directory. Both files stay: a guard that outlives its
@@ -613,9 +632,10 @@ internal sealed class SessionLock : IDisposable
     {
         // ⚠️ IT WAITS FOR AN IN-FLIGHT WRITE , NOT RACING ONE. Disposing
         // _gate underneath a writer that is holding it is B4. See _inProcess.
+        // A lock ReleaseAndDeleteAsync has marked is that one's to dispose.
         lock (_inProcess)
         {
-            if (Interlocked.Exchange(ref _disposed, 1) is not 0)
+            if (Interlocked.CompareExchange(ref _disposed, 1, 0) is not 0)
             {
                 return;
             }
@@ -636,7 +656,7 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <para>
     /// <b>This is the sweep's ownership test, and it is deliberately not
-    /// <see cref="TryAcquire"/>.</b> The rule it implements is race R1 --
+    /// <see cref="TryAcquireAsync"/>.</b> The rule it implements is race R1 --
     /// <i>the sweep may only kill a browser whose directory lock it can itself
     /// acquire, and it holds that lock for the whole kill</i> -- which is what
     /// stops one process sweeping away a browser that a second process,
@@ -644,9 +664,9 @@ internal sealed class SessionLock : IDisposable
     /// </para>
     /// <para>
     /// <b>But "whose lock we can acquire" must not mean
-    /// <see cref="TryAcquire"/>, and that distinction is the whole reason this
+    /// <see cref="TryAcquireAsync"/>, and that distinction is the whole reason this
     /// method exists.</b> A sweep is not opening a session, and
-    /// <see cref="TryAcquire"/> would write a new <c>browserai.lock</c> naming
+    /// <see cref="TryAcquireAsync"/> would write a new <c>browserai.lock</c> naming
     /// the sweeper and add a holder row to the crashed session's own history. A
     /// janitor is the last party that should be editing the evidence.
     /// </para>
@@ -661,7 +681,7 @@ internal sealed class SessionLock : IDisposable
     /// store", with no subject, which read as a property of the sweep).*** <b>It
     /// was true of this method and false of the pass that calls it.</b>
     /// <c>StraySweep.Pass</c> calls <c>SessionIndex.Sweep</c>, which followed
-    /// every entry on the machine through <see cref="ReadRecord"/> -- one
+    /// every entry on the machine through <see cref="ReadRecordAsync"/> -- one
     /// <c>SessionStore.OpenForReading</c> per registered session, and the index
     /// is machine-wide. <b>So one process start was one store open per session on
     /// the host</b>, each leaving a <c>-shm</c> and a <c>-wal</c> in a directory
@@ -696,13 +716,13 @@ internal sealed class SessionLock : IDisposable
     /// </para>
     /// </remarks>
     /// <param name="location">The canonicalised session directory.</param>
-    /// <param name="hold">The hold, when one was taken.</param>
-    /// <returns>Why it could not be held, or <see langword="null"/> when it was.</returns>
-    public static string? TryHoldUnowned(SessionPath location, out SessionDirectoryHold? hold)
+    /// <returns>
+    /// Why it could not be held, with no hold; or the hold, with no refusal. <i>An out
+    /// parameter until 2026-10-11, when the gate's wait became asynchronous.</i>
+    /// </returns>
+    public static async Task<(string? Refusal, SessionDirectoryHold? Hold)> TryHoldUnownedAsync(SessionPath location)
     {
         ArgumentNullException.ThrowIfNull(location);
-
-        hold = null;
 
         // Declared before the try and disposed unconditionally in the finally,
         // the same shape TryAcquire uses for the same reason.
@@ -720,52 +740,53 @@ internal sealed class SessionLock : IDisposable
                 or IOException
                 or NotSupportedException)
             {
-                return $"the machine-wide lock '{location.MutexName}' could not be created ({failure.Message})";
+                return ($"the machine-wide lock '{location.MutexName}' could not be created ({failure.Message})", null);
             }
 
             // R3 again, on the per-directory gate: an abandoned mutex WAS
             // acquired. Proceeding is mandatory -- and here the abandonment
             // carries no extra warning worth acting on, because nothing is
             // written.
-            if (gate.Acquire(LockScopes.PerDirectoryGate) is MutexAcquisition.NotAcquired)
-            {
-                return $"another BrowserAI is inside create-or-take on '{location.FullPath}'";
-            }
-
+            var section = await gate.HoldAsync(LockScopes.PerDirectoryGate).ConfigureAwait(false);
             LockFileHold? held = null;
 
             try
             {
+                if (!section.Held)
+                {
+                    return ($"another BrowserAI is inside create-or-take on '{location.FullPath}'", null);
+                }
+
                 try
                 {
                     held = LockFile.Hold(location.LockFile);
                 }
                 catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
                 {
-                    return $"'{location.FullPath}' holds no '{SessionLayout.LockFileName}', so it is not a BrowserAI session";
+                    return ($"'{location.FullPath}' holds no '{SessionLayout.LockFileName}', so it is not a BrowserAI session", null);
                 }
                 catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
                 {
-                    return $"'{location.FullPath}' is held by a live session";
+                    return ($"'{location.FullPath}' is held by a live session", null);
                 }
                 catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
                 {
-                    return $"'{location.LockFile}' could not be opened ({failure.Message})";
+                    return ($"'{location.LockFile}' could not be opened ({failure.Message})", null);
                 }
 
                 // CA2000: ownership of the handle moves into the returned hold,
                 // which the caller disposes, and the rule's dataflow cannot see
-                // a transfer into an out parameter.
+                // a transfer into a returned tuple.
 #pragma warning disable CA2000
-                hold = new SessionDirectoryHold(location, held);
+                var hold = new SessionDirectoryHold(location, held);
 #pragma warning restore CA2000
                 held = null;
-                return null;
+                return (null, hold);
             }
             finally
             {
                 held?.Dispose();
-                gate.Release();
+                await section.DisposeAsync().ConfigureAwait(false);
             }
         }
         finally
@@ -804,7 +825,7 @@ internal sealed class SessionLock : IDisposable
     /// </param>
     /// <returns>The record, or <see langword="null"/> if there is no store.</returns>
     /// <exception cref="SessionRecordException">There is a record and it cannot be acted on.</exception>
-    public static SessionRecord? ReadRecord(SessionPath location, TimeSpan? patience = null)
+    public static async Task<SessionRecord?> ReadRecordAsync(SessionPath location, TimeSpan? patience = null)
     {
         ArgumentNullException.ThrowIfNull(location);
 
@@ -854,7 +875,7 @@ internal sealed class SessionLock : IDisposable
                         refused);
                 }
 
-                Thread.Sleep(delay);
+                await Task.Delay(delay).ConfigureAwait(false);
                 delay = Math.Min(delay * 2, SessionTimes.RecordReadRetryLongestDelayMilliseconds);
             }
         }
@@ -895,7 +916,7 @@ internal sealed class SessionLock : IDisposable
     /// read as <see cref="SessionLiveness.Held"/>; a denied open or a device
     /// error is <see cref="SessionLiveness.Undetermined"/> and carries a
     /// reason. <see cref="SessionLiveness.NotHeld"/> is a snapshot and not
-    /// a claim on the directory, which is why <see cref="ProbeForHolder"/>
+    /// a claim on the directory, which is why <see cref="ProbeForHolderAsync"/>
     /// still falls through to the gate on it.
     /// </para>
     /// <para>
@@ -905,7 +926,7 @@ internal sealed class SessionLock : IDisposable
     /// exactly what an open sharing only <c>Read</c> is refused by. Detecting
     /// an owner and blocking one are the same capability, so no share mode
     /// dissolves it -- it is absorbed on the other side, at
-    /// <see cref="LockFile.TakeAndWrite"/>'s hold, which runs under the gate
+    /// <see cref="LockFile.TakeAndWriteAsync"/>'s hold, which runs under the gate
     /// and therefore cannot meet an owner.
     /// </para>
     /// </remarks>
@@ -956,7 +977,7 @@ internal sealed class SessionLock : IDisposable
     /// A refusal naming the holder, or <see langword="null"/> when the question
     /// must be settled under the gate.
     /// </returns>
-    private static SessionLockResult? ProbeForHolder(SessionPath location, ILogger logger)
+    private static async Task<SessionLockResult?> ProbeForHolderAsync(SessionPath location, ILogger logger)
     {
         if (ProbeLiveness(location).State is not SessionLiveness.Held)
         {
@@ -969,7 +990,7 @@ internal sealed class SessionLock : IDisposable
 
         try
         {
-            holder = LockFile.Read(location.LockFile);
+            holder = await LockFile.ReadAsync(location.LockFile).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is InvalidDataException or IOException or UnauthorizedAccessException)
         {
@@ -986,7 +1007,7 @@ internal sealed class SessionLock : IDisposable
 
         SessionLog.Contended(logger, location.FullPath, holder.ProcessId);
 
-        return HeldBy(location, holder, PurposeOf(location));
+        return HeldBy(location, holder, await PurposeOfAsync(location).ConfigureAwait(false));
     }
 
     /// <summary>
@@ -1004,7 +1025,7 @@ internal sealed class SessionLock : IDisposable
     /// </remarks>
     /// <param name="location">The session directory.</param>
     /// <returns>The purpose, or <see langword="null"/>.</returns>
-    private static string? PurposeOf(SessionPath location)
+    private static async Task<string?> PurposeOfAsync(SessionPath location)
     {
         try
         {
@@ -1013,7 +1034,7 @@ internal sealed class SessionLock : IDisposable
             // whole business is one sentence -- so a reader that waited a dying
             // holder out here would put that wait in front of every refusal, on
             // exactly the path the pre-gate probe exists to keep fast.
-            return ReadRecord(location, TimeSpan.Zero)?.Purpose;
+            return (await ReadRecordAsync(location, TimeSpan.Zero).ConfigureAwait(false))?.Purpose;
         }
         catch (SessionRecordException)
         {
@@ -1021,7 +1042,7 @@ internal sealed class SessionLock : IDisposable
         }
     }
 
-    private static SessionLockResult TakeOrReport(
+    private static async Task<SessionLockResult> TakeOrReportAsync(
         SessionPath location,
         SessionLockRequest request,
         ILogger logger,
@@ -1036,7 +1057,7 @@ internal sealed class SessionLock : IDisposable
 
         if (probe.State is LockFileState.Held)
         {
-            return Contended(location, logger);
+            return await ContendedAsync(location, logger).ConfigureAwait(false);
         }
 
         if (probe.State is LockFileState.Undetermined)
@@ -1052,7 +1073,7 @@ internal sealed class SessionLock : IDisposable
 
         try
         {
-            previousHolder = LockFile.Read(location.LockFile);
+            previousHolder = await LockFile.ReadAsync(location.LockFile).ConfigureAwait(false);
         }
         catch (InvalidDataException failure)
         {
@@ -1074,7 +1095,7 @@ internal sealed class SessionLock : IDisposable
 
         try
         {
-            previous = ReadRecord(location);
+            previous = await ReadRecordAsync(location).ConfigureAwait(false);
         }
         catch (SessionRecordException failure)
         {
@@ -1118,7 +1139,7 @@ internal sealed class SessionLock : IDisposable
                 // Temp file, durable write, rename -- and this is the only rename
                 // `browserai.lock` will ever see, because everything the session
                 // goes on to say goes into the store beside it.
-                LockFile.Write(location.LockFile, holder);
+                await LockFile.WriteAsync(location.LockFile, holder).ConfigureAwait(false);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
@@ -1146,7 +1167,7 @@ internal sealed class SessionLock : IDisposable
             // and cannot make it worse.
             try
             {
-                hold = RenameWindow.WaitOutWhereNoOwnerIsPossible(() => LockFile.Hold(location.LockFile));
+                hold = await RenameWindow.WaitOutWhereNoOwnerIsPossibleAsync(() => LockFile.Hold(location.LockFile)).ConfigureAwait(false);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
@@ -1379,13 +1400,13 @@ internal sealed class SessionLock : IDisposable
             previousRunning);
     }
 
-    private static SessionLockResult Contended(SessionPath location, ILogger logger)
+    private static async Task<SessionLockResult> ContendedAsync(SessionPath location, ILogger logger)
     {
         LockFileHolder? holder;
 
         try
         {
-            holder = LockFile.Read(location.LockFile);
+            holder = await LockFile.ReadAsync(location.LockFile).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is InvalidDataException or IOException or UnauthorizedAccessException)
         {
@@ -1402,7 +1423,7 @@ internal sealed class SessionLock : IDisposable
             ? new SessionLockResult(
                 SessionLockOutcome.Held,
                 $"'{location.FullPath}' is held by another process, which removed its '{SessionLayout.LockFileName}' between the refusal and the read. Nothing was changed. Try again, or choose another directory.")
-            : HeldBy(location, holder, PurposeOf(location));
+            : HeldBy(location, holder, await PurposeOfAsync(location).ConfigureAwait(false));
     }
 
     /// <summary>
@@ -1552,7 +1573,7 @@ internal enum SessionLiveness
     /// ⚠️ <b>A snapshot and never a claim.</b> It says an open succeeded once,
     /// or that there is no guard at all; it does not say the directory is free,
     /// and nothing may take a directory on the strength of it --
-    /// <see cref="SessionLock.TryAcquire"/> still settles that under the
+    /// <see cref="SessionLock.TryAcquireAsync"/> still settles that under the
     /// per-directory gate.
     /// </remarks>
     NotHeld,

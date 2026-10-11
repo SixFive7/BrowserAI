@@ -222,14 +222,13 @@ internal sealed class ToolVerdicts
     /// <exception cref="InvalidOperationException">There is no such resource, or it cannot be read.</exception>
     private static ToolVerdicts FromResource()
     {
-        using var stream = typeof(ToolVerdicts).Assembly.GetManifestResourceStream(ResourceName)
+        // Copied out of the image's memory, never read through a stream: see
+        // EmbeddedResource (2026-10-11, previously Stream.CopyTo into a MemoryStream).
+        var bytes = Hosting.EmbeddedResource.BytesOf(typeof(ToolVerdicts).Assembly, ResourceName)
             ?? throw new InvalidOperationException(
                 $"This BrowserAI was built without its tool verdicts: the resource '{ResourceName}' is not in the binary, so it cannot tell which tools it may forward.");
 
-        using var bytes = new MemoryStream();
-        stream.CopyTo(bytes);
-
-        return Parse(bytes.ToArray(), ResourceName);
+        return Parse(bytes, ResourceName);
     }
 
     /// <summary>Reads the file from bytes somebody else supplied.</summary>

@@ -29,7 +29,7 @@ namespace BrowserAI.Sessions;
 /// and the note explaining that a concurrent reader or a virus scanner is a live
 /// condition and not a bug. The readers had nothing, which made the pair
 /// asymmetric in the direction that throws:
-/// <c>SessionLock.ReadRecord</c> and the acquire path's own open both propagated
+/// <c>SessionLock.ReadRecordAsync</c> and the acquire path's own open both propagated
 /// <see cref="UnauthorizedAccessException"/> out to a caller, past
 /// <c>Contended</c>, which handles only a sharing violation and a
 /// <c>LockFileException</c>. One BrowserAI asking whether a session was locked,
@@ -56,7 +56,7 @@ namespace BrowserAI.Sessions;
 /// <description>What a refusal means, and what it must do</description>
 /// </listheader>
 /// <item>
-/// <term><b>Entitled</b> -- <c>SessionLock.ReadRecord</c>,
+/// <term><b>Entitled</b> -- <c>SessionLock.ReadRecordAsync</c>,
 /// <c>SessionLock.OpenHeld</c>, <c>SessionIndex.FollowOne</c></term>
 /// <description>
 /// It already holds whatever gives it the right to look: the per-directory
@@ -91,7 +91,7 @@ namespace BrowserAI.Sessions;
 /// one means passing through <c>SessionLock.TakeOrReport</c>, which needs the
 /// gate this caller is holding. A refusal is therefore an <b>ungated transient
 /// handle</b>, not an owner, and it is waited out --
-/// <see cref="WaitOutWhereNoOwnerIsPossible"/>. <b>The precondition is the whole
+/// <see cref="WaitOutWhereNoOwnerIsPossibleAsync"/>. <b>The precondition is the whole
 /// licence</b>: route an open that has not established it through here and a
 /// live owner gets waited out for thirty seconds and then reported as a
 /// transient.
@@ -131,7 +131,7 @@ internal static class RenameWindow
     /// <para>
     /// <b>A hang detector, not a budget, and it is stated once so the two
     /// sides of the rename cannot drift apart.</b>
-    /// <c>SessionLock.ReadRecord</c> takes it as its default patience and
+    /// <c>SessionLock.ReadRecordAsync</c> takes it as its default patience and
     /// reads it from here. <i>Corrected 2026-10-09 (previously
     /// "<c>SessionLock.MoveBudget</c> is this same value and reads it from
     /// here")</i>: that member went on 2026-08-26 with the record that was its
@@ -186,11 +186,19 @@ internal static class RenameWindow
     /// The open. Called again on a denial, which differs from the call that
     /// failed in the only way that can help: the world has had time to move on.
     /// </param>
+    /// <param name="cancellationToken">Ends the wait between two tries.</param>
     /// <returns>Whatever <paramref name="open"/> returned.</returns>
     /// <exception cref="UnauthorizedAccessException">
     /// The denial outlasted <see cref="Budget"/>, so it is not a window.
     /// </exception>
-    public static T WaitOut<T>(Func<T> open) => WaitOut(open, aSharingViolationToo: false);
+    /// <remarks>
+    /// <b>The wait between two tries is awaited since 2026-10-11</b>, the maintainer's
+    /// decision 54, in his words verbatim: <i>"Never block a worker anywhere."</i>
+    /// <i>Previously <c>WaitOut</c>, which slept the calling thread between tries.</i> The
+    /// open itself is one call of the file system's and is made where it was.
+    /// </remarks>
+    public static Task<T> WaitOutAsync<T>(Func<T> open, CancellationToken cancellationToken = default) =>
+        WaitOutAsync(open, aSharingViolationToo: false, cancellationToken);
 
     /// <summary>
     /// Runs an open by the <b>only process that can own the file</b>, waiting out
@@ -231,10 +239,12 @@ internal static class RenameWindow
     /// </remarks>
     /// <typeparam name="T">What the open produces.</typeparam>
     /// <param name="open">The open, called again while the refusal can still clear.</param>
+    /// <param name="cancellationToken">Ends the wait between two tries.</param>
     /// <returns>Whatever <paramref name="open"/> returned.</returns>
     /// <exception cref="UnauthorizedAccessException">The denial outlasted <see cref="Budget"/>.</exception>
     /// <exception cref="IOException">The sharing violation outlasted <see cref="Budget"/>.</exception>
-    public static T WaitOutWhereNoOwnerIsPossible<T>(Func<T> open) => WaitOut(open, aSharingViolationToo: true);
+    public static Task<T> WaitOutWhereNoOwnerIsPossibleAsync<T>(Func<T> open, CancellationToken cancellationToken = default) =>
+        WaitOutAsync(open, aSharingViolationToo: true, cancellationToken);
 
     /// <summary>
     /// Whether a failed open was refused because somebody else has the file
@@ -257,7 +267,7 @@ internal static class RenameWindow
         return (failure.HResult & 0xFFFF) is ErrorSharingViolation or ErrorLockViolation;
     }
 
-    private static T WaitOut<T>(Func<T> open, bool aSharingViolationToo)
+    private static async Task<T> WaitOutAsync<T>(Func<T> open, bool aSharingViolationToo, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(open);
 
@@ -272,14 +282,13 @@ internal static class RenameWindow
             }
             catch (UnauthorizedAccessException) when (clock.Elapsed < Budget)
             {
-                Thread.Sleep(delay);
-                delay = Math.Min(delay * 2, SessionTimes.RenameRetryLongestDelayMilliseconds);
             }
             catch (IOException failure) when (aSharingViolationToo && IsSharingViolation(failure) && clock.Elapsed < Budget)
             {
-                Thread.Sleep(delay);
-                delay = Math.Min(delay * 2, SessionTimes.RenameRetryLongestDelayMilliseconds);
             }
+
+            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            delay = Math.Min(delay * 2, SessionTimes.RenameRetryLongestDelayMilliseconds);
         }
     }
 }

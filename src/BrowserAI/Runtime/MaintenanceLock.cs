@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using System.Text;
 using BrowserAI.Sessions;
 
 namespace BrowserAI.Runtime;
@@ -39,7 +40,7 @@ namespace BrowserAI.Runtime;
 ///     claims are cumulative with no count to keep anywhere.
 ///   </description></item>
 ///   <item><description>
-///     <b>Writer</b> -- <see cref="TryTakeExclusive"/> opens
+///     <b>Writer</b> -- <see cref="TryTakeExclusiveAsync"/> opens
 ///     <c>FileAccess.ReadWrite</c> / <c>FileShare.Read</c>. A reader's
 ///     <c>FileShare.Read</c> does not admit <c>Write</c>, so the exclusive open
 ///     is refused while <b>any</b> reader holds it; and a reader's later
@@ -54,7 +55,7 @@ namespace BrowserAI.Runtime;
 /// exclusion is identical -- the arithmetic above never reaches the writer's own
 /// share mode -- but <b>nothing could read the record</b>, so a peer refused by
 /// a reinstall could not say whose reinstall, and could not quote how far in it
-/// is. <see cref="Read"/> opens <c>FileAccess.Read</c> /
+/// is. <see cref="ReadAsync"/> opens <c>FileAccess.Read</c> /
 /// <c>FileShare.ReadWrite | Delete</c>, which is wide enough to admit the
 /// writer's granted access and is therefore the one open that succeeds against
 /// a holder of either kind. It takes nothing and blocks nothing.
@@ -182,11 +183,15 @@ internal sealed class MaintenanceLock : IDisposable
         {
             _ = Directory.CreateDirectory(browsersDirectory);
 
+            // Opened for asynchronous I/O, and nothing is ever read through it: the handle
+            // is the claim.
             return new MaintenanceLock(new FileStream(
                 PathIn(browsersDirectory),
                 FileMode.OpenOrCreate,
                 FileAccess.Read,
-                FileShare.Read));
+                FileShare.Read,
+                bufferSize: 1,
+                FileOptions.Asynchronous));
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -232,19 +237,24 @@ internal sealed class MaintenanceLock : IDisposable
     /// by reading this file, because the two are mutually exclusive by
     /// construction: a writer cannot hold the claim while any session does.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Written through, asynchronously, since 2026-10-11, and no longer flushed to
+    /// disk after it</b>, the maintainer's decision 63, in his words verbatim: <i>"convert
+    /// disk writes as well. Some users have slow spinning rust."</i> <i>Previously a
+    /// <c>StreamWriter</c> written and flushed, then <c>Flush(flushToDisk: true)</c></i>:
+    /// what write-through keeps and what the flush added are said at
+    /// <c>Storage.LockFile.TakeAndWriteAsync</c>, the other durable write, and the
+    /// difference is put to the maintainer with the batch. The out parameters became the
+    /// claim's own fields, because an asynchronous method cannot have any.
+    /// </para>
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root. Created if absent.</param>
     /// <param name="target">What is being reinstalled, for the sentence a peer reads.</param>
-    /// <param name="denial">What the kernel said, when the claim was not taken.</param>
-    /// <param name="detail">Windows own message, when the claim was not taken.</param>
-    /// <returns>The claim, or <see langword="null"/> when it could not be taken.</returns>
-    public static MaintenanceLock? TryTakeExclusive(string browsersDirectory, string target, out MaintenanceDenial denial, out string detail)
+    /// <returns>The claim, or why it could not be taken.</returns>
+    public static async Task<MaintenanceClaim> TryTakeExclusiveAsync(string browsersDirectory, string target)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
         ArgumentNullException.ThrowIfNull(target);
-
-        denial = MaintenanceDenial.None;
-        detail = string.Empty;
 
         try
         {
@@ -254,22 +264,24 @@ internal sealed class MaintenanceLock : IDisposable
                 PathIn(browsersDirectory),
                 FileMode.Create,
                 FileAccess.ReadWrite,
-                FileShare.Read);
+                FileShare.Read,
+                bufferSize: 0,
+                FileOptions.WriteThrough | FileOptions.Asynchronous);
 
             try
             {
-                using var writer = new StreamWriter(held, leaveOpen: true);
-                writer.Write(DescribeSelf(target));
-                writer.Flush();
-                held.Flush(flushToDisk: true);
+                // UTF-8 with no byte order mark, which is what the StreamWriter wrote.
+                await held.WriteAsync(Encoding.UTF8.GetBytes(DescribeSelf(target))).ConfigureAwait(false);
             }
             catch
             {
-                held.Dispose();
+                await held.DisposeAsync().ConfigureAwait(false);
                 throw;
             }
 
-            return new MaintenanceLock(held);
+#pragma warning disable CA2000 // The claim owns the lock from here, and the caller disposes the claim's lock.
+            return new MaintenanceClaim(new MaintenanceLock(held), MaintenanceDenial.None, string.Empty);
+#pragma warning restore CA2000
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -279,13 +291,11 @@ internal sealed class MaintenanceLock : IDisposable
             // census of zero concludes "another reinstall has it", which is a
             // confident wrong diagnosis when the truth is that nothing could open
             // the file.
-            denial = failure is IOException io && RenameWindow.IsSharingViolation(io)
+            var denial = failure is IOException io && RenameWindow.IsSharingViolation(io)
                 ? MaintenanceDenial.Contended
                 : MaintenanceDenial.Unreachable;
 
-            detail = failure.Message;
-
-            return null;
+            return new MaintenanceClaim(null, denial, failure.Message);
         }
     }
 
@@ -313,11 +323,11 @@ internal sealed class MaintenanceLock : IDisposable
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root.</param>
     /// <returns>What the last writer said about itself, or a sentence saying why that could not be read.</returns>
-    public static string Describe(string browsersDirectory)
+    public static Task<string> DescribeAsync(string browsersDirectory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
 
-        return Read(PathIn(browsersDirectory));
+        return ReadAsync(PathIn(browsersDirectory));
     }
 
     /// <summary>
@@ -344,7 +354,7 @@ internal sealed class MaintenanceLock : IDisposable
     /// </para>
     /// <para>
     /// <b>Elapsed is the claim file's last write time</b>, which is the instant
-    /// <see cref="TryTakeExclusive"/> stamped its record -- so it is a fact of the
+    /// <see cref="TryTakeExclusiveAsync"/> stamped its record -- so it is a fact of the
     /// filesystem and not a field somebody has to parse out of a sentence.
     /// </para>
     /// <para>
@@ -443,7 +453,7 @@ internal sealed class MaintenanceLock : IDisposable
         return $"PID {self.Id.ToString(CultureInfo.InvariantCulture)}, started {self.StartTime.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture)}, is reinstalling '{target}'; it took this claim at {DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture)}";
     }
 
-    private static string Read(string path)
+    private static async Task<string> ReadAsync(string path)
     {
         try
         {
@@ -451,9 +461,9 @@ internal sealed class MaintenanceLock : IDisposable
             // reader that shared less than the holder's own access would be
             // refused by its own share mode and not by the holder's.
             using var reader = new StreamReader(
-                new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
+                new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous));
 
-            var said = reader.ReadToEnd().Trim();
+            var said = (await reader.ReadToEndAsync().ConfigureAwait(false)).Trim();
 
             return said.Length is 0
                 ? $"nothing has ever written a record into '{path}'"
@@ -484,6 +494,12 @@ internal sealed class MaintenanceLock : IDisposable
 /// <param name="Elapsed">How long ago the claim was taken.</param>
 internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan Elapsed);
 
+/// <summary>What <see cref="MaintenanceLock.TryTakeExclusiveAsync"/> came to.</summary>
+/// <param name="Lock">The claim, or <see langword="null"/> when it could not be taken.</param>
+/// <param name="Denial">What the kernel said, when the claim was not taken.</param>
+/// <param name="Detail">Windows own message, when the claim was not taken.</param>
+internal readonly record struct MaintenanceClaim(MaintenanceLock? Lock, MaintenanceDenial Denial, string Detail);
+
 /// <summary>Why a claim on the browsers root could not be taken.</summary>
 /// <remarks>
 /// <para>
@@ -502,7 +518,7 @@ internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan E
 /// open").*** As written it read as a biconditional and was relied on as one, and
 /// <b>the converse is false for 33</b>. <c>reinstall.lock</c> is claimed by share
 /// mode alone (<see cref="MaintenanceLock.TakeShared"/>,
-/// <see cref="MaintenanceLock.TryTakeExclusive"/>), and the only byte-range lock
+/// <see cref="MaintenanceLock.TryTakeExclusiveAsync"/>), and the only byte-range lock
 /// in this product is <c>NativeFile.TakeGate</c>, reachable solely through
 /// <c>OpenForLockedAppend</c> on <b>log</b> files -- so <b>no BrowserAI holder can
 /// produce <c>ERROR_LOCK_VIOLATION</c> on this open at all</b>. A 33 here can only

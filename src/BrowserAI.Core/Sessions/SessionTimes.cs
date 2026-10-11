@@ -275,7 +275,7 @@ internal static class SessionTimes
     /// <summary>
     /// The first pause of the loop that waits out a transient refusal to open a
     /// session's record, in milliseconds: 5, doubled after every refusal. Read by
-    /// <c>SessionLock.ReadRecord</c>.
+    /// <c>SessionLock.ReadRecordAsync</c>.
     /// </summary>
     public const int RecordReadRetryFirstDelayMilliseconds = 5;
 

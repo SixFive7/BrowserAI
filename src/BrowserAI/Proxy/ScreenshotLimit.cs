@@ -97,7 +97,7 @@ internal static class ScreenshotLimit
     /// <param name="result">The child's <c>result</c> object.</param>
     /// <param name="outputDirectory">The session's output directory, absolute.</param>
     /// <returns>The refusal, or <see langword="null"/> when the answer goes back as it came.</returns>
-    public static string? Refusal(JsonNode? result, string outputDirectory)
+    public static async Task<string?> RefusalAsync(JsonNode? result, string outputDirectory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(outputDirectory);
 
@@ -107,7 +107,7 @@ internal static class ScreenshotLimit
         }
 
         var file = LinkedFile(content, outputDirectory);
-        var size = InlineImageSize(content) ?? (file is null ? null : FileImageSize(file));
+        var size = InlineImageSize(content) ?? (file is null ? null : await FileImageSizeAsync(file).ConfigureAwait(false));
 
         return size is { } measured && (measured.Width > LargestFaithfulSide || measured.Height > LargestFaithfulSide)
             ? SessionErrors.ScreenshotPastChromiumsLimit(measured.Width, measured.Height, file)
@@ -223,14 +223,20 @@ internal static class ScreenshotLimit
     /// <summary>The size of an image file, read off its head.</summary>
     /// <param name="path">The file, absolute.</param>
     /// <returns>The size, or <see langword="null"/> when it cannot be read or says nothing readable.</returns>
-    private static ImageSize? FileImageSize(string path)
+    /// <remarks>
+    /// <b>Read asynchronously since 2026-10-11</b>, the maintainer's decision 63, in his
+    /// words verbatim: <i>"convert disk writes as well. Some users have slow spinning
+    /// rust."</i> <i>Previously <c>RandomAccess.Read</c> on a handle opened for synchronous
+    /// I/O.</i>
+    /// </remarks>
+    private static async Task<ImageSize?> FileImageSizeAsync(string path)
     {
         try
         {
-            using var handle = File.OpenHandle(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var handle = File.OpenHandle(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, FileOptions.Asynchronous);
 
             var head = new byte[HeadBytes];
-            var read = RandomAccess.Read(handle, head, 0);
+            var read = await RandomAccess.ReadAsync(handle, head, 0).ConfigureAwait(false);
 
             return SizeOf(head.AsSpan(0, read));
         }

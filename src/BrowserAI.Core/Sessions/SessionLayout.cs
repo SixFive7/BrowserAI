@@ -171,7 +171,7 @@ internal static class SessionLayout
     /// </para>
     /// <para>
     /// <b>It is made when the session's child starts</b>, by
-    /// <c>ChildLaunch.Create</c>, and not with the three folders below: nothing
+    /// <c>ChildLaunch.CreateAsync</c>, and not with the three folders below: nothing
     /// else writes into it.
     /// </para>
     /// </remarks>

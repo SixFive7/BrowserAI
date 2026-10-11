@@ -178,7 +178,7 @@ internal static class InstanceDirectory
             // exactly what CA2000 cannot follow.
             return new InstanceDirectoryHold(
                 directory,
-                new FileStream(marker, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1));
+                new FileStream(marker, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1, FileOptions.Asynchronous));
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -312,12 +312,13 @@ internal static class InstanceDirectory
     {
         try
         {
-            using var probe = new FileStream(
+            // Opened for asynchronous I/O, and nothing is read or written: the open is the question.
+            using var probe = File.OpenHandle(
                 Path.Combine(directory, MarkerFileName),
                 FileMode.Open,
                 FileAccess.ReadWrite,
                 FileShare.Read,
-                bufferSize: 1);
+                FileOptions.Asynchronous);
 
             return false;
         }

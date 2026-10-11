@@ -79,7 +79,7 @@ internal sealed class StraySweep
     /// <param name="liveInstallRoot">
     /// The <b>install</b> root whose live-marker directory this pass also
     /// reclaims, or <see langword="null"/> to skip that half. Its only use here
-    /// is <see cref="Updates.LiveInstances.ReclaimStaleMarkers"/>, which is added
+    /// is <see cref="Updates.LiveInstances.ReclaimStaleMarkersAsync"/>, which is added
     /// to this pass and not given a sweeper of its own because this one is
     /// already machine-wide, already mutex-serialised and already skips instantly
     /// when a peer holds the gate -- the three properties a marker reclaim needs
@@ -119,7 +119,7 @@ internal sealed class StraySweep
     }
 
     /// <summary>
-    /// Runs one pass on a background thread and returns immediately.
+    /// Runs one pass on the thread pool and returns immediately.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -136,26 +136,28 @@ internal sealed class StraySweep
     /// failure inside the pass, which is to say not at all.
     /// </para>
     /// <para>
-    /// A background thread and not a pool work item: it must not keep the
-    /// process alive on the way out, and it must not be something anything else
-    /// could accidentally await.
+    /// <b>A pool work item that nothing awaits</b>: it does not keep the process alive on
+    /// the way out, and nothing else holds its task. <i>Corrected 2026-10-11 (previously "A
+    /// background thread and not a pool work item"), the maintainer's decision 54, in his
+    /// words verbatim: "Never block a worker anywhere."</i> The pass awaits its gate and its
+    /// reads since that day, and a thread of its own cannot await.
     /// </para>
     /// </remarks>
-    /// <param name="create">Produces the sweep, on the sweep's own thread.</param>
+    /// <param name="create">Produces the sweep, inside the pass's catch.</param>
     /// <param name="logger">Where a failure is reported.</param>
-    public static void StartInBackground(Func<StraySweep> create, ILogger logger)
+    public static void StartInBackground(Func<Task<StraySweep>> create, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(create);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var thread = new Thread(() =>
+        _ = Task.Run(async () =>
         {
             try
             {
-                // Run() writes the census itself, so nothing is logged here: a
+                // RunAsync writes the census itself, so nothing is logged here: a
                 // second line would be the same fact twice, and the one that
                 // survives a rewrite would be the one further from the evidence.
-                _ = create().Run();
+                _ = await (await create().ConfigureAwait(false)).RunAsync().ConfigureAwait(false);
             }
 #pragma warning disable CA1031 // The whole purpose of this method: nothing the sweep can do may end the process.
             catch (Exception failure)
@@ -171,16 +173,10 @@ internal sealed class StraySweep
                 {
                 }
             }
-        })
-        {
-            IsBackground = true,
-            Name = "BrowserAI stray sweep",
-        };
-
-        thread.Start();
+        });
     }
 
-    /// <summary>Runs one pass, synchronously, waiting for nothing.</summary>
+    /// <summary>Runs one pass, waiting for nothing.</summary>
     /// <remarks>
     /// <b>This is the product's only entry, and it is the argument-free one on
     /// purpose</b> -- race <b>R9</b> is that a pass which cannot have the gate
@@ -189,9 +185,9 @@ internal sealed class StraySweep
     /// against <c>src\</c> as text.
     /// </remarks>
     /// <returns>What the pass found and what it did.</returns>
-    public StraySweepResult Run() => Run(LockScopes.NeverWaits);
+    public Task<StraySweepResult> RunAsync() => RunAsync(LockScopes.NeverWaits);
 
-    /// <summary>Runs one pass, synchronously, waiting up to <paramref name="gatePatience"/> for the gate.</summary>
+    /// <summary>Runs one pass, waiting up to <paramref name="gatePatience"/> for the gate.</summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The overload exists for the suite, and what it buys is
@@ -213,7 +209,7 @@ internal sealed class StraySweep
     /// </remarks>
     /// <param name="gatePatience">How long to wait for <see cref="LockScopes.Sweep"/>.</param>
     /// <returns>What the pass found and what it did.</returns>
-    public StraySweepResult Run(TimeSpan gatePatience)
+    public async Task<StraySweepResult> RunAsync(TimeSpan gatePatience)
     {
         var clock = Stopwatch.StartNew();
 
@@ -243,14 +239,15 @@ internal sealed class StraySweep
                 return new StraySweepResult { Outcome = StraySweepOutcome.NoLock, Elapsed = clock.Elapsed };
             }
 
-            var acquisition = mutex.Acquire(gatePatience);
+            var held = await mutex.HoldAsync(gatePatience).ConfigureAwait(false);
+            var acquisition = held.Acquisition;
 
             if (acquisition is MutexAcquisition.NotAcquired)
             {
                 // R9 as well as the herd: a pass that overruns the ten-minute
                 // re-check simply means the re-check does nothing. No pile-up
                 // is possible because nothing in the PRODUCT ever queues here
-                // -- `Run()` hands this a zero timeout and a scan keeps it that
+                // -- `RunAsync()` hands this a zero timeout and a scan keeps it that
                 // way. (Corrected 2026-08-26, previously "because nothing ever
                 // queues here": the suite's own passes wait, which is how an arm
                 // that needs a pass to have run stops losing to a peer that
@@ -270,7 +267,7 @@ internal sealed class StraySweep
 
             try
             {
-                var result = Pass(clock) with { GateWasAbandoned = acquisition is MutexAcquisition.AcquiredAbandoned };
+                var result = await PassAsync(clock).ConfigureAwait(false) with { GateWasAbandoned = acquisition is MutexAcquisition.AcquiredAbandoned };
                 SweepLog.Finished(_logger, result.Summary);
 
                 // ⚠️ THE FOURTH CLOSE PATH, and the one no session is left to
@@ -294,7 +291,7 @@ internal sealed class StraySweep
             }
             finally
             {
-                mutex.Release();
+                await held.DisposeAsync().ConfigureAwait(false);
             }
         }
         finally
@@ -375,7 +372,7 @@ internal sealed class StraySweep
         && !title.Contains('\0', StringComparison.Ordinal)
         && VolumeIdentity.Through(title, CanonicalPath.SubstitutionChainLimit).Kind is not VolumeKind.Network;
 
-    private StraySweepResult Pass(Stopwatch clock)
+    private async Task<StraySweepResult> PassAsync(Stopwatch clock)
     {
         using var scan = BrowserProcesses.ScanFor(_images);
         var walk = MessageWindows.Walk(MessageWindows.ChromiumSingletonClass);
@@ -417,13 +414,13 @@ internal sealed class StraySweep
                 continue;
             }
 
-            Judge(candidate, title, terminated, spared);
+            await JudgeAsync(candidate, title, terminated, spared).ConfigureAwait(false);
         }
 
         // The second detection path. Firefox publishes no message window at all,
         // so every Firefox candidate arrives here unattributed and would
         // otherwise be reported and left forever.
-        var byProfileLock = AttributeByProfileLock(unattributable, terminated, spared);
+        var byProfileLock = await AttributeByProfileLockAsync(unattributable, terminated, spared).ConfigureAwait(false);
 
         // ⚠️ THE TRIPWIRE, and it is the sibling of TitledWindows. A pass whose
         // own binaries could not be matched against what Windows reports finds
@@ -469,7 +466,7 @@ internal sealed class StraySweep
             Spared = spared,
             AttributedByProfileLock = byProfileLock,
             Unattributable = [.. unattributable.Select(candidate => (candidate.ProcessId, candidate.ImagePath))],
-            Index = _index?.Sweep(),
+            Index = _index is null ? null : await _index.SweepAsync().ConfigureAwait(false),
 
             // Last, and inside the sweep gate this pass already holds. It takes
             // the live set's OWN gate as well -- at zero timeout -- because the
@@ -478,7 +475,7 @@ internal sealed class StraySweep
             // racing a peer's join. Neither substitutes for the other. Corrected
             // 2026-10-10 by addition: the only join left to race is a build's from
             // before 2026-10-08, since this build's was deleted that day.
-            LiveMarkers = _liveInstallRoot is null ? null : LiveInstances.ReclaimStaleMarkers(_liveInstallRoot, _logger),
+            LiveMarkers = _liveInstallRoot is null ? null : await LiveInstances.ReclaimStaleMarkersAsync(_liveInstallRoot, _logger).ConfigureAwait(false),
         };
     }
 
@@ -506,7 +503,7 @@ internal sealed class StraySweep
     /// matches the one recorded when it was found.
     /// Both guards are the same ones the Chromium path uses; the third -- the
     /// session's own <c>browserai.lock</c> being takeable -- is applied by
-    /// <see cref="ActOn"/> after this.
+    /// <see cref="ActOnAsync"/> after this.
     /// </para>
     /// <para>
     /// <b>The index is the source of directories, and a null one costs
@@ -528,7 +525,7 @@ internal sealed class StraySweep
     /// <param name="terminated">Where a termination is recorded.</param>
     /// <param name="spared">Where a refusal to act is recorded.</param>
     /// <returns>How many candidates this path attributed.</returns>
-    private int AttributeByProfileLock(
+    private async Task<int> AttributeByProfileLockAsync(
         List<StrayCandidate> unattributable,
         List<StrayTermination> terminated,
         List<StraySpared> spared)
@@ -549,7 +546,7 @@ internal sealed class StraySweep
 
         var attributed = 0;
 
-        foreach (var entry in _index.Follow())
+        foreach (var entry in await _index.FollowAsync().ConfigureAwait(false))
         {
             if (pending.Count is 0)
             {
@@ -621,14 +618,14 @@ internal sealed class StraySweep
                 _ = unattributable.Remove(candidate);
 
                 SweepLog.AttributedByProfileLock(_logger, candidate.ProcessId, location.FullPath);
-                ActOn(candidate, location, profile, terminated, spared);
+                await ActOnAsync(candidate, location, profile, terminated, spared).ConfigureAwait(false);
             }
         }
 
         return attributed;
     }
 
-    private void Judge(StrayCandidate candidate, string title, List<StrayTermination> terminated, List<StraySpared> spared)
+    private async Task JudgeAsync(StrayCandidate candidate, string title, List<StrayTermination> terminated, List<StraySpared> spared)
     {
         // ⚠️ READ, AND FIRST, because this string was published by a process
         // that is not ours and is about to decide whether something gets
@@ -667,7 +664,7 @@ internal sealed class StraySweep
             return;
         }
 
-        ActOn(candidate, location, title, terminated, spared);
+        await ActOnAsync(candidate, location, title, terminated, spared).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -685,7 +682,7 @@ internal sealed class StraySweep
     /// <param name="published">What attribution had to work with, for the record.</param>
     /// <param name="terminated">Where a termination is recorded.</param>
     /// <param name="spared">Where a refusal to act is recorded.</param>
-    private void ActOn(
+    private async Task ActOnAsync(
         StrayCandidate candidate,
         SessionPath location,
         string published,
@@ -701,7 +698,9 @@ internal sealed class StraySweep
             // TryAcquire would write a new browserai.lock naming the sweeper and add
             // a holder row to the crashed session's own history. A janitor is the
             // last party that should be editing the evidence.
-            if (SessionLock.TryHoldUnowned(location, out hold) is { } refusal)
+            (var refusal, hold) = await SessionLock.TryHoldUnownedAsync(location).ConfigureAwait(false);
+
+            if (refusal is not null)
             {
                 spared.Add(new StraySpared(candidate.ProcessId, published, refusal));
                 return;

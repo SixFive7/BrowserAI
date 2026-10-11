@@ -92,10 +92,23 @@ internal static class LockFile
     /// <b>Temporary file, durable write, rename, then hold.</b> The temporary
     /// file is in the target's own directory because a rename is atomic only
     /// within one volume and cheap only within one directory. The write is
-    /// <c>WriteThrough</c> <i>and</i> flushed to disk, because a plain write
-    /// returns once the bytes are in the filesystem cache and this is the one
-    /// file whose loss cannot be reconstructed from anything else in the
-    /// directory.
+    /// <c>WriteThrough</c>, because a plain write returns once the bytes are in the
+    /// filesystem cache and this is the one file whose loss cannot be reconstructed
+    /// from anything else in the directory.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Write-through and asynchronous since 2026-10-11, and no longer flushed
+    /// to disk after it</b>, the maintainer's decision 63, in his words verbatim:
+    /// <i>"convert disk writes as well. Some users have slow spinning rust."</i>
+    /// <i>Corrected that day (previously "The write is <c>WriteThrough</c> <i>and</i>
+    /// flushed to disk"):</i> <c>FlushAsync</c> cannot ask for the disk and Windows has no
+    /// asynchronous <c>FlushFileBuffers</c>. What write-through keeps, in Microsoft's words
+    /// on <c>CreateFileW</c>: the data "is flushed to disk without delay", and the request
+    /// "also causes NTFS to flush any metadata changes, such as a time stamp update or a
+    /// rename operation, that result from processing the request". What the flush added
+    /// and this gives up: Windows asks the disk to write its own cache through to its
+    /// media only for a handle that is also unbuffered, and a flush asked it for this one.
+    /// That difference is the maintainer's to weigh, and it is put to him with the batch.
     /// </para>
     /// <para>
     /// <b>The rename is the only one this file will ever see.</b> Everything
@@ -116,9 +129,9 @@ internal static class LockFile
     /// <param name="holder">Who is taking it.</param>
     /// <returns>The hold, which the caller keeps for the session's life.</returns>
     /// <exception cref="IOException">The write, the rename or the hold failed.</exception>
-    public static LockFileHold TakeAndWrite(string path, LockFileHolder holder)
+    public static async Task<LockFileHold> TakeAndWriteAsync(string path, LockFileHolder holder)
     {
-        Write(path, holder);
+        await WriteAsync(path, holder).ConfigureAwait(false);
 
         // ⚠️ WAITED OUT , NOT BELIEVED, AND ONLY HERE. The caller holds
         // the per-directory gate and the file on disk names this process, so no
@@ -129,7 +142,7 @@ internal static class LockFile
         // owner and blocking one are the same capability. Believing it once cost
         // a lock (CI run 32203064556 attempt 1, against the record this file
         // replaces).
-        return RenameWindow.WaitOutWhereNoOwnerIsPossible(() => Hold(path));
+        return await RenameWindow.WaitOutWhereNoOwnerIsPossibleAsync(() => Hold(path)).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -137,8 +150,9 @@ internal static class LockFile
     /// </summary>
     /// <param name="path">The lock file.</param>
     /// <param name="holder">Who is taking it.</param>
+    /// <returns>The write, complete once the record is in place.</returns>
     /// <exception cref="IOException">The write or the rename failed; nothing was changed.</exception>
-    public static void Write(string path, LockFileHolder holder)
+    public static async Task WriteAsync(string path, LockFileHolder holder)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(holder);
@@ -150,10 +164,12 @@ internal static class LockFile
 
         try
         {
-            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.WriteThrough))
+            // Unbuffered in the stream, so the one write goes to Windows as it is.
+            var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 0, FileOptions.WriteThrough | FileOptions.Asynchronous);
+
+            await using (stream.ConfigureAwait(false))
             {
-                stream.Write(Serialise(holder));
-                stream.Flush(flushToDisk: true);
+                await stream.WriteAsync(Serialise(holder)).ConfigureAwait(false);
             }
 
             File.Move(temporary, path, overwrite: true);
@@ -181,7 +197,7 @@ internal static class LockFile
     /// <returns>The hold.</returns>
     /// <exception cref="IOException">Somebody else holds it, or it is not there.</exception>
     public static LockFileHold Hold(string path) =>
-        new(new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1), path);
+        new(new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1, FileOptions.Asynchronous), path);
 
     /// <summary>
     /// Whether anything holds a session directory at the instant of the look,
@@ -227,12 +243,13 @@ internal static class LockFile
 
         try
         {
-            using var probe = new FileStream(
+            // Opened for asynchronous I/O, and nothing is read or written: the open is the question.
+            using var probe = File.OpenHandle(
                 path,
                 FileMode.Open,
                 FileAccess.ReadWrite,
                 FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 1);
+                FileOptions.Asynchronous);
 
             return new LockFileAnswer(LockFileState.Released, null);
         }
@@ -268,7 +285,7 @@ internal static class LockFile
     /// <param name="path">The lock file.</param>
     /// <returns>The holder, or <see langword="null"/> when there is no lock file.</returns>
     /// <exception cref="InvalidDataException">There is a lock file and it is not one of ours.</exception>
-    public static LockFileHolder? Read(string path)
+    public static async Task<LockFileHolder?> ReadAsync(string path)
     {
         ArgumentNullException.ThrowIfNull(path);
 
@@ -276,11 +293,15 @@ internal static class LockFile
 
         try
         {
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096);
-            using var buffer = new MemoryStream();
+            var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
 
-            stream.CopyTo(buffer);
-            bytes = buffer.ToArray();
+            await using (stream.ConfigureAwait(false))
+            {
+                using var buffer = new MemoryStream();
+
+                await stream.CopyToAsync(buffer).ConfigureAwait(false);
+                bytes = buffer.ToArray();
+            }
         }
         catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
         {
@@ -554,13 +575,13 @@ internal sealed class LockFileHold : IDisposable
     /// </remarks>
     /// <returns>The holder, or <see langword="null"/> for an empty file.</returns>
     /// <exception cref="InvalidDataException">The file is not one of ours.</exception>
-    public LockFileHolder? ReadHolder()
+    public async Task<LockFileHolder?> ReadHolderAsync()
     {
         _stream.Position = 0;
 
         using var buffer = new MemoryStream();
 
-        _stream.CopyTo(buffer);
+        await _stream.CopyToAsync(buffer).ConfigureAwait(false);
 
         return buffer.Length is 0 ? null : LockFile.Parse(buffer.ToArray(), Path);
     }

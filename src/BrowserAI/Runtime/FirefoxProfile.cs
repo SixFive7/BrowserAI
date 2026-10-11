@@ -148,12 +148,13 @@ internal static class FirefoxProfile
 
         try
         {
-            using var probe = new FileStream(
+            // Opened for asynchronous I/O, and nothing is read or written: the open is the question.
+            using var probe = File.OpenHandle(
                 lockFile,
                 FileMode.Open,
                 FileAccess.Write,
                 FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 1);
+                FileOptions.Asynchronous);
 
             return new FirefoxProfileState(FirefoxProfileLockState.Free, lockFile, []);
         }

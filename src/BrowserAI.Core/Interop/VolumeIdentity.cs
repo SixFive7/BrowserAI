@@ -52,7 +52,7 @@ namespace BrowserAI.Interop;
 /// the cost is the redirector's, not the object manager's:
 /// <c>Directory.Exists</c> against a dead host re-measured on this machine
 /// 2026-08-26 at <b>22,157 ms</b>, per call. It runs inside
-/// <c>Sessions.CanonicalPath.FinalName</c>, which <c>SessionLock.TryAcquire</c>
+/// <c>Sessions.CanonicalPath.FinalName</c>, which <c>SessionLock.TryAcquireAsync</c>
 /// reaches under the per-directory gate -- where the caller who named the path is
 /// not the one who waits.
 /// </para>

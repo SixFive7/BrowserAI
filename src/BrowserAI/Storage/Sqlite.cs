@@ -127,7 +127,7 @@ internal static partial class Sqlite
     /// a reader mapping or locking the wal-index of a database whose holder is
     /// in the middle of dying, so its handles are closing while the reader is
     /// opening. That one ends on its own, which is why
-    /// <see cref="Sessions.SessionLock.ReadRecord"/> waits it out instead of
+    /// <see cref="Sessions.SessionLock.ReadRecordAsync"/> waits it out instead of
     /// reporting a session unreadable.
     /// </remarks>
     public const int IoError = 10;

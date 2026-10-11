@@ -31,8 +31,8 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// ⚠️ ***Corrected 2026-08-24 (previously "Every entry is verified by opening the
 /// `browserai.json` it points at").*** That was true of
-/// <see cref="Follow"/> and became false as a statement about this store the
-/// moment <see cref="FollowUnder"/> existed: a subtree read decides which entries
+/// <see cref="FollowAsync"/> and became false as a statement about this store the
+/// moment <see cref="FollowUnderAsync"/> existed: a subtree read decides which entries
 /// to <i>ask about</i> and never which answers to <i>trust</i>. A filtered entry
 /// is not reported at all, which is a third thing beside <i>ours</i> and <i>not
 /// ours</i> and is why the sentence had to move and not be dropped.
@@ -133,7 +133,8 @@ internal sealed class SessionIndex
     /// write on, and because a fast path that skips under contention is a fast
     /// path that makes the concurrency test prove nothing.
     /// </remarks>
-    public void Record(SessionPath session)
+    /// <returns>The write, which never faults on a file system that refuses it.</returns>
+    public async Task RecordAsync(SessionPath session)
     {
         ArgumentNullException.ThrowIfNull(session);
 
@@ -151,8 +152,8 @@ internal sealed class SessionIndex
                 // a thing that can be wrong; this file cannot be wrong in a way
                 // that matters, because it is re-derived from the directory it
                 // names on every use.
-                File.WriteAllBytes(temp, Encoding.UTF8.GetBytes(session.FullPath));
-                Replace(temp, entry);
+                await File.WriteAllBytesAsync(temp, Encoding.UTF8.GetBytes(session.FullPath)).ConfigureAwait(false);
+                await ReplaceAsync(temp, entry).ConfigureAwait(false);
             }
             finally
             {
@@ -179,7 +180,7 @@ internal sealed class SessionIndex
     /// is done promptly because <c>browserai_list</c> reads the index, and
     /// a destroyed session lingering in an inventory is exactly the kind of
     /// confident wrong answer this project exists to remove. Never fatal, for the
-    /// same reason <see cref="Record"/> is not: the entry is re-derivable and a
+    /// same reason <see cref="RecordAsync"/> is not: the entry is re-derivable and a
     /// stale one is a report and not a fault.
     /// </remarks>
     public void Forget(SessionPath session)
@@ -199,14 +200,14 @@ internal sealed class SessionIndex
     /// directory is ours because it is listed; it decides that by opening the
     /// <c>browserai.data</c> inside it. The states this returns are an inventory
     /// report and confer no authority on anything. <b>That survives
-    /// <see cref="FollowUnder"/> intact</b> -- it is a rule about what a returned
+    /// <see cref="FollowUnderAsync"/> intact</b> -- it is a rule about what a returned
     /// state means, and no returned state changes.
     /// </para>
     /// <para>
     /// ⚠️ ***Corrected 2026-08-24 (previously "the only way this store is ever
-    /// read").*** <see cref="FollowUnder"/> is the second, and it is defined in
+    /// read").*** <see cref="FollowUnderAsync"/> is the second, and it is defined in
     /// terms of this one. <b>Three callers must keep using this one</b>, and each
-    /// is machine-wide by design: <see cref="Sweep"/>, which would otherwise
+    /// is machine-wide by design: <see cref="SweepAsync"/>, which would otherwise
     /// leave entries un-swept forever; <c>SessionManager.LiveSessions</c>, whose
     /// browsers root is machine-wide; and <c>StraySweep.AttributeByProfileLock</c>,
     /// whose whole reach is the point of it.
@@ -221,12 +222,12 @@ internal sealed class SessionIndex
     /// <c>foreach</c> over this read filters by subtree inside its body and that
     /// at least <b>two</b> such loops exist. It names none of the three; two of
     /// them were held only by that lower bound on a loop <i>shape</i>, and
-    /// <see cref="Sweep"/> by nothing at all, because it reads the result into a
+    /// <see cref="SweepAsync"/> by nothing at all, because it reads the result into a
     /// local. The named assertion exists now, and a sentence citing a mechanism
     /// is worse than no sentence when the mechanism does not hold what it says.
     /// </para>
     /// </remarks>
-    public IReadOnlyList<SessionIndexEntry> Follow() => Walk(under: null, SessionIndexDepth.Record);
+    public Task<IReadOnlyList<SessionIndexEntry>> FollowAsync() => WalkAsync(under: null, SessionIndexDepth.Record);
 
     /// <summary>
     /// Follows only the entries that name a directory under one subtree.
@@ -235,7 +236,7 @@ internal sealed class SessionIndex
     /// <para>
     /// ⚠️ <b>Added 2026-08-24. The filter used to run on the wrong side of the
     /// parse</b>: <c>browserai_list</c> and <c>SessionManager.Beneath</c> called
-    /// <see cref="Follow"/> and then dropped what was not under their prefix, so
+    /// <see cref="FollowAsync"/> and then dropped what was not under their prefix, so
     /// every session on the machine had its record opened and strictly parsed --
     /// up to 250 log entries and all their arguments -- to print the four fields
     /// of the few that matched. <c>Beneath</c> runs on every <c>init</c> and
@@ -321,11 +322,11 @@ internal sealed class SessionIndex
     /// </para>
     /// </param>
     /// <returns>The entries under that subtree, ordered by key.</returns>
-    public IReadOnlyList<SessionIndexEntry> FollowUnder(string prefix)
+    public Task<IReadOnlyList<SessionIndexEntry>> FollowUnderAsync(string prefix)
     {
         ArgumentException.ThrowIfNullOrEmpty(prefix);
 
-        return Walk(prefix, SessionIndexDepth.Record);
+        return WalkAsync(prefix, SessionIndexDepth.Record);
     }
 
     /// <summary>
@@ -337,12 +338,12 @@ internal sealed class SessionIndex
     /// folder's size and the folders not open now, which the background finds here. It is a
     /// read for a page and confers nothing: it asks whether the record file is there, so a
     /// session an agent is using right now is not touched, and it removes nothing, which
-    /// <see cref="Sweep"/> alone does.
+    /// <see cref="SweepAsync"/> alone does.
     /// </remarks>
     /// <returns>Each session's folder, ordered by key.</returns>
-    public IReadOnlyList<SessionPath> Present() =>
+    public async Task<IReadOnlyList<SessionPath>> PresentAsync() =>
     [
-        .. Walk(under: null, SessionIndexDepth.Presence)
+        .. (await WalkAsync(under: null, SessionIndexDepth.Presence).ConfigureAwait(false))
             .Where(static entry => entry.State is SessionIndexEntryState.Session)
             .Select(static entry => entry.Session)
             .OfType<SessionPath>(),
@@ -366,7 +367,7 @@ internal sealed class SessionIndex
     /// <c>resume</c>, and neither of these two can ever do that. A
     /// directory whose <c>browserai.data</c> is present but unparseable is a session
     /// -- a broken one -- and it cannot restore its own entry, because
-    /// <see cref="SessionLock.TryAcquire"/> refuses an unreadable record. And a
+    /// <see cref="SessionLock.TryAcquireAsync"/> refuses an unreadable record. And a
     /// path on a volume that is not mounted has not been destroyed; the drive is
     /// simply not there. Removing either would make a directory that still exists
     /// permanently invisible to the only inventory there is, which is this
@@ -379,7 +380,7 @@ internal sealed class SessionIndex
     /// checks is one refactor from being tidied away.
     /// </para>
     /// </remarks>
-    public SessionIndexSweep Sweep()
+    public async Task<SessionIndexSweep> SweepAsync()
     {
         // ⚠️ THE GUARD AND NEVER THE STORE, and until 2026-08-26 this line was
         // `Follow()`. The index is machine-wide and `Program.Main` starts a sweep
@@ -396,7 +397,7 @@ internal sealed class SessionIndex
         // this pass is about to act on -- `ReFollow` reads it in full -- and on
         // that entry there is nothing to open, because a removable entry is one
         // whose `browserai.data` is absent.
-        var followed = Walk(under: null, SessionIndexDepth.Guard);
+        var followed = await WalkAsync(under: null, SessionIndexDepth.Guard).ConfigureAwait(false);
         var removed = new List<SessionIndexEntry>();
         var kept = new List<SessionIndexEntry>();
 
@@ -415,7 +416,7 @@ internal sealed class SessionIndex
             // re-asserted on the next `init` or `resume` -- but a pointer whose
             // directory is already back costs a cycle of invisibility for
             // nothing, and re-following one entry costs one stat.
-            if (!ReFollow(entry).IsRemovable)
+            if (!(await ReFollowAsync(entry).ConfigureAwait(false)).IsRemovable)
             {
                 kept.Add(entry);
                 continue;
@@ -445,7 +446,7 @@ internal sealed class SessionIndex
     }
 
     /// <summary>
-    /// Follows one entry again -- what <see cref="Sweep"/> does immediately
+    /// Follows one entry again -- what <see cref="SweepAsync"/> does immediately
     /// before it deletes one (race <b>R7</b>).
     /// </summary>
     /// <remarks>
@@ -454,12 +455,12 @@ internal sealed class SessionIndex
     /// be arranged deterministically from outside -- so what the suite asserts is
     /// this: an entry produced by an earlier enumeration, whose directory has
     /// since come back, is no longer removable. That is the whole mechanism, and
-    /// a version of <see cref="Sweep"/> that dropped the call would leave this
+    /// a version of <see cref="SweepAsync"/> that dropped the call would leave this
     /// method correct and nothing else would notice.
     /// </remarks>
-    /// <param name="entry">An entry from an earlier <see cref="Follow"/>.</param>
+    /// <param name="entry">An entry from an earlier <see cref="FollowAsync"/>.</param>
     /// <returns>What following it says now.</returns>
-    internal static SessionIndexEntry ReFollow(SessionIndexEntry entry)
+    internal static async Task<SessionIndexEntry> ReFollowAsync(SessionIndexEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -467,10 +468,10 @@ internal sealed class SessionIndex
         // runs on one entry, immediately before that entry is acted on, and it is
         // the only store open a sweep ever performs -- which on a removable entry
         // is not an open at all, because a removable entry is one whose
-        // `browserai.data` is absent and `SessionLock.ReadRecord` answers that
+        // `browserai.data` is absent and `SessionLock.ReadRecordAsync` answers that
         // from a `File.Exists`. What it buys is that the last word before a
         // delete comes from the reader that can see everything.
-        return FollowOne(entry.EntryFile, entry.Key, under: null, SessionIndexDepth.Record)!;
+        return (await FollowOneAsync(entry.EntryFile, entry.Key, under: null, SessionIndexDepth.Record).ConfigureAwait(false))!;
     }
 
     /// <summary>The one walk, with the subtree filter and the depth optional.</summary>
@@ -479,7 +480,7 @@ internal sealed class SessionIndex
     /// </param>
     /// <param name="depth">Whether each session's store may be opened.</param>
     /// <returns>Every entry that survived, ordered by key.</returns>
-    private List<SessionIndexEntry> Walk(string? under, SessionIndexDepth depth)
+    private async Task<IReadOnlyList<SessionIndexEntry>> WalkAsync(string? under, SessionIndexDepth depth)
     {
         if (!Directory.Exists(Root))
         {
@@ -499,7 +500,7 @@ internal sealed class SessionIndex
                 continue;
             }
 
-            if (FollowOne(file, key, under, depth) is { } followed)
+            if (await FollowOneAsync(file, key, under, depth).ConfigureAwait(false) is { } followed)
             {
                 entries.Add(followed);
             }
@@ -536,7 +537,7 @@ internal sealed class SessionIndex
     private static bool IsUnder(SessionPath candidate, string prefix) =>
         (candidate.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal);
 
-    private static SessionIndexEntry? FollowOne(string file, string key, string? under, SessionIndexDepth depth)
+    private static async Task<SessionIndexEntry?> FollowOneAsync(string file, string key, string? under, SessionIndexDepth depth)
     {
         string pointer;
 
@@ -563,10 +564,14 @@ internal sealed class SessionIndex
             // failures. The entry is kept either way, so nothing was ever
             // destroyed by it; what was lost is a session the caller should have
             // been told about.
-            using var stream = RenameWindow.WaitOut(() =>
-                new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
+            var stream = await RenameWindow.WaitOutAsync(() =>
+                new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous)).ConfigureAwait(false);
             using var buffer = new MemoryStream();
-            stream.CopyTo(buffer);
+
+            await using (stream.ConfigureAwait(false))
+            {
+                await stream.CopyToAsync(buffer).ConfigureAwait(false);
+            }
 
             // A BOM is stripped and not refused. This is a pointer, and a
             // person who repaired one in an editor should be followed, not
@@ -643,10 +648,10 @@ internal sealed class SessionIndex
             return null;
         }
 
-        return Locate(file, key, pointer, session, depth);
+        return await LocateAsync(file, key, pointer, session, depth).ConfigureAwait(false);
     }
 
-    private static SessionIndexEntry Locate(string file, string key, string pointer, SessionPath session, SessionIndexDepth depth)
+    private static async Task<SessionIndexEntry> LocateAsync(string file, string key, string pointer, SessionPath session, SessionIndexDepth depth)
     {
         if (!Directory.Exists(session.FullPath))
         {
@@ -699,7 +704,7 @@ internal sealed class SessionIndex
 
         try
         {
-            var record = SessionLock.ReadRecord(session);
+            var record = await SessionLock.ReadRecordAsync(session).ConfigureAwait(false);
 
             return record is null
                 ? Absent(file, key, pointer, session)
@@ -740,7 +745,7 @@ internal sealed class SessionIndex
     /// only one in the product that reached a destructive act.</b> Added
     /// 2026-08-19, from
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md).
-    /// <c>SessionLock.ReadRecord</c> takes no gate -- it cannot, because the whole
+    /// <c>SessionLock.ReadRecordAsync</c> takes no gate -- it cannot, because the whole
     /// point of the index is to describe sessions nobody is holding -- so it can
     /// land in the instant in which the guard's <b>name is unbound</b>
     /// while another process is acquiring the directory
@@ -850,7 +855,7 @@ internal sealed class SessionIndex
     /// </para>
     /// <para>
     /// <b>The legacy record is checked here and not inherited.</b>
-    /// <c>SessionLock.ReadRecord</c> refuses a directory carrying the old
+    /// <c>SessionLock.ReadRecordAsync</c> refuses a directory carrying the old
     /// <c>browserai.json</c> before it opens anything, and that refusal is what
     /// made such a directory <c>LockUnreadable</c> and therefore <b>kept</b>.
     /// Skipping it would leave a legacy session with no <c>browserai.data</c>
@@ -950,7 +955,7 @@ internal sealed class SessionIndex
             && name[(marker + 5)..].All(char.IsAsciiHexDigit);
     }
 
-    private static void Replace(string temp, string entry)
+    private static async Task ReplaceAsync(string temp, string entry)
     {
         var clock = Stopwatch.StartNew();
         var delay = SessionTimes.IndexMoveRetryFirstDelayMilliseconds;
@@ -983,7 +988,7 @@ internal sealed class SessionIndex
                     throw;
                 }
 
-                Thread.Sleep(delay);
+                await Task.Delay(delay).ConfigureAwait(false);
                 delay = Math.Min(delay * 2, SessionTimes.IndexMoveRetryLongestDelayMilliseconds);
             }
         }
@@ -1116,7 +1121,7 @@ internal sealed record SessionIndexEntry
     /// followed at <see cref="SessionIndexDepth.Guard"/> -- 2026-08-26.</b> A walk
     /// that may not open a store cannot carry a record, so <c>Session</c> no
     /// longer implies one. The only caller that walks at that depth is
-    /// <see cref="SessionIndex.Sweep"/>, which reads no record; every reporting
+    /// <see cref="SessionIndex.SweepAsync"/>, which reads no record; every reporting
     /// caller walks at <see cref="SessionIndexDepth.Record"/> and still gets one.
     /// </remarks>
     public SessionRecord? Record { get; init; }

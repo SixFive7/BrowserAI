@@ -147,7 +147,7 @@ internal static class LockScopes
     /// <para>
     /// ⚠️ <b>And it was smaller than a wait taken INSIDE it, which is incoherent
     /// on its face.</b> <c>SessionLock.OpenHeld</c> and
-    /// <c>SessionLock.ReadRecord</c> both run under this gate and both go through
+    /// <c>SessionLock.ReadRecordAsync</c> both run under this gate and both go through
     /// <c>RenameWindow</c>, whose budget has been <b>30 s</b> since
     /// 2026-08-18. One entitled reader legitimately waiting out a rename window
     /// therefore held this gate six times longer than its own timeout, turning

@@ -200,13 +200,12 @@ internal sealed class UpstreamToolList
 
     private static UpstreamToolList FromResource()
     {
-        using var stream = typeof(UpstreamToolList).Assembly.GetManifestResourceStream(ResourceName)
+        // Copied out of the image's memory, never read through a stream: see
+        // EmbeddedResource (2026-10-11, previously Stream.CopyTo into a MemoryStream).
+        var bytes = Hosting.EmbeddedResource.BytesOf(typeof(UpstreamToolList).Assembly, ResourceName)
             ?? throw new InvalidOperationException($"This BrowserAI was built without its tool list: the resource '{ResourceName}' is not in the binary.");
 
-        using var bytes = new MemoryStream();
-        stream.CopyTo(bytes);
-
-        return Parse(bytes.ToArray(), ResourceName);
+        return Parse(bytes, ResourceName);
     }
 
     /// <summary>Where the root's <c>tools</c> array starts and ends, or <see langword="null"/>.</summary>

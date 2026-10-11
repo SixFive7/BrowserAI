@@ -71,7 +71,7 @@ internal static partial class SessionInventory
     /// <summary>Walks one session directory and reports what is in it.</summary>
     /// <param name="session">The canonicalised session directory.</param>
     /// <returns>What the directory holds.</returns>
-    public static SessionContents Of(SessionPath session)
+    public static async Task<SessionContents> OfAsync(SessionPath session)
     {
         ArgumentNullException.ThrowIfNull(session);
 
@@ -151,7 +151,7 @@ internal static partial class SessionInventory
                     continue;
                 }
 
-                if (SensitiveKindOf(session.FullPath, output, file) is { } sensitiveKind)
+                if (await SensitiveKindOfAsync(session.FullPath, output, file).ConfigureAwait(false) is { } sensitiveKind)
                 {
                     if (!sensitive.TryGetValue(sensitiveKind, out var ofKind))
                     {
@@ -229,7 +229,7 @@ internal static partial class SessionInventory
     /// <param name="output">Its output folder.</param>
     /// <param name="file">One file in it, outside the profile and any trace.</param>
     /// <returns>The kind, or <see langword="null"/>.</returns>
-    private static SensitiveKind? SensitiveKindOf(string root, string output, FileInfo file)
+    private static async Task<SensitiveKind?> SensitiveKindOfAsync(string root, string output, FileInfo file)
     {
         var relative = Path.GetRelativePath(root, file.FullName);
         var separator = relative.IndexOf(Path.DirectorySeparatorChar, StringComparison.Ordinal);
@@ -259,7 +259,7 @@ internal static partial class SessionInventory
             return SensitiveKind.Transcript;
         }
 
-        if (IsSavedLogin(file))
+        if (await IsSavedLoginAsync(file).ConfigureAwait(false))
         {
             return SensitiveKind.SavedLogin;
         }
@@ -369,7 +369,7 @@ internal static partial class SessionInventory
     /// </remarks>
     /// <param name="file">A file under the output folder.</param>
     /// <returns>Whether it holds a storage state.</returns>
-    private static bool IsSavedLogin(FileInfo file)
+    private static async Task<bool> IsSavedLoginAsync(FileInfo file)
     {
         if (!string.Equals(file.Extension, ".json", StringComparison.OrdinalIgnoreCase) || file.Length > SavedLoginReadLimit)
         {
@@ -378,7 +378,7 @@ internal static partial class SessionInventory
 
         try
         {
-            using var document = JsonDocument.Parse(File.ReadAllBytes(file.FullName));
+            using var document = JsonDocument.Parse(await File.ReadAllBytesAsync(file.FullName).ConfigureAwait(false));
 
             return document.RootElement.ValueKind is JsonValueKind.Object
                 && document.RootElement.TryGetProperty("cookies", out var cookies)

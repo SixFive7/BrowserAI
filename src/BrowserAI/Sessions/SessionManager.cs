@@ -631,7 +631,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// whose answer cannot change what the dictionary lookup below returns. A
     /// spelling that is not canonical misses the dictionary either way, because
     /// the key was stored canonical -- and when it does,
-    /// <see cref="ExplainUnknownSession"/> runs the whole sequence and is what
+    /// <see cref="ExplainUnknownSessionAsync"/> runs the whole sequence and is what
     /// names the spelling to use.
     /// </remarks>
     /// <param name="directory">The <c>session</c> argument, as it arrived.</param>
@@ -737,7 +737,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="tool">The tool that was called.</param>
     /// <param name="session">The <c>session</c> argument, as it arrived.</param>
     /// <returns>The refusal to answer with.</returns>
-    public static string ExplainUnknownSession(string tool, string session)
+    public static async Task<string> ExplainUnknownSessionAsync(string tool, string session)
     {
         SessionPath location;
 
@@ -752,7 +752,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         try
         {
-            if (SessionLock.ReadRecord(location) is not { } record)
+            if (await SessionLock.ReadRecordAsync(location).ConfigureAwait(false) is not { } record)
             {
                 return SessionErrors.SessionNamesNoSession(tool, location.FullPath);
             }
@@ -814,7 +814,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="tool">The tool being called.</param>
     /// <param name="session">The session it named.</param>
     /// <returns>The refusal, or <see langword="null"/>.</returns>
-    public string? ProvisioningRefusal(string tool, LiveSession session)
+    public async Task<string?> ProvisioningRefusalAsync(string tool, LiveSession session)
     {
         ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(session);
@@ -825,7 +825,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         try
         {
-            status = _environment.ProvisioningProbe?.Invoke(browser) ?? _environment.Provisioner.Ensure(browser);
+            status = _environment.ProvisioningProbe?.Invoke(browser) ?? await _environment.Provisioner.EnsureAsync(browser).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A probe that throws must not refuse the call: the browser may well be there, and the launch failure below names its own cause.
         catch (Exception failure)
@@ -990,8 +990,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolSurface.Init => await InitAsync(connection, arguments, cancellationToken).ConfigureAwait(false),
                 SessionToolSurface.Resume => await ResumeAsync(connection, arguments, cancellationToken).ConfigureAwait(false),
                 SessionToolSurface.Close => await CloseAsync(connection, arguments, cancellationToken).ConfigureAwait(false),
-                SessionToolSurface.CatchUp => CatchUp(arguments),
-                SessionToolSurface.List => List(arguments),
+                SessionToolSurface.CatchUp => await CatchUpAsync(arguments).ConfigureAwait(false),
+                SessionToolSurface.List => await ListAsync(arguments).ConfigureAwait(false),
                 SessionToolSurface.Destroy => await DestroyAsync(connection, arguments).ConfigureAwait(false),
                 SessionToolSurface.ChangePurpose => await ChangePurposeAsync(connection, arguments).ConfigureAwait(false),
                 SessionToolSurface.ReinstallBrowser => await ReinstallBrowserAsync(arguments, cancellationToken).ConfigureAwait(false),
@@ -1322,7 +1322,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             if (claim is null)
             {
-                return TheRootCouldNotBeClaimed(SessionToolSurface.Init, denial, denialDetail);
+                return await TheRootCouldNotBeClaimedAsync(SessionToolSurface.Init, denial, denialDetail).ConfigureAwait(false);
             }
 
             var named = Required(arguments, "directory");
@@ -1356,7 +1356,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // session, with a shorter sentence about who holds the file, which is
             // the regression the paragraph above records having already been made
             // once.
-            if (Existing(location) is { } existing)
+            if (await ExistingAsync(location).ConfigureAwait(false) is { } existing)
             {
                 return new ToolOutcome(existing, IsError: true);
             }
@@ -1441,7 +1441,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             if (claim is null)
             {
-                return TheRootCouldNotBeClaimed(SessionToolSurface.Resume, denial, denialDetail);
+                return await TheRootCouldNotBeClaimedAsync(SessionToolSurface.Resume, denial, denialDetail).ConfigureAwait(false);
             }
 
             var named = Required(arguments, "directory");
@@ -1633,7 +1633,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     already.Lock.Settle(row, SessionStore.Successful, failure: null);
 
                     return new ToolOutcome(
-                        Describe(already, notes, lead: AlreadyLive(browserUp, purposeChanged: appended is not null, never: already.Settings.Idle.IsNever)),
+                        await DescribeAsync(already, notes, lead: AlreadyLive(browserUp, purposeChanged: appended is not null, never: already.Settings.Idle.IsNever)).ConfigureAwait(false),
                         IsError: false);
                 }
 
@@ -1702,7 +1702,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 }
             }
 
-            var record = SessionLock.ReadRecord(location)
+            var record = await SessionLock.ReadRecordAsync(location).ConfigureAwait(false)
                 ?? throw new SessionToolException(
                     $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to resume. "
                     + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists -- {SessionToolSurface.List} will show what is under a path.");
@@ -1926,7 +1926,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (live is null)
         {
-            return NothingHereToClose(location, why);
+            return await NothingHereToCloseAsync(location, why).ConfigureAwait(false);
         }
 
         SessionToolLog.Why(live.Logger, SessionToolSurface.Close, why);
@@ -2000,13 +2000,13 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="location">The session directory.</param>
     /// <param name="why">What the call gave as its reason, for the process log.</param>
     /// <returns>The answer, or a refusal when there is no session or another process holds it.</returns>
-    private ToolOutcome NothingHereToClose(SessionPath location, string why)
+    private async Task<ToolOutcome> NothingHereToCloseAsync(SessionPath location, string why)
     {
         SessionRecord? record;
 
         try
         {
-            record = SessionLock.ReadRecord(location);
+            record = await SessionLock.ReadRecordAsync(location).ConfigureAwait(false);
         }
         catch (SessionRecordException failure)
         {
@@ -2073,7 +2073,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Read-only, and it takes no lock it can be refused by.</b> A session
     /// another BrowserAI is driving is exactly the case this exists for, so
     /// anything that could be refused by a live holder would refuse when it was
-    /// needed. The record is read the way <see cref="List"/> reads one, and the
+    /// needed. The record is read the way <see cref="ListAsync"/> reads one, and the
     /// directory walk opens no file inside it.
     /// </para>
     /// <para>
@@ -2116,11 +2116,11 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     /// <param name="arguments">The call's arguments.</param>
     /// <returns>What to tell the caller.</returns>
-    private ToolOutcome CatchUp(JsonObject? arguments)
+    private async Task<ToolOutcome> CatchUpAsync(JsonObject? arguments)
     {
         var location = Resolve(Required(arguments, SessionToolSurface.SessionParameter), SessionToolSurface.SessionParameter);
         var why = Why(arguments, SessionToolSurface.CatchUp);
-        var answer = ReadBack(location, arguments);
+        var answer = await ReadBackAsync(location, arguments).ConfigureAwait(false);
 
         // ⚠️ THE WHY IS RECORDED SINCE 2026-10-04, the maintainer's words of
         // 2026-10-03: "browserai_catch_up should take a why." Written AFTER the
@@ -2154,11 +2154,11 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="location">The session directory.</param>
     /// <param name="arguments">The call's arguments, for the page.</param>
     /// <returns>The answer.</returns>
-    private ToolOutcome ReadBack(SessionPath location, JsonObject? arguments)
+    private async Task<ToolOutcome> ReadBackAsync(SessionPath location, JsonObject? arguments)
     {
         var asked = Number(arguments, SessionToolSurface.PageParameter);
 
-        var record = SessionLock.ReadRecord(location)
+        var record = await SessionLock.ReadRecordAsync(location).ConfigureAwait(false)
             ?? throw new SessionToolException(
                 $"'{location.FullPath}' has no '{SessionLayout.DataFileName}', so it is not a BrowserAI session and there is nothing to catch up on. "
                 + $"Call {SessionToolSurface.List} with a directory to see the sessions beneath it, or {SessionToolSurface.Init} to create one here.");
@@ -2283,7 +2283,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (page is 1)
         {
-            AppendWhatIsHereNow(text, location, now);
+            await AppendWhatIsHereNowAsync(text, location, now).ConfigureAwait(false);
             _ = text.Append(HowItGotHere(record));
         }
 
@@ -2423,9 +2423,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="text">Where it goes.</param>
     /// <param name="location">The session directory.</param>
     /// <param name="now">The instant the ages are against.</param>
-    private static void AppendWhatIsHereNow(StringBuilder text, SessionPath location, DateTimeOffset now)
+    private static async Task AppendWhatIsHereNowAsync(StringBuilder text, SessionPath location, DateTimeOffset now)
     {
-        var contents = SessionInventory.Of(location);
+        var contents = await SessionInventory.OfAsync(location).ConfigureAwait(false);
 
         _ = text.Append('\n').Append("WHAT IS HERE NOW -- the directory, walked just now. This is what is true; it does not know why any of it exists.\n");
 
@@ -2711,13 +2711,13 @@ internal sealed class SessionManager : IAsyncDisposable
             _ => $"{Math.Max(0, span.TotalSeconds).ToString("F0", CultureInfo.InvariantCulture)} seconds",
         };
 
-    private ToolOutcome List(JsonObject? arguments)
+    private async Task<ToolOutcome> ListAsync(JsonObject? arguments)
     {
         var (root, prefix) = Subtree(Required(arguments, "directory"));
         var lines = new List<string>();
         var found = 0;
 
-        foreach (var entry in _index.FollowUnder(prefix))
+        foreach (var entry in await _index.FollowUnderAsync(prefix).ConfigureAwait(false))
         {
             if (entry.Session is not { } session || entry.Record is not { } record)
             {
@@ -2861,7 +2861,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// subtree filter ran <i>after</i> the record was opened, so every session on
     /// the machine had its <c>browserai.json</c> strictly parsed -- and each of
     /// those opens carried <c>RenameWindow</c>'s budget -- to print the few under
-    /// the prefix. <see cref="SessionIndex.FollowUnder"/> is what moved the
+    /// the prefix. <see cref="SessionIndex.FollowUnderAsync"/> is what moved the
     /// filter above the open.
     /// </para>
     /// </remarks>
@@ -2962,18 +2962,18 @@ internal sealed class SessionManager : IAsyncDisposable
                 IsError: true);
         }
 
-        var record = SessionLock.ReadRecord(location)
+        var record = await SessionLock.ReadRecordAsync(location).ConfigureAwait(false)
             ?? throw new SessionToolException(
                 $"'{location.FullPath}' has no '{SessionLayout.DataFileName}', so it is not a BrowserAI session and {SessionToolSurface.Destroy} will not touch it. "
                 + "This refusal is what makes the tool safe: it deletes session directories and nothing else. Nothing was changed.");
 
-        var taken = SessionLock.TryAcquire(
+        var taken = await SessionLock.TryAcquireAsync(
             location,
             // No `Entry`: this call takes the record in order to delete it,
             // and an entry appended to a file that is about to be unlinked is a
             // write nobody reads. The `why` is in the answer instead.
             new SessionLockRequest { Browser = record.Browser, Purpose = record.Purpose },
-            _logger);
+            _logger).ConfigureAwait(false);
 
         if (taken.Acquired is not { } held)
         {
@@ -3010,7 +3010,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // Release and finish inside one hold of the per-directory gate, so the
         // instant in which browserai.lock is unheld and still on disk is an
         // instant no peer's create-or-take can be inside.
-        held.ReleaseAndDelete(() => TreeDelete.Remove(location.FullPath, failures));
+        await held.ReleaseAndDeleteAsync(() => TreeDelete.Remove(location.FullPath, failures)).ConfigureAwait(false);
 
         _index.Forget(location);
         SessionToolLog.Destroyed(_logger, location.FullPath, failures.Count);
@@ -3097,11 +3097,11 @@ internal sealed class SessionManager : IAsyncDisposable
             return new ToolOutcome($"Purpose of '{location.FullPath}' is now: {purpose}\nIt was: {previous}", IsError: false);
         }
 
-        var recorded = SessionLock.ReadRecord(location)
+        var recorded = await SessionLock.ReadRecordAsync(location).ConfigureAwait(false)
             ?? throw new SessionToolException(
                 $"'{location.FullPath}' has no '{SessionLayout.DataFileName}', so it is not a BrowserAI session and has no purpose to set. Nothing was changed.");
 
-        var taken = SessionLock.TryAcquire(
+        var taken = await SessionLock.TryAcquireAsync(
             location,
             new SessionLockRequest
             {
@@ -3109,7 +3109,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 Purpose = purpose,
                 Entry = new SessionCall(SessionToolSurface.ChangePurpose, why),
             },
-            _logger);
+            _logger).ConfigureAwait(false);
 
         if (taken.Acquired is not { } held)
         {
@@ -3225,7 +3225,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// open with its browser not currently launched let the delete through. The
     /// maintainer's decision of 2026-08-19: <i>"No reinstall if there is any
     /// session running system wide. Including any reinstall sessions."</i> See
-    /// <see cref="TheRootIsBusy"/>.
+    /// <see cref="TheRootIsBusyAsync"/>.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 (previously "No extra lock is taken around the
@@ -3260,15 +3260,13 @@ internal sealed class SessionManager : IAsyncDisposable
         // The ordering is the deadlock argument: this is the OUTERMOST lock and
         // the provisioning mutexes are taken under it, never the other way
         // round. See MaintenanceLock's remarks.
-        using var maintenance = MaintenanceLock.TryTakeExclusive(
-            _environment.Paths.BrowsersDirectory,
-            target,
-            out var denial,
-            out var denialDetail);
+        var claim = await MaintenanceLock.TryTakeExclusiveAsync(_environment.Paths.BrowsersDirectory, target).ConfigureAwait(false);
+
+        using var maintenance = claim.Lock;
 
         if (maintenance is null)
         {
-            return new ToolOutcome(TheRootIsBusy(denial, denialDetail), IsError: true);
+            return new ToolOutcome(await TheRootIsBusyAsync(claim.Denial, claim.Detail).ConfigureAwait(false), IsError: true);
         }
 
         return ProvisionedBrowsers.IsShared(target)
@@ -3302,12 +3300,12 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     /// <param name="tool">The tool being refused.</param>
     /// <returns>The refusal.</returns>
-    private ToolOutcome ReinstallHoldsTheRoot(string tool) =>
+    private async Task<ToolOutcome> ReinstallHoldsTheRootAsync(string tool) =>
         new(
             SessionErrors.BrowsersAreBeingReinstalled(
                 tool,
                 _environment.Paths.BrowsersDirectory,
-                MaintenanceLock.Describe(_environment.Paths.BrowsersDirectory),
+                await MaintenanceLock.DescribeAsync(_environment.Paths.BrowsersDirectory).ConfigureAwait(false),
                 MaintenanceLock.ProgressOf(_environment.Paths.BrowsersDirectory)),
             IsError: true);
 
@@ -3329,12 +3327,12 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="denial">What the kernel said.</param>
     /// <param name="detail">Windows' own message, for the unreachable arm.</param>
     /// <returns>The refusal.</returns>
-    private ToolOutcome TheRootCouldNotBeClaimed(string tool, MaintenanceDenial denial, string detail) =>
+    private async Task<ToolOutcome> TheRootCouldNotBeClaimedAsync(string tool, MaintenanceDenial denial, string detail) =>
         denial is MaintenanceDenial.Unreachable
             ? new ToolOutcome(
                 SessionErrors.TheBrowsersRootCouldNotBeClaimed(tool, _environment.Paths.BrowsersDirectory, detail),
                 IsError: true)
-            : ReinstallHoldsTheRoot(tool);
+            : await ReinstallHoldsTheRootAsync(tool).ConfigureAwait(false);
 
     /// <summary>
     /// The refusal a reinstall earns when the exclusive claim could not be
@@ -3369,7 +3367,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// ⚠️ <b>The family filter is gone, and the maintainer removed it on purpose:
-    /// <i>"No matter the browser type."</i></b> <see cref="LiveSessions"/> used to
+    /// <i>"No matter the browser type."</i></b> <see cref="LiveSessionsAsync"/> used to
     /// take a family and list only sessions of it, because only a Chromium
     /// session can hold an executable out of the Chromium tree. That reasoning is
     /// still true and no longer relevant: the claim is one file at the root of the
@@ -3385,7 +3383,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// </remarks>
     /// <returns>The whole refusal.</returns>
-    private string TheRootIsBusy(MaintenanceDenial denial, string detail)
+    private async Task<string> TheRootIsBusyAsync(MaintenanceDenial denial, string detail)
     {
         var root = _environment.Paths.BrowsersDirectory;
 
@@ -3397,7 +3395,7 @@ internal sealed class SessionManager : IAsyncDisposable
             return SessionErrors.TheBrowsersRootCouldNotBeClaimed(SessionToolSurface.ReinstallBrowser, root, detail);
         }
 
-        var claimants = LiveSessions();
+        var claimants = await LiveSessionsAsync().ConfigureAwait(false);
 
         if (claimants.Count is 0)
         {
@@ -3407,7 +3405,7 @@ internal sealed class SessionManager : IAsyncDisposable
             return SessionErrors.BrowsersAreBeingReinstalled(
                 SessionToolSurface.ReinstallBrowser,
                 root,
-                MaintenanceLock.Describe(root),
+                await MaintenanceLock.DescribeAsync(root).ConfigureAwait(false),
                 MaintenanceLock.ProgressOf(root));
         }
 
@@ -3467,7 +3465,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <returns>What to tell the caller.</returns>
     private async Task<ToolOutcome> ReinstallSharedAsync(CancellationToken cancellationToken)
     {
-        var directories = _environment.Provisioner.SharedComponentDirectories();
+        var directories = await _environment.Provisioner.SharedComponentDirectoriesAsync().ConfigureAwait(false);
         var named = string.Join("' and '", directories);
         var running = new List<RunningImage>();
 
@@ -3511,7 +3509,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private async Task<ToolOutcome> ReinstallFamilyAsync(string browser, CancellationToken cancellationToken)
     {
-        var directory = _environment.Provisioner.DirectoryFor(browser);
+        var directory = await _environment.Provisioner.DirectoryForAsync(browser).ConfigureAwait(false);
 
         // ⚠️ NO SESSION GATE HERE ANY MORE -- see ReinstallSharedAsync for the
         // same note. It is the exclusive claim on the browsers root, taken
@@ -3628,7 +3626,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// </remarks>
     /// <returns>One line per live session, of any family.</returns>
-    private List<string> LiveSessions()
+    private async Task<List<string>> LiveSessionsAsync()
     {
         var lines = new List<string>();
 
@@ -3637,7 +3635,7 @@ internal sealed class SessionManager : IAsyncDisposable
             lines.Add($"  {session.Location.FullPath} -- open in this BrowserAI (browser '{session.Lock.Record.Browser}')");
         }
 
-        foreach (var entry in _index.Follow())
+        foreach (var entry in await _index.FollowAsync().ConfigureAwait(false))
         {
             if (entry.Session is not { } session || entry.Record is not { } record)
             {
@@ -3702,7 +3700,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolLog.DirectoryMoved(sessionLogger, movedFrom, location.FullPath);
             }
 
-            var taken = SessionLock.TryAcquire(location, request, sessionLogger);
+            var taken = await SessionLock.TryAcquireAsync(location, request, sessionLogger).ConfigureAwait(false);
 
             if (taken.Acquired is not { } held)
             {
@@ -3719,7 +3717,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
 
-            var options = ChildLaunch.Create(
+            var options = await ChildLaunch.CreateAsync(
                 _environment.Payload,
                 _environment.Paths.BrowsersDirectory,
 
@@ -3751,7 +3749,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 // every session, where the 2026-10-08 privacy census found a
                 // picture a page served). In the session's folder, catch_up names
                 // what is in it and destroy removes it with the session.
-                temporaryDirectory: Path.Combine(location.FullPath, SessionLayout.TemporaryFolderName));
+                temporaryDirectory: Path.Combine(location.FullPath, SessionLayout.TemporaryFolderName)).ConfigureAwait(false);
 
             // CA2000 is disabled for these two statements and nothing else.
             // Ownership moves into the live session and then into the dictionary
@@ -3789,9 +3787,12 @@ internal sealed class SessionManager : IAsyncDisposable
 
             // 10 b, 2026-10-10: the install is told it matches, which ends a broken
             // install's notice once a later session's child lists the tools again.
-            _environment.InstallHealth?.Intact();
+            if (_environment.InstallHealth is { } intact)
+            {
+                await intact.IntactAsync().ConfigureAwait(false);
+            }
 
-            session = new LiveSession(location, held, claim, child, settings, logging, config, configFile, createdHere, _environment, _reap, BrowserExecutableFor(request.Browser))
+            session = new LiveSession(location, held, claim, child, settings, logging, config, configFile, createdHere, _environment, _reap, await BrowserExecutableForAsync(request.Browser).ConfigureAwait(false))
             {
                 NoticeGiven = noticeGiven,
             };
@@ -3824,7 +3825,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // same reason: a launch that hangs still leaves a record of what the
             // directory was for.
             held.SettleOpening(SessionStore.Successful, failure: null);
-            _index.Record(location);
+            await _index.RecordAsync(location).ConfigureAwait(false);
             SessionToolLog.Opened(sessionLogger, location.FullPath, settings.Headed, createdHere);
 
             // ⚠️ 8 b, 2026-10-04: a close nobody recorded is written down now, dated
@@ -3839,7 +3840,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
             // ⚠️ F5 a, 2026-10-08: every answer that opens a visible window ends with the
             // line that says the window can go again at no loss.
-            var answer = new ToolOutcome(Describe(session, notes, closing: settings.Headed ? SettingsHoldBack.HeadedHint : null), IsError: false);
+            var answer = new ToolOutcome(await DescribeAsync(session, notes, closing: settings.Headed ? SettingsHoldBack.HeadedHint : null).ConfigureAwait(false), IsError: false);
 
             // ⚠️ A CONNECTION THAT ENDED WHILE THIS OPEN RAN has already detached
             // whatever it found in the dictionary, and this session was not in it
@@ -3864,7 +3865,10 @@ internal sealed class SessionManager : IAsyncDisposable
             // ⚠️ 10 b, 2026-10-10: the person is told too, by one toast per background
             // run and a notice on the dashboard, and the model reads the refusal below
             // either way, since the notice never throws.
-            _environment.InstallHealth?.Broken(broken.Difference ?? "a difference the check did not name");
+            if (_environment.InstallHealth is { } health)
+            {
+                await health.BrokenAsync(broken.Difference ?? "a difference the check did not name").ConfigureAwait(false);
+            }
 
             return new ToolOutcome(broken.Message, IsError: true);
         }
@@ -3932,9 +3936,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <param name="browser">The family.</param>
     /// <returns>The path, or <see langword="null"/> for a family this build does not provision.</returns>
-    private string? BrowserExecutableFor(string browser) =>
+    private async Task<string?> BrowserExecutableForAsync(string browser) =>
         ProvisionedBrowsers.ExecutableWithin(browser) is { } within
-            ? Path.Combine(_environment.Provisioner.DirectoryFor(browser), within)
+            ? Path.Combine(await _environment.Provisioner.DirectoryForAsync(browser).ConfigureAwait(false), within)
             : null;
 
     /// <summary>
@@ -4017,7 +4021,7 @@ internal sealed class SessionManager : IAsyncDisposable
             return seam(browser);
         }
 
-        if (_environment.Provisioner.Peek(browser).State is not ProvisioningState.Installed
+        if ((await _environment.Provisioner.PeekAsync(browser).ConfigureAwait(false)).State is not ProvisioningState.Installed
             || ProvisionedBrowsers.ExecutableWithin(browser) is not { } within)
         {
             UserAgentLog.NotInstalledYet(logger, browser);
@@ -4025,7 +4029,7 @@ internal sealed class SessionManager : IAsyncDisposable
         }
 
         return await HeadedUserAgent.ForAsync(
-            Path.Combine(_environment.Provisioner.DirectoryFor(browser), within),
+            Path.Combine(await _environment.Provisioner.DirectoryForAsync(browser).ConfigureAwait(false), within),
             _environment.InstanceDirectory,
             logger,
             cancellationToken).ConfigureAwait(false);
@@ -4061,7 +4065,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <returns>The prefix.</returns>
     private static string ChildRequestIdPrefix(SessionPath location) => $"browserai-{location.Hash[..8]}-";
 
-    private string Describe(LiveSession session, IReadOnlyList<string> notes, string? lead = null, string? closing = null)
+    private async Task<string> DescribeAsync(LiveSession session, IReadOnlyList<string> notes, string? lead = null, string? closing = null)
     {
         var record = session.Lock.Record;
         var text = new StringBuilder();
@@ -4130,7 +4134,7 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append('x').Append(session.Config.Opinions.FirstOrDefault(opinion => opinion.Path == "browser.contextOptions.viewport.height")?.Value.ToString() ?? "?")
             .Append(" -- a screenshot arrives at this size unscaled, so it is what one costs you\n")
             .Append("  child protocol: ").Append(session.Child.NegotiatedProtocolVersion ?? "<none>").Append('\n')
-            .Append("  browserProvisioning: ").Append(Provisioning(record.Browser)).Append('\n');
+            .Append("  browserProvisioning: ").Append(await ProvisioningAsync(record.Browser).ConfigureAwait(false)).Append('\n');
 
         if (session.Config.HarPath is { } har)
         {
@@ -4147,7 +4151,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // own choice and not a boundary.
         if (Path.GetDirectoryName(session.Location.FullPath) is { Length: > 0 } root)
         {
-            var siblings = Beneath(root)
+            var siblings = (await BeneathAsync(root).ConfigureAwait(false))
                 .Where(directory => !string.Equals(directory, session.Location.FullPath, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
@@ -4213,11 +4217,11 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     /// <param name="browser">The family this session was created for.</param>
     /// <returns>The state, lower-cased, and one sentence of detail.</returns>
-    private string Provisioning(string browser)
+    private async Task<string> ProvisioningAsync(string browser)
     {
         try
         {
-            var status = _environment.Provisioner.Ensure(browser);
+            var status = await _environment.Provisioner.EnsureAsync(browser).ConfigureAwait(false);
 
             // Spelled out and not derived from the enum's name: the word is
             // part of the surface a caller reads, and ToLowerInvariant on an
@@ -4240,13 +4244,13 @@ internal sealed class SessionManager : IAsyncDisposable
         }
     }
 
-    private static string? Existing(SessionPath location)
+    private static async Task<string?> ExistingAsync(SessionPath location)
     {
         SessionRecord? record;
 
         try
         {
-            record = SessionLock.ReadRecord(location);
+            record = await SessionLock.ReadRecordAsync(location).ConfigureAwait(false);
         }
         catch (SessionRecordException failure)
         {
@@ -4361,12 +4365,12 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     /// <param name="root">The canonical directory the sessions sit under.</param>
     /// <returns>Each session's directory, newest use first.</returns>
-    private List<string> Beneath(string root)
+    private async Task<List<string>> BeneathAsync(string root)
     {
         var prefix = CanonicalPath.PrefixOf(root);
         var entries = new List<(string Directory, DateTimeOffset LastUsed)>();
 
-        foreach (var entry in _index.FollowUnder(prefix))
+        foreach (var entry in await _index.FollowUnderAsync(prefix).ConfigureAwait(false))
         {
             if (entry.Session is not { } session || entry.Record is not { } record)
             {
