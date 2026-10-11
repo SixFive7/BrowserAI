@@ -52,7 +52,7 @@ internal static class StarvedPoolProbe
         _ = ThreadPool.SetMaxThreads(1, 1);
         ThreadPool.GetMaxThreads(out var workers, out var completions);
 
-        await Console.Out.WriteLineAsync(string.Create(CultureInfo.InvariantCulture, $"workers={workers} completions={completions} processors={Environment.ProcessorCount}"));
+        await SayLineAsync(string.Create(CultureInfo.InvariantCulture, $"workers={workers} completions={completions} processors={Environment.ProcessorCount}"));
 
         var outcome = scenario switch
         {
@@ -62,7 +62,7 @@ internal static class StarvedPoolProbe
             _ => $"failed: no scenario called '{scenario}'",
         };
 
-        await Console.Out.WriteLineAsync(outcome);
+        await SayLineAsync(outcome);
         return outcome.StartsWith("ok", StringComparison.Ordinal) ? 0 : 1;
     }
 
@@ -82,12 +82,7 @@ internal static class StarvedPoolProbe
         }
 
         // Then until the suite closes this process's standard input, or ends its job.
-        await using var input = Console.OpenStandardInput();
-        var buffer = new byte[64];
-
-        while (await input.ReadAsync(buffer) > 0)
-        {
-        }
+        await UntilTheInputEndsAsync();
 
         return 0;
     }
@@ -96,12 +91,7 @@ internal static class StarvedPoolProbe
     /// <returns>Zero.</returns>
     public static async Task<int> QuietAsync()
     {
-        await using var input = Console.OpenStandardInput();
-        var buffer = new byte[64];
-
-        while (await input.ReadAsync(buffer) > 0)
-        {
-        }
+        await UntilTheInputEndsAsync();
 
         return 0;
     }
@@ -111,9 +101,38 @@ internal static class StarvedPoolProbe
     /// <returns>Zero.</returns>
     public static async Task<int> SayAsync(string text)
     {
-        await Console.Out.WriteLineAsync(text);
-        await Console.Out.FlushAsync();
+        await SayLineAsync(text);
         return 0;
+    }
+
+    /// <summary>Reads this process's standard input until it ends, through the product's channel.</summary>
+    /// <remarks>
+    /// The channel reads the handle on a thread of its own, so the wait holds no worker of
+    /// the pool. <i>Since 2026-10-11 (previously the console stream's <c>ReadAsync</c>, which
+    /// parked a pool thread in a synchronous read for as long as the input stayed open).</i>
+    /// </remarks>
+    /// <returns>The read.</returns>
+    private static async Task UntilTheInputEndsAsync()
+    {
+        using var channel = StdioChannel.OpenStandardStreams();
+        var buffer = new byte[64];
+
+        while (await channel.Input.ReadAsync(buffer) > 0)
+        {
+        }
+    }
+
+    /// <summary>Writes one line to this process's standard output through the product's pump, in the console's encoding.</summary>
+    /// <param name="line">The line.</param>
+    /// <returns>The write, once the line is on the wire.</returns>
+    private static async Task SayLineAsync(string line)
+    {
+#pragma warning disable CA2000 // The pump disposes the stream it wraps.
+        await using var output = StdioChannel.PumpWrites(Console.OpenStandardOutput());
+#pragma warning restore CA2000
+
+        await output.WriteAsync(Console.OutputEncoding.GetBytes(line + Environment.NewLine));
+        await output.FlushAsync();
     }
 
     /// <summary>The pipe client: one request to the background, and its answer.</summary>

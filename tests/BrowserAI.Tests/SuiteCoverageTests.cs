@@ -150,10 +150,17 @@ internal static class SuiteCoverage
         // `dotnet test`, so ReportPath below is the copy a gate run actually
         // has, and TESTING.md's two invocations append that file to each run's
         // own log for exactly this reason.
-        using (var standardOutput = Console.OpenStandardOutput())
-        using (var writer = new StreamWriter(standardOutput, new UTF8Encoding(false), 4096, leaveOpen: true) { AutoFlush = true })
+        //
+        // Through the product's pump since 2026-10-11, which writes the console's
+        // handle on a thread made for the flush (previously a StreamWriter over the
+        // console stream, whose asynchronous write parked a pool thread in a
+        // synchronous one).
+#pragma warning disable CA2000 // The pump disposes the stream it wraps.
+        await using (var standardOutput = BrowserAI.Protocol.StdioChannel.PumpWrites(Console.OpenStandardOutput()))
+#pragma warning restore CA2000
         {
-            await writer.WriteLineAsync(summary);
+            await standardOutput.WriteAsync(new UTF8Encoding(false).GetBytes(summary + Environment.NewLine));
+            await standardOutput.FlushAsync();
         }
 
         await (TestSessionContext.Current?.OutputWriter.WriteLineAsync(summary) ?? Task.CompletedTask);
