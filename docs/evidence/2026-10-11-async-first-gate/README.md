@@ -9,7 +9,8 @@ the two runs behind one of them; and the second gate's PowerShell half, its one 
 the run in which it was green.** Cited by the hazard index's rows of 2026-10-11 for a
 session's log scope across an asynchronous acquire, for a rename the compiler does not
 check, for an exited process's restart registration, for the real Codex arm's RegisterAI
-run and for a value kept for a thread and read after an await. Taken on this machine, Windows 11 Pro 10.0.26300, .NET 10.0.12, TUnit
+run, for a value kept for a thread and read after an await, and, by addition, for the
+Chromium containment arm's open row. Taken on this machine, Windows 11 Pro 10.0.26300, .NET 10.0.12, TUnit
 1.73.19.
 
 `async-ps-1.log` is the PowerShell half of the ordinary gate at `7e2f8516`, with the
@@ -32,6 +33,12 @@ that runs. `red-restart-registration.log` is the arm of `d8b2e708` against the r
 it was, red on the exited probe, and `green-restart-registration.log` is that arm and both
 of the reader's callers' classes with the fix of `3c69e627`, 7 of 7.
 
+`async-ps-4.log` is the PowerShell half of the third, at `d5fd9da6`, from 21:50:54Z:
+1346 cases, 2 failed, in 13m 00.5s, the Chromium containment arm on a walked row whose
+`inJobProcessIdList` was false and the real Codex arm's RegisterAI run past its 14 s
+again. A first attempt at that commit, async-ps-3, stopped at its test pack, whose publish
+was two commits behind the tree, and ran no test.
+
 `async-ps-2.log` is the PowerShell half of the second ordinary gate, at `784173f3`, from
 21:30:08Z: 1346 cases, 1 failed, in 13m 06.5s, the coverage arm reading a thread-static
 value on a thread the asynchronous summary had not printed on. `green-coverage-block.log`
@@ -48,8 +55,9 @@ is that arm and the three other classes that read the summary, with the fix of
 | `red-restart-registration.log` | `RestartRegistrationTests` before the reader's fix |
 | `green-restart-registration.log` | `RestartRegistrationTests`, `BrowserContainmentTests` and `FirefoxTests` after it |
 | `async-ps-2.log` | The second gate's PowerShell half, 102 lines |
+| `async-ps-4.log` | The third gate's PowerShell half, 112 lines |
 | `green-coverage-block.log` | `SuiteCoverageTests`, `FirstRunCacheTests`, `ForegroundLockTests` and `SafeModeWatchTests` after the fix |
-| `originals.sha256` | The SHA-256 of the seven files as they were taken, before this repository's line endings |
+| `originals.sha256` | The SHA-256 of the eight files as they were taken, before this repository's line endings |
 
-Line endings are this repository's, LF. The six logs were taken with CRLF and some LF
+Line endings are this repository's, LF. The seven logs were taken with CRLF and some LF
 among them, and `restart-probe.txt` with CRLF.

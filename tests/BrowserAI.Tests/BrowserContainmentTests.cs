@@ -308,11 +308,17 @@ internal sealed class BrowserContainmentTests
         await Assert.That(walk.Count).IsGreaterThanOrEqualTo(4);
         await Assert.That((int)report["escapees"]!).IsEqualTo(0);
 
+        // ⚠️ EACH ROW'S OWN REPORT IS THE REASON OF ITS ASSERTIONS -- 2026-10-11. The
+        // hazard index's open row for this arm asked for the failing row of the next red,
+        // and the red of async-ps-4 that day, a row whose inJobProcessIdList was false,
+        // said only "Expected to be true but found False".
         foreach (var row in walk)
         {
-            await Assert.That((bool?)row!["inOurJob"] is true).IsTrue();
-            await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue();
-            await Assert.That((string)row["note"]!).IsEmpty();
+            var said = row!.ToJsonString();
+
+            await Assert.That((bool?)row["inOurJob"] is true).IsTrue().Because(said);
+            await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue().Because(said);
+            await Assert.That((string)row["note"]!).IsEmpty().Because(said);
         }
 
         // The cross-check in the other direction: a job member the walk never

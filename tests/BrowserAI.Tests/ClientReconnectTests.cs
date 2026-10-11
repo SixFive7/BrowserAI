@@ -482,13 +482,21 @@ internal sealed class ClientReconnectTests
         // drop, BROWSERAI_ROOT, which no running BrowserAI reads any more), and since
         // 2026-10-09 the pipe of the background the arm started, which a build that is
         // not installed is given (D11 a).
+        //
+        // ⚠️ THE ARM'S OWN RUN, BOUNDED BY THE SUITE'S HANG DETECTOR -- 2026-10-11
+        // (previously McpRegistrar.ToolBudget, the product's 14 s). This call is not the
+        // product's: no step of an install makes it, and what the arm asks of it is that
+        // the entry is rewritten, not how fast. Under the full suite's load it ran past
+        // the 14 s twice of three PowerShell halves in the first gates after the
+        // maintainer's decision 54, at async-ps-1 and async-ps-4, and in its own class
+        // it ended inside it (the hazard index, the real Codex arm's RegisterAI run).
         var sandboxed = await tool.RunAsync(
             [
                 "register", "--name", McpRegistrar.ServerName, "--client", RegistrationClient.Codex.ToolId, "--scope", "user",
                 "--owned-root", install, "--replace", "--", server, RegistrationTarget.McpArgument, BrowserAiPaths.DataRootArgument, appRoot,
                 BrowserAI.Coordination.BackgroundPipe.PipeArgument, background.Pipe,
             ],
-            McpRegistrar.ToolBudget);
+            TestDefaults.ProcessHang);
 
         await Assert.That(ToolDocuments.TryRead(sandboxed, out var rewritten, out var problem)).IsTrue().Because(problem);
         await Assert.That(rewritten!.For(RegistrationClient.Codex.ToolId)!.Action).IsEqualTo("replaced");
