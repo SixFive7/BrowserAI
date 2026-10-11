@@ -6,6 +6,7 @@ using BrowserAI.App;
 using BrowserAI.App.Interop;
 using BrowserAI.App.Page;
 using BrowserAI.Registration;
+using BrowserAI.Relay;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -39,6 +40,7 @@ internal sealed class PageRig : IDisposable
             ServerRefusal = null,
             StartedAt = DateTimeOffset.UnixEpoch,
             StartedHow = BackgroundStart.SignIn,
+            RelayHold = RelayConstants.IdleCountdown,
         };
 
         Facts = facts is null ? made : facts(made);
@@ -126,12 +128,15 @@ internal sealed class NothingHolds : IUpdateHolds
     /// <summary>Where the updates come from and when BrowserAI last checked, as the arm sets them.</summary>
     public UpdateWatch Watching { get; set; } = new(UpdateChecks.Checking, UpdateSourceKind.GitHubReleases, null, null, DateTimeOffset.UnixEpoch);
 
+    /// <summary>What a read of <see cref="Watch"/> throws, or <see langword="null"/> for <see cref="Watching"/>.</summary>
+    public Exception? WatchFailure { get; set; }
+
     public UpdateHoldSnapshot Read() => UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
 
     public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
         Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");
 
-    public UpdateWatch Watch() => Watching;
+    public UpdateWatch Watch() => WatchFailure is { } failure ? throw failure : Watching;
 }
 
 /// <summary>The running servers, scripted.</summary>

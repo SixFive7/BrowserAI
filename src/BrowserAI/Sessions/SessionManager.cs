@@ -1791,7 +1791,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 // '...', which still exists -- the two are now separate sessions, ..." and
                 // "describe the ORIGINAL, not this copy").
                 notes.Add(Directory.Exists(record.Directory)
-                    ? $"This directory is a copy of the session at '{record.Directory}', which still exists. The two are now separate sessions, and the process named in the copied record may still be alive against the original. Its recorded purpose and history describe the original, not this copy: read them below before acting on them, and call {SessionToolSurface.ChangePurpose} to say what this copy is for."
+                    ? $"This directory is a copy of the session at '{record.Directory}', which still exists. The two are now separate sessions, and the process named in the copied record may still be using the original. Its recorded purpose and history describe the original, not this copy: read them below before acting on them, and call {SessionToolSurface.ChangePurpose} to say what this copy is for."
                     : $"This directory was moved or renamed: its record said '{record.Directory}', which no longer exists. The record has been repaired to '{location.FullPath}'.");
 
                 // Recorded, not logged here. The interesting record is the

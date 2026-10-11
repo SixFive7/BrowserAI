@@ -659,7 +659,9 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            PageServiceLog.HoldsUnread(_logger, failure);
+            // An event of its own since fact 7 of the reader pass of 2026-10-11 (previously
+            // HoldsUnread's 7014, which says what holds the update could not be read).
+            PageServiceLog.WatchUnread(_logger, failure);
             return UpdateWatch.Unreported;
         }
     }
@@ -838,7 +840,9 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
             // Corrected 2026-10-11 (previously "Closing every session and connection, then
             // installing ..."), 42 a: a browser closes, and a session is a folder that stays.
-            _notes[PageKind.Update] = new PageNote($"Closing every browser and ending every connection, then installing BrowserAI {version}.");
+            // And the reader pass of that day (previously "... and ending every connection, ..."):
+            // the page says conversation, never connection.
+            _notes[PageKind.Update] = new PageNote($"Closing every browser and disconnecting every conversation, then installing BrowserAI {version}.");
         }
 
         Push();
@@ -1246,10 +1250,13 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         [LoggerMessage(EventId = 7014, Level = LogLevel.Warning, Message = "What holds the update could not be read for the page.")]
         public static partial void HoldsUnread(ILogger logger, Exception failure);
 
-        [LoggerMessage(EventId = 7015, Level = LogLevel.Warning, Message = "The page's watch could not read the sessions this second, so it compares them again the next.")]
+        [LoggerMessage(EventId = 7015, Level = LogLevel.Warning, Message = "The page's watch could not read the sessions, so it reads them again a second later.")]
         public static partial void SessionsUnpeeked(ILogger logger, Exception failure);
 
         [LoggerMessage(EventId = 7016, Level = LogLevel.Warning, Message = "The session folders could not be measured for the page, so it shows the last measurement.")]
         public static partial void FoldersUnmeasured(ILogger logger, Exception failure);
+
+        [LoggerMessage(EventId = 7017, Level = LogLevel.Warning, Message = "Where the updates come from could not be read for the page, so it says nothing about them.")]
+        public static partial void WatchUnread(ILogger logger, Exception failure);
     }
 }

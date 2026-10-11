@@ -174,6 +174,6 @@ internal static partial class RelayLog
     [LoggerMessage(
         EventId = 26,
         Level = LogLevel.Warning,
-        Message = "Relay: the background refused this connection, for the reason it calls {Refusal}, and closes it: {Sentence}")]
+        Message = "Relay: the background refused this connection, for the reason it calls {Refusal}: {Sentence}")]
     public static partial void ClosedForNoFirstMessage(ILogger logger, string refusal, string sentence);
 }

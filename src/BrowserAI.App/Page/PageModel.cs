@@ -45,6 +45,18 @@ internal sealed record PageFacts
     /// <summary>How the background serving the page was started.</summary>
     /// <remarks><b>Added 2026-10-11, the maintainer's 43 b</b>, with <see cref="StartedAt"/>.</remarks>
     public BackgroundStart StartedHow { get; init; } = BackgroundStart.Unknown;
+
+    /// <summary>
+    /// How long a conversation holds an update after its app's last message other than a
+    /// ping: the relay's fixed countdown, <c>RelayConstants.IdleCountdown</c>, which the
+    /// background hands over because this project cannot read it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11, for fact 6 of that day's reader pass</b>: the home said <i>10 min
+    /// after each call</i>, a number written in a string, where the numbers index's scan cannot
+    /// see it, and a call where the countdown counts every message.
+    /// </remarks>
+    public required TimeSpan RelayHold { get; init; }
 }
 
 /// <summary>How the background was started, as its task's <c>$(Arg0)</c> said.</summary>

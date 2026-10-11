@@ -53,11 +53,11 @@ internal static class ConversationsContent
             .Append(PageContent.Crumbs(view.Tab, "Conversations and browsers"))
             .Append(PageContent.Title(
                 "Conversations and browsers",
-                "Every chat in Claude Code or Codex that uses BrowserAI, and the browser sessions it opened. Nothing here can be closed from this page: an agent closes its own browser, and a conversation ends when its app closes it."))
+                "Every chat in Claude Code or Codex that uses BrowserAI, and the browser sessions it opened. Nothing can be closed from this page: an agent closes its own browser, and a conversation ends when its app closes it."))
             .Append("<div class=\"explain\">")
             .Append(Explain("chat", "Conversation", "A chat in Claude Code or Codex. It is connected to BrowserAI while it is open."))
             .Append(Explain("folder", "Session", "A folder an agent made for its browser work: the browser profile with its logins, screenshots, downloads and a log."))
-            .Append(Explain("globe", "Browser", "A session's browser while it runs: hidden, or a window on your screen. It closes by itself when nobody uses it."))
+            .Append(Explain("globe", "Browser", "A session's browser while it runs: hidden, or a window on your screen. It closes by itself when nobody uses it, unless an agent set it never to close."))
             .Append("</div>\n");
 
         PageContent.AppendNote(html, view.Note);
@@ -292,7 +292,7 @@ internal static class ConversationsContent
                 "info",
                 "BrowserAI",
                 $"BrowserAI {facts.Version}",
-                "BrowserAI runs in the background on this PC from sign-in to sign-out. Claude Code and Codex reach it for each conversation, and it gives the agent a real browser."))
+                "BrowserAI runs in the background on this PC and starts by itself when you sign in. Claude Code and Codex reach it for each conversation, and it gives the agent a real browser."))
             .Append("<dl>");
 
         if (InstallContent.RunningSince(facts, view.Now) is { } running)
@@ -369,7 +369,7 @@ internal static class ConversationsContent
                 "globe",
                 "Browser session",
                 PageWords.NameOf(session.Directory),
-                "A folder an agent made for its browser work: the browser profile with its logins and cookies, screenshots, downloads and a log. Only the agent that made it deletes it."))
+                "A folder an agent made for its browser work: the browser profile with its logins and cookies, screenshots, downloads and a log. BrowserAI never deletes it, and this page deletes nothing: the agent that made it can, and so can you, in Explorer."))
             .Append("<dl>")
             .Append("<dt>For</dt><dd>").Append(PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded")).Append("</dd>")
             .Append("<dt>Browser</dt><dd>").Append(PageParts.Line(session, user?.Working ?? false, view.Now)).Append("</dd>")
@@ -387,7 +387,7 @@ internal static class ConversationsContent
         if (PageBoard.StateOf(session) is BrowserState.Window)
         {
             _ = html.Append("<div class=\"notice warn small-notice\">").Append(PageIcons.Of("window"))
-                .Append("<p>This window is on your screen. While it is open, it holds updates. Closing it ends the browser and keeps the session.</p></div>");
+                .Append("<p>This window is on your screen. While it is open, it holds back any update. Closing it ends the browser and keeps the session.</p></div>");
         }
 
         return html.Append("<div class=\"btn-row\">")
@@ -427,7 +427,7 @@ internal static class ConversationsContent
             _ = html.Append("<section class=\"group\"><div class=\"group-head\">").Append(PageIcons.Of("folder")).Append("Kept after their conversation ended</div>\n")
                 .Append("<article class=\"card convo\"><div class=\"convo-head\"><div><h3>")
                 .Append(PageContent.Text(PageWords.Count(board.Unlinked.Count, "session", "sessions") + " with no conversation"))
-                .Append("</h3><p class=\"row-sub\">BrowserAI keeps the browser as it was, so a conversation can pick the session up again. Its idle close ends it otherwise.</p></div></div>\n");
+                .Append("</h3><p class=\"row-sub\">BrowserAI keeps the browser as it was, so a conversation can pick the session up again. If none does, the browser closes by itself after its idle time.</p></div></div>\n");
 
             foreach (var session in board.Unlinked)
             {
@@ -445,7 +445,7 @@ internal static class ConversationsContent
         var description = conversation.Relay.Description;
         var status = conversation.Working
             ? "<span class=\"chip live\"><span class=\"pulse\" aria-hidden=\"true\"></span>Working now</span>"
-            : conversation.Relay.RecentlyActive ? "<span class=\"chip\">Last call a few minutes ago</span>" : "<span class=\"chip\">Idle</span>";
+            : conversation.Relay.RecentlyActive ? "<span class=\"chip\">Its browser is open</span>" : "<span class=\"chip\">Idle</span>";
         var html = new StringBuilder("<article class=\"card convo\" id=\"convo-").Append(PageContent.Text(conversation.Key)).Append("\"><div class=\"convo-head\">")
             .Append(PageContent.Badge(conversation.ClientName))
             .Append("<div><h3>").Append(PageContent.Text(conversation.Name)).Append("</h3><p class=\"row-sub\">")

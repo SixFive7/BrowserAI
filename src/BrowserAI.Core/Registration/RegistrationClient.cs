@@ -181,7 +181,7 @@ internal sealed record RegistrationClient
         ToolId = "claude-code",
         Executable = "claude.exe",
         RestartHint =
-            "Claude Code reads this when a conversation starts, so a conversation already open sees the change only after it is started again.",
+            "Claude Code reads the change when a conversation starts, so a conversation already open has to be started again to see it.",
         ProjectHint =
             "Claude Code asks you to approve BrowserAI the first time you open a conversation in that folder.",
         ProjectFileName = ".mcp.json",

@@ -210,7 +210,7 @@ internal sealed class PageServiceTests
         var list = body[body.IndexOf("<div class=\"list-view\">", StringComparison.Ordinal)..];
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-        await Assert.That(body).Contains(PageContent.Text("Every chat in Claude Code or Codex that uses BrowserAI, and the browser sessions it opened. Nothing here can be closed from this page: an agent closes its own browser, and a conversation ends when its app closes it."));
+        await Assert.That(body).Contains(PageContent.Text("Every chat in Claude Code or Codex that uses BrowserAI, and the browser sessions it opened. Nothing can be closed from this page: an agent closes its own browser, and a conversation ends when its app closes it."));
 
         // Each session once in the list, the driven one inside its conversation's card.
         foreach (var name in new[] { "driven", "kept", "window" })
@@ -225,7 +225,7 @@ internal sealed class PageServiceTests
         // The two kept sessions apart, with what keeps them.
         await Assert.That(list).Contains("Kept after their conversation ended");
         await Assert.That(list).Contains("<h3>2 sessions with no conversation</h3>");
-        await Assert.That(list).Contains(PageContent.Text("BrowserAI keeps the browser as it was, so a conversation can pick the session up again. Its idle close ends it otherwise."));
+        await Assert.That(list).Contains(PageContent.Text("BrowserAI keeps the browser as it was, so a conversation can pick the session up again. If none does, the browser closes by itself after its idle time."));
         await Assert.That(list).Contains("A window on your screen, set never to close by itself.");
 
         // Each conversation by its app, an app that gave no name as such, and a conversation

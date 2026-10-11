@@ -515,7 +515,7 @@ internal static class InstallRootScope
     private static string Remedy(JudgedRoot which, string profile) =>
         which is JudgedRoot.Install
             ? $"uninstall this copy, then run BrowserAI.exe again without --installto, which installs it into this user's LocalAppData folder; that folder has to be inside '{profile}'. "
-            : $"give BrowserAI a data root under '{profile}'. The shipping install keeps its data in this user's LocalAppData folder, which has to be inside the profile; a build started with --data-root, a developer's background or the suite's test install, whose installer's {LocalAppDataPaths.RootVariable} becomes --data-root, has to be handed a folder there. The installer's --installto cannot help here: it moves the install root and never the data root. ";
+            : $"give BrowserAI a data root under '{profile}'. The shipping install keeps its data in this user's LocalAppData folder, which has to be inside the profile. A build started with --data-root has to be handed a folder there: a developer's background, or the suite's test install, whose installer's {LocalAppDataPaths.RootVariable} becomes --data-root. The installer's --installto cannot help here: it moves the install root and never the data root. ";
 
     /// <summary>The refusing verdict: the whole sentence for the log, and its parts for a relay.</summary>
     /// <param name="which">Which root is at fault.</param>

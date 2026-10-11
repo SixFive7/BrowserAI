@@ -57,10 +57,13 @@ internal static class PageContent
     /// <i>Corrected 2026-10-11 (previously "BrowserAI is installed. Below is how it is
     /// registered with each client now. Sessions and threads that were already open do not
     /// see BrowserAI until they are started again.")</i>, the maintainer's 42 a: the apps
-    /// are set up, and what was open is a conversation.
+    /// are set up, and what was open is a conversation. <i>Corrected again 2026-10-11, fact 4 of
+    /// that day's reader pass (previously "A conversation that was already open sees BrowserAI
+    /// only after it is started again.")</i>: a Codex conversation never sees it again, and needs a
+    /// new one, as each client's restart hint says.
     /// </remarks>
     public const string FirstRunSentence =
-        "Below is how Claude Code and Codex are set up now. A conversation that was already open sees BrowserAI only after it is started again.";
+        "Below is how Claude Code and Codex are set up now. A Claude Code conversation that was already open sees BrowserAI only after it is started again, and Codex sees it only in a new conversation.";
 
     /// <summary>Q314 b: what the Codex card says about a Codex that predates the install.</summary>
     public const string CodexStartedBeforeTheInstall =

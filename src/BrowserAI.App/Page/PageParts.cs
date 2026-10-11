@@ -52,7 +52,7 @@ internal static class PageParts
 
         return PageBoard.StateOf(session) switch
         {
-            BrowserState.Window => "Window on your screen, " + (countdown ?? (working ? "in use" : "never closes")),
+            BrowserState.Window => "Window on your screen, " + (countdown is { } left ? "closes in " + left : working ? "in use" : "never closes"),
             BrowserState.Hidden => countdown is { } left ? "Hidden, closes in " + left : working ? "Hidden, in use" : "Hidden, never closes",
             _ => "No browser open",
         };

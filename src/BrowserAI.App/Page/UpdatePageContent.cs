@@ -54,7 +54,7 @@ internal static class UpdatePageContent
     public static IReadOnlyList<string> InstallNowEffects(string version) =>
     [
         "Every browser closes cleanly, windows included, with what is open in them. Each session comes back where it was when its agent resumes it.",
-        "Every conversation loses BrowserAI for a moment. Claude Code in VS Code reconnects by itself. In a terminal, run /mcp there, choose BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.",
+        "Every conversation loses BrowserAI. Claude Code in VS Code reconnects by itself; in a terminal, run /mcp there, choose BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.",
         $"BrowserAI starts again by itself once {version} is installed, and a notification says so.",
     ];
 
@@ -95,7 +95,7 @@ internal static class UpdatePageContent
                 break;
 
             case { State: UpdateHoldState.Installing, Version: { } installing }:
-                _ = html.Append(PageContent.Title($"Update {installing} is installing", $"BrowserAI {installing} is installing now. This page stops when BrowserAI closes, and BrowserAI starts again by itself."));
+                _ = html.Append(PageContent.Title($"Update {installing} is installing", "This page stops when BrowserAI closes, and BrowserAI starts again by itself."));
                 PageContent.AppendNote(html, view.Note);
                 break;
 
@@ -115,7 +115,7 @@ internal static class UpdatePageContent
             default:
                 _ = html.Append(PageContent.Title("No update is waiting", $"BrowserAI {view.Facts.Version} is installed. {CheckedSentence(view.Updates, now)}".TrimEnd()));
                 PageContent.AppendNote(html, view.Note);
-                _ = html.Append(PageContent.Empty("checkCircle", "Nothing is waiting", "When an update waits, this page shows what is still using BrowserAI, with a countdown for each, and a button to install it now."));
+                _ = html.Append(PageContent.Empty("checkCircle", "When an update waits", "This page shows what is still using BrowserAI, with a countdown for each, and a button to install it now."));
                 break;
         }
 
@@ -241,7 +241,7 @@ internal static class UpdatePageContent
             { Wait: UpdateWait.Counting, Ends: { } ends } => (
                 PageContent.Countdown(ends, now),
                 "Installs by itself at about " + PageWords.Clock(ends),
-                "if nothing below is used before then. Each countdown starts again when it is used."),
+                "if nothing below is used before then. Using anything below starts its countdown again."),
             { Wait: UpdateWait.WindowNeverCloses } => (PageIcons.Of("window"), "Waiting for a window", "A window set never to close by itself holds the update. It installs once you close that window and nothing else uses BrowserAI."),
             { Wait: UpdateWait.SessionNeverCloses } => (PageIcons.Of("hidden"), "Waiting for a session", "A hidden browser set never to close by itself holds the update. It installs once an agent closes that session and nothing else uses BrowserAI."),
             { Wait: UpdateWait.CallRunning } => (PageIcons.Of("clock"), "Waiting for a call", "Every countdown has run out, and a call is still running: it installs once that call has finished."),
@@ -252,11 +252,11 @@ internal static class UpdatePageContent
         _ = html.Append("<div class=\"card hero\" id=\"hero\"><div class=\"clock\">").Append(clock).Append("</div>")
             .Append("<div class=\"hero-text\"><p><b>").Append(PageContent.Text(title)).Append("</b></p><p class=\"small\">").Append(PageContent.Text(detail)).Append("</p></div>")
             .Append("<div class=\"hero-act\">").Append(InstallButton("b-install-now-top", version))
-            .Append("<span class=\"small\">Closes every browser and ends every connection. Below is what that means.</span></div></div>\n")
+            .Append("<span class=\"small\">Closes every browser and disconnects every conversation.</span></div></div>\n")
             .Append("<div class=\"grid\">\n");
 
-        AppendSessions(html, "windows", "window", "Windows on your screen", "Each one closes by itself after its idle time, if nobody uses it.", "No window is open.", holds.VisibleWindows, now, visible: true);
-        AppendSessions(html, "hidden", "hidden", "Hidden browsers", "Each one closes by itself after its idle time, if no call uses it.", "No hidden browser is open.", holds.HiddenSessions, now, visible: false);
+        AppendSessions(html, "windows", "window", "Windows on your screen", "Each one closes by itself after its idle time, if nobody uses it, unless it is set never to close.", "No window is open.", holds.VisibleWindows, now, visible: true);
+        AppendSessions(html, "hidden", "hidden", "Hidden browsers", "Each one closes by itself after its idle time, if no call uses it, unless it is set never to close.", "No hidden browser is open.", holds.HiddenSessions, now, visible: false);
         AppendConversations(html, holds.Relays, now);
 
         _ = html.Append("<section id=\"install-now\" class=\"card span-12\">").Append(PageContent.CardHead("bolt", "If you install it now"))
@@ -296,7 +296,7 @@ internal static class UpdatePageContent
                 .Append("<b>").Append(PageContent.Text(PageWords.NameOf(session.Directory))).Append("</b>")
                 .Append("<p class=\"sub\">").Append(PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded")).Append("</p>")
                 .Append("<p class=\"sub\">").Append(PageContent.Text(visible
-                    ? session.ClosesAt is null ? "Set never to close by itself. Close this window to let the update go ahead." : "Close this window to let the update go ahead, or it closes by itself if nobody types, clicks or calls in it."
+                    ? session.ClosesAt is null ? "Set never to close by itself. Close this window to let the update go ahead." : "Close this window to let the update go ahead, or it closes by itself if nobody types or clicks in it and no call names it."
                     : session.ClosesAt is null ? "Set never to close: an agent has to close it." : "Closes by itself if no call names it."))
                 .Append("</p></div>").Append(side).Append("</div>\n");
         }

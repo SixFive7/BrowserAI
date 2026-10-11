@@ -34,7 +34,7 @@ internal static class StorageContent
             .Append(PageContent.Crumbs(view.Tab, "Storage"))
             .Append(PageContent.Title(
                 "Storage",
-                "BrowserAI keeps a folder for each session, wherever its agent put it. A folder stays until the agent that made it deletes it; BrowserAI never deletes one on its own. To remove one yourself, open its folder."));
+                "BrowserAI keeps a folder for each session, wherever its agent put it, and never deletes one on its own; this page deletes nothing either. A folder stays until the agent that made it deletes it, or you do: open its folder and delete it in Explorer."));
 
         PageContent.AppendNote(html, view.Note);
 

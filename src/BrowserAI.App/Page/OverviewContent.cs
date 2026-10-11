@@ -154,12 +154,12 @@ internal static class OverviewContent
         if (needs > 0)
         {
             return (needs is 1 ? "1 thing needs you" : string.Create(CultureInfo.InvariantCulture, $"{needs} things need you"),
-                "BrowserAI is running. Each item below says what is wrong and what to do about it.");
+                "BrowserAI is running.");
         }
 
         if (occasion is Occasion.FirstRun)
         {
-            return ("BrowserAI is installed", "It runs in the background from now on and gives your agents a real browser. Below is what it set up.");
+            return ("BrowserAI is installed", "It runs in the background from now on and gives your agents a real browser.");
         }
 
         var conversations = board.Conversations.Count;
@@ -167,7 +167,7 @@ internal static class OverviewContent
         if (conversations is 0)
         {
             return board.All.Count is 0
-                ? ("All quiet", "BrowserAI is running and ready. No conversation is using it right now.")
+                ? ("All quiet", "BrowserAI is running. No conversation is using it right now.")
                 : ("No conversation is using BrowserAI", board.Kept is 1
                     ? "BrowserAI keeps 1 session for the next conversation that names it."
                     : string.Create(CultureInfo.InvariantCulture, $"BrowserAI keeps {board.Kept} sessions for the next conversation that names one."));
@@ -177,7 +177,7 @@ internal static class OverviewContent
 
         if (board.OnScreen is 1)
         {
-            said.Add("One of them has a browser window open on your screen.");
+            said.Add("A browser window is open on your screen.");
         }
         else if (board.OnScreen > 1)
         {
@@ -264,7 +264,7 @@ internal static class OverviewContent
         switch (view.Holds)
         {
             case null when facts.InstallRoot is not null:
-                _ = html.Append("<p class=\"big\">Not read</p>");
+                _ = html.Append("<p class=\"big\">Unknown</p>");
                 UpdatePageContent.AppendUnread(html, facts);
                 break;
 
@@ -283,7 +283,7 @@ internal static class OverviewContent
                 }
 
                 _ = html.Append("<p>").Append(UpdatePageContent.WaitSentence(wait, now)).Append("</p>\n");
-                AppendHolders(html, holds, now);
+                AppendHolders(html, holds, now, facts.RelayHold);
                 _ = html.Append("<div class=\"btn-row\">").Append(PageContent.LinkButton("l-update", PageContent.Route(PageKind.Update, view.Tab), "See what holds it", "btn primary")).Append("</div>\n");
                 break;
 
@@ -294,8 +294,16 @@ internal static class OverviewContent
                     break;
                 }
 
-                _ = html.Append("<p class=\"big\">No update is waiting</p>\n<p>").Append(PageContent.Text(UpdatePageContent.CheckedSentence(view.Updates, view.Now))).Append("</p>\n")
-                    .Append("<p class=\"small\">When a newer version is out, BrowserAI downloads it and installs it once nothing uses BrowserAI.</p>\n");
+                _ = html.Append("<p class=\"big\">No update is waiting</p>\n<p>").Append(PageContent.Text(UpdatePageContent.CheckedSentence(view.Updates, view.Now))).Append("</p>\n");
+
+                // Only where BrowserAI checks, since the reader pass of 2026-10-11 (previously
+                // on every installed home with nothing waiting, under a sentence saying it
+                // does not check, for a refused source or a development build's web address).
+                if (view.Updates.Checks is UpdateChecks.Checking)
+                {
+                    _ = html.Append("<p class=\"small\">When a newer version is out, BrowserAI downloads it and installs it once nothing uses BrowserAI.</p>\n");
+                }
+
                 break;
         }
 
@@ -303,7 +311,12 @@ internal static class OverviewContent
     }
 
     /// <summary>What holds a waiting update, one short line each.</summary>
-    private static void AppendHolders(StringBuilder html, UpdateHoldSnapshot holds, DateTimeOffset now)
+    /// <remarks>
+    /// <b>The conversations' line says how long each holds it from <paramref name="relayHold"/></b>,
+    /// since fact 6 of the reader pass of 2026-10-11 (previously <i>10 min after each call</i>,
+    /// written in the string).
+    /// </remarks>
+    private static void AppendHolders(StringBuilder html, UpdateHoldSnapshot holds, DateTimeOffset now, TimeSpan relayHold)
     {
         var lines = new StringBuilder();
 
@@ -321,7 +334,7 @@ internal static class OverviewContent
 
         if (active > 0)
         {
-            _ = lines.Append(Mini("chat", string.Empty, active is 1 ? "1 active conversation" : string.Create(CultureInfo.InvariantCulture, $"{active} active conversations"), "<span class=\"small\">10 min after each call</span>"));
+            _ = lines.Append(Mini("chat", string.Empty, active is 1 ? "1 active conversation" : string.Create(CultureInfo.InvariantCulture, $"{active} active conversations"), "<span class=\"small\">" + PageContent.Text(PageWords.Minutes(relayHold) + " after the last message to BrowserAI") + "</span>"));
         }
 
 

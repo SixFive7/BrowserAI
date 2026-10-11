@@ -6,6 +6,7 @@ using BrowserAI.App.Interop;
 using BrowserAI.App.Page;
 using BrowserAI.Interop;
 using BrowserAI.Registration;
+using BrowserAI.Relay;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -589,6 +590,7 @@ internal sealed class PageRegistrationTests
                     ServerCommand = server,
                     ServerArguments = arguments,
                     ServerRefusal = null,
+                    RelayHold = RelayConstants.IdleCountdown,
                 },
                 SessionsSnapshot.Empty,
                 null),

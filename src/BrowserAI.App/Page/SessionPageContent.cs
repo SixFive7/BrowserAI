@@ -113,7 +113,7 @@ internal static class SessionPageContent
                 .ToString();
         }
 
-        return html.Append(PageContent.Notice("good", "Only its agent deletes it", "BrowserAI never deletes a session folder on its own. To remove this one yourself, open its folder."))
+        return html.Append(PageContent.Notice("good", "This page deletes nothing", "BrowserAI never deletes a session folder on its own. The agent that made this one can delete it, and so can you: open its folder and delete it in Explorer."))
             .Append("</div></div>\n").ToString();
     }
 

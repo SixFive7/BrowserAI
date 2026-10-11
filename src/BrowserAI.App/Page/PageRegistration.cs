@@ -187,8 +187,8 @@ internal static class RegistrationNotes
                 $"BrowserAI is set up in that project for {app}." + (note is { Length: > 0 } said ? " " + said : string.Empty) + " " + who.ProjectHint + " " + who.RestartHint,
                 report.Detail),
             RegistrationStatus.Unregistered => new PageNote($"BrowserAI is no longer set up in that project for {app}. {who.RestartHint}", report.Detail),
-            RegistrationStatus.AlreadyRegistered => new PageNote($"That project already sets up BrowserAI for {app}, so nothing changed.", report.Detail),
-            RegistrationStatus.NothingToUnregister => new PageNote($"That project does not set up BrowserAI for {app}, so nothing was removed.", report.Detail),
+            RegistrationStatus.AlreadyRegistered => new PageNote($"BrowserAI was already set up in that project for {app}, so nothing changed.", report.Detail),
+            RegistrationStatus.NothingToUnregister => new PageNote($"BrowserAI was not set up in that project for {app}, so nothing was removed.", report.Detail),
             _ => NotDone(report, who, registering
                 ? $"BrowserAI could not set itself up in that project for {app}."
                 : $"BrowserAI could not remove itself from that project for {app}."),

@@ -42,7 +42,7 @@ internal static class SetupContent
             .Append(PageContent.Crumbs(view.Tab, "Claude Code and Codex"))
             .Append(PageContent.Title(
                 "Claude Code and Codex",
-                "Your agents reach BrowserAI through these apps, and each is set up on its own. Set up for all your projects means one entry in that app's own settings. A project setup writes a file in one folder, to commit with the project."));
+                "Your agents reach BrowserAI through these apps, and each is set up on its own. Setting one up for all your projects writes one entry in that app's own settings. A project setup writes a file in one folder, to commit with the project."));
 
         PageContent.AppendNote(html, view.Note);
 
@@ -128,7 +128,7 @@ internal static class SetupContent
 
         if (client.ProjectScope is { Command: { Length: > 0 } command } project && client.ProjectDirectory is { Length: > 0 } directory)
         {
-            _ = html.Append("<p class=\"small\">The project at <code>").Append(PageContent.Text(directory)).Append("</code> sets up <code>").Append(PageContent.Text(command))
+            _ = html.Append("<p class=\"small\">The project at <code>").Append(PageContent.Text(directory)).Append("</code> names <code>").Append(PageContent.Text(command))
                 .Append("</code> in <code>").Append(PageContent.Text(project.File)).Append("</code>.</p>\n");
         }
 
@@ -161,7 +161,7 @@ internal static class SetupContent
             if (client.MayRegisterInProject || client.MayUnregisterFromAProject || client.MayUnregisterFromProject)
             {
                 _ = html.Append("<div class=\"sub-block\"><h3>In one project</h3><p>")
-                    .Append(PageContent.Text($"Writes or removes {who.ProjectFileName} in a folder you choose. Windows' folder picker opens, and it can open behind this browser window."))
+                    .Append(PageContent.Text($"Writes or removes {who.ProjectFileName} in a folder you choose. Windows' folder picker opens, and it can appear behind this browser window."))
                     .Append("</p><div class=\"actions\">");
 
                 if (client.MayRegisterInProject)

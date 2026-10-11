@@ -88,7 +88,7 @@ internal sealed class DashboardTests
 
         await Assert.That(overview.Status).IsEqualTo(200).Because(overview.Raw);
         await Assert.That(overview.Body).Contains("<h1>All quiet</h1>");
-        await Assert.That(overview.Body).Contains("BrowserAI is running and ready. No conversation is using it right now.");
+        await Assert.That(overview.Body).Contains("BrowserAI is running. No conversation is using it right now.");
 
         foreach (var card in new[] { "Right now", "Update", "Claude Code and Codex", "Storage", "This install" })
         {
@@ -248,11 +248,21 @@ internal sealed class DashboardTests
     /// and on the install page: GitHub's releases, a folder on this PC with the folder named,
     /// and a source the install named and this build refused, which checks nothing.
     /// </summary>
-    /// <remarks><b>43 b, the second of the three facts.</b></remarks>
+    /// <remarks>
+    /// <para><b>43 b, the second of the three facts.</b></para>
+    /// <para>
+    /// <b>And the sentence that a newer version installs by itself is said only where BrowserAI
+    /// checks</b>, since fact 2 of the reader pass of 2026-10-11: it was drawn on every installed
+    /// home with nothing waiting, under the sentence saying BrowserAI does not check for a refused
+    /// source or a development build's web address. Planted red that day against the home as it
+    /// stood.
+    /// </para>
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task WhereUpdatesComeFromAndTheLastCheckAreSaidWhereTheUpdateIs()
     {
+        const string InstallsByItself = "When a newer version is out, BrowserAI downloads it and installs it once nothing uses BrowserAI.";
         var at = Now.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
 
         using (var rig = new PageRig())
@@ -261,6 +271,7 @@ internal sealed class DashboardTests
 
             await Assert.That(home.Body).Contains("No update is waiting");
             await Assert.That(home.Body).Contains($"BrowserAI last checked GitHub releases at {at}.");
+            await Assert.That(home.Body).Contains(InstallsByItself);
 
             var install = await PageRig.GetAsync(rig.Root + "install?tab=1");
 
@@ -290,6 +301,17 @@ internal sealed class DashboardTests
 
             await Assert.That(home.Body).Contains("BrowserAI does not check for updates, because the update source its install named was refused.");
             await Assert.That(home.Body).DoesNotContain("last checked");
+            await Assert.That(home.Body).DoesNotContain(InstallsByItself).Because("a home that says BrowserAI does not check said a newer version installs by itself");
+        }
+
+        var development = new NothingHolds { Watching = new UpdateWatch(UpdateChecks.PreReleaseUrl, UpdateSourceKind.Url, "https://example.invalid/feed", null, null) };
+
+        using (var rig = new PageRig(holds: development))
+        {
+            var home = await PageRig.GetAsync(rig.HandOut());
+
+            await Assert.That(home.Body).Contains("This development build does not check for updates, because its install named a web address and it checks only a folder.");
+            await Assert.That(home.Body).DoesNotContain(InstallsByItself).Because("a development build that checks nothing said a newer version installs by itself");
         }
 
         using (var rig = new PageRig(installed: false))
@@ -298,6 +320,57 @@ internal sealed class DashboardTests
 
             await Assert.That(home.Body).Contains(PageContent.Text(PageContent.NotInstalledSentence));
         }
+    }
+
+    /// <summary>
+    /// The home's update card says how long a conversation holds the update from the relay's
+    /// own countdown, which the background hands the page, and counts every message to
+    /// BrowserAI, where it said each call.
+    /// </summary>
+    /// <remarks>
+    /// <b>Fact 6 of the reader pass of 2026-10-11</b>: the card said <i>10 min after each
+    /// call</i>, a number written in a string where the numbers index's scan cannot see it, and
+    /// a call where the countdown counts every message but a ping. A length the relay does not
+    /// have shows the derivation: the card follows <see cref="PageFacts.RelayHold"/>. Planted
+    /// red that day against the card as it stood.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheHomeSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdown()
+    {
+        using var rig = new PageRig(holds: new ScriptedHolds { Snapshot = Held() }, facts: facts => facts with { RelayHold = TimeSpan.FromMinutes(7) });
+
+        var home = await PageRig.GetAsync(rig.HandOut());
+
+        await Assert.That(home.Body).Contains("1 active conversation");
+        await Assert.That(home.Body).Contains("7 min after the last message to BrowserAI");
+        await Assert.That(home.Body).DoesNotContain("after each call");
+    }
+
+    /// <summary>
+    /// A read of where the updates come from that fails is logged as that, under an event of
+    /// its own, and never as a read of what holds the update.
+    /// </summary>
+    /// <remarks>
+    /// <b>Fact 7 of the reader pass of 2026-10-11</b>: the page logged the failure through
+    /// <c>PageServiceLog.HoldsUnread</c>, event 7014, <i>"What holds the update could not be read
+    /// for the page."</i>, so the log named the wrong read. Planted red that day against the
+    /// page as it stood.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AWatchThatCannotBeReadIsLoggedAsItselfAndNotAsWhatHoldsTheUpdate()
+    {
+        using var logs = new CapturingLoggerProvider();
+        using var rig = new PageRig(logs: logs, holds: new NothingHolds { WatchFailure = new InvalidOperationException("the update core is gone") });
+
+        var home = await PageRig.GetAsync(rig.HandOut());
+
+        await Assert.That(home.Status).IsEqualTo(200).Because(home.Raw);
+        await Assert.That(home.Body).DoesNotContain("last checked");
+        await Assert.That(logs.Records.Any(record => record.EventId.Id == 7017)).IsTrue().Because("the failed read of where updates come from was not logged under its own event");
+        await Assert.That(logs.Logged("Where the updates come from could not be read for the page")).IsTrue();
+        await Assert.That(logs.Logged("What holds the update could not be read for the page.")).IsFalse().Because("the failed read of where updates come from was logged as a read of what holds the update");
     }
 
     /// <summary>

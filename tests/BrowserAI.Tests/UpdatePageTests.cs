@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using BrowserAI.App.Page;
 using BrowserAI.Proxy;
+using BrowserAI.Relay;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
 
@@ -61,7 +62,7 @@ internal sealed class UpdatePageTests
         await Assert.That(html).Contains("It installs by itself once nothing uses BrowserAI, so no agent is cut off in the middle of its work.");
         await Assert.That(html).Contains($"<div class=\"clock\">{Countdown(Now.AddMinutes(50), "50:00")}</div>");
         await Assert.That(html).Contains($"Installs by itself at about {at}");
-        await Assert.That(html).Contains("if nothing below is used before then. Each countdown starts again when it is used.");
+        await Assert.That(html).Contains("if nothing below is used before then. Using anything below starts its countdown again.");
 
         var hidden = Section(html, "hidden");
 
@@ -74,7 +75,7 @@ internal sealed class UpdatePageTests
         // session and on the person's input in it, as browserai_init says.
         var windows = Section(html, "windows");
 
-        await Assert.That(windows).Contains("Close this window to let the update go ahead, or it closes by itself if nobody types, clicks or calls in it.");
+        await Assert.That(windows).Contains("Close this window to let the update go ahead, or it closes by itself if nobody types or clicks in it and no call names it.");
         await Assert.That(windows).Contains(Countdown(Now.AddMinutes(50), "50:00"));
 
         var conversations = Section(html, "conversations");
@@ -302,7 +303,8 @@ internal sealed class UpdatePageTests
 
         await Assert.That(none).Contains("<h1 class=\"page-title\">No update is waiting</h1>");
         await Assert.That(none).Contains("<p class=\"lede\">BrowserAI 9.0.0 is installed.</p>");
-        await Assert.That(none).Contains("When an update waits, this page shows what is still using BrowserAI, with a countdown for each, and a button to install it now.");
+        await Assert.That(none).Contains("When an update waits");
+        await Assert.That(none).Contains("This page shows what is still using BrowserAI, with a countdown for each, and a button to install it now.");
         await Assert.That(none).DoesNotContain("data-action=\"install-now\"");
 
         var uninstalled = Render(UpdateHoldSnapshot.Nothing(Now), installed: false);
@@ -312,7 +314,8 @@ internal sealed class UpdatePageTests
 
         var installing = Render(new UpdateHoldSnapshot(Now, UpdateHoldState.Installing, "1.2.0", [], [], []));
 
-        await Assert.That(installing).Contains("BrowserAI 1.2.0 is installing now. This page stops when BrowserAI closes, and BrowserAI starts again by itself.");
+        await Assert.That(installing).Contains("<h1 class=\"page-title\">Update 1.2.0 is installing</h1>");
+        await Assert.That(installing).Contains("<p class=\"lede\">This page stops when BrowserAI closes, and BrowserAI starts again by itself.</p>");
         await Assert.That(installing).DoesNotContain("data-action=\"install-now\"");
 
         var unread = Render(null);
@@ -373,7 +376,7 @@ internal sealed class UpdatePageTests
         // the texts review, 2026-10-10, #118 (previously "once the new version is
         // installed", above an older one). Planted red against "the new version".
         await Assert.That(Section(Render(older), "install-now")).Contains("BrowserAI starts again by itself once 8.5.0 is installed, and a notification says so.");
-        await Assert.That(Section(Render(older), "install-now")).Contains("In a terminal, run /mcp there, choose BrowserAI, then Reconnect.");
+        await Assert.That(Section(Render(older), "install-now")).Contains("Claude Code in VS Code reconnects by itself; in a terminal, run /mcp there, choose BrowserAI, then Reconnect.");
         await Assert.That(Section(Render(older), "install-now")).DoesNotContain("new version");
 
         // An open tab hears of it: the watch's signature tells the two apart.
@@ -428,7 +431,7 @@ internal sealed class UpdatePageTests
 
         // The page's own note while the request runs, then a new state once the
         // background has the install, and no word of its own to the tabs.
-        await Assert.That(await StateContainingAsync(stream, "Closing every browser and ending every connection, then installing BrowserAI 1.2.0.")).IsNotNull();
+        await Assert.That(await StateContainingAsync(stream, "Closing every browser and disconnecting every conversation, then installing BrowserAI 1.2.0.")).IsNotNull();
 
         var handedOver = await stream.NextAsync();
 
@@ -574,6 +577,7 @@ internal sealed class UpdatePageTests
         LogDirectory = @"C:\data\logs",
         ServerCommand = null,
         ServerRefusal = null,
+        RelayHold = RelayConstants.IdleCountdown,
     };
 
     /// <summary>The home's main part, rendered for tab 3.</summary>

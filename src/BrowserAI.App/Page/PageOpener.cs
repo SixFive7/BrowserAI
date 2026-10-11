@@ -87,8 +87,9 @@ internal static partial class PageOpener
 
     /// <summary>What the page knows about this BrowserAI, read once.</summary>
     /// <param name="paths">Where the data and the log are.</param>
+    /// <param name="relayHold">How long a conversation holds an update after its app's last message: the relay's countdown.</param>
     /// <returns>The facts.</returns>
-    public static PageFacts FactsFor(IAppPaths paths)
+    public static PageFacts FactsFor(IAppPaths paths, TimeSpan relayHold)
     {
         ArgumentNullException.ThrowIfNull(paths);
 
@@ -103,6 +104,7 @@ internal static partial class PageOpener
             ServerCommand = resolved ? target!.Command : null,
             ServerArguments = resolved ? InstallerSettings.SavedFor(target!.InstallRoot, InstallLocation.AppId).RelayArguments : InstallerSettings.None.RelayArguments,
             ServerRefusal = resolved ? null : refusal,
+            RelayHold = relayHold,
         };
     }
 

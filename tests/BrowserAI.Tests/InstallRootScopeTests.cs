@@ -100,7 +100,7 @@ internal sealed class InstallRootScopeTests
         // ⚠️ The shipping install's data root since 2026-10-10, the maintainer's 21 and the
         // way to do it he took that day (previously "so reinstall it with that variable
         // cleared;"): it reads no BROWSERAI_ROOT. Planted red against the remedy as it was.
-        await Assert.That(refusal).Contains("The shipping install keeps its data in this user's LocalAppData folder, which has to be inside the profile;");
+        await Assert.That(refusal).Contains("The shipping install keeps its data in this user's LocalAppData folder, which has to be inside the profile. A build started with --data-root has to be handed a folder there:");
         await Assert.That(refusal).DoesNotContain("naming a directory under that profile");
 
         // ⚠️ AND THE REMEDY THAT IS NO LONGER THERE -- 2026-09-15. The sentence

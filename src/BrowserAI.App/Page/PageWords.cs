@@ -113,6 +113,12 @@ internal static class PageWords
         };
     }
 
+    /// <summary>A length of time in whole minutes, as <i>10 min</i>.</summary>
+    /// <param name="span">The length.</param>
+    /// <returns>The words.</returns>
+    public static string Minutes(TimeSpan span) =>
+        string.Create(CultureInfo.InvariantCulture, $"{(long)span.TotalMinutes} min");
+
     /// <summary>A moment as a clock on this PC shows it, to the minute.</summary>
     /// <param name="at">The moment.</param>
     /// <returns>The words.</returns>

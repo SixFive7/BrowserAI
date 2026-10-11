@@ -11,6 +11,7 @@ using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
 using BrowserAI.Registration;
+using BrowserAI.Relay;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Updates;
@@ -359,7 +360,7 @@ internal static partial class Program
 
         using var page = new PageService(
             // 43 b, 2026-10-11: when the background started and how, which the page says.
-            PageOpener.FactsFor(paths) with { StartedAt = startedAt, StartedHow = BackgroundStartOf(startedBy) },
+            PageOpener.FactsFor(paths, RelayConstants.IdleCountdown) with { StartedAt = startedAt, StartedHow = BackgroundStartOf(startedBy) },
 
             // The occasion the first tab is handed out on: a person's start after an
             // install, or Velopack's restart after an update, says so through the
