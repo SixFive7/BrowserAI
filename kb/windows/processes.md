@@ -780,6 +780,14 @@ on a purpose change, there is nothing to trade. Reproduce with
 `BrowserAI.TestProbe.exe session-rewrite <dir> <ready-file> 100 <done-file>` and
 time it. `[MACHINE]`
 
+⚠️ *Added 2026-10-11 by addition*: **the product no longer takes the path measured
+here.** Its durable writes open their file `WriteThrough` and asynchronously and call
+no `Flush(flushToDisk: true)` since the maintainer's 63 and 77 a, so the figures above
+are the cost of the path with the flush, as it stood on 2026-08-16, and the path
+without it was not measured. `session-rewrite` no longer reproduces either: it
+appends purpose rows to the session's store, and `browserai.json` is the legacy
+record a session directory is refused for since it was renamed on 2026-08-26.
+
 **A rename cannot replace a file whose handle is open -- under *any* share mode --
 and it fails `ERROR_ACCESS_DENIED` and not a sharing violation.** Measured
 2026-08-16 across `FileShare.Read`, `FileShare.Read | FileShare.Delete` and
