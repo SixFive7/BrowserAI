@@ -2011,7 +2011,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// first.
     /// </para>
     /// </remarks>
-    private sealed class PollTicker : IDisposable
+    internal sealed class PollTicker : IDisposable
     {
         private readonly AutoResetEvent _tick = new(initialState: false);
         private readonly ITimer _timer;

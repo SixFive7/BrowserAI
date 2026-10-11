@@ -495,6 +495,49 @@ internal sealed class PageServiceTests
         await Assert.That(rig.Page.IsServing).IsTrue();
     }
 
+    /// <summary>
+    /// A linger tick that arrives after the tabs were disposed wakes nothing, where it set
+    /// the background's inbox after the background had closed it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-11, by the sweep of every timer callback in <c>src</c></b> that
+    /// followed <c>BrowserProvisioner.PollTicker</c>'s crash of the release gate's second
+    /// PowerShell run at <c>d1bae44f</c>. The linger's tick calls the wake it was given,
+    /// which in the product is <see cref="CoordinatorInbox.Wake"/>, and the background
+    /// disposes its inbox right after its page. <see cref="PageTabs.Dispose"/> disposed
+    /// the timer and set nothing a tick could read, and a system timer's
+    /// <c>Dispose</c> does not wait for a tick already handed to the thread pool, so a
+    /// tick that late set a closed event on a pool thread, which ends the process. Read in
+    /// the code and not seen in a run.
+    /// </para>
+    /// <para>
+    /// <b>In the product's order</b>: the tabs go first and the inbox after them, as
+    /// <c>Program.Background</c> disposes them, and <see cref="ManualClock.FireAfterDispose"/>
+    /// delivers the late tick when the arm asks.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ALingerTickThatArrivesAfterTheTabsAreDisposedWakesNothing()
+    {
+        var clock = new ManualClock();
+        var inbox = new CoordinatorInbox();
+        var tabs = new PageTabs(clock, PageTabs.ProductLinger, inbox.Wake);
+
+        // A hand-out arms the linger.
+        await Assert.That(tabs.HandOut()).IsEqualTo(1);
+
+        tabs.Dispose();
+        inbox.Dispose();
+
+        // Today this throws the inbox's ObjectDisposedException out of the tick itself.
+        var late = clock.FireAfterDispose();
+
+        await Assert.That(late).IsEqualTo(1)
+            .Because("the tabs arm one linger timer, and its tick has to have run for this arm to be about anything");
+    }
+
     // RETIRED 2026-10-08: AnOpenTabDoesNotHoldAnUpdateBackAndIsToldToReopenFromTheStartMenu,
     // which drove the coordinator's loop to apply a staged update with a tab open. The
     // loop went with the coordinator (S a); the background's update core decides when

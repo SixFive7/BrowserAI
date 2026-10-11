@@ -46,6 +46,7 @@ internal sealed class ManualClock : TimeProvider
 {
     private readonly Lock _gate = new();
     private readonly List<ManualTimer> _timers = [];
+    private readonly List<ManualTimer> _disposed = [];
 
     private long _now;
     private int _created;
@@ -172,6 +173,40 @@ internal sealed class ManualClock : TimeProvider
     }
 
     /// <summary>
+    /// Runs, once each, the callback of every timer disposed since the last call: the
+    /// tick a system timer had already queued when its <c>Dispose</c> was called.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11</b>, after the second PowerShell run of the release gate at
+    /// <c>d1bae44f</c> ended on such a tick: <c>BrowserProvisioner.PollTicker</c>'s timer
+    /// called <c>Set</c> on the event its <c>Dispose</c> had already closed, on a pool
+    /// thread, and the exception ended the test host. A system timer's <c>Dispose</c>
+    /// does not wait for a tick already handed to the thread pool, and the
+    /// documentation of <c>Timer.Dispose</c> says so: <i>"Callbacks can occur after the
+    /// Dispose() method overload has been called, because the timer queues callbacks for
+    /// execution by thread pool threads."</i> A timer of this clock never fires once it is
+    /// disposed, so this is the one way an arm can deliver that tick.
+    /// </remarks>
+    /// <returns>How many callbacks ran.</returns>
+    public int FireAfterDispose()
+    {
+        List<ManualTimer> late;
+
+        lock (_gate)
+        {
+            late = [.. _disposed];
+            _disposed.Clear();
+        }
+
+        foreach (var timer in late)
+        {
+            timer.FireLate();
+        }
+
+        return late.Count;
+    }
+
+    /// <summary>
     /// Moves the clock forward and fires everything that becomes due, in order.
     /// </summary>
     /// <param name="by">How far to move.</param>
@@ -219,7 +254,11 @@ internal sealed class ManualClock : TimeProvider
     {
         lock (_gate)
         {
-            _ = _timers.Remove(timer);
+            // Kept for FireAfterDispose, once: a second Dispose finds it gone.
+            if (_timers.Remove(timer))
+            {
+                _disposed.Add(timer);
+            }
         }
     }
 
@@ -301,6 +340,9 @@ internal sealed class ManualClock : TimeProvider
 
             callback(state);
         }
+
+        /// <summary>Runs the callback once, disposed or not, for <see cref="ManualClock.FireAfterDispose"/>.</summary>
+        public void FireLate() => callback(state);
 
         /// <inheritdoc />
         public void Dispose()

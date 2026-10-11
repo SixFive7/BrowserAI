@@ -1319,6 +1319,44 @@ internal sealed partial class ProvisioningTests
         await Assert.That(Bytes(chromium)).IsGreaterThan(0);
     }
 
+    /// <summary>
+    /// A poll tick that arrives after the ticker was disposed does nothing, where it
+    /// ended the process.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-11, after the second PowerShell run of the release gate at
+    /// <c>d1bae44f</c> ended on it</b>, 652 tests in: <i>"Unhandled exception.
+    /// System.ObjectDisposedException: Cannot access a disposed object. Object name:
+    /// 'Microsoft.Win32.SafeHandles.SafeWaitHandle'."</i>, at
+    /// <c>EventWaitHandle.Set()</c> in the ticker's timer callback, from
+    /// <c>TimerQueue.FireNextTimers</c>. The ticker's <c>Dispose</c> closed its event
+    /// after disposing the timer, and a system timer's <c>Dispose</c> does not wait for
+    /// a tick already handed to the thread pool. An exception on a timer thread ends the
+    /// process, and in the product that process is the background.
+    /// </para>
+    /// <para>
+    /// <b>No timing in it</b>: <see cref="ManualClock.FireAfterDispose"/> delivers that
+    /// tick when the arm asks. The period is the product's own,
+    /// <see cref="SessionTimes.ProvisioningPoll"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APollTickThatArrivesAfterItsTickerIsDisposedDoesNothing()
+    {
+        var clock = new ManualClock();
+        var ticker = new BrowserProvisioner.PollTicker(clock, SessionTimes.ProvisioningPoll);
+
+        ticker.Dispose();
+
+        // Today this throws the gate's ObjectDisposedException out of the tick itself.
+        var late = clock.FireAfterDispose();
+
+        await Assert.That(late).IsEqualTo(1)
+            .Because("the ticker arms one timer, and its tick has to have run for this arm to be about anything");
+    }
+
     /// <summary>The byte count one anchor published, with its thousands separators removed.</summary>
     /// <param name="match">The anchor match.</param>
     /// <returns>The count.</returns>
