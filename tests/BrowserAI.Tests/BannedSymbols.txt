@@ -39,7 +39,7 @@ T:Windows.UI.Notifications.ToastNotifier;No ordinary test raises a real toast. S
 ; raw HTTP or through a headless session, and hands the page a desktop that
 ; records what it was asked to open. A test that needs the address a real start
 ; was handed passes --write-address, which writes it to a file and opens nothing.
-M:BrowserAI.App.Interop.ShellInterop.OpenUrl(System.String);No test opens a real browser tab: the person's browser draws it on the real desktop, where the window watch cannot attribute it. Record the address through PageOpener.Deliver with an open delegate the test owns, or pass --write-address to a real start.
+M:BrowserAI.App.Interop.ShellInterop.OpenUrlAsync(System.String);No test opens a real browser tab: the person's browser draws it on the real desktop, where the window watch cannot attribute it. Record the address through PageOpener.Deliver with an open delegate the test owns, or pass --write-address to a real start.
 M:BrowserAI.App.Interop.ShellInterop.OpenInExplorer(System.String);No test opens a real Explorer window. Hand the page a desktop that records the folder it was asked to open.
 M:BrowserAI.App.Interop.ShellInterop.PickFolder(System.IntPtr,System.String);No test opens a real folder picker. Hand the caller a picker that answers what the test decides.
 T:BrowserAI.App.Page.DesktopPageHost;No test uses the page's real desktop: every call it queues opens something on the person's screen. Hand the page a desktop that records what it was asked for.
@@ -55,6 +55,6 @@ T:BrowserAI.App.Page.DesktopPageHost;No test uses the page's real desktop: every
 ; arm registers the activator's class with COM.
 M:BrowserAI.Updates.WindowsToastSurface.#ctor(System.String);No ordinary test raises a real toast: hand UpdateToasts a surface that records what it was asked.
 M:BrowserAI.Updates.WindowsToastSurface.ForThisProcess;No ordinary test raises a real toast. Same rule as the surface's constructor.
-M:BrowserAI.Updates.UpdateToasts.ForThisProcess(BrowserAI.Updates.IUpdateHolds,BrowserAI.Hosting.IAppPaths,Microsoft.Extensions.Logging.ILogger);No ordinary test raises a real toast: it makes the product's own surface. Construct UpdateToasts with a recording one.
+M:BrowserAI.Updates.UpdateToasts.ForThisProcess(BrowserAI.Updates.IUpdateHoldsReader,BrowserAI.Hosting.IAppPaths,Microsoft.Extensions.Logging.ILogger);No ordinary test raises a real toast: it makes the product's own surface. Construct UpdateToasts with a recording one.
 M:BrowserAI.Updates.ToastActivatorRegistration.UserClasses;No test writes the activator's registration where Windows reads it: hand Register a scratch key under HKCU\Software\BrowserAI.Tests.
-M:BrowserAI.Updates.ToastActivation.Receive(System.String,Microsoft.Extensions.Logging.ILogger);No test registers the activator's class with COM: a registered class takes real clicks. Hand a click to its class object in process.
+M:BrowserAI.Updates.ToastActivation.ReceiveAsync(System.String,Microsoft.Extensions.Logging.ILogger);No test registers the activator's class with COM: a registered class takes real clicks. Hand a click to its class object in process.
