@@ -928,6 +928,81 @@ internal sealed partial class RelayTests
     }
 
     /// <summary>
+    /// A background that closes a connection for sending no first message in time says so
+    /// in a refusal that carries no id; the relay's log names that refusal by its kind and
+    /// its sentence, and not as a frame it could not read, and the relay looks again and
+    /// passes on what it held.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>47 b, the maintainer's choice of 2026-10-11</b>, out of 34 d: since that decision
+    /// the background answers a connection whose first message has not come within
+    /// <see cref="RelayConstants.HoldBound"/> with a refusal of the kind
+    /// <c>firstMessage</c>, a null id and a sentence, and then closes it. A reading of the
+    /// relay's code the same day found that a relay logged that frame as one it could not
+    /// read, so the reason never reached its log.
+    /// </para>
+    /// <para>
+    /// <b>What follows the close is the close's as before</b>: the held call stays held,
+    /// the relay looks for the background again, and the next one is greeted.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARefusalOfAConnectionThatSentNoFirstMessageIsLoggedByItsKindAndSentence()
+    {
+        const string Sentence = "This connection sent no complete first message in the 150 s after it opened, so the background closes it.";
+
+        await using var rig = RelayRig.Start();
+        rig.Finder.Absence = new BackgroundAbsence.Starting();
+
+        _ = await rig.InitializeAsync(KnownClients.ClaudeCode);
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        var call = RelayRig.CallFrame("1");
+
+        await rig.SendAsync(call);
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        var slow = rig.Finder.Offer();
+        await rig.StepAsync(RelayConstants.LookWhileHolding);
+        _ = await slow.NextAsync();
+
+        // The background's refusal as it writes it: a null id, the invalid request code
+        // and the kind under data.refusal, and then the close.
+        await slow.SendAsync(new JsonObject
+        {
+            ["jsonrpc"] = "2.0",
+            ["id"] = null,
+            ["error"] = new JsonObject
+            {
+                ["code"] = -32600,
+                ["message"] = Sentence,
+                ["data"] = new JsonObject { ["refusal"] = BrowserAI.Background.BackgroundServer.RefusedForNoFirstMessage },
+            },
+        }.ToJsonString());
+        slow.GoAway();
+
+        // The relay closes its end once it has read the close, and settles looking again.
+        await Assert.That(await slow.ClosedAsync()).IsTrue();
+        await rig.SettledAsync();
+
+        // The relay looks again, and the next background is greeted and handed the call.
+        var next = rig.Finder.Offer();
+        await rig.StepAsync(RelayConstants.LookWhileHolding);
+        _ = await next.GreetAsync();
+
+        await Assert.That((await next.NextAsync()).Text).IsEqualTo(call);
+
+        var logged = string.Join(Environment.NewLine, rig.Logs.Select(record => record.Message));
+
+        await Assert.That(logged).Contains(BrowserAI.Background.BackgroundServer.RefusedForNoFirstMessage).Because(logged);
+        await Assert.That(logged).Contains(Sentence).Because(logged);
+        await Assert.That(logged).DoesNotContain("could not be read as JSON-RPC").Because(logged);
+    }
+
+    /// <summary>
     /// A pipe that closes under a call in flight has the call answered once the finder
     /// has said whether the background crashed, asked with the pid the background gave.
     /// </summary>

@@ -238,6 +238,107 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
+    /// In a checkout that has never been restored, a fresh clone or a new worktree, the
+    /// release script derives its version and goes on to the next step, and it never
+    /// blames the tags for a project that was not restored.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found 2026-10-11 while an update was packed</b>, at <c>b0c5ef6a</c> in a detached
+    /// worktree: MinVer's targets arrive with the restore, so <c>dotnet msbuild ... -t:MinVer
+    /// -getProperty:MinVerVersion</c> answered MSB4057, <i>"The target "MinVer" does not
+    /// exist in the project"</i>, and the script said that a checkout with no tags produces
+    /// nothing, with the tags all there. After <c>dotnet restore</c> the same query answered
+    /// 1.1.1-alpha.0.341.
+    /// </para>
+    /// <para>
+    /// <b>A clone of this tree, with this tree's scripts copied over its own</b>, so the
+    /// script under test is the one in the tree and the project is one no restore has
+    /// touched. A test pack stops at its next step for want of a publish, which is where a
+    /// checkout with no publish stops; the run goes no further than that, so nothing is
+    /// packed and the shipping feed is not read.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheVersionIsDerivedInACheckoutThatWasNeverRestored()
+    {
+        SuiteEnvironment.RequireGit();
+        _ = SuiteEnvironment.RequirePackagedRelease();
+
+        using var scratch = ScratchDirectory.Create("release-fresh-checkout");
+
+        var checkout = Path.Combine(scratch.Path, "checkout");
+        // Long paths, because the evidence directories carry names that pass 260
+        // characters under a scratch root, and a checkout that stopped half way is not
+        // the fresh clone this is about.
+        var (cloned, clonedSaid) = await RunGitAsync(scratch.Path, "-c", "core.longpaths=true", "clone", "-c", "core.longpaths=true", "--local", "--quiet", RepositoryLayout.Root.FullName, checkout);
+
+        await Assert.That(cloned).IsEqualTo(0).Because(clonedSaid);
+
+        foreach (var script in Directory.EnumerateFiles(Path.Combine(RepositoryLayout.Root.FullName, "build"), "*.ps1"))
+        {
+            File.Copy(script, Path.Combine(checkout, "build", Path.GetFileName(script)), overwrite: true);
+        }
+
+        await Assert.That(Directory.Exists(Path.Combine(checkout, "src", "BrowserAI", "obj"))).IsFalse().Because("the checkout must be one no restore has touched");
+
+        var (exit, _, said) = await RunAsync(
+            Path.Combine(checkout, "build", "New-Release.ps1"),
+            "-TestPackOnly",
+            "-OutputDir", Path.Combine(scratch.Path, "Releases"),
+            "-PackDir", Path.Combine(scratch.Path, "packdir"));
+
+        await Assert.That(said).DoesNotContain("Could not derive a version").Because(said);
+        await Assert.That(said).Contains("Packing version ").Because(said);
+        await Assert.That(said).Contains("There is no published BrowserAI.exe").Because("a checkout with no publish stops at the publish, after the version");
+        await Assert.That(exit).IsNotEqualTo(0);
+    }
+
+    /// <summary>Runs git in one directory and waits for it.</summary>
+    /// <remarks>
+    /// <b><see cref="GitOracle"/> is pinned to this repository's root</b>, and this clones
+    /// it into a directory of its own. <c>CreateNoWindow</c> for the house rule: a
+    /// windowless parent puts a terminal on the user's screen without it.
+    /// </remarks>
+    /// <param name="directory">Where to run it.</param>
+    /// <param name="arguments">The git arguments.</param>
+    /// <returns>The exit code and what it said.</returns>
+    private static async Task<(int ExitCode, string Output)> RunGitAsync(string directory, params string[] arguments)
+    {
+        using var git = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                WorkingDirectory = directory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            },
+        };
+
+        git.StartInfo.Environment["GIT_TERMINAL_PROMPT"] = "0";
+
+        foreach (var argument in arguments)
+        {
+            git.StartInfo.ArgumentList.Add(argument);
+        }
+
+        _ = git.Start();
+
+        var output = git.StandardOutput.ReadToEndAsync();
+        var error = git.StandardError.ReadToEndAsync();
+
+        using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
+
+        await git.WaitForExitAsync(patience.Token);
+
+        return (git.ExitCode, await output + await error);
+    }
+
+    /// <summary>
     /// A copy of the real <c>drift-check.json</c> with its stamp set, every row set
     /// to no drift, and then one change made to it.
     /// </summary>
