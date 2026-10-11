@@ -1,0 +1,25 @@
+Running tests from C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed (58s 585ms)
+Exit code: -532462766
+  Error output: Unhandled exception. System.ObjectDisposedException: Cannot access a disposed object.
+  Object name: 'Microsoft.Win32.SafeHandles.SafeWaitHandle'.
+     at Interop.Kernel32.SetEvent(SafeWaitHandle handle)
+     at System.Threading.EventWaitHandle.Set()
+     at BrowserAI.Runtime.BrowserProvisioner.PollTicker.<.ctor>b__2_0(Object _) in C:\Source\SixFive7\BrowserAI\.work\wt\release\src\BrowserAI\Runtime\BrowserProvisioner.cs:line 2026
+     at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+  --- End of stack trace from previous location ---
+     at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+     at System.Threading.TimerQueue.FireNextTimers()
+     at System.Threading.ThreadPoolWorkQueue.Dispatch()
+     at System.Threading.PortableThreadPool.WorkerThread.WorkerThreadStart()
+     at System.Threading.Thread.StartCallback()
+
+Test run summary: Failed!
+  error: 1
+
+  total: 652
+  failed: 0
+  succeeded: 652
+  skipped: 0
+  duration: 58s 920ms
+Test run completed with non-success exit code: -532462766 (see: https://aka.ms/testingplatform/exitcodes)

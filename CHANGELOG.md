@@ -348,6 +348,10 @@ argument a tool does not have is refused.
   A failed browser download quotes the error line of Playwright's installer whole, and the
   process log says in words what happened, with one event id per line.
 
+- 🐛 **A browser install that ends as its once-a-second look fires no longer ends BrowserAI.**
+  That look could run after the install had closed the event it sets, and the error ended the
+  process and every session in it. A look that comes that late does nothing now.
+
 - 📦 **A fresh checkout derives its version, and a gate whose test pack fails says so.**
   In a fresh clone or a new worktree MinVer's targets had not arrived, so the version step
   failed and blamed the tags; the script restores first now, and tells a build that failed

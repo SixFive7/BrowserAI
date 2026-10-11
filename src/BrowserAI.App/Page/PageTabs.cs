@@ -225,6 +225,7 @@ internal sealed class PageTabs : IDisposable
     private int _handedOut;
     private int _newest;
     private bool _closing;
+    private bool _disposed;
 
     /// <summary>Tabs for one listener.</summary>
     /// <param name="clock">The clock the linger runs on.</param>
@@ -444,10 +445,22 @@ internal sealed class PageTabs : IDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// ⚠️ <b>A linger tick after this does nothing, and no linger is armed again.</b>
+    /// <i>Corrected 2026-10-11 (previously this disposed the timer and set nothing a tick
+    /// read)</i>: a system timer's <c>Dispose</c> does not wait for a tick already handed
+    /// to the thread pool, and the tick calls the wake it was given, which in the product
+    /// is the background's inbox, disposed right after its page. Such a tick set a closed
+    /// event on a pool thread, which ends the process. Read in the code by the sweep of
+    /// every timer callback that followed <c>BrowserProvisioner.PollTicker</c>'s crash of
+    /// the release gate at <c>d1bae44f</c>, and held by
+    /// <c>PageServiceTests.ALingerTickThatArrivesAfterTheTabsAreDisposedWakesNothing</c>.
+    /// </remarks>
     public void Dispose()
     {
         lock (_gate)
         {
+            _disposed = true;
             _timer?.Dispose();
             _timer = null;
         }
@@ -456,6 +469,11 @@ internal sealed class PageTabs : IDisposable
     /// <summary>Arms the linger timer for what is left of the linger. Called under the lock.</summary>
     private void ArmLocked()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         var left = Linger - _clock.GetElapsedTime(_lastActivity);
 
         if (left < TimeSpan.Zero)
@@ -474,5 +492,21 @@ internal sealed class PageTabs : IDisposable
     }
 
     /// <summary>The linger ran out: wake whoever waits, and let them decide.</summary>
-    private void Expired() => _changed();
+    /// <remarks>
+    /// The wake runs under the lock <see cref="Dispose"/> takes, so a tick still running
+    /// finishes before <see cref="Dispose"/> returns, and one that comes later finds the
+    /// flag. The product's wake sets an event and takes no lock of its own.
+    /// </remarks>
+    private void Expired()
+    {
+        lock (_gate)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _changed();
+        }
+    }
 }

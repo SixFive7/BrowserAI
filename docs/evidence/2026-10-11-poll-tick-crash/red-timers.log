@@ -1,0 +1,81 @@
+failed APollTickThatArrivesAfterItsTickerIsDisposedDoesNothing (30ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ObjectDisposedException: Cannot access a disposed object.
+  Object name: 'Microsoft.Win32.SafeHandles.SafeWaitHandle'.
+    at System.Runtime.InteropServices.SafeHandle.DangerousAddRef(Boolean& success)
+    at Interop.Kernel32.SetEvent(SafeWaitHandle handle)
+    at System.Threading.EventWaitHandle.Set()
+    at BrowserAI.Runtime.BrowserProvisioner.PollTicker.<.ctor>b__2_0(Object _) in C:\Source\SixFive7\BrowserAI\.work\wt\release\src\BrowserAI\Runtime\BrowserProvisioner.cs:2026
+    at BrowserAI.Tests.Harness.ManualClock.ManualTimer.FireLate() in C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\Harness\ManualClock.cs:345
+    at BrowserAI.Tests.Harness.ManualClock.FireAfterDispose() in C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\Harness\ManualClock.cs:203
+    at BrowserAI.Tests.ProvisioningTests.APollTickThatArrivesAfterItsTickerIsDisposedDoesNothing() in C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\ProvisioningTests.cs:1354
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ALingerTickThatArrivesAfterTheTabsAreDisposedWakesNothing (32ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ObjectDisposedException: Cannot access a disposed object.
+  Object name: 'Microsoft.Win32.SafeHandles.SafeWaitHandle'.
+    at System.Runtime.InteropServices.SafeHandle.DangerousAddRef(Boolean& success)
+    at Interop.Kernel32.SetEvent(SafeWaitHandle handle)
+    at System.Threading.EventWaitHandle.Set()
+    at BrowserAI.Coordination.CoordinatorInbox.Wake() in C:\Source\SixFive7\BrowserAI\.work\wt\release\src\BrowserAI.Core\Coordination\CoordinatorInbox.cs:54
+    at BrowserAI.App.Page.PageTabs.Expired() in C:\Source\SixFive7\BrowserAI\.work\wt\release\src\BrowserAI.App\Page\PageTabs.cs:477
+    at BrowserAI.App.Page.PageTabs.<>c.<ArmLocked>b__29_0(Object state) in C:\Source\SixFive7\BrowserAI\.work\wt\release\src\BrowserAI.App\Page\PageTabs.cs:468
+    at BrowserAI.Tests.Harness.ManualClock.ManualTimer.FireLate() in C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\Harness\ManualClock.cs:345
+    at BrowserAI.Tests.Harness.ManualClock.FireAfterDispose() in C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\Harness\ManualClock.cs:203
+    at BrowserAI.Tests.PageServiceTests.ALingerTickThatArrivesAfterTheTabsAreDisposedWakesNothing() in C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\PageServiceTests.cs:535
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\release\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\release\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\release\Releases\test-pack\twin\BrowserAI.app-1.1.1-alpha.0.354-full.nupkg
+  shipping release    PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\release\Releases\BrowserAI.app-1.1.1-alpha.0.354-full.nupkg
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\release\Releases\test-pack\BrowserAI.test-installer.exe; BrowserAI.app.test-1.1.1-alpha.0.354-full.nupkg's lib/app/BrowserAI.exe is not C:\Source\SixFive7\BrowserAI\.work\wt\release\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe, so the pack is not the build this run tested. Publish both slices and run: pwsh -File build/New-Release.ps1 -TestPackOnly (every gate driver does)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\release rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   STALE      exe 2026-10-11T12:02:01.914Z is 1h01m21s OLDER than the newest of 226 inputs (src\BrowserAI\Runtime\BrowserProvisioner.cs, 2026-10-11T13:03:23.053Z) · 1 of 226 are newer · exe and tree both 1.1.1-alpha.0.354 · the comparison PublishedSlice.EnsureFresh refused on
+      ⚠️  THE PUBLISHED BINARY IS OLDER THAN THE SOURCE THAT GOES INTO IT, so every
+      slice arm in this run refused rather than proving anything about the code in
+      the tree. Run: dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64 --self-contained
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/*/(APollTickThatArrivesAfterItsTickerIsDisposedDoesNothing|ALingerTickThatArrivesAfterTheTabsAreDisposedWakesNothing)' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       TIGHT      start 110,237 MiB (78.1%) · end 110,237 MiB (78.1%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+      ⚠️  Commit was tight during this run. A timing failure here is not safely
+      attributable to the code under test; re-run it on a quieter machine before
+      recording it as a defect.
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 2 events, 0 about visible root windows and none of them this run's, 146 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 2 scans, 9 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=101848 created=134361975467840213), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  1 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed! - C:\Source\SixFive7\BrowserAI\.work\wt\release\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 2
+  failed: 2
+  succeeded: 0
+  skipped: 0
+  duration: 1s 889ms
+exit 2

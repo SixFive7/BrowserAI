@@ -2010,11 +2010,25 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// property they had: a process going down does not sit in a poll interval
     /// first.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>A tick that arrives after <see cref="Dispose"/> does nothing</b>, because the
+    /// tick and <see cref="Dispose"/> meet under one lock and the tick reads the flag
+    /// <see cref="Dispose"/> sets. <i>Corrected 2026-10-11 (previously the tick set the
+    /// event unguarded, and <see cref="Dispose"/> disposed the timer and then the
+    /// event)</i>: a system timer's <c>Dispose</c> does not wait for a tick already handed
+    /// to the thread pool, so such a tick set an event that was already closed, and the
+    /// <see cref="ObjectDisposedException"/> on a pool thread ended the process. It ended
+    /// the suite's test host in the release gate at <c>d1bae44f</c>, where the poll is
+    /// 20 ms; in the product it would end the background. Internal since that day, for
+    /// <c>ProvisioningTests.APollTickThatArrivesAfterItsTickerIsDisposedDoesNothing</c>.
+    /// </para>
     /// </remarks>
     internal sealed class PollTicker : IDisposable
     {
+        private readonly Lock _gate = new();
         private readonly AutoResetEvent _tick = new(initialState: false);
         private readonly ITimer _timer;
+        private bool _disposed;
 
         /// <summary>Arms a ticker.</summary>
         /// <param name="clock">The clock that releases each poll.</param>
@@ -2023,7 +2037,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
         {
             ArgumentNullException.ThrowIfNull(clock);
 
-            _timer = clock.CreateTimer(_ => _ = _tick.Set(), null, period, period);
+            _timer = clock.CreateTimer(static state => ((PollTicker)state!).Tick(), this, period, period);
         }
 
         /// <summary>Waits for the next poll, or for shutdown.</summary>
@@ -2032,10 +2046,36 @@ internal sealed partial class BrowserProvisioner : IDisposable
             _ = WaitHandle.WaitAny([_tick, stopping.WaitHandle]);
 
         /// <inheritdoc />
+        /// <remarks>
+        /// The flag first, under the lock a tick takes, so a tick still running finishes
+        /// before the event goes and one that comes later finds the flag.
+        /// </remarks>
         public void Dispose()
         {
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+            }
+
             _timer.Dispose();
             _tick.Dispose();
+        }
+
+        /// <summary>One tick of the timer: the next poll is released, unless this ticker is disposed.</summary>
+        private void Tick()
+        {
+            lock (_gate)
+            {
+                if (!_disposed)
+                {
+                    _ = _tick.Set();
+                }
+            }
         }
     }
 
