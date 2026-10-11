@@ -466,6 +466,11 @@ internal sealed class RecordedToasts(ConcurrentQueue<string> events) : IUpdateTo
 
     /// <inheritdoc />
     public void Failed(string version) => events.Enqueue($"toast failed {version}");
+
+    /// <inheritdoc />
+    /// <remarks>Recorded as <c>reconnects</c> and not as a toast: nothing shows (52 b).</remarks>
+    public void Ending(string version, IReadOnlyList<RelayReconnect> needs) =>
+        events.Enqueue($"reconnects {version} [{string.Join(' ', needs)}]");
 }
 
 /// <summary>The record of the last check, in memory.</summary>

@@ -290,6 +290,12 @@ internal sealed class ToastActivationTests
 
         public void Waited(string version) => Version = version;
 
+        public void Ended(string version, IReadOnlyList<RelayReconnect> needs)
+        {
+        }
+
+        public IReadOnlyList<RelayReconnect>? EndedFor(string version) => null;
+
         public void Forget() => Version = null;
     }
 }

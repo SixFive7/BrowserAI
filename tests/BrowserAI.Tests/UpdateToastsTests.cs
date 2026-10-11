@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Xml.Linq;
 using BrowserAI.Background;
 using BrowserAI.Proxy;
 using BrowserAI.Tests.Harness;
@@ -247,6 +248,55 @@ internal sealed class UpdateToastsTests
     }
 
     /// <summary>
+    /// The installed toast says what the apps of the relays the update ended need, a
+    /// Claude Code terminal its <c>/mcp</c> and a Codex conversation a new one, and carries no
+    /// such line when none needs anything.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>52 b, the maintainer's answer of 2026-10-11, verbatim: <i>"52 b"</i></b>: with 49 b an
+    /// update that installs at once raises no ready toast, which was the one toast that said
+    /// which conversations would have to reconnect, so the background hands what each relay
+    /// needs to the after-update start, and its installed toast says it in the ready toast's
+    /// own words. Only the apps whose relays were connected are named, and Claude Code in VS
+    /// Code, which starts BrowserAI again by itself, adds nothing.
+    /// </para>
+    /// <para>
+    /// <b>Two processes, one memory</b>: the background's update core ends the relays and
+    /// records through its toasts, and a second <see cref="UpdateToasts"/>, standing for the
+    /// after-update start, raises the installed toast from the same memory. Planted red
+    /// 2026-10-11 against a build that recorded nothing and raised the installed toast with
+    /// its title alone.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheInstalledToastSaysWhatTheEndedRelaysAppsNeedAndCarriesNoLineWhenNoneNeedsOne()
+    {
+        const string Line = "After the update: run /mcp, BrowserAI, Reconnect in 1 Claude Code terminal; 1 Codex conversation needs a new one.";
+
+        // A terminal, a Codex conversation and Claude Code in VS Code, every one quiet and
+        // agreeing: the update installs at once.
+        var (texts, remembered) = await InstalledAfterAsync(
+            ("a", KnownClients.ClaudeCode, RelayReconnect.McpReconnect),
+            ("b", KnownClients.Codex, RelayReconnect.Unknown),
+            ("c", KnownClients.ClaudeCode, RelayReconnect.None));
+
+        await Assert.That(Joined(texts)).IsEqualTo(Joined(["BrowserAI 1.2.0 is installed", Line]));
+        await Assert.That(remembered).IsNull().Because("the after-update start left what the relays needed on disk for a later start");
+
+        // Only Claude Code in VS Code was connected: nothing to reconnect, so no line.
+        var (vsCode, _) = await InstalledAfterAsync(("c", KnownClients.ClaudeCode, RelayReconnect.None));
+
+        await Assert.That(Joined(vsCode)).IsEqualTo(Joined(["BrowserAI 1.2.0 is installed"]));
+
+        // And no relay at all: no line either.
+        var (none, _) = await InstalledAfterAsync();
+
+        await Assert.That(Joined(none)).IsEqualTo(Joined(["BrowserAI 1.2.0 is installed"]));
+    }
+
+    /// <summary>
     /// A version the person answered <i>Wait for inactivity</i> for is raised again
     /// with no banner, straight into the Notification Centre; any other version pops
     /// up.
@@ -346,6 +396,18 @@ internal sealed class UpdateToastsTests
         memory.Forget();
 
         await Assert.That(memory.WaitedFor()).IsNull();
+
+        // 52 b: what the relays an update ended needed, one word each, for that version alone.
+        memory.Ended("1.2.0", [RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.None, RelayReconnect.Unknown]);
+
+        await Assert.That(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "data", UpdateToastMemoryFile.EndedFileName))).IsEqualTo("1.2.0\nmcp,new-conversation,none,unknown");
+        await Assert.That(Joined(memory.EndedFor("1.2.0") ?? [])).IsEqualTo(Joined([RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.None, RelayReconnect.Unknown]));
+        await Assert.That(memory.EndedFor("1.3.0")).IsNull();
+
+        memory.Forget();
+
+        await Assert.That(memory.EndedFor("1.2.0")).IsNull();
+        await Assert.That(File.Exists(Path.Combine(scratch.Path, "data", UpdateToastMemoryFile.EndedFileName))).IsFalse();
     }
 
     /// <summary>
@@ -367,6 +429,43 @@ internal sealed class UpdateToastsTests
     }
 
     private static string Lines(params string[] lines) => string.Join('\n', lines);
+
+    private static string Joined<T>(IEnumerable<T> items) => string.Join(" | ", items);
+
+    /// <summary>
+    /// Has the background's update core install 1.2.0 at once with these relays connected,
+    /// then raises the installed toast as the after-update start does, from the same memory.
+    /// </summary>
+    /// <param name="relays">Each relay's id, client and the reconnect it said it needs.</param>
+    /// <returns>The installed toast's lines, and what the memory still holds for 1.2.0 after it.</returns>
+    private static async Task<(List<string> Texts, IReadOnlyList<RelayReconnect>? Remembered)> InstalledAfterAsync(
+        params (string Id, string Client, RelayReconnect Reconnect)[] relays)
+    {
+        var memory = new MemoryInProcess();
+
+        using (var background = new BackgroundUpdateRig())
+        using (var shown = new CoreToasts(background, memory))
+        {
+            foreach (var (id, client, reconnect) in relays)
+            {
+                background.Relays.Connect(new RelayState(id, client, "1.0.0", @"C:\project", background.Clock.GetUtcNow() - TimeSpan.FromMinutes(1), CallInFlight: false) { Reconnect = reconnect });
+            }
+
+            background.Relays.Answer = _ => Agrees(background);
+            background.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
+            shown.Start();
+
+            await Assert.That(background.IndexOf("apply 1.2.0 with [--after-update 1.2.0]")).IsGreaterThanOrEqualTo(0).Because(string.Join(" | ", background.Events));
+        }
+
+        using var after = new Rig(holds: false, memory: memory);
+
+        after.Toasts.Installed("1.2.0");
+
+        var toast = XDocument.Parse(after.Surface.Shown.Single().Xml);
+
+        return ([.. toast.Descendants("text").Select(text => text.Value)], memory.EndedFor("1.2.0"));
+    }
 
     /// <summary>A relay of the update core's rig with no call in flight, whose countdown runs out at a moment.</summary>
     /// <param name="idleAt">The moment.</param>
@@ -391,10 +490,10 @@ internal sealed class UpdateToastsTests
         private readonly DeferredUpdateHolds _holds = new();
         private readonly UpdateToasts _toasts;
 
-        public CoreToasts(BackgroundUpdateRig rig)
+        public CoreToasts(BackgroundUpdateRig rig, MemoryInProcess? memory = null)
         {
             _rig = rig;
-            _toasts = new UpdateToasts(Surface, _holds, new MemoryInProcess(), Rig.Facts, rig.Clock, TimeZoneInfo.Utc, Logs.CreateLogger("toasts"));
+            _toasts = new UpdateToasts(Surface, _holds, memory ?? new MemoryInProcess(), Rig.Facts, rig.Clock, TimeZoneInfo.Utc, Logs.CreateLogger("toasts"));
         }
 
         public RecordingSurface Surface { get; } = new();
@@ -421,8 +520,10 @@ internal sealed class UpdateToastsTests
     /// <summary>One <see cref="UpdateToasts"/>, its recording surface, its holds and its clock.</summary>
     private sealed class Rig : IDisposable
     {
-        public Rig(bool holds = true)
+        public Rig(bool holds = true, MemoryInProcess? memory = null)
         {
+            Memory = memory ?? new MemoryInProcess();
+
             Holds = new ScriptedHolds
             {
                 // A visible window fifty minutes from the clock's start.
@@ -446,7 +547,7 @@ internal sealed class UpdateToastsTests
 
         public ScriptedHolds Holds { get; }
 
-        public MemoryInProcess Memory { get; } = new();
+        public MemoryInProcess Memory { get; }
 
         public UpdateToasts Toasts { get; }
 
@@ -535,11 +636,21 @@ internal sealed class UpdateToastsTests
     private sealed class MemoryInProcess : IUpdateToastMemory
     {
         private string? _version;
+        private (string Version, IReadOnlyList<RelayReconnect> Needs)? _ended;
 
         public string? WaitedFor() => _version;
 
         public void Waited(string version) => _version = version;
 
-        public void Forget() => _version = null;
+        public void Ended(string version, IReadOnlyList<RelayReconnect> needs) => _ended = (version, [.. needs]);
+
+        public IReadOnlyList<RelayReconnect>? EndedFor(string version) =>
+            _ended is { } ended && string.Equals(ended.Version, version, StringComparison.OrdinalIgnoreCase) ? ended.Needs : null;
+
+        public void Forget()
+        {
+            _version = null;
+            _ended = null;
+        }
     }
 }

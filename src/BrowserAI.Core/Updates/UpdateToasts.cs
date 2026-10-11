@@ -69,19 +69,40 @@ internal interface IUpdateToastMemory
     /// <param name="version">The version.</param>
     void Waited(string version);
 
-    /// <summary>Forgets it: the update installed or failed.</summary>
+    /// <summary>
+    /// Records what the clients of the relays an update is about to end need, for the
+    /// installed toast the after-update start raises (52 b).
+    /// </summary>
+    /// <param name="version">The version being installed.</param>
+    /// <param name="needs">What each relay's client needs, one entry per relay.</param>
+    void Ended(string version, IReadOnlyList<RelayReconnect> needs);
+
+    /// <summary>What <see cref="Ended"/> recorded for a version, or <see langword="null"/> when it recorded nothing for it.</summary>
+    /// <param name="version">The version installed.</param>
+    /// <returns>What each ended relay's client needs.</returns>
+    IReadOnlyList<RelayReconnect>? EndedFor(string version);
+
+    /// <summary>Forgets the wait and what the ended relays needed: the update installed or failed.</summary>
     void Forget();
 }
 
 /// <summary>
-/// <see cref="IUpdateToastMemory"/> as one small file in the data root, holding the
-/// version and nothing else.
+/// <see cref="IUpdateToastMemory"/> as two small files in the data root: the version the
+/// person chose to wait for, and what the relays an update ended needed.
 /// </summary>
-/// <param name="path">The file.</param>
+/// <remarks>
+/// <b>The second file was added 2026-10-11 with 52 b</b>: the background that ends the
+/// relays and the after-update start that raises the installed toast are two processes, and
+/// the file holds the version and one word per relay, never a conversation's name.
+/// </remarks>
+/// <param name="path">The wait's file.</param>
 internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
 {
-    /// <summary>The file's name in the data root.</summary>
+    /// <summary>The wait's file's name in the data root.</summary>
     public const string FileName = "update-toast-wait.txt";
+
+    /// <summary>The name of the file that holds what the ended relays needed, beside the wait's.</summary>
+    public const string EndedFileName = "update-toast-reconnects.txt";
 
     /// <summary>The memory of one data root.</summary>
     /// <param name="dataRoot">The data root.</param>
@@ -99,6 +120,21 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
 
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, version);
+    }
+
+    /// <inheritdoc />
+    public void Ended(string version, IReadOnlyList<RelayReconnect> needs)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+        ArgumentNullException.ThrowIfNull(needs);
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<RelayReconnect>? EndedFor(string version)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+
+        return null;
     }
 
     /// <inheritdoc />
@@ -128,6 +164,11 @@ internal sealed class NoUpdateToasts : IUpdateToasts
 
     /// <inheritdoc />
     public void Failed(string version)
+    {
+    }
+
+    /// <inheritdoc />
+    public void Ending(string version, IReadOnlyList<RelayReconnect> needs)
     {
     }
 }
@@ -308,6 +349,11 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <b>It says what the relays the update ended need from their clients</b>, 52 b of
+    /// 2026-10-11: the background recorded them through <see cref="Ending"/> before it ended
+    /// them, and this start reads them back for this version and forgets them.
+    /// </remarks>
     public void Installed(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
@@ -334,6 +380,13 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
                 new ToastRequest(UpdateToastContent.Failed(version, _facts.RunningVersion, _facts.VelopackLog, _facts.BrowserAiLog), null, SuppressPopup: false, ExpiresOnReboot: false),
                 0);
         }
+    }
+
+    /// <inheritdoc />
+    public void Ending(string version, IReadOnlyList<RelayReconnect> needs)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+        ArgumentNullException.ThrowIfNull(needs);
     }
 
     /// <summary>
@@ -639,6 +692,6 @@ internal static partial class UpdateToastsLog
     /// <summary>The memory of a person's wait could not be read or cleared.</summary>
     /// <param name="logger">Where the record goes.</param>
     /// <param name="failure">What it threw.</param>
-    [LoggerMessage(EventId = 7109, Level = LogLevel.Warning, Message = "The record of which update the person chose to wait for could not be read or cleared.")]
+    [LoggerMessage(EventId = 7109, Level = LogLevel.Warning, Message = "The record of which update the person chose to wait for, or of what the ended relays need, could not be read, written or cleared.")]
     public static partial void MemoryFailed(ILogger logger, Exception failure);
 }

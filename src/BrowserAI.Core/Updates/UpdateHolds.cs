@@ -353,6 +353,19 @@ internal interface IUpdateToasts
     /// <param name="version">The version being installed.</param>
     void Installing(string version);
 
+    /// <summary>
+    /// The background is about to end its relays for an update: keeps what each one's
+    /// client needs, for the installed toast the after-update start raises.
+    /// </summary>
+    /// <remarks>
+    /// <b>52 b, the maintainer's answer of 2026-10-11, in his words verbatim: <i>"52 b"</i></b>:
+    /// the installed toast says which apps need a reconnect, because an update that installs at
+    /// once raises no ready toast to say it before (49 b).
+    /// </remarks>
+    /// <param name="version">The version being installed.</param>
+    /// <param name="needs">What each connected relay's client needs once the update has ended it.</param>
+    void Ending(string version, IReadOnlyList<RelayReconnect> needs);
+
     /// <summary>The after-update start found the new version running.</summary>
     /// <param name="version">The version now installed.</param>
     void Installed(string version);

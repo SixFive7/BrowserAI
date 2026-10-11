@@ -552,7 +552,10 @@ internal sealed partial class UpdateToastContentTests
             }
         }
 
-        await Assert.That(toasts.Count).IsEqualTo((States.Length * States.Length * States.Length) + 5);
+        // Every ready toast, five others, and since 52 b the installed toast at every count.
+        var counted = States.Count(state => !state.Named);
+
+        await Assert.That(toasts.Count).IsEqualTo((States.Length * States.Length * States.Length) + 5 + (counted * counted * counted));
         await Assert.That(named).IsGreaterThan(0).Because("a line with room for names spells them out");
         await Assert.That(string.Join(Environment.NewLine, over)).IsEmpty();
     }
@@ -787,6 +790,27 @@ internal sealed partial class UpdateToastContentTests
         toasts.Add(("ready, older", UpdateToastContent.Ready(version, new UpdateHoldSnapshot(T0, UpdateHoldState.Held, version, [], [], crowded, Older: true), later)));
         toasts.Add(("installing", UpdateToastContent.Installing(version)));
         toasts.Add(("installed", UpdateToastContent.Installed(version)));
+
+        // 52 b: the installed toast's reconnect line, counted, at every count of each kind.
+        foreach (var (terminals, _) in States.Where(state => !state.Named))
+        {
+            foreach (var (codex, _) in States.Where(state => !state.Named))
+            {
+                foreach (var (others, _) in States.Where(state => !state.Named))
+                {
+                    List<RelayReconnect> ended =
+                    [
+                        .. Enumerable.Repeat(Kinds[0], terminals),
+                        .. Enumerable.Repeat(Kinds[1], codex),
+                        .. Enumerable.Repeat(Kinds[2], others),
+                        RelayReconnect.None,
+                    ];
+
+                    toasts.Add(($"installed, {terminals}, {codex}, {others}", UpdateToastContent.Installed(version, ended)));
+                }
+            }
+        }
+
         toasts.Add(("failed", UpdateToastContent.Failed(version, earlier, velopack, own)));
         toasts.Add(("broken install", InstallToastContent.Broken()));
 

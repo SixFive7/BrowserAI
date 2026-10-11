@@ -324,6 +324,12 @@ internal sealed class BrokenInstallTests
         {
         }
 
+        public void Ended(string version, IReadOnlyList<RelayReconnect> needs)
+        {
+        }
+
+        public IReadOnlyList<RelayReconnect>? EndedFor(string version) => null;
+
         public void Forget()
         {
         }

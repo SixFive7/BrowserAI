@@ -196,17 +196,43 @@ internal static class UpdateToastContent
     /// <summary>The installed toast.</summary>
     /// <param name="version">The version now installed.</param>
     /// <returns>Its XML.</returns>
-    public static string Installed(string version)
+    public static string Installed(string version) => Installed(version, null);
+
+    /// <summary>The installed toast, with the reconnect line for what the ended relays need.</summary>
+    /// <remarks>
+    /// <b>52 b, the maintainer's answer of 2026-10-11, in his words verbatim: <i>"52 b"</i></b>:
+    /// the toast says what a Claude Code terminal or a Codex conversation needs once the update
+    /// has ended its relay, in the ready toast's own sentence (H1-T a), counted and never named,
+    /// because the background hands over one word per relay and no conversation's name. A relay
+    /// whose client starts BrowserAI again by itself adds nothing, so with only Claude Code in VS
+    /// Code connected there is no line. It is the toast's one line under its title, so it may
+    /// take the four the banner gives its description.
+    /// </remarks>
+    /// <param name="version">The version now installed.</param>
+    /// <param name="ended">What each relay the update ended needed, or <see langword="null"/> when nothing was recorded.</param>
+    /// <returns>Its XML.</returns>
+    public static string Installed(string version, IReadOnlyList<RelayReconnect>? ended)
     {
         ArgumentNullException.ThrowIfNull(version);
 
+        _ = ended;
+        var texts = new List<string> { $"BrowserAI {version} is installed" };
+
         return Toast(
             Arguments(ToastAction.Changelog, version),
-            [$"BrowserAI {version} is installed"],
+            texts,
             null,
             ("Changelog", Arguments(ToastAction.Changelog, version)),
             ("Dismiss", Arguments(ToastAction.Dismiss, null)));
     }
+
+    /// <summary>How many lines of the banner the installed toast's reconnect line may take: four, the whole description.</summary>
+    /// <remarks>
+    /// <b>Microsoft's four, read 2026-10-10</b>, as <see cref="ReconnectLines"/> reads them: the
+    /// installed toast has no second line before it, so it keeps all four.
+    /// </remarks>
+    public const int InstalledReconnectLines = 4;
+
 
     /// <summary>The failed toast.</summary>
     /// <remarks>
