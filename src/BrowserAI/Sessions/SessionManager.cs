@@ -2980,6 +2980,8 @@ internal sealed class SessionManager : IAsyncDisposable
             return new ToolOutcome($"'{location.FullPath}' was not destroyed. {taken.Message}", IsError: true);
         }
 
+        held.ScopeTheCallersRecords();
+
         // ⚠️ Corrected 2026-08-18 (previously `held.Dispose()` on this line,
         // defended as "Windows will not remove a file this process is holding
         // open, and the lock has done its job the moment ownership is proven").
@@ -3116,6 +3118,7 @@ internal sealed class SessionManager : IAsyncDisposable
             return new ToolOutcome($"The purpose of '{location.FullPath}' was not changed. {taken.Message}", IsError: true);
         }
 
+        held.ScopeTheCallersRecords();
         held.SettleOpening(SessionStore.Successful, failure: null);
         held.Dispose();
 
@@ -3707,6 +3710,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 return new ToolOutcome(taken.Message, IsError: true);
             }
 
+            held.ScopeTheCallersRecords();
             acquired = held;
 
             // The family comes from the session's own record and not from a

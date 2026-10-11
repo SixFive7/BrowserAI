@@ -1894,18 +1894,20 @@ internal sealed class SessionLockTests
 
             for (var at = 0; at < lines.Length; at++)
             {
-                if (lines[at].Contains("WaitOutWhereNoOwnerIsPossible(", StringComparison.Ordinal))
+                // The asynchronous spellings since 2026-10-11, the maintainer's decision 54
+                // (previously WaitOutWhereNoOwnerIsPossible, Write and LockFile.Write).
+                if (lines[at].Contains("WaitOutWhereNoOwnerIsPossibleAsync(", StringComparison.Ordinal))
                 {
                     // The write it follows: within this method, above this line.
                     var wrote = Enumerable.Range(Math.Max(0, at - 40), Math.Min(40, at))
-                        .Any(line => lines[line].Contains("Write(path, holder)", StringComparison.Ordinal)
-                            || lines[line].Contains("LockFile.Write(", StringComparison.Ordinal));
+                        .Any(line => lines[line].Contains("WriteAsync(path, holder)", StringComparison.Ordinal)
+                            || lines[line].Contains("LockFile.WriteAsync(", StringComparison.Ordinal));
 
                     tolerant.Add($"{file.Name}:{(at + 1).ToString(CultureInfo.InvariantCulture)}{(wrote ? string.Empty : " -- NOT PRECEDED BY A WRITE")}");
                 }
 
                 if (lines[at].Contains("LockFile.Hold(", StringComparison.Ordinal)
-                    && !lines[at].Contains("WaitOutWhereNoOwnerIsPossible(", StringComparison.Ordinal))
+                    && !lines[at].Contains("WaitOutWhereNoOwnerIsPossibleAsync(", StringComparison.Ordinal))
                 {
                     bare.Add($"{file.Name}:{(at + 1).ToString(CultureInfo.InvariantCulture)}");
                 }
@@ -1944,6 +1946,10 @@ internal sealed class SessionLockTests
             // and a record written by unrelated code inside the scope are
             // covered.
             var watched = await SessionLock.TryAcquireAsync(path, Request("watched"), logger);
+
+            // The caller's own scope since 2026-10-11, as the product's three acquirers
+            // begin theirs: what the asynchronous acquire begins never reaches this flow.
+            watched.Acquired?.ScopeTheCallersRecords();
 
             try
             {

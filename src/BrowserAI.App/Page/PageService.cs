@@ -673,6 +673,21 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
             await context.Response.StartAsync(context.RequestAborted).ConfigureAwait(false);
 
+            // A stream's first state reads what holds the update for itself, as a draw does:
+            // a tab whose stream opens with no draw before it, the reconnect after the
+            // background restarted, would otherwise be told what holds the update cannot
+            // be read until the watch's next second. Added 2026-10-11, when the holds came
+            // to be read asynchronously and cached; until then every state read them.
+            if (page is PageKind.Update or PageKind.Status or PageKind.Sessions)
+            {
+                var holds = await ReadHoldsAsync().ConfigureAwait(false);
+
+                lock (_gate)
+                {
+                    _holds = holds;
+                }
+            }
+
             if (!stream.Superseded)
             {
                 stream.Send(StateFor(stream));

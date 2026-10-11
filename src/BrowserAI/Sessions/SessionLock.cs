@@ -117,6 +117,7 @@ internal sealed class SessionLock : IDisposable
     private readonly LockFileHold _hold;
     private readonly SessionStore _store;
     private readonly IDisposable? _logScope;
+    private IDisposable? _callerScope;
     private long _opening;
     private int _disposed;
 
@@ -140,8 +141,34 @@ internal sealed class SessionLock : IDisposable
         Logger = logger;
 
         // The session on every record written while this lock is held. The
-        // provider was given scope support at build-order step 2 for this.
+        // provider was given scope support at build-order step 2 for this. Since
+        // 2026-10-11 this one covers the acquire's own records, and the caller
+        // begins its own: see ScopeTheCallersRecords.
         _logScope = logger.BeginScope($"session={location.FullPath}");
+    }
+
+    /// <summary>
+    /// Puts this session on every record the calling flow writes from here until the
+    /// lock is let go, as taking the lock did before the acquire was asynchronous.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 with the maintainer's decision 54</b>, in his words verbatim:
+    /// <i>"Never block a worker anywhere."</i> A log scope is held in an
+    /// <c>AsyncLocal</c>, and what an asynchronous method sets in one never reaches its
+    /// caller: the scope the constructor begins covers the acquire's own records and goes
+    /// out of reach when the acquire returns. So the caller begins its own, once it has the
+    /// lock, and the lock lets both go. A second call begins nothing.
+    /// <c>SessionLockTests.EveryLogRecordWrittenWhileTheLockIsHeldCarriesTheSession</c>
+    /// went red without it, in the first gate after the conversion.
+    /// </remarks>
+    public void ScopeTheCallersRecords()
+    {
+        var scope = Logger.BeginScope($"session={Location.FullPath}");
+
+        if (Interlocked.CompareExchange(ref _callerScope, scope, null) is not null)
+        {
+            scope?.Dispose();
+        }
     }
 
     /// <summary>The canonicalised directory this lock owns.</summary>
@@ -615,6 +642,7 @@ internal sealed class SessionLock : IDisposable
         {
             await held.DisposeAsync().ConfigureAwait(false);
 
+            Interlocked.Exchange(ref _callerScope, null)?.Dispose();
             _logScope?.Dispose();
             _gate.Dispose();
         }
@@ -644,6 +672,7 @@ internal sealed class SessionLock : IDisposable
 
             _store.Dispose();
             _hold.Dispose();
+            Interlocked.Exchange(ref _callerScope, null)?.Dispose();
             _logScope?.Dispose();
             _gate.Dispose();
         }
