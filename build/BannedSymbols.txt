@@ -164,9 +164,13 @@ M:System.Diagnostics.Process.WaitForExit(System.Int32);Never WaitForExit, any ov
 ; asynchronous read or write of a stream that was not opened for overlapped
 ; I/O, which the framework serves as a synchronous call on a pool thread: a
 ; System.Diagnostics.Process's redirected streams are such streams (kb,
-; windows/processes.md, measured 2026-10-11), and the suite still reads its own
-; children through them, where the product reads its children through
-; Interop/JobLauncher's overlapped pipes.
+; windows/processes.md, measured 2026-10-11). The product and the suite read
+; their children through Interop/JobLauncher's overlapped pipes, the suite
+; through Harness/ChildRunner, and the one Process whose redirected streams the
+; suite still reads is ProcessLogTests' measurement of Process itself.
+; Corrected 2026-10-11 (previously "and the suite still reads its own children
+; through them, where the product reads its children through
+; Interop/JobLauncher's overlapped pipes"), when the suite's runs moved.
 ; -----------------------------------------------------------------------------
 
 M:System.Runtime.CompilerServices.TaskAwaiter.GetResult;Never block a worker on a task (decision 54): await it. GetResult on a task that has not finished parks this thread until another thread finishes it, and on a pool thread the task's own completion may need the thread it took.

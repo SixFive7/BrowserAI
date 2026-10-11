@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using BrowserAI.Tests.Harness;
@@ -1054,39 +1053,27 @@ internal sealed partial class SuiteCoverageTests
         var report = Path.Combine(scratch.Path, "filter.txt");
         const string Filter = "/*/*/SuiteCoverageTests/" + nameof(AReleaseRunFailsWhereAnOrdinaryRunSkips);
 
-        var startInfo = new ProcessStartInfo(host)
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = AppContext.BaseDirectory,
-            StandardOutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-            StandardErrorEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-        };
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes
+        // are read without parking a thread, both as UTF-8, as before. Started outside
+        // a job object, so the spawn record is the only thing that can name it if this
+        // run is killed while it is running, and the runner writes it.
+        var run = await ChildRunner.RunAsync(
+            host,
+            ["--disable-logo", "--treenode-filter", Filter],
+            AppContext.BaseDirectory,
+            TestDefaults.ProcessHang,
+            new Dictionary<string, string?>
+            {
+                [SuiteFilter.ProbeVariable] = report,
+                [SuiteEnvironment.ReleaseRunVariable] = "1",
+            },
+            encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
-        startInfo.ArgumentList.Add("--disable-logo");
-        startInfo.ArgumentList.Add("--treenode-filter");
-        startInfo.ArgumentList.Add(Filter);
+        var console = run.StandardOutput + run.StandardError;
 
-        startInfo.Environment[SuiteFilter.ProbeVariable] = report;
-        startInfo.Environment[SuiteEnvironment.ReleaseRunVariable] = "1";
+        await Assert.That(run.Exited).IsTrue().Because(console);
 
-        using var child = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start '{host}'.");
-
-        // Started outside a job object, so the spawn record is the only thing
-        // that can name it if this run is killed while it is running.
-        await SpawnRecord.AddAsync(child.Id);
-
-        var stdout = child.StandardOutput.ReadToEndAsync();
-        var stderr = child.StandardError.ReadToEndAsync();
-
-        using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
-
-        await child.WaitForExitAsync(patience.Token);
-
-        var exitCode = child.ExitCode;
-        var console = await stdout + await stderr;
+        var exitCode = run.ExitCode;
 
         // ⚠️ THE READING, ON A RUN THAT REALLY WAS FILTERED. Not the state word
         // alone: the filter string itself, byte for byte, because a verdict that
@@ -1180,36 +1167,18 @@ internal sealed partial class SuiteCoverageTests
 
         using var probe = await ScratchDirectory.CreateAsync("child-probe");
 
-        var startInfo = new ProcessStartInfo(host)
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = AppContext.BaseDirectory,
-            StandardOutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-            StandardErrorEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-        };
+        // Through the product's launcher since 2026-10-11, as the arm above's child is.
+        var run = await ChildRunner.RunAsync(
+            host,
+            ["--disable-logo", "--treenode-filter", "/*/*/SuiteCoverageTests/" + nameof(AReleaseRunFailsWhereAnOrdinaryRunSkips)],
+            AppContext.BaseDirectory,
+            TestDefaults.ProcessHang,
+            new Dictionary<string, string?> { [SuiteFilter.ProbeVariable] = Path.Combine(probe.Path, "filter.txt") },
+            encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
-        startInfo.ArgumentList.Add("--disable-logo");
-        startInfo.ArgumentList.Add("--treenode-filter");
-        startInfo.ArgumentList.Add("/*/*/SuiteCoverageTests/" + nameof(AReleaseRunFailsWhereAnOrdinaryRunSkips));
+        var console = run.StandardOutput + run.StandardError;
 
-        startInfo.Environment[SuiteFilter.ProbeVariable] = Path.Combine(probe.Path, "filter.txt");
-
-        using var child = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start '{host}'.");
-
-        // Started outside a job object, as the arm above's child is.
-        await SpawnRecord.AddAsync(child.Id);
-
-        var stdout = child.StandardOutput.ReadToEndAsync();
-        var stderr = child.StandardError.ReadToEndAsync();
-
-        using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
-
-        await child.WaitForExitAsync(patience.Token);
-
-        var console = await stdout + await stderr;
+        await Assert.That(run.Exited).IsTrue().Because(console);
 
         await Assert.That(console).Contains("suite coverage -- what this run actually exercised").Because(console);
 
@@ -1900,32 +1869,13 @@ internal sealed partial class SuiteCoverageTests
         var tag = $"suite-path-{Guid.NewGuid():N}";
         var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
 
-        var start = new ProcessStartInfo("pwsh")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        start.ArgumentList.Add("-NoProfile");
-        start.ArgumentList.Add("-NonInteractive");
-        start.ArgumentList.Add("-File");
-        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"));
-        start.ArgumentList.Add("-Tag");
-        start.ArgumentList.Add(tag);
-        start.Environment["USERPROFILE"] = profile.Path;
-        start.Environment["APPDATA"] = Path.Combine(profile.Path, "AppData", "Roaming");
-
-        using (var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the clearance script."))
-        {
-            var output = process.StandardOutput.ReadToEndAsync();
-            var error = process.StandardError.ReadToEndAsync();
-
-            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-            _ = await output;
-            _ = await error;
-        }
+        await RunTheClearanceScriptAsync(
+            ["-Tag", tag],
+            new Dictionary<string, string?>
+            {
+                ["USERPROFILE"] = profile.Path,
+                ["APPDATA"] = Path.Combine(profile.Path, "AppData", "Roaming"),
+            });
 
         string[] lines;
 
@@ -2076,32 +2026,7 @@ internal sealed partial class SuiteCoverageTests
         var tag = $"suite-activator-{Guid.NewGuid():N}";
         var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
 
-        var start = new ProcessStartInfo("pwsh")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        start.ArgumentList.Add("-NoProfile");
-        start.ArgumentList.Add("-NonInteractive");
-        start.ArgumentList.Add("-File");
-        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"));
-        start.ArgumentList.Add("-Tag");
-        start.ArgumentList.Add(tag);
-        start.ArgumentList.Add("-ClassesKey");
-        start.ArgumentList.Add(classesKey);
-
-        using (var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the clearance script."))
-        {
-            var output = process.StandardOutput.ReadToEndAsync();
-            var error = process.StandardError.ReadToEndAsync();
-
-            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-            _ = await output;
-            _ = await error;
-        }
+        await RunTheClearanceScriptAsync(["-Tag", tag, "-ClassesKey", classesKey]);
 
         try
         {
@@ -2122,30 +2047,7 @@ internal sealed partial class SuiteCoverageTests
         var tag = $"suite-task-{Guid.NewGuid():N}";
         var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
 
-        var start = new ProcessStartInfo("pwsh")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        start.ArgumentList.Add("-NoProfile");
-        start.ArgumentList.Add("-NonInteractive");
-        start.ArgumentList.Add("-File");
-        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"));
-        start.ArgumentList.Add("-Tag");
-        start.ArgumentList.Add(tag);
-
-        using (var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the clearance script."))
-        {
-            var output = process.StandardOutput.ReadToEndAsync();
-            var error = process.StandardError.ReadToEndAsync();
-
-            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-            _ = await output;
-            _ = await error;
-        }
+        await RunTheClearanceScriptAsync(["-Tag", tag]);
 
         try
         {
@@ -2192,37 +2094,14 @@ internal sealed partial class SuiteCoverageTests
         var tag = $"suite-q292-{Guid.NewGuid():N}";
         var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
 
-        var start = new ProcessStartInfo("pwsh")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-
-            // The house rule for every launch in this tree: redirecting the
-            // streams does not suppress the console.
-            CreateNoWindow = true,
-        };
-
-        start.ArgumentList.Add("-NoProfile");
-        start.ArgumentList.Add("-NonInteractive");
-        start.ArgumentList.Add("-File");
-        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"));
-        start.ArgumentList.Add("-Tag");
-        start.ArgumentList.Add(tag);
-
         // The child's own block, so this process's environment is untouched.
-        start.Environment["USERPROFILE"] = profile;
-        start.Environment["APPDATA"] = Path.Combine(profile, "AppData", "Roaming");
-
-        using (var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the clearance script."))
-        {
-            var output = process.StandardOutput.ReadToEndAsync();
-            var error = process.StandardError.ReadToEndAsync();
-
-            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-            _ = await output;
-            _ = await error;
-        }
+        await RunTheClearanceScriptAsync(
+            ["-Tag", tag],
+            new Dictionary<string, string?>
+            {
+                ["USERPROFILE"] = profile,
+                ["APPDATA"] = Path.Combine(profile, "AppData", "Roaming"),
+            });
 
         try
         {
@@ -2231,6 +2110,32 @@ internal sealed partial class SuiteCoverageTests
         finally
         {
             File.Delete(snapshot);
+        }
+    }
+
+    /// <summary>Runs the clearance script and waits for it to end.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 with the maintainer's decision 54</b>, when the four runs of it
+    /// in this file moved from a <c>Process</c> each, whose redirected streams park a pool
+    /// thread per read, to <see cref="ChildRunner"/>, which starts every child with no
+    /// console window of its own, the house rule for every launch in this tree.
+    /// </remarks>
+    /// <param name="arguments">Its arguments after <c>-File</c> and the script.</param>
+    /// <param name="environment">Variables set in the child's own block, or <see langword="null"/>.</param>
+    /// <returns>The run.</returns>
+    /// <exception cref="TimeoutException">It did not end within <see cref="TestDefaults.ProcessHang"/>.</exception>
+    private static async Task RunTheClearanceScriptAsync(string[] arguments, IReadOnlyDictionary<string, string?>? environment = null)
+    {
+        var run = await ChildRunner.RunAsync(
+            "pwsh",
+            ["-NoProfile", "-NonInteractive", "-File", Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"), .. arguments],
+            RepositoryLayout.Root.FullName,
+            TestDefaults.ProcessHang,
+            environment);
+
+        if (!run.Exited)
+        {
+            throw new TimeoutException($"The clearance script did not exit within {TestDefaults.ProcessHang} and was terminated. It said: {run.StandardOutput}{run.StandardError}");
         }
     }
 

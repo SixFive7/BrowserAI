@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using BrowserAI.App;
@@ -842,36 +841,16 @@ internal sealed class RegisterAiTests
     /// <summary>Runs the payload's tool once, with no window, reading both pipes as UTF-8.</summary>
     private static async Task<ToolRun> RunAsync(string exe, string[] arguments, IReadOnlyDictionary<string, string>? environment)
     {
-        var start = new ProcessStartInfo(exe)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = new UTF8Encoding(false),
-            StandardErrorEncoding = new UTF8Encoding(false),
-        };
+        // Through the product's launcher since 2026-10-11, decision 54, its input closed
+        // at once as before, and both pipes read as UTF-8.
+        var run = await ChildRunner.RunAsync(
+            exe,
+            arguments,
+            Environment.CurrentDirectory,
+            TestDefaults.ProcessHang,
+            environment?.ToDictionary(pair => pair.Key, string? (pair) => pair.Value),
+            encoding: new UTF8Encoding(false));
 
-        foreach (var argument in arguments)
-        {
-            start.ArgumentList.Add(argument);
-        }
-
-        foreach (var (name, value) in environment ?? new Dictionary<string, string>())
-        {
-            start.Environment[name] = value;
-        }
-
-        using var process = Process.Start(start) ?? throw new InvalidOperationException($"'{exe}' did not start.");
-
-        process.StandardInput.Close();
-
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-
-        return new ToolRun(process.ExitCode, await output, await error, TimedOut: false, null);
+        return new ToolRun(run.ExitCode ?? -1, run.StandardOutput, run.StandardError, TimedOut: !run.Exited, null);
     }
 }

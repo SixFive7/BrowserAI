@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace BrowserAI.Tests.Harness;
@@ -38,23 +37,16 @@ internal static partial class PathAliases
     /// <returns>The awaitable creation.</returns>
     public static async Task JunctionAsync(string link, string target)
     {
-        using var process = Process.Start(new ProcessStartInfo(
+        var made = await ChildRunner.RunAsync(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
-            ["/c", "mklink", "/J", link, target])
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = Path.GetDirectoryName(link)!,
-        })!;
+            ["/c", "mklink", "/J", link, target],
+            Path.GetDirectoryName(link)!,
+            TestDefaults.ProcessHang);
 
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
+        var output = made.StandardOutput;
+        var error = made.StandardError;
 
-        await process.WaitForExitAsync();
-
-        if (process.ExitCode is not 0 || !Directory.Exists(link))
+        if (made.ExitCode is not 0 || !Directory.Exists(link))
         {
             throw new InvalidOperationException(
                 $"mklink /J could not create '{link}' -> '{target}'. This test proves nothing without one. {output} {error}");

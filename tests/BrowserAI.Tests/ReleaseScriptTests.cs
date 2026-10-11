@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.IO.Enumeration;
 using System.Text;
 using System.Text.Json;
@@ -327,69 +326,63 @@ internal sealed class ReleaseScriptTests
 
         foreach (var (driver, aborted) in drivers)
         {
-            using var scratch = await ScratchDirectory.CreateAsync("gate-test-pack-error");
-
-            var build = Directory.CreateDirectory(Path.Combine(scratch.Path, "build")).FullName;
-
-            foreach (var name in new[] { driver, "InstallerLock.ps1" })
-            {
-                await TestFiles.CopyAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", name), Path.Combine(build, name));
-            }
-
-            await File.WriteAllTextAsync(
-                Path.Combine(build, "New-Release.ps1"),
-                "$ErrorActionPreference = 'Stop'\nWrite-Host 'The planted release script starts.'\nthrow 'The planted release script stops with an error.'\n");
-
-            var (exit, _, said) = await RunAsync(Path.Combine(build, driver));
-
-            await Assert.That(said).Contains(aborted).Because(said);
-            await Assert.That(said).Contains("The planted release script stops with an error.").Because(said);
-            await Assert.That(File.Exists(Path.Combine(scratch.Path, ".work", "installer.lock"))).IsFalse().Because($"{driver} left the lock it took: {said}");
-            await Assert.That(exit).IsEqualTo(1).Because(said);
+            await TheDriverSaysItStoppedOnTheTestPackAsync(driver, aborted);
         }
+    }
+
+    /// <summary>One driver of the arm above, in a scratch tree of its own.</summary>
+    /// <param name="driver">The driver's file name under <c>build</c>.</param>
+    /// <param name="aborted">The abort line it must write.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task TheDriverSaysItStoppedOnTheTestPackAsync(string driver, string aborted)
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("gate-test-pack-error");
+
+        var build = Directory.CreateDirectory(Path.Combine(scratch.Path, "build")).FullName;
+
+        foreach (var name in new[] { driver, "InstallerLock.ps1" })
+        {
+            await TestFiles.CopyAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", name), Path.Combine(build, name));
+        }
+
+        await File.WriteAllTextAsync(
+            Path.Combine(build, "New-Release.ps1"),
+            "$ErrorActionPreference = 'Stop'\nWrite-Host 'The planted release script starts.'\nthrow 'The planted release script stops with an error.'\n");
+
+        var (exit, _, said) = await RunAsync(Path.Combine(build, driver));
+
+        await Assert.That(said).Contains(aborted).Because(said);
+        await Assert.That(said).Contains("The planted release script stops with an error.").Because(said);
+        await Assert.That(File.Exists(Path.Combine(scratch.Path, ".work", "installer.lock"))).IsFalse().Because($"{driver} left the lock it took: {said}");
+        await Assert.That(exit).IsEqualTo(1).Because(said);
     }
 
     /// <summary>Runs git in one directory and waits for it.</summary>
     /// <remarks>
     /// <b><see cref="GitOracle"/> is pinned to this repository's root</b>, and this clones
-    /// it into a directory of its own. <c>CreateNoWindow</c> for the house rule: a
-    /// windowless parent puts a terminal on the user's screen without it.
+    /// it into a directory of its own. <b>Through <see cref="ChildRunner"/> since
+    /// 2026-10-11</b>, the maintainer's decision 54 (previously a <c>Process</c> with
+    /// <c>CreateNoWindow</c> set here for the house rule: a windowless parent puts a
+    /// terminal on the user's screen without it, and the launcher sets it for every child).
     /// </remarks>
     /// <param name="directory">Where to run it.</param>
     /// <param name="arguments">The git arguments.</param>
     /// <returns>The exit code and what it said.</returns>
     private static async Task<(int ExitCode, string Output)> RunGitAsync(string directory, params string[] arguments)
     {
-        using var git = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "git",
-                WorkingDirectory = directory,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            },
-        };
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes are
+        // read without parking a thread; it starts every child with no console window
+        // of its own, the house rule for every launch in this tree.
+        var git = await ChildRunner.RunAsync(
+            "git",
+            arguments,
+            directory,
+            TestDefaults.ProcessHang,
+            new Dictionary<string, string?> { ["GIT_TERMINAL_PROMPT"] = "0" });
 
-        git.StartInfo.Environment["GIT_TERMINAL_PROMPT"] = "0";
-
-        foreach (var argument in arguments)
-        {
-            git.StartInfo.ArgumentList.Add(argument);
-        }
-
-        _ = git.Start();
-
-        var output = git.StandardOutput.ReadToEndAsync();
-        var error = git.StandardError.ReadToEndAsync();
-
-        using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
-
-        await git.WaitForExitAsync(patience.Token);
-
-        return (git.ExitCode, await output + await error);
+        return git.ExitCode is { } exitCode
+            ? (exitCode, git.StandardOutput + git.StandardError)
+            : throw new TimeoutException($"git did not exit within {TestDefaults.ProcessHang} and was terminated. It said: {git.StandardOutput}{git.StandardError}");
     }
 
     /// <summary>
@@ -2065,35 +2058,25 @@ internal sealed class ReleaseScriptTests
     /// <returns>Its exit code.</returns>
     private static async Task<int> VpkAsync(string[] arguments)
     {
-        var start = new ProcessStartInfo("vpk")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
+        ChildRunner.Result packaging;
 
-            // House rule: no launch in this tree puts a window on the screen.
-            CreateNoWindow = true,
-        };
-
-        foreach (var argument in arguments)
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes are
+        // read without parking a thread, both drained as before. No launch in this tree
+        // puts a window on the screen, and the launcher starts every child without one.
+        try
         {
-            start.ArgumentList.Add(argument);
+            packaging = await ChildRunner.RunAsync("vpk", arguments, Environment.CurrentDirectory, TestDefaults.ProcessHang);
+        }
+        catch (FileNotFoundException absent)
+        {
+            throw new InvalidOperationException(
+                "'vpk' did not start. The release script needs it too, and refuses without it:"
+                + " dotnet tool install -g vpk --version <the Velopack the build resolved>.",
+                absent);
         }
 
-        using var packaging = Process.Start(start)
-            ?? throw new InvalidOperationException(
-                "'vpk' did not start. The release script needs it too, and refuses without it:"
-                + " dotnet tool install -g vpk --version <the Velopack the build resolved>.");
-
-        var output = packaging.StandardOutput.ReadToEndAsync();
-        var errors = packaging.StandardError.ReadToEndAsync();
-
-        await packaging.WaitForExitAsync();
-
-        _ = await output;
-        _ = await errors;
-
-        return packaging.ExitCode;
+        return packaging.ExitCode
+            ?? throw new TimeoutException($"vpk did not exit within {TestDefaults.ProcessHang} and was terminated. It said: {packaging.StandardOutput}{packaging.StandardError}");
     }
 
     /// <param name="feed">A feed directory.</param>
@@ -2149,46 +2132,23 @@ internal sealed class ReleaseScriptTests
     /// <returns>The exit code, stdout alone, and stdout followed by stderr.</returns>
     private static async Task<(int Exit, string Verdict, string Everything)> RunAsync(string script, params string[] arguments)
     {
-        var start = new ProcessStartInfo("pwsh")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes are
+        // read without parking a thread. Redirecting the two streams does NOT suppress
+        // the console: measured 2026-08-23, from a parent with no console of its own,
+        // this launch without the flag put two visible windows on screen, a Windows
+        // Terminal host and a pseudoconsole, and with it put none. The launcher sets it
+        // for every child, and this is the site that most needs it, because `pwsh` is
+        // started once per script arm. The wait has a hang detector since that day too:
+        // until then it had none.
+        var run = await ChildRunner.RunAsync(
+            "pwsh",
+            ["-NoProfile", "-NonInteractive", "-File", script, .. arguments],
+            Environment.CurrentDirectory,
+            TestDefaults.ProcessHang);
 
-            // Redirecting the two streams does NOT suppress the console.
-            // Measured 2026-08-23: from a parent with no console of its own,
-            // this launch without the flag put two visible windows on screen --
-            // a Windows Terminal host and a pseudoconsole -- and with it put
-            // none. This one is the worst of the ten sites for it: `pwsh` is
-            // started once per script arm.
-            CreateNoWindow = true,
-        };
-
-        start.ArgumentList.Add("-NoProfile");
-        start.ArgumentList.Add("-NonInteractive");
-        start.ArgumentList.Add("-File");
-        start.ArgumentList.Add(script);
-
-        foreach (var argument in arguments)
-        {
-            start.ArgumentList.Add(argument);
-        }
-
-        using var process = Process.Start(start)
-            ?? throw new InvalidOperationException($"'pwsh' did not start for {script}.");
-
-        var captured = new StringBuilder();
-        var stdout = process.StandardOutput.ReadToEndAsync();
-        var stderr = process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync();
-
-        var verdict = await stdout;
-        _ = captured.Append(verdict).Append(await stderr);
-
-        // Cached immediately: Process.ExitCode throws after Dispose(), and this
-        // object is disposed on the way out of the using.
-        return (process.ExitCode, verdict, captured.ToString());
+        return run.ExitCode is { } exitCode
+            ? (exitCode, run.StandardOutput, run.StandardOutput + run.StandardError)
+            : throw new TimeoutException($"'{script}' did not exit within {TestDefaults.ProcessHang} and was terminated. It said: {run.StandardOutput}{run.StandardError}");
     }
     /// <summary>
     /// <b>The icon that ships is the one the maintainer chose, in the shape

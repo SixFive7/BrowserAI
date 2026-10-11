@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Globalization;
 
 namespace BrowserAI.Tests.Harness;
@@ -197,7 +196,7 @@ internal static class GitOracle
 
             return exitCode is 0 && output.Trim().Equals("true", StringComparison.Ordinal);
         }
-        catch (System.ComponentModel.Win32Exception)
+        catch (Exception failure) when (failure is System.ComponentModel.Win32Exception or FileNotFoundException)
         {
             // No git on PATH at all: the export case, and the one absence this
             // whole type is allowed to have.
@@ -207,57 +206,22 @@ internal static class GitOracle
 
     private static async Task<(int ExitCode, string Output, string Error)> RunAsync(params string[] arguments)
     {
-        using var git = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "git",
-                WorkingDirectory = RepositoryLayout.Root.FullName,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            },
-        };
-
         // -C, although the working directory is already the root. A host started
         // somewhere else, or a git resolving the working directory through a
         // junction, would otherwise answer about a different repository -- and
         // the answer would look perfectly ordinary.
-        git.StartInfo.ArgumentList.Add("-C");
-        git.StartInfo.ArgumentList.Add(RepositoryLayout.Root.FullName);
+        //
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes
+        // are read without parking a thread; both streams are drained concurrently,
+        // as they were, because taking them in turn deadlocks the moment the other
+        // fills its pipe buffer, and `ls-files` over this tree is tens of kilobytes.
+        var run = await ChildRunner.RunAsync("git", ["-C", RepositoryLayout.Root.FullName, .. arguments], RepositoryLayout.Root.FullName, Patience);
 
-        foreach (var argument in arguments)
-        {
-            git.StartInfo.ArgumentList.Add(argument);
-        }
-
-        _ = git.Start();
-
-        // Both streams drained concurrently. Taking them in turn deadlocks the
-        // moment the other fills its pipe buffer, and `ls-files` over this tree
-        // is tens of kilobytes.
-        var output = git.StandardOutput.ReadToEndAsync();
-        var error = git.StandardError.ReadToEndAsync();
-
-        using var patience = new CancellationTokenSource(Patience);
-
-        try
-        {
-            await git.WaitForExitAsync(patience.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            // Parameterless, so this is the process this method started and
-            // nothing else: never a tree walk, never a pid found by name.
-            git.Kill();
-
-            await git.WaitForExitAsync(CancellationToken.None);
-
-            throw new InvalidOperationException(
-                $"git did not answer within {Patience.TotalSeconds.ToString(CultureInfo.InvariantCulture)}s and was killed, so the walk has nothing to be compared against.");
-        }
-
-        return (git.ExitCode, await output, await error);
+        // The process this method started and nothing else was terminated at the
+        // patience: never a tree walk, never a pid found by name.
+        return run.ExitCode is { } exitCode
+            ? (exitCode, run.StandardOutput, run.StandardError)
+            : throw new InvalidOperationException(
+                $"git did not answer within {Patience.TotalSeconds.ToString(CultureInfo.InvariantCulture)}s and was terminated, so the walk has nothing to be compared against.");
     }
 }

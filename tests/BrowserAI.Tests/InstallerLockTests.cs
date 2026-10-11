@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Globalization;
 using BrowserAI.Tests.Harness;
 
@@ -152,27 +151,26 @@ internal sealed class InstallerLockTests
     /// <summary>A process that has exited, as the pid and creation time it had.</summary>
     private static async Task<InstallerLockHolder> ExitedChildAsync()
     {
-        var start = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"))
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
+        // Started through the product's launcher, whose pipes are read without parking
+        // a thread, and held until it has gone, so its creation time is read off the
+        // live process and its exit is waited for. Since 2026-10-11, decision 54
+        // (previously Process.Start with its two streams read to their ends).
+        using var child = BrowserAI.Interop.JobLauncher.StartOutsideAnyJob(
+            Path.Combine(Environment.SystemDirectory, "cmd.exe"),
+            ["/d", "/c", "exit 0"],
+            Environment.CurrentDirectory,
+            ChildRunner.EnvironmentWith(null));
 
-        start.ArgumentList.Add("/d");
-        start.ArgumentList.Add("/c");
-        start.ArgumentList.Add("exit 0");
+        await SpawnRecord.AddAsync(child.Id);
 
-        using var child = Process.Start(start) ?? throw new InvalidOperationException("cmd.exe did not start.");
+        var created = ProcessIdentity.CreationTimeOf(child.Id);
 
-        var created = child.StartTime.ToFileTimeUtc();
-        var output = child.StandardOutput.ReadToEndAsync();
-        var error = child.StandardError.ReadToEndAsync();
+        await child.StandardInput.DisposeAsync();
 
-        await child.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-        _ = await output;
-        _ = await error;
+        var drained = Task.WhenAll(child.StandardOutput.CopyToAsync(Stream.Null), child.StandardError.CopyToAsync(Stream.Null));
+
+        await Assert.That(await child.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+        await drained.WaitAsync(TestDefaults.ProcessHang);
 
         return new InstallerLockHolder(child.Id, created);
     }
@@ -180,34 +178,15 @@ internal sealed class InstallerLockTests
     /// <summary>Runs the drivers' lock script and returns its exit code and stdout.</summary>
     private static async Task<(int Exit, string Output)> RunAsync(params string[] arguments)
     {
-        var start = new ProcessStartInfo("pwsh")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
+        // Through the product's launcher since 2026-10-11, decision 54, which starts
+        // every child with no console window of its own, the house rule for every
+        // launch in this tree.
+        var run = await ChildRunner.RunAsync(
+            "pwsh",
+            ["-NoProfile", "-NonInteractive", "-File", Path.Combine(RepositoryLayout.Root.FullName, "build", "InstallerLock.ps1"), .. arguments],
+            Environment.CurrentDirectory,
+            TestDefaults.ProcessHang);
 
-            // The house rule for every launch in this tree.
-            CreateNoWindow = true,
-        };
-
-        start.ArgumentList.Add("-NoProfile");
-        start.ArgumentList.Add("-NonInteractive");
-        start.ArgumentList.Add("-File");
-        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "InstallerLock.ps1"));
-
-        foreach (var argument in arguments)
-        {
-            start.ArgumentList.Add(argument);
-        }
-
-        using var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the lock script.");
-
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-        _ = await error;
-
-        return (process.ExitCode, (await output).Trim());
+        return (run.ExitCode ?? -1, run.StandardOutput.Trim());
     }
 }

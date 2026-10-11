@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Text;
 
 namespace BrowserAI.Tests.Harness;
@@ -38,48 +37,23 @@ internal static class ProbeProcess
     /// <returns>What the run produced.</returns>
     public static async Task<Result> RunInAsync(string workingDirectory, params string[] arguments)
     {
-        var startInfo = new ProcessStartInfo(ExecutablePath)
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes
+        // are read without parking a thread, with the working directory explicit and
+        // the output read as UTF-8, as before: console stdio defaults to CP437 in both
+        // directions, so a harness that left this alone would fail the product for the
+        // harness's defect. The hang detector is the suite's own: until that day the
+        // wait had none.
+        var run = await ChildRunner.RunAsync(
+            ExecutablePath,
+            arguments,
+            workingDirectory,
+            TestDefaults.ProcessHang,
+            encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
-            // Explicit, never left unset. .NET passes null to CreateProcess for
-            // an unset WorkingDirectory and the child silently inherits the
-            // test host's -- the same rule the product's own spawns obey.
-            WorkingDirectory = workingDirectory,
-
-            // Console stdio defaults to CP437 in both directions, so a harness
-            // that leaves this alone fails the product for the harness's defect.
-            StandardOutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-            StandardErrorEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-        };
-
-        foreach (var argument in arguments)
-        {
-            startInfo.ArgumentList.Add(argument);
-        }
-
-        using var process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException($"Could not start '{ExecutablePath}'.");
-
-        // This one is started OUTSIDE a job object -- it is awaited to exit
-        // and not contained -- so the spawn record is the only thing that
-        // can name it if this run is killed while it is running.
-        await SpawnRecord.AddAsync(process.Id);
-
-        var stdout = process.StandardOutput.ReadToEndAsync();
-        var stderr = process.StandardError.ReadToEndAsync();
-
-        // WaitForExitAsync, never WaitForExit(int): only the former drains the
-        // async readers.
-        await process.WaitForExitAsync().ConfigureAwait(false);
-
-        // Cached immediately as an int. Process.ExitCode throws after Dispose().
-        var exitCode = process.ExitCode;
-
-        return new Result(exitCode, await stdout.ConfigureAwait(false), await stderr.ConfigureAwait(false));
+        return run.ExitCode is { } exitCode
+            ? new Result(exitCode, run.StandardOutput, run.StandardError)
+            : throw new TimeoutException(
+                $"The probe '{string.Join(' ', arguments)}' did not exit within {TestDefaults.ProcessHang} and was terminated. It said: {run.StandardOutput}{run.StandardError}");
     }
 
     /// <summary>Reads every process-log record written under a scratch root.</summary>

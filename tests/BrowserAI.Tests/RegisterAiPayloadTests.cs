@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -345,7 +344,7 @@ internal sealed class RegisterAiPayloadTests
         {
             return await StartAsync(file, arguments, environment);
         }
-        catch (Win32Exception)
+        catch (Exception failure) when (failure is Win32Exception or FileNotFoundException)
         {
             return null;
         }
@@ -354,40 +353,16 @@ internal sealed class RegisterAiPayloadTests
     /// <summary>Runs a program, with these variables changed for it alone, and returns what it did.</summary>
     private static async Task<ScriptRun> StartAsync(string file, string[] arguments, IReadOnlyDictionary<string, string?>? environment)
     {
-        var start = new ProcessStartInfo(file)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = new UTF8Encoding(false),
-            StandardErrorEncoding = new UTF8Encoding(false),
-        };
+        // Through the product's launcher since 2026-10-11, decision 54, with both pipes
+        // read as UTF-8, as before.
+        var run = await ChildRunner.RunAsync(
+            file,
+            arguments,
+            Environment.CurrentDirectory,
+            TestDefaults.ProcessHang,
+            environment,
+            encoding: new UTF8Encoding(false));
 
-        foreach (var argument in arguments)
-        {
-            start.ArgumentList.Add(argument);
-        }
-
-        foreach (var (name, value) in environment ?? new Dictionary<string, string?>())
-        {
-            if (value is null)
-            {
-                _ = start.Environment.Remove(name);
-            }
-            else
-            {
-                start.Environment[name] = value;
-            }
-        }
-
-        using var process = Process.Start(start) ?? throw new InvalidOperationException($"'{file}' did not start.");
-
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-
-        return new ScriptRun(process.ExitCode, await output + await error);
+        return new ScriptRun(run.ExitCode ?? -1, run.StandardOutput + run.StandardError);
     }
 }

@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Globalization;
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -1815,36 +1814,15 @@ internal sealed partial class RealInstallerTests
 
     private static async Task<int> RunAsync(string executable, string[] arguments)
     {
-        var start = new ProcessStartInfo(executable)
-        {
-            UseShellExecute = false,
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes are
+        // read without parking a thread. Both streams are still drained to their ends,
+        // because a process whose output is not read can fill a pipe and never exit, and
+        // the launcher starts every child with no console window of its own, the house
+        // rule for every launch in this tree.
+        var run = await ChildRunner.RunAsync(executable, arguments, Environment.CurrentDirectory, TestDefaults.ProcessHang);
 
-            // The house rule for every launch in this tree: redirecting the
-            // streams does not suppress the console, and from a windowless test
-            // host each omission puts a terminal on the maintainer's screen.
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-
-        foreach (var argument in arguments)
-        {
-            start.ArgumentList.Add(argument);
-        }
-
-        using var process = Process.Start(start)!;
-
-        // Both streams are drained before the wait, which is the pairing the
-        // banned timed overload exists to protect: a process whose output is not
-        // read can fill a pipe and never exit.
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-        _ = await output;
-        _ = await error;
-
-        return process.ExitCode;
+        return run.ExitCode
+            ?? throw new TimeoutException($"'{executable}' did not exit within {TestDefaults.ProcessHang} and was terminated. It said: {run.StandardOutput}{run.StandardError}");
     }
 
     /// <summary>

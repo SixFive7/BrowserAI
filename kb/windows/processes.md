@@ -326,10 +326,16 @@ child's quiet standard error is a pool thread parked in a synchronous read for a
 as the child says nothing. **BrowserAI starts its children through
 `Interop/JobLauncher` since the maintainer's decision 54**, whose pipes are named,
 overlapped at BrowserAI's end and handed to the child without the flag, so the reads
-are overlapped and park no thread. **The suite still starts children through
-`Process`**, and every read of one of their streams, its event-driven readers included,
-is such a parked thread for as long as the child is quiet; no analyzer sees it, which
-is why `build/BannedSymbols.txt` names it among what its list cannot see.
+are overlapped and park no thread. **The suite runs the tools it waits on through the
+same launcher**, `Harness/ChildRunner`, and what it still starts through `Process`
+redirects nothing, except `ProcessLogTests.WaitForExitAsyncWaitsForTheEndOfBothRedirectedReaders`,
+which measures `Process` itself: every read of one of that child's streams, its
+event-driven readers included, is such a parked thread for as long as the child is
+quiet. No analyzer sees one, which is why `build/BannedSymbols.txt` names it among what
+its list cannot see. *Corrected 2026-10-11 (previously "**The suite still starts
+children through `Process`**, and every read of one of their streams, its event-driven
+readers included, is such a parked thread for as long as the child is quiet"), when the
+suite's child runs moved to the launcher the same day.*
 
 **To re-establish it**, start any console child through `ProcessStartInfo` with
 `UseShellExecute = false` and the three streams redirected, and print

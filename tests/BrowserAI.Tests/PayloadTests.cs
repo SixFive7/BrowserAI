@@ -293,7 +293,7 @@ internal sealed partial class PayloadTests
         // binary and not read back out of the manifest beside it. A
         // manifest agreeing with itself proves nothing about the executable.
         var recorded = manifest.RootElement.GetProperty("node").GetProperty("version").GetString();
-        var (versionExit, versionOutput) = await RunAsync(layout.NodeExecutable, "--version");
+        var (versionExit, versionOutput) = await RunAsync(layout.NodeExecutable, ["--version"]);
 
         await Assert.That(versionExit).IsEqualTo(0);
         await Assert.That(versionOutput.Trim()).IsEqualTo(recorded);
@@ -302,7 +302,7 @@ internal sealed partial class PayloadTests
         // block. This is the check that would have caught a tree that installed
         // and cannot start, which is the founding failure class of this project
         // arriving from npm instead of from a browser.
-        var (helpExit, helpOutput) = await RunAsync(layout.NodeExecutable, $"\"{layout.PlaywrightMcpCli}\" --help");
+        var (helpExit, helpOutput) = await RunAsync(layout.NodeExecutable, [layout.PlaywrightMcpCli, "--help"]);
 
         await Assert.That(helpExit).IsEqualTo(0);
         await Assert.That(helpOutput).Contains("Usage:");
@@ -461,37 +461,18 @@ internal sealed partial class PayloadTests
             .Because("a missing file never reads as newer than the binary, so a freshness input that is not there is indistinguishable from one that never fires");
     }
 
-    private static async Task<(int ExitCode, string Output)> RunAsync(string executable, string arguments)
+    private static async Task<(int ExitCode, string Output)> RunAsync(string executable, string[] arguments)
     {
-        using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = executable,
-            Arguments = arguments,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes are
+        // read without parking a thread. It starts every child with no console window
+        // of its own: redirecting the three streams does NOT suppress the console,
+        // measured 2026-08-23, when this launch without the flag put two visible windows
+        // on screen from a parent with no console of its own. The working directory is
+        // explicit, because an unset one is the test host's, which for a tree that
+        // resolves anything relative is a different answer per runner.
+        var run = await ChildRunner.RunAsync(executable, arguments, RepositoryLayout.Root.FullName, TestDefaults.ProcessHang);
 
-            // Redirecting the three streams does NOT suppress the console.
-            // Measured 2026-08-23: from a parent with no console of its own,
-            // this launch without the flag put two visible windows on screen
-            // and with it put none. A suite run from a terminal hides the
-            // difference, because the child joins the terminal's console
-            // instead of allocating one.
-            CreateNoWindow = true,
-
-            // Explicit, because an unset WorkingDirectory passes null to
-            // CreateProcess and the child inherits the test host's -- which for
-            // a tree that resolves anything relative is a different answer per
-            // runner.
-            WorkingDirectory = RepositoryLayout.Root.FullName,
-        })!;
-
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync();
-
-        return (process.ExitCode, output + error);
+        return (run.ExitCode ?? -1, run.StandardOutput + run.StandardError);
     }
 
     /// <summary><c>@playwright/mcp</c>'s own declared <c>playwright-core</c> dependency.</summary>

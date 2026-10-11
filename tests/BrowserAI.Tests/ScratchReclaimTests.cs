@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -100,37 +99,21 @@ internal sealed partial class ScratchReclaimTests
             using var probe = await ScratchDirectory.CreateAsync("reclaim-second-host");
             var report = Path.Combine(probe.Path, "reclaim.txt");
 
-            var startInfo = new ProcessStartInfo(host)
-            {
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = AppContext.BaseDirectory,
-                StandardOutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-                StandardErrorEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-            };
+            // Through the product's launcher since 2026-10-11, decision 54, whose pipes
+            // are read without parking a thread, both as UTF-8, as before. Started outside
+            // a job object, so the spawn record is the only thing that can name it if this
+            // run is killed while it is running, and the runner writes it.
+            var run = await ChildRunner.RunAsync(
+                host,
+                ["--disable-logo", "--treenode-filter", "/*/*/ScratchReclaimTests/" + nameof(AnotherTestHostsReclaimTakesOnlyTheFoldersWhoseOwnersAreGone)],
+                AppContext.BaseDirectory,
+                TestDefaults.ProcessHang,
+                new Dictionary<string, string?> { [ScratchRoot.ReclaimProbeVariable] = report },
+                encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
-            startInfo.ArgumentList.Add("--disable-logo");
-            startInfo.ArgumentList.Add("--treenode-filter");
-            startInfo.ArgumentList.Add("/*/*/ScratchReclaimTests/" + nameof(AnotherTestHostsReclaimTakesOnlyTheFoldersWhoseOwnersAreGone));
+            var console = run.StandardOutput + run.StandardError;
 
-            startInfo.Environment[ScratchRoot.ReclaimProbeVariable] = report;
-
-            using var child = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start '{host}'.");
-
-            // Started outside a job object, so the spawn record is the only thing that
-            // can name it if this run is killed while it is running.
-            await SpawnRecord.AddAsync(child.Id);
-
-            var stdout = child.StandardOutput.ReadToEndAsync();
-            var stderr = child.StandardError.ReadToEndAsync();
-
-            using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
-
-            await child.WaitForExitAsync(patience.Token);
-
-            var console = await stdout + await stderr;
+            await Assert.That(run.Exited).IsTrue().Because(console);
 
             await Assert.That(File.Exists(report)).IsTrue().Because(console);
 

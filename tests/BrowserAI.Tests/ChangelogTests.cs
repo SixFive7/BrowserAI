@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -1266,37 +1265,9 @@ internal sealed partial class ChangelogTests
     /// <returns>The exit code and what it said.</returns>
     private static async Task<(int ExitCode, string Output)> RunGitAsync(string directory, params string[] arguments)
     {
-        using var git = new System.Diagnostics.Process
-        {
-            StartInfo = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "git",
-                WorkingDirectory = directory,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            },
-        };
+        var git = await ChildRunner.RunAsync("git", ["-C", directory, .. arguments], directory, TestDefaults.ProcessHang);
 
-        git.StartInfo.ArgumentList.Add("-C");
-        git.StartInfo.ArgumentList.Add(directory);
-
-        foreach (var argument in arguments)
-        {
-            git.StartInfo.ArgumentList.Add(argument);
-        }
-
-        _ = git.Start();
-
-        var output = git.StandardOutput.ReadToEndAsync();
-        var error = git.StandardError.ReadToEndAsync();
-
-        using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
-
-        await git.WaitForExitAsync(patience.Token);
-
-        return (git.ExitCode, await output + await error);
+        return (git.ExitCode ?? -1, git.StandardOutput + git.StandardError);
     }
 
     /// <summary>
@@ -1593,35 +1564,15 @@ internal sealed partial class ChangelogTests
     /// <returns>Its exit code, its stdout and its stderr.</returns>
     private static async Task<ScriptRun> RunScriptAsync(string script, params string[] arguments)
     {
-        using var pwsh = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                // PowerShell 7, by name on PATH. Every build script in this
-                // repository is pwsh and the snapshot gate already fails the
-                // build when it is missing.
-                FileName = "pwsh",
-                WorkingDirectory = RepositoryLayout.Root.FullName,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            },
-        };
+        // PowerShell 7, by name on PATH. Every build script in this repository is pwsh
+        // and the snapshot gate already fails the build when it is missing.
+        var pwsh = await ChildRunner.RunAsync(
+            "pwsh",
+            ["-NoProfile", "-NonInteractive", "-File", script, .. arguments],
+            RepositoryLayout.Root.FullName,
+            TestDefaults.ProcessHang);
 
-        foreach (var argument in new[] { "-NoProfile", "-NonInteractive", "-File", script }.Concat(arguments))
-        {
-            pwsh.StartInfo.ArgumentList.Add(argument);
-        }
-
-        _ = pwsh.Start();
-
-        var standardOutput = pwsh.StandardOutput.ReadToEndAsync();
-        var standardError = pwsh.StandardError.ReadToEndAsync();
-
-        await pwsh.WaitForExitAsync();
-
-        return new ScriptRun(pwsh.ExitCode, await standardOutput, await standardError);
+        return new ScriptRun(pwsh.ExitCode ?? -1, pwsh.StandardOutput, pwsh.StandardError);
     }
 
     /// <summary>A changelog list item at the start of a line.</summary>

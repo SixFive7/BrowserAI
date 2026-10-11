@@ -752,35 +752,19 @@ internal sealed partial class RealInstallerTests
     /// <returns>Its exit code, and its two outputs joined.</returns>
     private static async Task<(int ExitCode, string Output)> SchedulerToolAsync(params string[] arguments)
     {
-        var start = new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "schtasks.exe"))
-        {
-            UseShellExecute = false,
+        // Through the product's launcher since 2026-10-11, decision 54, whose pipes are
+        // read without parking a thread. Its input is closed at once, so a question it
+        // might ask is answered by the end of its input and never by a wait, and the
+        // launcher starts it with no console window, the house rule for every launch.
+        var run = await ChildRunner.RunAsync(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "schtasks.exe"),
+            arguments,
+            Environment.CurrentDirectory,
+            TestDefaults.ProcessHang);
 
-            // The house rule for every launch in this tree.
-            CreateNoWindow = true,
-
-            // Closed at once, so a question it might ask is answered by the end of its
-            // input and never by a wait.
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-
-        foreach (var argument in arguments)
-        {
-            start.ArgumentList.Add(argument);
-        }
-
-        using var process = Process.Start(start)!;
-
-        process.StandardInput.Close();
-
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-
-        return (process.ExitCode, await output + await error);
+        return run.ExitCode is { } exitCode
+            ? (exitCode, run.StandardOutput + run.StandardError)
+            : throw new TimeoutException($"schtasks did not exit within {TestDefaults.ProcessHang} and was terminated. It said: {run.StandardOutput}{run.StandardError}");
     }
 
     /// <summary>Reads a file another process may be writing, sharing with it.</summary>
