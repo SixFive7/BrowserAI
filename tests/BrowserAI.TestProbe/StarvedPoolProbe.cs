@@ -40,6 +40,19 @@ internal static class StarvedPoolProbe
     /// </remarks>
     private static readonly TimeSpan ReleaseAfter = TimeSpan.FromMilliseconds(200);
 
+    /// <summary>How long the quiet child's read has to itself before the loud child is read.</summary>
+    /// <remarks>
+    /// <b>Long enough for the pool to take the quiet read off its queue and start it</b>, so a
+    /// read that parks a worker is parked before anything else asks for one, and the pause's
+    /// own end, a timer callback, needs that worker too. It is not a bound on anything.
+    /// <i>Added 2026-10-11 (previously the loud child was read straight after the quiet
+    /// read was asked for)</i>, when the arm passed against the tree before the conversion:
+    /// a read asked for on a pool thread is queued to that thread's own queue, which is
+    /// taken newest first, so the loud child's read ran first, the loud child ended, and
+    /// the quiet read was started only after the quiet child had been told to end.
+    /// </remarks>
+    private static readonly TimeSpan QuietReadHeadStart = TimeSpan.FromMilliseconds(200);
+
     /// <summary>Caps the pool at one worker, runs one waiting path on it, and says how it came out.</summary>
     /// <param name="scenario">Which path: <c>ask</c>, <c>rename-window</c> or <c>child-pipes</c>.</param>
     /// <param name="argument">The path's one argument: a pipe, a file or nothing.</param>
@@ -196,6 +209,8 @@ internal static class StarvedPoolProbe
         // parks a worker parks the only one there is.
         var never = new byte[16];
         var pending = quiet.StandardOutput.ReadAsync(never).AsTask();
+
+        await Task.Delay(QuietReadHeadStart);
 
         using var reader = new StreamReader(loud.StandardOutput, Encoding.UTF8);
         var said = await reader.ReadToEndAsync().WaitAsync(bound);
