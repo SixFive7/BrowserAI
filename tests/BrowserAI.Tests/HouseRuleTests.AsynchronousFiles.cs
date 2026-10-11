@@ -58,9 +58,13 @@ internal sealed partial class HouseRuleTests
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // Not vacuous over the tree: the conversion of 2026-10-11 left well over a
-        // hundred opens behind it, and a scan that found none had stopped reading.
-        await Assert.That(opens).IsGreaterThan(100);
+        // Not vacuous over the tree: 95 opens on 2026-10-11, measured through this scan
+        // once the suite's children had moved to Harness/ChildRunner, and a scan that
+        // finds fewer than half of them has stopped reading. Corrected the same day
+        // (previously "the conversion of 2026-10-11 left well over a hundred opens
+        // behind it", at a floor of 100), when the scan read 94 before the lock file's
+        // probe opened through a FileStream again.
+        await Assert.That(opens).IsGreaterThan(50);
 
         // ⚠️ THE CONTROLS, synthetic because a converted tree is indistinguishable from
         // a scan whose needle stopped matching. Composed from parts, as the needles are.

@@ -244,12 +244,7 @@ internal static class LockFile
         try
         {
             // Opened for asynchronous I/O, and nothing is read or written: the open is the question.
-            using var probe = File.OpenHandle(
-                path,
-                FileMode.Open,
-                FileAccess.ReadWrite,
-                FileShare.ReadWrite | FileShare.Delete,
-                FileOptions.Asynchronous);
+            using var probe = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1, FileOptions.Asynchronous);
 
             return new LockFileAnswer(LockFileState.Released, null);
         }

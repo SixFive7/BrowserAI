@@ -1178,7 +1178,7 @@ internal sealed partial class HouseRuleTests
     /// <remarks>
     /// <para>
     /// <b>Following an entry is not free and the cost is not local.</b>
-    /// <c>SessionIndex.Follow</c> ends at <c>SessionLock.ReadRecord</c>, which
+    /// <c>SessionIndex.Follow</c> ends at <c>SessionLock.ReadRecordAsync</c>, which
     /// opens the session's store read-only and waits <c>SQLITE_BUSY</c> and
     /// <c>SQLITE_IOERR</c> out inside <c>RenameWindow</c>'s budget -- so one
     /// session anywhere on the machine whose <c>browserai.data</c> is denied or
@@ -1187,7 +1187,7 @@ internal sealed partial class HouseRuleTests
     /// session on the machine, to report the few that matched.
     /// <i>(Corrected 2026-08-26, previously "a strict parse of up to 250 log
     /// entries and all their arguments, opened through
-    /// <c>RenameWindow.WaitOut</c> ... whose <c>browserai.json</c> is denied or
+    /// <c>RenameWindow.WaitOutAsync</c> ... whose <c>browserai.json</c> is denied or
     /// held" -- the record is a database, there is no cap on entries and no
     /// argument is stored at all. The cost is smaller and the position of the
     /// filter is the same rule.)</i>
@@ -1195,7 +1195,7 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// ⚠️ <b>This is a rule about the POSITION of the filter and not about the
     /// word.</b> <c>Follow()</c> stays exactly as it is and stays whole-machine:
-    /// <c>SessionIndex.Sweep</c>, <c>SessionManager.LiveSessions</c> and
+    /// <c>SessionIndex.Sweep</c>, <c>SessionManager.LiveSessionsAsync</c> and
     /// <c>StraySweep</c> all need every entry, and the non-vacuity assertion
     /// below is what keeps a later change from quietly moving the two of them
     /// this scan can see onto the subtree read.
@@ -1241,7 +1241,7 @@ internal sealed partial class HouseRuleTests
         // carried on 2026-08-24.
         string[] planted =
         [
-            "        foreach (var entry in _index." + Walk + "())",
+            "        foreach (var entry in await _index." + Walk + "().ConfigureAwait(false))",
             "        {",
             "            if (entry.Session is not { } session || !" + Subtree + "session, prefix))",
             "            {",
@@ -1258,7 +1258,7 @@ internal sealed partial class HouseRuleTests
         // the filter and not the presence of the word.
         string[] corrected =
         [
-            "        foreach (var entry in _index.FollowUnder(prefix))",
+            "        foreach (var entry in await _index.FollowUnderAsync(prefix))",
             "        {",
             "            if (entry.Session is not { } session)",
             "            {",
@@ -1288,7 +1288,7 @@ internal sealed partial class HouseRuleTests
     /// ⚠️ <b>W8, and the reason it needs a scan and not a note.</b>
     /// <c>SessionIndex.IsUnder</c>'s own remark says <i>"Do not re-derive it ...
     /// Two spellings of this predicate is the class of defect this repository
-    /// keeps re-finding"</i> -- and <c>SessionManager.Beneath</c> was re-deriving
+    /// keeps re-finding"</i> -- and <c>SessionManager.BeneathAsync</c> was re-deriving
     /// the prefix three lines below a call into that very member, and had been
     /// since before the remark was written. It was benign because its input
     /// happened to be canonical already; what makes it worth a mechanism is that
@@ -1374,7 +1374,7 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// ⚠️ <b>Added 2026-08-24, because <c>SessionIndex.Follow</c>'s own remark
     /// said this was already asserted and it was not.</b> That remark named three
-    /// callers -- <c>Sweep</c>, <c>SessionManager.LiveSessions</c> and
+    /// callers -- <c>Sweep</c>, <c>SessionManager.LiveSessionsAsync</c> and
     /// <c>StraySweep</c> -- and cited
     /// <see cref="NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry"/> for it.
     /// That scan names none of them: it holds that no <c>foreach</c> over the
@@ -1387,8 +1387,8 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// <b>Each is machine-wide by design and the reason differs per caller</b>:
     /// <c>SessionIndex.Sweep</c> would otherwise leave entries un-swept forever;
-    /// <c>SessionManager.LiveSessions</c> answers about a browsers root that is
-    /// machine-wide; <c>StraySweep.AttributeByProfileLock</c>'s whole reach is the
+    /// <c>SessionManager.LiveSessionsAsync</c> answers about a browsers root that is
+    /// machine-wide; <c>StraySweep.AttributeByProfileLockAsync</c>'s whole reach is the
     /// point of it. Moving any of them onto the subtree read is a behaviour change
     /// that has to be made deliberately, which is what a named assertion costs and
     /// a lower bound does not.
@@ -1402,8 +1402,14 @@ internal sealed partial class HouseRuleTests
     /// cannot read.
     /// </para>
     /// <para>
+    /// <i>Corrected 2026-10-11 (previously the three declarations and the two reads
+    /// without the <c>Async</c> suffix)</i>, when the maintainer's decision 54 made each
+    /// of them asynchronous: the scan went red on that day's tree naming all three as
+    /// not declared, which is the renamed-member finding its last control holds.
+    /// </para>
+    /// <para>
     /// <b>Watched red twice, against the real regression and not against the
-    /// control.</b> With <c>SessionManager.LiveSessions</c> moved onto the subtree
+    /// control.</b> With <c>SessionManager.LiveSessionsAsync</c> moved onto the subtree
     /// read this failed naming the file and the member, and the older scan failed
     /// too -- with <i>Expected to be greater than or equal to 2 but received 1</i>,
     /// which names nothing. With <c>SessionIndex.Sweep</c> moved instead, this was
@@ -1418,9 +1424,9 @@ internal sealed partial class HouseRuleTests
     {
         (string File, string Member)[] readers =
         [
-            (Path.Combine("src", "BrowserAI", "Sessions", "SessionIndex.cs"), "public SessionIndexSweep Sweep()"),
-            (Path.Combine("src", "BrowserAI", "Sessions", "SessionManager.cs"), "private List<string> LiveSessions()"),
-            (Path.Combine("src", "BrowserAI", "Sessions", "StraySweep.cs"), "private int AttributeByProfileLock("),
+            (Path.Combine("src", "BrowserAI", "Sessions", "SessionIndex.cs"), "public async Task<SessionIndexSweep> SweepAsync()"),
+            (Path.Combine("src", "BrowserAI", "Sessions", "SessionManager.cs"), "private async Task<List<string>> LiveSessionsAsync()"),
+            (Path.Combine("src", "BrowserAI", "Sessions", "StraySweep.cs"), "private async Task<int> AttributeByProfileLockAsync("),
         ];
 
         var offenders = new List<string>();
@@ -1446,7 +1452,7 @@ internal sealed partial class HouseRuleTests
         [
             "    private List<string> LiveSessions()",
             "    {",
-            "        foreach (var entry in _index." + Walk + "Under(prefix))",
+            "        foreach (var entry in await _index.FollowUnderAsync(prefix))",
             "        {",
             "        }",
             "    }",
@@ -1456,7 +1462,7 @@ internal sealed partial class HouseRuleTests
         [
             "    private List<string> LiveSessions()",
             "    {",
-            "        foreach (var entry in _index." + Walk + "())",
+            "        foreach (var entry in await _index." + Walk + "().ConfigureAwait(false))",
             "        {",
             "        }",
             "    }",
@@ -1534,7 +1540,13 @@ internal sealed partial class HouseRuleTests
     private const string Subtree = "IsUnder" + "(";
 
     /// <summary>The whole-machine read, composed for the same reason.</summary>
-    private const string Walk = "Fol" + "low";
+    /// <remarks>
+    /// <i>Corrected 2026-10-11 (previously the read without the <c>Async</c> suffix)</i>,
+    /// when the maintainer's decision 54 made the index's reads asynchronous: the walk
+    /// scan read no loop on that day's tree, <i>"Expected to be greater than or equal to
+    /// 2 but received 0"</i>.
+    /// </remarks>
+    private const string Walk = "Fol" + "lowAsync";
 
     /// <summary>
     /// The whole-machine read spelled as the walk itself, which is what a caller
@@ -1545,7 +1557,7 @@ internal sealed partial class HouseRuleTests
     /// Scope is what this gate is about: <c>Walk(prefix, ...)</c> is the regression,
     /// whatever depth follows it.
     /// </remarks>
-    private const string WholeMachine = "Wal" + "k(under: null";
+    private const string WholeMachine = "Wal" + "kAsync(under: null";
 
     /// <summary>The case-fold half of a prefix derivation.</summary>
     private const string Fold = "ToUpper" + "Invariant()";
