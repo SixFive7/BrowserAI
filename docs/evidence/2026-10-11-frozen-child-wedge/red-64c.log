@@ -1,0 +1,220 @@
+=== dotnet test "C:\Source\SixFive7\BrowserAI\.work\wt\async-red\BrowserAI.slnx" --no-build --treenode-filter "/*/*/(GateDriverTests|ClientRunTests)/*", started 2026-10-11T20:05:00.9980994+00:00 ===
+Running tests from C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed AClientAnArmStartedLeavesNoProcessBehindOnceTheArmEnds (10m 00s 495ms)
+  [Test Failure] AssertionException: Expected to be true, because the child the client started, pid 54768, was still running 10 minutes after the arm that started the client had ended, holding every handle it inherited
+but found False
+
+at Assert.That(gone).IsTrue().Because("the child the client started, pid 54768, was still running 10 minutes after the arm that started the client had ended, holding every handle it inherited")
+  from C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true, because the child the client started, pid 54768, was still running 10 minutes after the arm that started the client had ended, holding every handle it inherited
+  but found False
+  
+  at Assert.That(gone).IsTrue().Because("the child the client started, pid 54768, was still running 10 minutes after the arm that started the client had ended, holding every handle it inherited")
+    at BrowserAI.Tests.ClientRunTests.AClientAnArmStartedLeavesNoProcessBehindOnceTheArmEnds() in C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\ClientRunTests.cs:68
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput(Invoke-OrdinaryGate·ps1) (10m 10s 210ms)
+  [Test Failure] AssertionException: Expected to be true, because Invoke-OrdinaryGate.ps1 had not finished 10 minutes after it started, while process 83620 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: === ORDINARY RUN gate-arm starting 22:05:05 ===
+installer lock held: pid=42684 created=0
+scratch released after 0s
+the stand-in run of Invoke-OrdinaryGate.ps1, 199a0aa95a664857a7f598acba97943a
+but found False
+
+at Assert.That(finished).IsTrue().Because("Invoke-OrdinaryGate.ps1 had not finished 10 minutes after it started, while process 83620 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: === ORDINARY RUN gate-arm starting 22:05:05 ===
+installer lock held: pid=42684 created=0
+scratch released after 0s
+the stand-in run of Invoke-OrdinaryGate.ps1, 199a0aa95a664857a7f598acba97943a
+")
+  from C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true, because Invoke-OrdinaryGate.ps1 had not finished 10 minutes after it started, while process 83620 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: === ORDINARY RUN gate-arm starting 22:05:05 ===
+  installer lock held: pid=42684 created=0
+  scratch released after 0s
+  the stand-in run of Invoke-OrdinaryGate.ps1, 199a0aa95a664857a7f598acba97943a
+  but found False
+  
+  at Assert.That(finished).IsTrue().Because("Invoke-OrdinaryGate.ps1 had not finished 10 minutes after it started, while process 83620 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: === ORDINARY RUN gate-arm starting 22:05:05 ===
+  installer lock held: pid=42684 created=0
+  scratch released after 0s
+  the stand-in run of Invoke-OrdinaryGate.ps1, 199a0aa95a664857a7f598acba97943a
+  ")
+    at BrowserAI.Tests.GateDriverTests.ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput(String driver) in C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\GateDriverTests.cs:130
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput(Invoke-ReleaseGate·ps1) (10m 10s 210ms)
+  [Test Failure] AssertionException: Expected to be true, because Invoke-ReleaseGate.ps1 had not finished 10 minutes after it started, while process 82744 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: installer lock held: pid=4136 created=0
+=== RELEASE RUN gate-arm-1 starting 22:05:05 ===
+scratch released after 0s
+the stand-in run of Invoke-ReleaseGate.ps1, 2b84eaf604944f3e888767646c432092
+but found False
+
+at Assert.That(finished).IsTrue().Because("Invoke-ReleaseGate.ps1 had not finished 10 minutes after it started, while process 82744 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: installer lock held: pid=4136 created=0
+=== RELEASE RUN gate-arm-1 starting 22:05:05 ===
+scratch released after 0s
+the stand-in run of Invoke-ReleaseGate.ps1, 2b84eaf604944f3e888767646c432092
+")
+  from C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true, because Invoke-ReleaseGate.ps1 had not finished 10 minutes after it started, while process 82744 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: installer lock held: pid=4136 created=0
+  === RELEASE RUN gate-arm-1 starting 22:05:05 ===
+  scratch released after 0s
+  the stand-in run of Invoke-ReleaseGate.ps1, 2b84eaf604944f3e888767646c432092
+  but found False
+  
+  at Assert.That(finished).IsTrue().Because("Invoke-ReleaseGate.ps1 had not finished 10 minutes after it started, while process 82744 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: installer lock held: pid=4136 created=0
+  === RELEASE RUN gate-arm-1 starting 22:05:05 ===
+  scratch released after 0s
+  the stand-in run of Invoke-ReleaseGate.ps1, 2b84eaf604944f3e888767646c432092
+  ")
+    at BrowserAI.Tests.GateDriverTests.ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput(String driver) in C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\GateDriverTests.cs:130
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput(invoke-release-gate·sh) (10m 10s 240ms)
+  [Test Failure] AssertionException: Expected to be true, because invoke-release-gate.sh had not finished 10 minutes after it started, while process 51508 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: installer lock held: pid=14368 created=0
+=== RELEASE RUN gate-arm-1 starting 22:05:06 ===
+scratch released after 0s
+the stand-in run of invoke-release-gate.sh, 4c16e7482f4e4981ba595131e97e1b10
+but found False
+
+at Assert.That(finished).IsTrue().Because("invoke-release-gate.sh had not finished 10 minutes after it started, while process 51508 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: installer lock held: pid=14368 created=0
+=== RELEASE RUN gate-arm-1 starting 22:05:06 ===
+scratch released after 0s
+the stand-in run of invoke-release-gate.sh, 4c16e7482f4e4981ba595131e97e1b10
+")
+  from C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true, because invoke-release-gate.sh had not finished 10 minutes after it started, while process 51508 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: installer lock held: pid=14368 created=0
+  === RELEASE RUN gate-arm-1 starting 22:05:06 ===
+  scratch released after 0s
+  the stand-in run of invoke-release-gate.sh, 4c16e7482f4e4981ba595131e97e1b10
+  but found False
+  
+  at Assert.That(finished).IsTrue().Because("invoke-release-gate.sh had not finished 10 minutes after it started, while process 51508 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: installer lock held: pid=14368 created=0
+  === RELEASE RUN gate-arm-1 starting 22:05:06 ===
+  scratch released after 0s
+  the stand-in run of invoke-release-gate.sh, 4c16e7482f4e4981ba595131e97e1b10
+  ")
+    at BrowserAI.Tests.GateDriverTests.ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput(String driver) in C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\GateDriverTests.cs:130
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput(invoke-ordinary-gate·sh) (10m 10s 254ms)
+  [Test Failure] AssertionException: Expected to be true, because invoke-ordinary-gate.sh had not finished 10 minutes after it started, while process 92308 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: === ORDINARY RUN gate-arm starting 22:05:05 ===
+installer lock held: pid=15400 created=0
+scratch released after 0s
+the stand-in run of invoke-ordinary-gate.sh, 589483d32b7844479497362a29e9457d
+but found False
+
+at Assert.That(finished).IsTrue().Because("invoke-ordinary-gate.sh had not finished 10 minutes after it started, while process 92308 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: === ORDINARY RUN gate-arm starting 22:05:05 ===
+installer lock held: pid=15400 created=0
+scratch released after 0s
+the stand-in run of invoke-ordinary-gate.sh, 589483d32b7844479497362a29e9457d
+")
+  from C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true, because invoke-ordinary-gate.sh had not finished 10 minutes after it started, while process 92308 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: === ORDINARY RUN gate-arm starting 22:05:05 ===
+  installer lock held: pid=15400 created=0
+  scratch released after 0s
+  the stand-in run of invoke-ordinary-gate.sh, 589483d32b7844479497362a29e9457d
+  but found False
+  
+  at Assert.That(finished).IsTrue().Because("invoke-ordinary-gate.sh had not finished 10 minutes after it started, while process 92308 its run left behind held the run's output; a driver that waits for the end of a pipe waits for that process. It said: === ORDINARY RUN gate-arm starting 22:05:05 ===
+  installer lock held: pid=15400 created=0
+  scratch released after 0s
+  the stand-in run of invoke-ordinary-gate.sh, 589483d32b7844479497362a29e9457d
+  ")
+    at BrowserAI.Tests.GateDriverTests.ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput(String driver) in C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\GateDriverTests.cs:130
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 5 error(s) (10m 11s 776ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage -- what this run actually exercised
+  ==============================================================================
+    published slice     ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+    repository payload  ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\payload\payload.json
+    Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+    Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+    packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\Releases\BrowserAI.app-<version>-full.nupkg
+    shipping release    ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\Releases\BrowserAI.app-<version>-full.nupkg, at the top of the directory and not under test-pack
+    client CLI          ABSENT   claude.exe, not found: the payload's RegisterAI, which finds the clients, is not at 'C:\Source\SixFive7\BrowserAI\.work\wt\async-red\payload\registerai\RegisterAI.exe'
+    release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+    git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\async-red rev-parse --is-inside-work-tree said true
+    Codex CLI           ABSENT   codex.exe, not found: the payload's RegisterAI, which finds the clients, is not at 'C:\Source\SixFive7\BrowserAI\.work\wt\async-red\payload\registerai\RegisterAI.exe'
+    publish freshness   NOT ESTABLISHED  nothing has been published: there is no directory at 'C:\Source\SixFive7\BrowserAI\.work\wt\async-red\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish' -- nothing was compared, so no line in this log says whether a binary matches the tree
+    release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     NOT RUN  no first-run test has run in this session yet
+    drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+    filter              FILTERED   --treenode-filter '/*/*/(GateDriverTests|ClientRunTests)/*' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+        ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+        about what it selected and about nothing else, and its total/failed/succeeded
+        block is character-for-character the shape a full run's is. --treenode-filter
+        also reads '|' as an OR INSIDE one path segment and never between whole path
+        patterns, so a filter can select far more or far less than it looks like it
+        selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+    foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+        ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+        A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+        window belongs to an ancestor of the launching process, so a change that stole
+        focus on a default install would read as clean on this machine. It is a blind
+        spot in the checking rather than a defect to repair, and nothing here may
+        change the setting: see HAZARDS.md and kb/windows/detection.md.
+    commit charge       TIGHT      start 119,538 MiB (83.8%) · end 120,200 MiB (84.3%) · limit 142,639 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+        ⚠️  Commit was tight during this run. A timing failure here is not safely
+        attributable to the code under test; re-run it on a quieter machine before
+        recording it as a defect.
+    windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 8797 events, 14 about visible root windows and none of them this run's, 145 windows in the baseline
+    firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 296 scans, 19 processes read under the browsers root and the scratch roots
+    installer lock      TAKEN    taken by this run (pid=12396 created=134362227018595743), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+  ==============================================================================
+    7 capability above is ABSENT and no test in this run asked for it.
+        Nothing was degraded, and nothing here proves it could have been exercised.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\async-red\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 5
+  failed: 5
+  succeeded: 0
+  skipped: 0
+  duration: 10m 13s 096ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)
+
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\Releases\BrowserAI.app-<version>-full.nupkg
+  shipping release    ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\Releases\BrowserAI.app-<version>-full.nupkg, at the top of the directory and not under test-pack
+  client CLI          ABSENT   claude.exe, not found: the payload's RegisterAI, which finds the clients, is not at 'C:\Source\SixFive7\BrowserAI\.work\wt\async-red\payload\registerai\RegisterAI.exe'
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\async-red\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\async-red rev-parse --is-inside-work-tree said true
+  Codex CLI           ABSENT   codex.exe, not found: the payload's RegisterAI, which finds the clients, is not at 'C:\Source\SixFive7\BrowserAI\.work\wt\async-red\payload\registerai\RegisterAI.exe'
+  publish freshness   NOT ESTABLISHED  nothing has been published: there is no directory at 'C:\Source\SixFive7\BrowserAI\.work\wt\async-red\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish' -- nothing was compared, so no line in this log says whether a binary matches the tree
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\async-red\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/(GateDriverTests|ClientRunTests)/*' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       TIGHT      start 119,538 MiB (83.8%) · end 120,200 MiB (84.3%) · limit 142,639 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+      ⚠️  Commit was tight during this run. A timing failure here is not safely
+      attributable to the code under test; re-run it on a quieter machine before
+      recording it as a defect.
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 8797 events, 14 about visible root windows and none of them this run's, 145 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 296 scans, 19 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=12396 created=134362227018595743), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  7 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================
+
+RUN-DONE exit=2 at 2026-10-11T20:15:14.9975050+00:00

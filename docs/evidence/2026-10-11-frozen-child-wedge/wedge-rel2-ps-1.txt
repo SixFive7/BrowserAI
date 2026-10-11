@@ -1,0 +1,32 @@
+The second release gate's PowerShell driver, held in its tee after a green first run. Read 2026-10-11 between 12:28Z and 12:41Z, nothing changed.
+
+Driver: pwsh pid 85140, created 2026-10-11T12:03:50.3666216Z, build/Invoke-ReleaseGate.ps1 -Prefix rel2-ps, holding .work\installer.lock.
+  Its log rel2-ps-driver.log and rel2-ps-1.log last written 12:18:10Z, ending at the dotnet test summary (1333 of 1333, 13m 21s 044ms).
+  .work\suite-coverage.txt written 12:18:04Z, never appended to the run log: line 118, `& dotnet test ... 2>&1 | Tee-Object -LiteralPath $log`, has not returned.
+  rel2-ps-1.log opened for read with FileShare.None at 12:3xZ: refused, "being used by another process" -- the tee still holds it.
+  Children of 85140: conhost 93132 only. Its CPU time stayed 3.140625 s; 17 threads, all waiting.
+  No dotnet, test host, BrowserAI or node process created since 12:03Z is alive, and no browser but content processes of the installed
+  C:\Program Files\Mozilla Firefox, whose parent is that Firefox's own pid 54064 (every process listed by creation time, by pid and parent).
+
+The one process alive since then whose parent is gone and whose time fits the run:
+  git.exe pid 102292, QueryFullProcessImageName: C:\Program Files\Git\mingw64\bin\git.exe
+  created 2026-10-11T12:05:20.2023564Z, one thread (28792), ThreadState Wait, WaitReason Suspended, thread start 12:05:20.2023590Z, CPU 0, 37 handles, working set 2060288
+  parent pid 61564: gone
+  command line: git.exe -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c hook.<every hook>.enabled=false ... -c core.hooksPath=\\.\NUL -c core.fsmonitor= -C C:\Source\SixFive7\BrowserAI worktree list --porcelain -z
+  conhost.exe pid 99988, parent 61564, created 2026-10-11T12:05:20.1455842Z, alive
+
+The arm running when it appeared (rel2-ps-1's TUnit report):
+  ClientReconnectTests.ARealClaudeCodeMeetsTheRefusalOnceAndItsRetryGoesThrough, 12:05:01 to 12:05:21, passed
+  real claude.exe working directory: .work\test-scratch\suite-cc-e62bbbfa9ad\proj (inside the worktree, whose main checkout is C:\Source\SixFive7\BrowserAI)
+  shim launches.log: 12:05:19.916Z "client closed its end; ending server=90180"; 12:05:20.173Z "EXIT shim=71936"
+  proj\claude.stderr.txt written 12:05:20.2179Z (its stderr's end); proj\claude.stdout.txt written 12:05:21.2499Z (its stdout's end)
+
+Read, not measured: claude started the Git for Windows launcher (61564, cmd\git.exe, with a console of its own, 99988) as it ended; the launcher
+created the real git suspended and died before resuming it; the real git holds every handle it inherited along test host -> claude -> launcher,
+which would include the test host's own standard output, the pipe the driver's tee reads. Not verified: that 102292 holds that handle; no handle
+tool is on this machine and the shell is not elevated.
+
+Control session after rel2-ps-1: answered (39b-g2-1-after-rel2-ps-1.txt). Stop arm in rel2-ps-1: passed, 10.5 s, 12:04:51.54Z to 12:05:02.05Z.
+
+Resolved 2026-10-11T12:42:19.52Z, on the root's authority (option a): pid 102292 re-verified through one handle -- image C:\Program Files\Git\mingw64\bin\git.exe, created 2026-10-11T12:05:20.2023564Z (FILETIME 134361939202023564), command line ending '-C C:\Source\SixFive7\BrowserAI worktree list --porcelain -z' with '-c core.hooksPath=\.\NUL', parent 61564 not alive -- and ended through that same handle, nothing else touched.
+The driver went on in the same second: rel2-ps-1.log gained its coverage block (45 lines), rel2-ps-1-after.txt was written at 12:42:19Z, '=== RELEASE RUN rel2-ps-1 done 14:42:19, clearance clean ===', and rel2-ps-2 started at 12:42:19Z. So the suspended git was what held the tee's pipe open: measured by ending it, not by reading its handles.

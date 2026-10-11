@@ -1,0 +1,21 @@
+The second release gate's second PowerShell run, rel2-ps-2: its test host crashed, and the driver is held in its tee again. Read 2026-10-11 12:46Z to 12:50Z, nothing changed.
+
+rel2-ps-2.log: failed (58s 585ms), Exit code -532462766; 652 of 1333 reported, 0 failed; the summary written 12:43:41Z.
+  Unhandled exception. System.ObjectDisposedException: Cannot access a disposed object. Object name: Microsoft.Win32.SafeHandles.SafeWaitHandle.
+  at System.Threading.EventWaitHandle.Set() at BrowserAI.Runtime.BrowserProvisioner.PollTicker.<.ctor>b__2_0(Object _) in src\BrowserAI\Runtime\BrowserProvisioner.cs:line 2026, from TimerQueue.FireNextTimers on a pool thread.
+  No TUnit report was written for this run: TestResults holds rel2-ps-1's files (12:18:05Z) and nothing newer.
+
+The process holding the tee: cmd.exe pid 23920, command line "C:\WINDOWS\system32\cmd.exe" /d /c "exit 0", created 2026-10-11T12:43:35.8656820Z, 1 thread(s), state Wait Suspended, CPU 0 s; parent 23500 gone.
+  23500 was rel2-ps-2's test host: the ten background records it left in %LOCALAPPDATA%\BrowserAI\background are named BrowserAI-Background-suite-23500-<guid>.json (12:42:44Z to 12:43:28Z).
+  The command line is InstallerLockTests.ExitedChildAsync's, exactly: cmd.exe /d /c "exit 0" through Process.Start.
+  Read, not measured: the test host ended while that thread was inside CreateProcess, which creates the first thread suspended and resumes it last; the child kept every handle it inherited.
+
+Left in the installed data root by the crashed run: 22 instance folders in %LOCALAPPDATA%\BrowserAI\instances created 12:42:44Z to 12:43:29Z, and the ten suite-23500 records above.
+The background 46780 is unaffected (39b-g2-2-after-rel2-ps-2.txt), and a clearance snapshot taken by hand after the crash matches rel2-ps-2-before.txt.
+
+Resolved 2026-10-11, on the root's answer to Q2 (b), in this order:
+  12:53:36.10Z driver pwsh 85140 (which I started) re-verified through one handle -- image C:\Program Files\PowerShell\7\pwsh.exe, created 2026-10-11T12:03:50.3666216Z (FILETIME 134361938303666216), command line '-NoProfile -NonInteractive -File build/Invoke-ReleaseGate.ps1 -Prefix rel2-ps' -- and ended through that handle, so no run happens on the unfixed tree. Its console host 93132 ended with it.
+  12:53:58.53Z cmd.exe 23920 re-verified -- image C:\Windows\System32\cmd.exe, created 2026-10-11T12:43:35.8656825Z (FILETIME 134361962158656825, CIM 12:43:35.865682Z), one thread, Wait Suspended, 0 CPU, parent 23500 not alive, command line '"C:\WINDOWS\system32\cmd.exe" /d /c "exit 0"', which is InstallerLockTests.ExitedChildAsync's -- and ended through that handle.
+    (A first attempt at 12:53:37Z refused itself and did nothing: the expected creation time had been written from CIM's microseconds with a 0 appended, .8656820 against the handle's .8656825.)
+  12:54:00Z the installer lock C:\Source\SixFive7\BrowserAI\.work\installer.lock, reading 'holder=gate pid=85140 created=134361938303666216 at=2026-10-11T12:03:50Z', released by renaming it to installer.lock.released-2026-10-11T125400Z-by-release-driver-85140, which is left in place.
+  The background shell that kept each run's report (keep-reports.sh over rel2-ps-driver.log) stopped with TaskStop: its driver would never write the line it waits for.

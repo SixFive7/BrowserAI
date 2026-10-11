@@ -383,6 +383,23 @@ was working** -- fourteen minutes were lost waiting on it. That is also why each
 driver prints a `starting` line, and why the caller must read the driver's own
 log for it before waiting.
 
+⚠️ **A DRIVER HANDS ITS RUN A FILE AND WAITS FOR THE RUN'S OWN PROCESS -- 64 c,
+the maintainer's words verbatim: *"64 c now"*, added 2026-10-11 by addition.**
+Until that day each driver read `dotnet test` through a pipe, a `Tee-Object` in
+PowerShell and a `tee` in Git Bash, the shape of the two invocations above, and a
+pipe ends only when every process holding its write end has closed it. Twice that
+day a suspended child of a test host held it after the run had printed its
+summary, and the driver waited with nothing in any log to say why ([the hazard
+index](HAZARDS.md#hazard-index), the frozen-child wedge). Each driver now starts
+the run with its output redirected to the run's log, waits for that process, and
+copies the log into its own output as it grows; the coverage block is appended
+with the log shared, because a child the run left behind may still hold it open.
+`GateDriverTests.ADriverFinishesWhileAChildItsRunLeftBehindStillHoldsTheRunsOutput`
+runs all four against a run that leaves such a child behind. **The two invocations
+above are still the 2026-08-23 shape**, and a run started by hand that way can
+still be held by such a child, which is one more reason the drivers are the way to
+run a gate.
+
 ⚠️ **Between two runs, wait for `.work\test-scratch` to be released, not
 for the first run to report.** *Added 2026-09-15.* A test host that has printed
 its summary has not necessarily let go: on the 2026-09-15 release gate, **137
