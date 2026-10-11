@@ -268,6 +268,18 @@ internal sealed partial class RelayEngine
     {
         if (frame.Id is not { } id)
         {
+            // 47 b, 2026-10-11: the one answer the background sends with no id is its
+            // refusal of a connection whose first message did not come in time, and the
+            // close follows it. Named by its kind and its sentence, which are BrowserAI's
+            // own words; the close that follows is handled as every close is.
+            if (frame.IsError
+                && RelayFrame.Node(frame.Payload) is { } error
+                && Text(Member(Member(error, "data"), "refusal")) is RelayProtocol.RefusedForNoFirstMessage)
+            {
+                RelayLog.ClosedForNoFirstMessage(_logger, RelayProtocol.RefusedForNoFirstMessage, Text(Member(error, "message")) ?? string.Empty);
+                return;
+            }
+
             RelayLog.UnreadableBackgroundFrame(_logger, frame.Bytes.Length);
             return;
         }

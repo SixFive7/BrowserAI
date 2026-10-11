@@ -77,4 +77,15 @@ internal static class RelayProtocol
 
     /// <summary>A refusal of the greeting: the background has decided to stop.</summary>
     public const string RefusedWhileStopping = "stopping";
+
+    /// <summary>
+    /// The background's refusal of a connection whose first message did not come within
+    /// <see cref="RelayConstants.HoldBound"/>: an error with a null id, since nothing was
+    /// asked, after which the background closes the connection.
+    /// </summary>
+    /// <remarks>
+    /// <b>34 d, decided 2026-10-10</b>, built 2026-10-11; and <b>47 b, decided 2026-10-11</b>:
+    /// the relay names it in its log by this kind and its sentence.
+    /// </remarks>
+    public const string RefusedForNoFirstMessage = "firstMessage";
 }

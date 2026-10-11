@@ -403,12 +403,26 @@ Write-Host "vpk $toolVersion matches Velopack $libraryVersion."
 
 # --- 2. The version is derived ------------------------------------------------
 if (-not $PackVersion) {
-    $derived = & dotnet msbuild $project -t:MinVer -getProperty:MinVerVersion -v:quiet 2>&1 | Out-String
+    # ⚠️ -restore, added 2026-10-11: MinVer's targets arrive with the restore, so in a
+    # checkout no restore has touched, a fresh clone or a new worktree, the query met
+    # MSB4057 "The target "MinVer" does not exist in the project" and the line below
+    # blamed the tags. Reproduced at b0c5ef6a in a detached worktree; with the restore the
+    # same query answered 1.1.1-alpha.0.341. In a restored tree the restore changes nothing.
+    $derived = & dotnet msbuild $project -restore -t:MinVer -getProperty:MinVerVersion -v:quiet 2>&1 | Out-String
     $PackVersion = ([regex]::Match($derived, '(?m)^\s*(?<v>\d+\.\d+\.\d+[0-9A-Za-z.\-+]*)\s*$')).Groups['v'].Value
 }
 
 if (-not $PackVersion) {
-    Write-Error "Could not derive a version. MinVer answers this from the nearest git tag; a checkout with no tags produces nothing here and a shallow clone produces 0.0.0. 'git fetch --tags', or set fetch-depth to 0."
+    # The two causes told apart: an msbuild that failed is not a checkout with no tags.
+    $failed = ([regex]::Match($derived, '(?m)error [A-Z]+\d+:[^\r\n]*')).Value
+
+    if ($failed) {
+        Write-Error "Could not derive a version, because msbuild failed before MinVer could answer: $failed"
+    }
+    else {
+        Write-Error "Could not derive a version. MinVer answers this from the nearest git tag; a checkout with no tags produces nothing here and a shallow clone produces 0.0.0. 'git fetch --tags', or set fetch-depth to 0."
+    }
+
     exit 1
 }
 

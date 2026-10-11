@@ -12,8 +12,12 @@ namespace BrowserAI.Relay;
 /// frame's <c>params</c>, <c>result</c> and <c>error</c> are the client's data or the
 /// background's, and none of them is ever written here; neither is any environment
 /// variable, since a Claude Code server's environment carries a messaging socket's
-/// secret token (the root's measurement, 2026-10-08). Counts, ids, methods, the
+/// secret token (a measurement of 2026-10-08). Counts, ids, methods, the
 /// relay's own reasons and the exceptions of its own calls are what remains.
+/// ⚠️ <i>Added 2026-10-11 by addition, 47 b:</i> one error is quoted, the background's
+/// refusal of a connection whose first message did not come in time, by its kind and its
+/// sentence. Both are BrowserAI's own words, a fixed sentence with a number in it, and
+/// they are the reason the close that follows it happened.
 /// </remarks>
 internal static partial class RelayLog
 {
@@ -157,4 +161,14 @@ internal static partial class RelayLog
         Level = LogLevel.Warning,
         Message = "Relay: telling what this client needs after an update failed ({ExceptionType}, {HResult}), so its greeting says Unknown.")]
     public static partial void ClassifyFailed(ILogger logger, string exceptionType, int hresult);
+
+    /// <summary>The background refused this connection because its first message did not come in time (47 b, 2026-10-11).</summary>
+    /// <param name="logger">Where to log.</param>
+    /// <param name="refusal">The refusal's kind, <see cref="RelayProtocol.RefusedForNoFirstMessage"/>.</param>
+    /// <param name="sentence">The background's sentence.</param>
+    [LoggerMessage(
+        EventId = 23,
+        Level = LogLevel.Warning,
+        Message = "Relay: the background refused this connection, for the reason it calls {Refusal}, and closes it: {Sentence}")]
+    public static partial void ClosedForNoFirstMessage(ILogger logger, string refusal, string sentence);
 }

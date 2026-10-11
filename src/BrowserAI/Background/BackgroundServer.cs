@@ -81,7 +81,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     /// The kind of the refusal a connection meets when its first message has not come
     /// within <see cref="FirstFrameBound"/>, in <c>data.refusal</c>.
     /// </summary>
-    public const string RefusedForNoFirstMessage = "firstMessage";
+    public const string RefusedForNoFirstMessage = Relay.RelayProtocol.RefusedForNoFirstMessage;
 
     /// <summary>
     /// How long a connection may take to send its first message: as long as a relay holds
