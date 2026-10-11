@@ -88,7 +88,7 @@ internal static partial class JobProbe
     /// <param name="command">The executable to start inside the job.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>Never, on the happy path: the process parks until it is terminated.</returns>
-    public static int Launcher(
+    public static async Task<int> LauncherAsync(
         string outputDirectory,
         string readyFile,
         TimeSpan readyPatience,
@@ -129,14 +129,14 @@ internal static partial class JobProbe
 
         try
         {
-            WaitForFile(readyFile, readyPatience);
+            await WaitForFileAsync(readyFile, readyPatience);
         }
         catch (TimeoutException failure)
         {
             // Written before the throw, because the throw kills this process and
             // KILL_ON_JOB_CLOSE then takes the whole tree with it -- so this is
             // the last moment at which anything can say what happened.
-            File.WriteAllText(
+            await File.WriteAllTextAsync(
                 Path.Combine(outputDirectory, LauncherErrorFile),
                 $"{failure.Message}{Environment.NewLine}"
                 + $"The child had{(process.HasExited ? string.Empty : " not")} exited"
@@ -153,7 +153,7 @@ internal static partial class JobProbe
 
         // Descendants a browser or a runtime starts asynchronously -- renderers,
         // GPU, crashpad -- appear after the child reports ready.
-        WaitUntilTheTreeStopsGrowing(job, readyPatience);
+        await WaitUntilTheTreeStopsGrowingAsync(job, readyPatience);
 
         // ⚠️ Two snapshots of the job's own membership, taken either side of the
         // walk, because a live browser is not a static tree: Chromium starts and
@@ -255,18 +255,18 @@ internal static partial class JobProbe
                 [.. stableJobMembers.Where(id => !walked.Contains(id)).Select(id => JsonValue.Create(id))]),
             ["escapees"] = escapees,
             ["walk"] = rows,
-            ["childReport"] = ReadChildReport(readyFile),
+            ["childReport"] = await ReadChildReportAsync(readyFile),
         };
 
-        File.WriteAllText(Path.Combine(outputDirectory, "report.json"), report.ToJsonString(), new UTF8Encoding(false));
+        await File.WriteAllTextAsync(Path.Combine(outputDirectory, "report.json"), report.ToJsonString(), new UTF8Encoding(false));
 
         // The done marker is written last and is what the test waits on, so a
         // partially written report can never be read as a complete one.
-        File.WriteAllText(Path.Combine(outputDirectory, "done"), "ok", new UTF8Encoding(false));
+        await File.WriteAllTextAsync(Path.Combine(outputDirectory, "done"), "ok", new UTF8Encoding(false));
 
         // Parks until the test terminates it from outside, which is the event
         // the whole acceptance test exists to observe.
-        Thread.Sleep(Timeout.Infinite);
+        await Task.Delay(Timeout.Infinite);
         return 0;
     }
 
@@ -296,7 +296,7 @@ internal static partial class JobProbe
     /// <param name="readyFile">Where to report this process's own tree.</param>
     /// <param name="grandchildCount">How many grandchildren to start.</param>
     /// <returns>Never, on the happy path: the process parks until it is terminated.</returns>
-    public static int Child(string readyFile, int grandchildCount)
+    public static async Task<int> ChildAsync(string readyFile, int grandchildCount)
     {
         // FIRST, while the only jobs above this process are BrowserAI's and the
         // suite's -- neither of which permits breakaway. This is the plain
@@ -356,17 +356,17 @@ internal static partial class JobProbe
             },
         };
 
-        File.WriteAllText(readyFile, report.ToJsonString(), new UTF8Encoding(false));
+        await File.WriteAllTextAsync(readyFile, report.ToJsonString(), new UTF8Encoding(false));
 
-        Thread.Sleep(Timeout.Infinite);
+        await Task.Delay(Timeout.Infinite);
         return 0;
     }
 
     /// <summary>A leaf process that does nothing but exist until it is killed.</summary>
     /// <returns>Never: the process parks until it is terminated.</returns>
-    public static int Grandchild()
+    public static async Task<int> GrandchildAsync()
     {
-        Thread.Sleep(Timeout.Infinite);
+        await Task.Delay(Timeout.Infinite);
         return 0;
     }
 
@@ -427,11 +427,11 @@ internal static partial class JobProbe
         return (0, (int)information.ProcessId);
     }
 
-    private static JsonNode? ReadChildReport(string readyFile)
+    private static async Task<JsonNode?> ReadChildReportAsync(string readyFile)
     {
         try
         {
-            return JsonNode.Parse(File.ReadAllText(readyFile));
+            return JsonNode.Parse(await File.ReadAllTextAsync(readyFile));
         }
 #pragma warning disable CA1031 // A missing or malformed child report is reported as absent; the walk is the real evidence.
         catch (Exception)
@@ -457,7 +457,7 @@ internal static partial class JobProbe
         {
             var buffer = new byte[4096];
 
-            using var file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            await using var file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, bufferSize: 0, FileOptions.Asynchronous);
 
             int read;
 
@@ -506,7 +506,7 @@ internal static partial class JobProbe
     /// </remarks>
     /// <param name="job">The job whose membership is being watched.</param>
     /// <param name="patience">The host's budget, shared and not re-invented.</param>
-    private static void WaitUntilTheTreeStopsGrowing(JobObject job, TimeSpan patience)
+    private static async Task WaitUntilTheTreeStopsGrowingAsync(JobObject job, TimeSpan patience)
     {
         // Ten readings 100 ms apart: one second of stillness, which is the
         // criterion, not a duration to spend.
@@ -528,11 +528,11 @@ internal static partial class JobProbe
                 return;
             }
 
-            Thread.Sleep(100);
+            await Task.Delay(100);
         }
     }
 
-    private static void WaitForFile(string path, TimeSpan patience)
+    private static async Task WaitForFileAsync(string path, TimeSpan patience)
     {
         var deadline = Stopwatch.StartNew();
 
@@ -543,7 +543,7 @@ internal static partial class JobProbe
                 return;
             }
 
-            Thread.Sleep(25);
+            await Task.Delay(25);
         }
 
         throw new TimeoutException($"The child never wrote '{path}'.");

@@ -64,7 +64,7 @@ internal static partial class ClientProbe
     /// <param name="reportPath">Where to write the report, once everything is up.</param>
     /// <param name="backgroundPipe">The pipe of the background the test started, which the relay reaches.</param>
     /// <returns>Nothing, ever: it blocks until this process is terminated.</returns>
-    public static int Start(string browserAi, string workingDirectory, int testProcessId, string reportPath, string backgroundPipe)
+    public static async Task<int> StartAsync(string browserAi, string workingDirectory, int testProcessId, string reportPath, string backgroundPipe)
     {
         // CA2000 is disabled for this statement and the two stream wrappers
         // below, and nothing else. Nothing here is ever disposed on purpose:
@@ -98,7 +98,7 @@ internal static partial class ClientProbe
 
         // Drained on a background thread, so a BrowserAI writing diagnostics
         // cannot fill a pipe nobody is reading and block.
-        _ = Task.Run(() => Drain(process.StandardError));
+        _ = Task.Run(() => DrainAsync(process.StandardError));
 
 #pragma warning disable CA2000 // See above: this process is killed, not unwound, and closing these would close BrowserAI's stdin.
         var writer = new StreamWriter(process.StandardInput, new UTF8Encoding(false)) { NewLine = "\n", AutoFlush = true };
@@ -107,14 +107,14 @@ internal static partial class ClientProbe
 
         var session = Path.Combine(workingDirectory, "watcher-session");
 
-        _ = Exchange(writer, reader, 1, "initialize", new JsonObject
+        _ = await ExchangeAsync(writer, reader, 1, "initialize", new JsonObject
         {
             ["protocolVersion"] = "2025-11-25",
             ["capabilities"] = new JsonObject(),
             ["clientInfo"] = new JsonObject { ["name"] = "client-liveness probe", ["version"] = "1" },
         });
 
-        writer.WriteLine(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = "notifications/initialized" }.ToJsonString());
+        await writer.WriteLineAsync(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = "notifications/initialized" }.ToJsonString());
 
         // ⚠️ IT ASKS FOR THE TOOL LIST, BECAUSE EVERY REAL CLIENT DOES. Since
         // Q261, BrowserAI refuses the first `tools/call` that arrives on a
@@ -123,9 +123,9 @@ internal static partial class ClientProbe
         // this probe's own `browserai_init`, the session is never opened, and the
         // navigate below reports `navigated: false` about a defect that is the
         // probe's. Measured: exactly this, on the gate run of 2026-09-24.
-        _ = Exchange(writer, reader, 2, "tools/list", new JsonObject());
+        _ = await ExchangeAsync(writer, reader, 2, "tools/list", new JsonObject());
 
-        _ = Exchange(writer, reader, 3, "tools/call", new JsonObject
+        _ = await ExchangeAsync(writer, reader, 3, "tools/call", new JsonObject
         {
             ["name"] = "browserai_init",
             ["arguments"] = new JsonObject
@@ -139,7 +139,7 @@ internal static partial class ClientProbe
             },
         });
 
-        var navigate = Exchange(writer, reader, 4, "tools/call", new JsonObject
+        var navigate = await ExchangeAsync(writer, reader, 4, "tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
             ["arguments"] = new JsonObject
@@ -174,12 +174,12 @@ internal static partial class ClientProbe
             ["jobHandle"] = Duplicate(job.Handle.DangerousGetHandle(), testProcessId),
         };
 
-        Write(reportPath, report);
+        await WriteAsync(reportPath, report);
 
         // Killed from outside, which is the event under test. Nothing below this
         // line runs, deliberately: a probe that shut anything down cleanly would
         // be the thing being observed instead of the watcher.
-        Thread.Sleep(Timeout.Infinite);
+        await Task.Delay(Timeout.Infinite);
         return 0;
     }
 
@@ -219,11 +219,11 @@ internal static partial class ClientProbe
     /// </remarks>
     /// <param name="path">Where the host is looking.</param>
     /// <param name="report">What to write.</param>
-    private static void Write(string path, JsonObject report)
+    private static async Task WriteAsync(string path, JsonObject report)
     {
         var temp = $"{path}.writing";
 
-        File.WriteAllText(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        await File.WriteAllTextAsync(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
         var waited = System.Diagnostics.Stopwatch.StartNew();
 
@@ -243,7 +243,7 @@ internal static partial class ClientProbe
                         failure);
                 }
 
-                Thread.Sleep(10);
+                await Task.Delay(10);
             }
         }
     }
@@ -284,13 +284,13 @@ internal static partial class ClientProbe
         return duplicate;
     }
 
-    private static void Drain(Stream stream)
+    private static async Task DrainAsync(Stream stream)
     {
         var buffer = new byte[4096];
 
         try
         {
-            while (stream.Read(buffer) > 0)
+            while (await stream.ReadAsync(buffer) > 0)
             {
                 // Discarded deliberately.
             }
@@ -303,9 +303,9 @@ internal static partial class ClientProbe
     }
 
     /// <summary>One request and the matching answer, correlated by id.</summary>
-    private static JsonObject Exchange(StreamWriter writer, StreamReader reader, int id, string method, JsonNode parameters)
+    private static async Task<JsonObject> ExchangeAsync(StreamWriter writer, StreamReader reader, int id, string method, JsonNode parameters)
     {
-        writer.WriteLine(new JsonObject
+        await writer.WriteLineAsync(new JsonObject
         {
             ["jsonrpc"] = "2.0",
             ["id"] = id,
@@ -313,7 +313,7 @@ internal static partial class ClientProbe
             ["params"] = parameters,
         }.ToJsonString());
 
-        while (reader.ReadLine() is { } line)
+        while (await reader.ReadLineAsync() is { } line)
         {
             if (line.Length is 0)
             {

@@ -44,6 +44,9 @@ internal static partial class WindowProbe
     private const uint WmClose = 0x0010;
     private const uint PmRemove = 0x0001;
 
+    /// <summary><c>QS_ALLINPUT</c>: any message wakes the wait.</summary>
+    private const uint QsAllInput = 0x04FF;
+
     // HWND_MESSAGE: the parent that makes a window message-only -- invisible,
     // never enumerated by EnumWindows, and scoped to this window station and
     // desktop.
@@ -98,7 +101,16 @@ internal static partial class WindowProbe
     /// string; anything else to let <c>DefWindowProc</c> answer it.
     /// </param>
     /// <returns>Zero once it is asked to stop, or one if a window could not be made.</returns>
-    public static unsafe int Publish(string className, string title, string reportPath, string suppress)
+    public static Task<int> PublishAsync(string className, string title, string reportPath, string suppress) =>
+        OnAWindowThreadAsync(reportPath, report => Publish(className, title, suppress, report));
+
+    /// <summary>The window thread's half of <see cref="PublishAsync"/>.</summary>
+    /// <param name="className">The singleton class to register.</param>
+    /// <param name="title">The title it publishes.</param>
+    /// <param name="suppress">Whether the WndProc answers <c>WM_GETTEXT</c> with an empty string.</param>
+    /// <param name="report">Hands what was created to the caller, which writes it.</param>
+    /// <returns>Zero once it is asked to stop, or one if a window could not be made.</returns>
+    private static unsafe int Publish(string className, string title, string suppress, Action<JsonObject> report)
     {
         _suppressWindowText = string.Equals(suppress, "suppress", StringComparison.Ordinal);
 
@@ -116,7 +128,7 @@ internal static partial class WindowProbe
 
         if (RegisterClassExW(ref registration) is 0)
         {
-            Write(reportPath, new JsonObject
+            report(new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["error"] = $"RegisterClassExW failed with {Marshal.GetLastPInvokeError()}",
@@ -129,7 +141,7 @@ internal static partial class WindowProbe
 
         if (window == nint.Zero)
         {
-            Write(reportPath, new JsonObject
+            report(new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["error"] = $"CreateWindowExW failed with {Marshal.GetLastPInvokeError()}",
@@ -160,7 +172,7 @@ internal static partial class WindowProbe
 
         if (RegisterClassExW(ref topLevelRegistration) is 0)
         {
-            Write(reportPath, new JsonObject
+            report(new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["error"] = $"RegisterClassExW failed for '{topLevelClassName}' with {Marshal.GetLastPInvokeError()}",
@@ -173,7 +185,7 @@ internal static partial class WindowProbe
 
         if (topLevelWindow == nint.Zero)
         {
-            Write(reportPath, new JsonObject
+            report(new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["error"] = $"CreateWindowExW failed for the top-level window with {Marshal.GetLastPInvokeError()}",
@@ -182,7 +194,7 @@ internal static partial class WindowProbe
             return 1;
         }
 
-        Write(reportPath, new JsonObject
+        report(new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["window"] = window.ToInt64(),
@@ -221,7 +233,9 @@ internal static partial class WindowProbe
                 _ = DispatchMessageW(ref message);
             }
 
-            Thread.Sleep(10);
+            // The window thread's wait for its next message, at most 10 ms, as the
+            // sleep it replaces was (2026-10-11, decision 54).
+            _ = MsgWaitForMultipleObjects(0, nint.Zero, waitAll: false, 10, QsAllInput);
         }
 
         return 0;
@@ -252,7 +266,15 @@ internal static partial class WindowProbe
     /// <param name="title">The window's caption.</param>
     /// <param name="reportPath">Where to write what was shown.</param>
     /// <returns>Zero once it is asked to stop, or one if the window could not be made.</returns>
-    public static unsafe int Show(string className, string title, string reportPath)
+    public static Task<int> ShowAsync(string className, string title, string reportPath) =>
+        OnAWindowThreadAsync(reportPath, report => Show(className, title, report));
+
+    /// <summary>The window thread's half of <see cref="ShowAsync"/>.</summary>
+    /// <param name="className">The class to register.</param>
+    /// <param name="title">The window's caption.</param>
+    /// <param name="report">Hands what was shown to the caller, which writes it.</param>
+    /// <returns>Zero once it is asked to stop, or one if the window could not be made.</returns>
+    private static unsafe int Show(string className, string title, Action<JsonObject> report)
     {
         var classNameBuffer = Marshal.StringToHGlobalUni(className);
         var titleBuffer = Marshal.StringToHGlobalUni(title);
@@ -268,7 +290,7 @@ internal static partial class WindowProbe
 
         if (RegisterClassExW(ref registration) is 0)
         {
-            Write(reportPath, new JsonObject
+            report(new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["error"] = $"RegisterClassExW failed with {Marshal.GetLastPInvokeError()}",
@@ -281,7 +303,7 @@ internal static partial class WindowProbe
 
         if (window == nint.Zero)
         {
-            Write(reportPath, new JsonObject
+            report(new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["error"] = $"CreateWindowExW failed with {Marshal.GetLastPInvokeError()}",
@@ -292,7 +314,7 @@ internal static partial class WindowProbe
 
         _ = ShowWindow(window, ShowNoActivate);
 
-        Write(reportPath, new JsonObject
+        report(new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["window"] = window.ToInt64(),
@@ -315,7 +337,9 @@ internal static partial class WindowProbe
                 _ = DispatchMessageW(ref message);
             }
 
-            Thread.Sleep(10);
+            // The window thread's wait for its next message, at most 10 ms, as the
+            // sleep it replaces was (2026-10-11, decision 54).
+            _ = MsgWaitForMultipleObjects(0, nint.Zero, waitAll: false, 10, QsAllInput);
         }
 
         return 0;
@@ -390,10 +414,10 @@ internal static partial class WindowProbe
     /// </remarks>
     /// <param name="path">Where the host is looking.</param>
     /// <param name="report">What to write.</param>
-    private static void Write(string path, JsonObject report)
+    private static async Task WriteAsync(string path, JsonObject report)
     {
         var temp = $"{path}.writing";
-        File.WriteAllText(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        await File.WriteAllTextAsync(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
         var waited = Stopwatch.StartNew();
 
@@ -413,9 +437,57 @@ internal static partial class WindowProbe
                         failure);
                 }
 
-                Thread.Sleep(10);
+                await Task.Delay(10);
             }
         }
+    }
+
+    /// <summary>
+    /// Runs a window's whole life on a thread of its own, writes the report it hands
+    /// over, and completes with the window thread's exit code.
+    /// </summary>
+    /// <remarks>
+    /// <b>A thread of its own since 2026-10-11</b>: a window's messages go to the thread
+    /// that made it, and <c>Main</c> is asynchronous since that day, so its continuations
+    /// run on whichever pool thread is free. The report is written by the caller, with
+    /// asynchronous writes, while the window thread goes on to pump.
+    /// </remarks>
+    /// <param name="reportPath">Where the report goes.</param>
+    /// <param name="body">The window thread's body, handed the way to report.</param>
+    /// <returns>The window thread's exit code.</returns>
+    private static async Task<int> OnAWindowThreadAsync(string reportPath, Func<Action<JsonObject>, int> body)
+    {
+        var reported = new TaskCompletionSource<JsonObject>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var ended = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                _ = ended.TrySetResult(body(report => reported.TrySetResult(report)));
+            }
+#pragma warning disable CA1031 // The window thread's boundary: the failure goes to the caller, who awaits it.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                _ = ended.TrySetException(failure);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "window probe",
+        };
+
+        thread.Start();
+
+        _ = await Task.WhenAny(reported.Task, ended.Task);
+
+        if (reported.Task.IsCompleted)
+        {
+            await WriteAsync(reportPath, await reported.Task);
+        }
+
+        return await ended.Task;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -476,6 +548,10 @@ internal static partial class WindowProbe
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool PeekMessageW(out WindowMessage message, nint window, uint filterMin, uint filterMax, uint remove);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("user32.dll")]
+    private static partial uint MsgWaitForMultipleObjects(uint count, nint handles, [MarshalAs(UnmanagedType.Bool)] bool waitAll, uint milliseconds, uint wakeMask);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("user32.dll")]

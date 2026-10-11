@@ -112,6 +112,20 @@ internal sealed class StdioChannel : IDisposable
 #pragma warning restore RS0030, CA2000
     }
 
+    /// <summary>
+    /// Wraps a stream no overlapped write can be made on the way <see cref="Output"/> is
+    /// wrapped: a write is kept in memory, and a flush puts it on the wire from a thread
+    /// made for it, in turn.
+    /// </summary>
+    /// <remarks>
+    /// <b>For the suite's stand-ins</b>, since 2026-10-11: a probe that writes to a standard
+    /// handle of its own acquires the handle itself and writes through this, so that no
+    /// write of the suite's holds a pool thread either. Nothing of the product's calls it.
+    /// </remarks>
+    /// <param name="raw">The stream, which the wrapper disposes.</param>
+    /// <returns>The wrapper, which the caller disposes.</returns>
+    public static Stream PumpWrites(Stream raw) => new OutputPump(raw);
+
     /// <summary>Opens the channel over caller-supplied streams, for tests.</summary>
     /// <param name="input">What the channel reads.</param>
     /// <param name="output">What it writes.</param>

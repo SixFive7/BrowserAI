@@ -87,12 +87,12 @@ internal static class SessionProbe
     /// <param name="spelling">Any spelling of a directory.</param>
     /// <param name="reportPath">Where to write the verdict.</param>
     /// <returns>Zero.</returns>
-    public static int Identity(string spelling, string reportPath)
+    public static async Task<int> IdentityAsync(string spelling, string reportPath)
     {
         var verdict = CanonicalPath.Of(spelling, PathOrigin.Named, "directory");
         var path = verdict.Canonical is null ? null : SessionPath.For(verdict.Canonical);
 
-        Write(reportPath, new JsonObject
+        await WriteAsync(reportPath, new JsonObject
         {
             ["spelling"] = spelling,
             ["workingDirectory"] = Environment.CurrentDirectory,
@@ -119,7 +119,7 @@ internal static class SessionProbe
     /// <param name="reportPath">Where to write this contender's outcome.</param>
     /// <param name="releasePath">A file the host creates when the winner may let go.</param>
     /// <returns>Zero.</returns>
-    public static int Race(string directory, string startEventName, string reportPath, string releasePath)
+    public static async Task<int> RaceAsync(string directory, string startEventName, string reportPath, string releasePath)
     {
         var path = SessionPath.For(directory);
 
@@ -129,8 +129,8 @@ internal static class SessionProbe
             // event, so that the attempt below really is simultaneous. Without
             // it the event is already set by the time a late starter opens it,
             // and the "race" is a queue.
-            File.WriteAllText($"{reportPath}.ready", Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
-            _ = start.WaitOne(Patience);
+            await File.WriteAllTextAsync($"{reportPath}.ready", Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+            _ = await HandleWaits.WhenSignaledAsync(start, Patience);
         }
 
         var request = new SessionLockRequest
@@ -163,7 +163,7 @@ internal static class SessionProbe
 
         try
         {
-            result = SessionLock.TryAcquire(path, request, NullLogger.Instance);
+            result = await SessionLock.TryAcquireAsync(path, request, NullLogger.Instance);
         }
 #pragma warning disable CA1031 // A throw out of TryAcquire is the most interesting outcome of all, and unwritten it presents to the host as a report that never appeared.
         catch (Exception thrown)
@@ -176,11 +176,11 @@ internal static class SessionProbe
 
         // Taken AFTER the attempt and before anything else runs, so it is as
         // close to the instant of the outcome as this process can get.
-        var onDisk = StateOfTheLockFile(path.LockFile);
+        var onDisk = await StateOfTheLockFileAsync(path.LockFile);
 
         try
         {
-            Write(reportPath, new JsonObject
+            await WriteAsync(reportPath, new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["createdFileTime"] = ProcessLiveness.CreationTimeOfThisProcess(),
@@ -202,7 +202,7 @@ internal static class SessionProbe
             // race would prove nothing. The host decides when that is over.
             if (result?.Taken is true)
             {
-                WaitForFile(releasePath);
+                await WaitForFileAsync(releasePath);
             }
         }
         finally
@@ -228,7 +228,7 @@ internal static class SessionProbe
     /// </remarks>
     /// <param name="lockFile">The lock file to describe.</param>
     /// <returns>What the machine said, for the host's failure message.</returns>
-    private static JsonObject StateOfTheLockFile(string lockFile)
+    private static async Task<JsonObject> StateOfTheLockFileAsync(string lockFile)
     {
         var state = new JsonObject { ["exists"] = File.Exists(lockFile) };
         var directory = Path.GetDirectoryName(lockFile);
@@ -252,10 +252,11 @@ internal static class SessionProbe
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 1);
+                bufferSize: 1,
+                FileOptions.Asynchronous);
 
             using var reader = new StreamReader(stream);
-            state["text"] = reader.ReadToEnd();
+            state["text"] = await reader.ReadToEndAsync();
         }
         catch (Exception thrown)
         {
@@ -291,18 +292,18 @@ internal static class SessionProbe
     /// <param name="readyPath">Written once the lock is held.</param>
     /// <param name="purpose">What to record as the purpose.</param>
     /// <returns>Zero if it never acquired, otherwise it is killed before returning.</returns>
-    public static int Hold(string directory, string readyPath, string purpose)
+    public static async Task<int> HoldAsync(string directory, string readyPath, string purpose)
     {
         var path = SessionPath.For(directory);
 
-        var result = SessionLock.TryAcquire(
+        var result = await SessionLock.TryAcquireAsync(
             path,
             new SessionLockRequest { Browser = "chromium", Purpose = purpose },
             NullLogger.Instance);
 
         try
         {
-            Write(readyPath, new JsonObject
+            await WriteAsync(readyPath, new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["outcome"] = result.Outcome.ToString(),
@@ -317,7 +318,7 @@ internal static class SessionProbe
 
             // Killed from outside. Reaching the end of this wait means the host
             // failed to do so, and the exit code says which.
-            Thread.Sleep(Patience);
+            await Task.Delay(Patience);
             return 2;
         }
         finally
@@ -338,7 +339,7 @@ internal static class SessionProbe
     /// <param name="directory">The session directory whose gate to take.</param>
     /// <param name="readyPath">Written once the mutex is held.</param>
     /// <returns>Two if the host failed to kill it.</returns>
-    public static int HoldGate(string directory, string readyPath)
+    public static async Task<int> HoldGateAsync(string directory, string readyPath)
     {
         var path = SessionPath.For(directory);
 
@@ -346,9 +347,10 @@ internal static class SessionProbe
         // Patience, not thirty seconds: this probe exists to BE the holder, and an
         // acquire that gave up early would make the test flaky in the one
         // direction that reads as a product defect. Corrected 2026-08-18.
-        var acquisition = gate.Acquire(Patience);
+        // Held by the gate's own thread, which a kill ends: that is the abandonment.
+        var acquisition = (await gate.HoldAsync(Patience)).Acquisition;
 
-        Write(readyPath, new JsonObject
+        await WriteAsync(readyPath, new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["mutexName"] = gate.Name,
@@ -360,7 +362,7 @@ internal static class SessionProbe
             return 1;
         }
 
-        Thread.Sleep(Patience);
+        await Task.Delay(Patience);
         return 2;
     }
 
@@ -369,7 +371,7 @@ internal static class SessionProbe
     /// killed.
     /// </summary>
     /// <remarks>
-    /// <b>The wait is bounded, not zero, unlike <see cref="Sweep"/>'s.</b>
+    /// <b>The wait is bounded, not zero, unlike <see cref="SweepAsync"/>'s.</b>
     /// This probe exists to <i>be</i> the holder -- for the skip path and for the
     /// abandoned-mutex path -- so it must end up holding the object even if
     /// another process on the machine is momentarily using the same name. A
@@ -379,12 +381,13 @@ internal static class SessionProbe
     /// <param name="mutexName">The <c>Global\</c> name to take.</param>
     /// <param name="readyPath">Written once it is held.</param>
     /// <returns>One if it never acquired, two if the host failed to kill it.</returns>
-    public static int HoldNamed(string mutexName, string readyPath)
+    public static async Task<int> HoldNamedAsync(string mutexName, string readyPath)
     {
         using var mutex = MachineMutex.Create(mutexName);
-        var acquisition = mutex.Acquire(Patience);
+        // Held by the mutex's own thread, which a kill ends: that is the abandonment.
+        var acquisition = (await mutex.HoldAsync(Patience)).Acquisition;
 
-        Write(readyPath, new JsonObject
+        await WriteAsync(readyPath, new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["mutexName"] = mutex.Name,
@@ -396,7 +399,7 @@ internal static class SessionProbe
             return 1;
         }
 
-        Thread.Sleep(Patience);
+        await Task.Delay(Patience);
         return 2;
     }
 
@@ -417,21 +420,22 @@ internal static class SessionProbe
     /// <param name="reportPath">Where to write this process's outcome.</param>
     /// <param name="releasePath">A file the host creates when the winner may let go.</param>
     /// <returns>Zero.</returns>
-    public static int Sweep(string mutexName, string startEventName, string reportPath, string releasePath)
+    public static async Task<int> SweepAsync(string mutexName, string startEventName, string reportPath, string releasePath)
     {
         using var mutex = MachineMutex.Create(mutexName);
 
         using (var start = EventWaitHandle.OpenExisting(startEventName))
         {
-            File.WriteAllText($"{reportPath}.ready", Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
-            _ = start.WaitOne(Patience);
+            await File.WriteAllTextAsync($"{reportPath}.ready", Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+            _ = await HandleWaits.WhenSignaledAsync(start, Patience);
         }
 
-        var acquisition = mutex.Acquire(LockScopes.NeverWaits);
+        var held = await mutex.HoldAsync(LockScopes.NeverWaits);
+        var acquisition = held.Acquisition;
 
         try
         {
-            Write(reportPath, new JsonObject
+            await WriteAsync(reportPath, new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["acquisition"] = acquisition.ToString(),
@@ -447,15 +451,12 @@ internal static class SessionProbe
 
             if (acquisition is not MutexAcquisition.NotAcquired)
             {
-                WaitForFile(releasePath);
+                await WaitForFileAsync(releasePath);
             }
         }
         finally
         {
-            if (acquisition is not MutexAcquisition.NotAcquired)
-            {
-                mutex.Release();
-            }
+            await held.DisposeAsync();
         }
 
         return 0;
@@ -483,7 +484,7 @@ internal static class SessionProbe
     /// <c>TestDefaults</c> -- it references the product and nothing else.
     /// </param>
     /// <returns>Zero.</returns>
-    public static int StraySweepPass(string reportPath, string images, int gatePatienceMilliseconds)
+    public static async Task<int> StraySweepPassAsync(string reportPath, string images, int gatePatienceMilliseconds)
     {
         var sweep = new StraySweep(
             [.. images.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)],
@@ -494,9 +495,9 @@ internal static class SessionProbe
         // pass to have RUN, and the machine-wide gate is held for a few
         // milliseconds by every BrowserAI that starts. The product's own entry
         // point never waits -- see StraySweep.Run().
-        var result = sweep.Run(TimeSpan.FromMilliseconds(gatePatienceMilliseconds));
+        var result = await sweep.RunAsync(TimeSpan.FromMilliseconds(gatePatienceMilliseconds));
 
-        Write(reportPath, new JsonObject
+        await WriteAsync(reportPath, new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["outcome"] = result.Outcome.ToString(),
@@ -523,18 +524,18 @@ internal static class SessionProbe
     /// <param name="rewrites">How many times to replace the record.</param>
     /// <param name="donePath">Written when every rewrite is finished.</param>
     /// <returns>Zero.</returns>
-    public static int Rewrite(string directory, string readyPath, int rewrites, string donePath)
+    public static async Task<int> RewriteAsync(string directory, string readyPath, int rewrites, string donePath)
     {
         var path = SessionPath.For(directory);
 
-        var result = SessionLock.TryAcquire(
+        var result = await SessionLock.TryAcquireAsync(
             path,
             new SessionLockRequest { Browser = "chromium", Purpose = "rewrite probe" },
             NullLogger.Instance);
 
         try
         {
-            Write(readyPath, new JsonObject
+            await WriteAsync(readyPath, new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
                 ["outcome"] = result.Outcome.ToString(),
@@ -549,7 +550,7 @@ internal static class SessionProbe
             // The host starts its reader loop and then says go. Without the
             // handshake the rewrites can be finished before the reader is
             // scheduled at all, and the test passes having observed nothing.
-            WaitForFile($"{readyPath}.go");
+            await WaitForFileAsync($"{readyPath}.go");
 
             var completed = 0;
             string? failure = null;
@@ -578,7 +579,7 @@ internal static class SessionProbe
                 failure = $"{thrown.GetType().Name}: {thrown.Message}";
             }
 
-            Write(donePath, new JsonObject
+            await WriteAsync(donePath, new JsonObject
             {
                 ["rewrites"] = completed,
                 ["requested"] = rewrites,
@@ -619,7 +620,7 @@ internal static class SessionProbe
     /// <param name="reportPath">Where to write this writer's outcome.</param>
     /// <param name="writes">How many times to re-assert the entry.</param>
     /// <returns>Zero.</returns>
-    public static int Index(string directory, string root, string startEventName, string reportPath, int writes)
+    public static async Task<int> IndexAsync(string directory, string root, string startEventName, string reportPath, int writes)
     {
         var path = SessionPath.For(directory);
         var paths = new LocalAppDataPaths(root);
@@ -629,20 +630,20 @@ internal static class SessionProbe
 
         using (var start = EventWaitHandle.OpenExisting(startEventName))
         {
-            File.WriteAllText($"{reportPath}.ready", Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
-            _ = start.WaitOne(Patience);
+            await File.WriteAllTextAsync($"{reportPath}.ready", Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+            _ = await HandleWaits.WhenSignaledAsync(start, Patience);
         }
 
         var clock = Stopwatch.StartNew();
 
         for (var i = 0; i < writes; i++)
         {
-            index.Record(path);
+            await index.RecordAsync(path);
         }
 
         var elapsed = clock.Elapsed;
 
-        Write(reportPath, new JsonObject
+        await WriteAsync(reportPath, new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["writes"] = writes,
@@ -676,11 +677,11 @@ internal static class SessionProbe
     /// <param name="path">The file to hold. Created if it does not exist.</param>
     /// <param name="readyPath">Written once the handle is open.</param>
     /// <returns>Two if the host failed to kill it.</returns>
-    public static int HoldFile(string path, string readyPath)
+    public static async Task<int> HoldFileAsync(string path, string readyPath)
     {
-        using var held = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+        using var held = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, bufferSize: 1, FileOptions.Asynchronous);
 
-        Write(readyPath, new JsonObject
+        await WriteAsync(readyPath, new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["path"] = path,
@@ -689,7 +690,7 @@ internal static class SessionProbe
 
         // Killed from outside. Reaching the end of this wait means the host
         // failed to do so, and the exit code says which.
-        Thread.Sleep(Patience);
+        await Task.Delay(Patience);
         return 2;
     }
 
@@ -716,11 +717,11 @@ internal static class SessionProbe
     /// <param name="browsersRoot">The browsers root to claim.</param>
     /// <param name="readyPath">Written once the claim is held.</param>
     /// <returns>2 if this process was never killed, which is the host's failure.</returns>
-    public static int HoldBrowsersClaim(string browsersRoot, string readyPath)
+    public static async Task<int> HoldBrowsersClaimAsync(string browsersRoot, string readyPath)
     {
         using var claim = BrowserAI.Runtime.MaintenanceLock.TakeShared(browsersRoot, out _, out _);
 
-        Write(readyPath, new JsonObject
+        await WriteAsync(readyPath, new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["path"] = browsersRoot,
@@ -730,17 +731,17 @@ internal static class SessionProbe
 
         // Killed from outside. Reaching the end of this wait means the host
         // failed to do so, and the exit code says which.
-        Thread.Sleep(Patience);
+        await Task.Delay(Patience);
         return 2;
     }
 
-    private static void WaitForFile(string path)
+    private static async Task WaitForFileAsync(string path)
     {
         var clock = Stopwatch.StartNew();
 
         while (!File.Exists(path) && clock.Elapsed < Patience)
         {
-            Thread.Sleep(10);
+            await Task.Delay(10);
         }
     }
 
@@ -750,11 +751,11 @@ internal static class SessionProbe
     /// partly-written one, and that failure looks exactly like the product being
     /// wrong.
     /// </summary>
-    private static void Write(string path, JsonObject report)
+    private static async Task WriteAsync(string path, JsonObject report)
     {
         var temp = $"{path}.writing";
-        File.WriteAllText(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        Publish(temp, path);
+        await File.WriteAllTextAsync(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        await PublishAsync(temp, path);
     }
 
     /// <summary>
@@ -774,7 +775,7 @@ internal static class SessionProbe
     /// </remarks>
     /// <param name="temp">The fully written temporary file.</param>
     /// <param name="path">Where the host is looking.</param>
-    private static void Publish(string temp, string path)
+    private static async Task PublishAsync(string temp, string path)
     {
         var waited = Stopwatch.StartNew();
 
@@ -794,7 +795,7 @@ internal static class SessionProbe
                         failure);
                 }
 
-                Thread.Sleep(10);
+                await Task.Delay(10);
             }
         }
     }

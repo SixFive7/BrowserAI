@@ -18,7 +18,15 @@ namespace BrowserAI.TestProbe;
 /// </summary>
 internal static class Program
 {
-    private static int Main(string[] args)
+    /// <summary>Runs the probe the first argument names.</summary>
+    /// <remarks>
+    /// <b>Asynchronous since 2026-10-11</b>, the maintainer's decision 54, in his words
+    /// verbatim: <i>"Never block a worker anywhere."</i> Every probe awaits what it waits
+    /// for, as the product it stands beside does.
+    /// </remarks>
+    /// <param name="args">The probe and its arguments.</param>
+    /// <returns>The probe's exit code.</returns>
+    private static async Task<int> Main(string[] args)
     {
         if (args.Length is 0)
         {
@@ -31,72 +39,80 @@ internal static class Program
             "log-many" when args.Length is 4 => LogMany(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture)),
             "crash" when args.Length is 2 => Crash(args[1]),
             "transport-child" when args.Length is 4 =>
-                TransportChild(args[1], int.Parse(args[2], CultureInfo.InvariantCulture), args[3]),
+                await TransportChildAsync(args[1], int.Parse(args[2], CultureInfo.InvariantCulture), args[3]),
             // <outputDirectory> <readyFile> <readySeconds> <command> [arguments...].
             // The patience is the caller's, never a constant inside the probe:
             // see JobProbe.Launcher's remarks for what two nested budgets cost.
             "job-launcher" when args.Length >= 5 =>
-                JobProbe.Launcher(
+                await JobProbe.LauncherAsync(
                     args[1],
                     args[2],
                     TimeSpan.FromSeconds(double.Parse(args[3], CultureInfo.InvariantCulture)),
                     args[4],
                     args[5..]),
             "job-child" when args.Length is 3 =>
-                JobProbe.Child(args[1], int.Parse(args[2], CultureInfo.InvariantCulture)),
-            "job-grandchild" when args.Length is 1 => JobProbe.Grandchild(),
-            "session-identity" when args.Length is 3 => SessionProbe.Identity(args[1], args[2]),
-            "session-race" when args.Length is 5 => SessionProbe.Race(args[1], args[2], args[3], args[4]),
-            "session-hold" when args.Length is 4 => SessionProbe.Hold(args[1], args[2], args[3]),
-            "session-hold-gate" when args.Length is 3 => SessionProbe.HoldGate(args[1], args[2]),
-            "session-hold-named" when args.Length is 3 => SessionProbe.HoldNamed(args[1], args[2]),
-            "hold-file" when args.Length is 3 => SessionProbe.HoldFile(args[1], args[2]),
-            "browsers-claim" when args.Length is 3 => SessionProbe.HoldBrowsersClaim(args[1], args[2]),
-            "window" when args.Length is 5 => WindowProbe.Publish(args[1], args[2], args[3], args[4]),
+                await JobProbe.ChildAsync(args[1], int.Parse(args[2], CultureInfo.InvariantCulture)),
+            "job-grandchild" when args.Length is 1 => await JobProbe.GrandchildAsync(),
+            "session-identity" when args.Length is 3 => await SessionProbe.IdentityAsync(args[1], args[2]),
+            "session-race" when args.Length is 5 => await SessionProbe.RaceAsync(args[1], args[2], args[3], args[4]),
+            "session-hold" when args.Length is 4 => await SessionProbe.HoldAsync(args[1], args[2], args[3]),
+            "session-hold-gate" when args.Length is 3 => await SessionProbe.HoldGateAsync(args[1], args[2]),
+            "session-hold-named" when args.Length is 3 => await SessionProbe.HoldNamedAsync(args[1], args[2]),
+            "hold-file" when args.Length is 3 => await SessionProbe.HoldFileAsync(args[1], args[2]),
+            "browsers-claim" when args.Length is 3 => await SessionProbe.HoldBrowsersClaimAsync(args[1], args[2]),
+            "window" when args.Length is 5 => await WindowProbe.PublishAsync(args[1], args[2], args[3], args[4]),
             // <className> <title> <reportPath>. Shows a window: started only on a
             // private desktop, by WindowWatchTests' child. See WindowProbe.Show.
-            "window-show" when args.Length is 4 => WindowProbe.Show(args[1], args[2], args[3]),
-            "session-sweep" when args.Length is 5 => SessionProbe.Sweep(args[1], args[2], args[3], args[4]),
+            "window-show" when args.Length is 4 => await WindowProbe.ShowAsync(args[1], args[2], args[3]),
+            "session-sweep" when args.Length is 5 => await SessionProbe.SweepAsync(args[1], args[2], args[3], args[4]),
             "stray-sweep" when args.Length is 4 =>
-                SessionProbe.StraySweepPass(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture)),
+                await SessionProbe.StraySweepPassAsync(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture)),
             "session-rewrite" when args.Length is 5 =>
-                SessionProbe.Rewrite(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
+                await SessionProbe.RewriteAsync(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
             // <executable> <reportPath> [arguments...]. Starts it suspended and
             // exits; see LauncherProbe for why the order has to be a fact. The
             // arguments arrived 2026-10-08 with the one executable, whose mode is
             // its argument.
-            "launch-suspended" when args.Length >= 3 => LauncherProbe.LaunchSuspended(args[1], args[2], args[3..]),
+            "launch-suspended" when args.Length >= 3 => await LauncherProbe.LaunchSuspendedAsync(args[1], args[2], args[3..]),
             // The same, with this probe's own three standard handles handed on to
             // the program, for a relay that has to meet a gone launcher with a pipe
             // on its standard input (2026-10-09).
-            "launch-suspended-handing-on" when args.Length >= 3 => LauncherProbe.LaunchSuspendedHandingOn(args[1], args[2], args[3..]),
+            "launch-suspended-handing-on" when args.Length >= 3 => await LauncherProbe.LaunchSuspendedHandingOnAsync(args[1], args[2], args[3..]),
             // <browserAi> <workingDirectory> <testPid> <reportPath> <backgroundPipe>.
             // The pipe arrived 2026-10-09: the process a client starts is a relay,
             // which holds no session, and the background it reaches is the arm's.
             "client-parent" when args.Length is 6 =>
-                ClientProbe.Start(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4], args[5]),
+                await ClientProbe.StartAsync(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4], args[5]),
             "session-index" when args.Length is 6 =>
-                SessionProbe.Index(args[1], args[2], args[3], args[4], int.Parse(args[5], CultureInfo.InvariantCulture)),
+                await SessionProbe.IndexAsync(args[1], args[2], args[3], args[4], int.Parse(args[5], CultureInfo.InvariantCulture)),
             // <releaseFile> <command> [arguments...]. Runs a real @playwright/mcp
             // child behind it and holds its browser_close until the file exists;
             // see CloseRelayProbe.
-            "close-relay" when args.Length >= 3 => CloseRelayProbe.Relay(args[1], args[2], args[3..]),
+            "close-relay" when args.Length >= 3 => await CloseRelayProbe.RelayAsync(args[1], args[2], args[3..]),
             // <reportPath>. A middle process and the leaf it starts, the leaf reading
             // its parent and its parent's parent as a relay does (2026-10-10); see
             // ParentChainProbe.
-            "parent-chain-middle" when args.Length is 2 => ParentChainProbe.Middle(args[1]),
-            "parent-chain" when args.Length is 2 => ParentChainProbe.Leaf(args[1]),
+            "parent-chain-middle" when args.Length is 2 => await ParentChainProbe.MiddleAsync(args[1]),
+            "parent-chain" when args.Length is 2 => await ParentChainProbe.LeafAsync(args[1]),
             // <pipeName> <recordPath> <readyPath> <exitCode>. A background that takes
             // its pipe and writes its record and answers nothing; see BackgroundStandIn.
             "background-standin" when args.Length is 5 =>
-                BackgroundStandIn.Run(args[1], args[2], args[3], int.Parse(args[4], CultureInfo.InvariantCulture)),
+                await BackgroundStandIn.RunAsync(args[1], args[2], args[3], int.Parse(args[4], CultureInfo.InvariantCulture)),
             // <documentPath> <holdSeconds>. A RegisterAI that writes its document and leaves a
             // process holding its output; see LingeringOutputProbe (2026-10-10).
-            "registerai-lingering" when args.Length is 3 => LingeringOutputProbe.Write(args[1], args[2]),
-            "registerai-holder" when args.Length is 2 => LingeringOutputProbe.Hold(args[1]),
+            "registerai-lingering" when args.Length is 3 => await LingeringOutputProbe.WriteAsync(args[1], args[2]),
+            "registerai-holder" when args.Length is 2 => await LingeringOutputProbe.HoldAsync(args[1]),
             // <documentPath> <holdSeconds> <reportPath>. The same, writing the holder's
             // pid and creation time for the arm to read (64 c, 2026-10-11).
-            "output-holder" when args.Length is 4 => LingeringOutputProbe.WriteAndReport(args[1], args[2], args[3]),
+            "output-holder" when args.Length is 4 => await LingeringOutputProbe.WriteAndReportAsync(args[1], args[2], args[3]),
+            // <scenario> <argument> <boundSeconds>. One scenario of the product's own, on a
+            // pool of one worker (decision 54, 2026-10-11); see StarvedPoolProbe.
+            "starved" when args.Length is 4 => await StarvedPoolProbe.RunAsync(args[1], args[2], args[3]),
+            // <pipeName> <readyPath>. A background that answers one connection; see StarvedPoolProbe.
+            "answering-background" when args.Length is 3 => await StarvedPoolProbe.AnsweringBackgroundAsync(args[1], args[2]),
+            // A child that writes nothing until its input ends, and one that writes a line.
+            "quiet" when args.Length is 1 => await StarvedPoolProbe.QuietAsync(),
+            "say" when args.Length is 2 => await StarvedPoolProbe.SayAsync(args[1]),
             _ => Usage(),
         };
     }
@@ -123,19 +139,30 @@ internal static class Program
     /// <param name="reportPath">Where to write the pid-and-environment report.</param>
     /// <param name="standardErrorLines">How many lines to write to stderr before anything else.</param>
     /// <param name="framePath">Where to append every frame received, exactly as its bytes arrived.</param>
-    private static int TransportChild(string reportPath, int standardErrorLines, string framePath)
+    private static async Task<int> TransportChildAsync(string reportPath, int standardErrorLines, string framePath)
     {
         // First, before the report and before a single frame is read. A child
         // that only writes to stderr once it has work to do would never catch a
         // handler attached after Start().
-        for (var i = 0; i < standardErrorLines; i++)
+        //
+        // Console's handle instead of ILogger, deliberately: what is under test is
+        // the pipe, and a logger here would prove the logging stack instead. The
+        // console ban is enforced in src/ by an analyzer this test asset does not
+        // reference, which is why no suppression is needed and why one must never
+        // be copied from here into src/. The bytes are Console.Error's own, in its
+        // encoding and with its line ends, written by the product's pump since
+        // 2026-10-11 (previously Console.Error.WriteLine, a write that held the
+        // thread it ran on).
+#pragma warning disable CA2000 // The pump disposes the stream it wraps.
+        await using (var error = StdioChannel.PumpWrites(Console.OpenStandardError()))
+#pragma warning restore CA2000
         {
-            // Console instead of ILogger, deliberately: what is under test is
-            // the pipe, and a logger here would prove the logging stack
-            // instead. The console ban is enforced in src/ by an analyzer this
-            // test asset does not reference, which is why no suppression is
-            // needed and why one must never be copied from here into src/.
-            Console.Error.WriteLine($"probe-stderr#{i.ToString(CultureInfo.InvariantCulture)}");
+            for (var i = 0; i < standardErrorLines; i++)
+            {
+                await error.WriteAsync(Console.OutputEncoding.GetBytes($"probe-stderr#{i.ToString(CultureInfo.InvariantCulture)}{Environment.NewLine}"));
+            }
+
+            await error.FlushAsync();
         }
 
         var environment = new JsonObject();
@@ -152,13 +179,13 @@ internal static class Program
             ["environment"] = environment,
         };
 
-        File.WriteAllText(reportPath, report.ToJsonString(new JsonSerializerOptions { WriteIndented = false }), Encoding.UTF8);
+        await File.WriteAllTextAsync(reportPath, report.ToJsonString(new JsonSerializerOptions { WriteIndented = false }), Encoding.UTF8);
 
         using var channel = StdioChannel.OpenStandardStreams();
-        using var frames = new FileStream(framePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+        await using var frames = new FileStream(framePath, FileMode.Create, FileAccess.Write, FileShare.Read, bufferSize: 0, FileOptions.Asynchronous);
         using var reader = new StreamReader(channel.Input, StdioChannel.Utf8NoBom);
 
-        while (reader.ReadLine() is { } line)
+        while (await reader.ReadLineAsync() is { } line)
         {
             if (line.Length is 0)
             {
@@ -168,11 +195,11 @@ internal static class Program
             // The bytes as they arrived, recorded so the test can assert that
             // nothing escaped them on the way down.
             var bytes = StdioChannel.Utf8NoBom.GetBytes(line);
-            frames.Write(bytes);
-            frames.WriteByte((byte)'\n');
-            frames.Flush();
+            await frames.WriteAsync(bytes);
+            await frames.WriteAsync("\n"u8.ToArray());
+            await frames.FlushAsync();
 
-            channel.WriteFrame(bytes);
+            await channel.WriteFrameAsync(bytes);
         }
 
         return 0;

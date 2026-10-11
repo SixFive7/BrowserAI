@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Text;
+using System.Threading.Channels;
 
 namespace BrowserAI.TestProbe;
 
@@ -49,58 +48,51 @@ internal static class CloseRelayProbe
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
     /// <summary>Starts the child and relays until the child has gone.</summary>
+    /// <remarks>
+    /// <b>Every copy is awaited since 2026-10-11</b>, the maintainer's decision 54: the child
+    /// is started through the product's own launcher, whose pipes are overlapped at this
+    /// end, and this probe's own standard handles through the product's channel, which reads
+    /// and writes them on threads of their own. <i>Previously a <c>Process</c>'s redirected
+    /// streams, a thread reading the input into a blocking queue, and sleeps between looks.</i>
+    /// </remarks>
     /// <param name="releaseFile">The file whose existence lets a held close through.</param>
     /// <param name="command">The child's executable.</param>
     /// <param name="arguments">Its arguments, passed as they are.</param>
     /// <returns>The child's exit code.</returns>
-    public static int Relay(string releaseFile, string command, string[] arguments)
+    public static async Task<int> RelayAsync(string releaseFile, string command, string[] arguments)
     {
-        var start = new ProcessStartInfo(command)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
+        var environment = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var argument in arguments)
+        foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
         {
-            start.ArgumentList.Add(argument);
+            if (entry.Key is string name && entry.Value is string value)
+            {
+                environment[name] = value;
+            }
         }
 
-        using var child = Process.Start(start) ?? throw new InvalidOperationException($"'{command}' did not start.");
-        using var output = Console.OpenStandardOutput();
-        using var error = Console.OpenStandardError();
+        using var child = global::BrowserAI.Interop.JobLauncher.StartOutsideAnyJob(command, arguments, Environment.CurrentDirectory, environment);
+        using var channel = global::BrowserAI.Protocol.StdioChannel.OpenStandardStreams();
 
-        var down = Task.Run(() => Copy(child.StandardOutput.BaseStream, output));
-        var errors = Task.Run(() => Copy(child.StandardError.BaseStream, error));
+        var down = CopyAsync(child.StandardOutput, channel.Output);
+        var errors = CopyToStandardErrorAsync(child.StandardError);
 
-        using var lines = new BlockingCollection<string>();
+        var lines = Channel.CreateUnbounded<string>(new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        var reading = ReadAsync(channel.Input, lines.Writer);
 
-        var reader = new Thread(() => Read(lines))
-        {
-            IsBackground = true,
-            Name = "close relay, stdin",
-        };
-
-        reader.Start();
-
-        var toChild = child.StandardInput.BaseStream;
+        var toChild = child.StandardInput;
 
         try
         {
-            foreach (var line in lines.GetConsumingEnumerable())
+            await foreach (var line in lines.Reader.ReadAllAsync())
             {
-                if (line.Contains(HeldTool, StringComparison.Ordinal) && !WaitForTheRelease(releaseFile, lines))
+                if (line.Contains(HeldTool, StringComparison.Ordinal) && !await WaitForTheReleaseAsync(releaseFile, lines.Reader))
                 {
                     break;
                 }
 
-                var bytes = Utf8NoBom.GetBytes(line + "\n");
-
-                toChild.Write(bytes);
-                toChild.Flush();
+                await toChild.WriteAsync(Utf8NoBom.GetBytes(line + "\n"));
+                await toChild.FlushAsync();
             }
         }
         catch (IOException)
@@ -110,31 +102,45 @@ internal static class CloseRelayProbe
 
         try
         {
-            child.StandardInput.Close();
+            await toChild.DisposeAsync();
         }
         catch (IOException)
         {
             // Already closed by the child's exit.
         }
 
-        child.WaitForExit();
-        down.Wait();
-        errors.Wait();
+        _ = await child.WaitForExitAsync(Timeout.InfiniteTimeSpan);
+        await down;
+        await errors;
 
-        return child.ExitCode;
+        return child.TryReadExitCode() ?? 1;
+    }
+
+    /// <summary>Copies the child's standard error to this process's own, until the child's ends.</summary>
+    /// <param name="from">The child's standard error.</param>
+    /// <returns>The copy.</returns>
+    private static async Task CopyToStandardErrorAsync(Stream from)
+    {
+        // Console's handle, deliberately: what is under test is the pipe, as in TransportChild.
+#pragma warning disable CA2000 // The pump disposes the stream it wraps.
+        await using var error = global::BrowserAI.Protocol.StdioChannel.PumpWrites(Console.OpenStandardError());
+#pragma warning restore CA2000
+        await CopyAsync(from, error);
     }
 
     /// <summary>Reads this process's stdin a line at a time until it ends.</summary>
+    /// <param name="input">The input.</param>
     /// <param name="lines">Where each line goes; completed at the end of input.</param>
-    private static void Read(BlockingCollection<string> lines)
+    /// <returns>The read.</returns>
+    private static async Task ReadAsync(Stream input, ChannelWriter<string> lines)
     {
         try
         {
-            using var input = new StreamReader(Console.OpenStandardInput(), Utf8NoBom);
+            using var reader = new StreamReader(input, Utf8NoBom, detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
 
-            while (input.ReadLine() is { } line)
+            while (await reader.ReadLineAsync() is { } line)
             {
-                lines.Add(line);
+                _ = lines.TryWrite(line);
             }
         }
         catch (IOException)
@@ -143,7 +149,7 @@ internal static class CloseRelayProbe
         }
         finally
         {
-            lines.CompleteAdding();
+            _ = lines.TryComplete();
         }
     }
 
@@ -151,34 +157,35 @@ internal static class CloseRelayProbe
     /// <param name="releaseFile">The file.</param>
     /// <param name="lines">The input, whose completion is the end of stdin.</param>
     /// <returns>Whether the held close may go through.</returns>
-    private static bool WaitForTheRelease(string releaseFile, BlockingCollection<string> lines)
+    private static async Task<bool> WaitForTheReleaseAsync(string releaseFile, ChannelReader<string> lines)
     {
         while (!File.Exists(releaseFile))
         {
-            if (lines.IsAddingCompleted)
+            if (lines.Completion.IsCompleted)
             {
                 return false;
             }
 
-            Thread.Sleep(Look);
+            await Task.Delay(Look);
         }
 
         return true;
     }
 
-    /// <summary>Copies one stream to another until the first ends.</summary>
+    /// <summary>Copies one stream to another until the first ends, flushing each piece.</summary>
     /// <param name="from">The child's stream.</param>
     /// <param name="to">This process's.</param>
-    private static void Copy(Stream from, Stream to)
+    /// <returns>The copy.</returns>
+    private static async Task CopyAsync(Stream from, Stream to)
     {
         var buffer = new byte[64 * 1024];
 
         try
         {
-            while (from.Read(buffer, 0, buffer.Length) is var read and > 0)
+            while (await from.ReadAsync(buffer) is var read and > 0)
             {
-                to.Write(buffer, 0, read);
-                to.Flush();
+                await to.WriteAsync(buffer.AsMemory(0, read));
+                await to.FlushAsync();
             }
         }
         catch (IOException)

@@ -45,26 +45,40 @@ internal static class BackgroundStandIn
     /// <param name="readyPath">Written with this process's pid once the pipe and the record are both there.</param>
     /// <param name="exitCode">The exit code once standard input ends.</param>
     /// <returns>The exit code.</returns>
-    public static int Run(string pipeName, string recordPath, string readyPath, int exitCode)
+    public static async Task<int> RunAsync(string pipeName, string recordPath, string readyPath, int exitCode)
     {
         using var listening = NamedPipes.CreateStreamServer(pipeName);
 
-        _ = BackgroundRecord.Started(recordPath, "9.9.9-background-stand-in", Environment.ProcessPath ?? string.Empty, DateTimeOffset.UtcNow);
+        _ = await BackgroundRecord.StartedAsync(recordPath, "9.9.9-background-stand-in", Environment.ProcessPath ?? string.Empty, DateTimeOffset.UtcNow);
 
         var temporary = readyPath + ".writing";
-        File.WriteAllText(temporary, Environment.ProcessId.ToString(CultureInfo.InvariantCulture), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        await File.WriteAllTextAsync(temporary, Environment.ProcessId.ToString(CultureInfo.InvariantCulture), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         File.Move(temporary, readyPath, overwrite: true);
 
-        var ended = Task.Run(() =>
+        // The product's own channel reads the input on a thread of its own, so the wait
+        // for its end is an await.
+        using var channel = global::BrowserAI.Protocol.StdioChannel.OpenStandardStreams();
+
+        try
         {
-            using var input = Console.OpenStandardInput();
-            var buffer = new byte[64];
+            await DrainAsync(channel.Input).WaitAsync(Patience);
+            return exitCode;
+        }
+        catch (TimeoutException)
+        {
+            return 2;
+        }
+    }
 
-            while (input.Read(buffer, 0, buffer.Length) > 0)
-            {
-            }
-        });
+    /// <summary>Reads a stream to its end.</summary>
+    /// <param name="input">The stream.</param>
+    /// <returns>The read.</returns>
+    private static async Task DrainAsync(Stream input)
+    {
+        var buffer = new byte[64];
 
-        return ended.Wait(Patience) ? exitCode : 2;
+        while (await input.ReadAsync(buffer) > 0)
+        {
+        }
     }
 }

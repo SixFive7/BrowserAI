@@ -23,13 +23,12 @@ internal static class LingeringOutputProbe
     /// <param name="documentPath">The file whose text is the document.</param>
     /// <param name="holdSeconds">How long the process left behind holds the pipe.</param>
     /// <returns>Zero.</returns>
-    public static int Write(string documentPath, string holdSeconds)
+    public static async Task<int> WriteAsync(string documentPath, string holdSeconds)
     {
-        var document = File.ReadAllText(documentPath);
+        var document = await File.ReadAllTextAsync(documentPath);
 
-        // Console, deliberately: what is under test is the pipe, as in TransportChild.
-        Console.Out.Write(document);
-        Console.Out.Flush();
+        // Console's handle, deliberately: what is under test is the pipe, as in TransportChild.
+        await WriteToStandardOutputAsync(document);
 
         using var holder = Process.Start(new ProcessStartInfo(Environment.ProcessPath!)
         {
@@ -53,12 +52,11 @@ internal static class LingeringOutputProbe
     /// <param name="holdSeconds">How long the process left behind holds the pipe.</param>
     /// <param name="reportPath">Where the holder's pid and creation time go.</param>
     /// <returns>Zero.</returns>
-    public static int WriteAndReport(string documentPath, string holdSeconds, string reportPath)
+    public static async Task<int> WriteAndReportAsync(string documentPath, string holdSeconds, string reportPath)
     {
-        var document = File.ReadAllText(documentPath);
+        var document = await File.ReadAllTextAsync(documentPath);
 
-        Console.Out.Write(document);
-        Console.Out.Flush();
+        await WriteToStandardOutputAsync(document);
 
         using var holder = Process.Start(new ProcessStartInfo(Environment.ProcessPath!)
         {
@@ -67,19 +65,37 @@ internal static class LingeringOutputProbe
             ArgumentList = { "registerai-holder", holdSeconds },
         }) ?? throw new InvalidOperationException("The holder did not start.");
 
-        File.WriteAllText(
+        await File.WriteAllTextAsync(
             reportPath,
             string.Create(CultureInfo.InvariantCulture, $"{holder.Id} {holder.StartTime.ToUniversalTime().ToFileTimeUtc()}"));
 
         return 0;
     }
 
+    /// <summary>Writes the document to this process's standard output and waits until it is on the wire.</summary>
+    /// <remarks>
+    /// The bytes are <c>Console.Out</c>'s own, in its encoding, written by the product's
+    /// pump since 2026-10-11 (previously <c>Console.Out.Write</c> and <c>Flush</c>, a write
+    /// that held the thread it ran on). The pump leaves the handle open, which is what the
+    /// holder inherits.
+    /// </remarks>
+    /// <param name="document">The document.</param>
+    /// <returns>The write.</returns>
+    private static async Task WriteToStandardOutputAsync(string document)
+    {
+#pragma warning disable CA2000 // The pump disposes the stream it wraps.
+        await using var output = global::BrowserAI.Protocol.StdioChannel.PumpWrites(Console.OpenStandardOutput());
+#pragma warning restore CA2000
+        await output.WriteAsync(Console.OutputEncoding.GetBytes(document));
+        await output.FlushAsync();
+    }
+
     /// <summary>Holds what it inherited for a while, and exits.</summary>
     /// <param name="holdSeconds">How long.</param>
     /// <returns>Zero.</returns>
-    public static int Hold(string holdSeconds)
+    public static async Task<int> HoldAsync(string holdSeconds)
     {
-        Thread.Sleep(TimeSpan.FromSeconds(double.Parse(holdSeconds, CultureInfo.InvariantCulture)));
+        await Task.Delay(TimeSpan.FromSeconds(double.Parse(holdSeconds, CultureInfo.InvariantCulture)));
         return 0;
     }
 }

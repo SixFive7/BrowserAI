@@ -63,16 +63,33 @@ internal static partial class LauncherProbe
     /// and is refused otherwise, so nothing here has to quote one.
     /// </param>
     /// <returns>Zero when the program was created; one with the error in the report otherwise.</returns>
-    public static int LaunchSuspended(string executable, string reportPath, string[] arguments)
+    public static async Task<int> LaunchSuspendedAsync(string executable, string reportPath, string[] arguments)
     {
         ArgumentNullException.ThrowIfNull(arguments);
 
         if (Array.Exists(arguments, argument => argument.Length is 0 || argument.AsSpan().IndexOfAny(" \t\"") >= 0))
         {
-            File.WriteAllText(reportPath, "error an argument is empty or carries a space, a tab or a quote");
+            await File.WriteAllTextAsync(reportPath, "error an argument is empty or carries a space, a tab or a quote");
             return 1;
         }
 
+        var (created, information, error) = CreateSuspendedAlone(executable, arguments);
+
+        if (!created)
+        {
+            await File.WriteAllTextAsync(reportPath, "error " + error.ToString(CultureInfo.InvariantCulture));
+            return 1;
+        }
+
+        return await ReportAsync(reportPath, information);
+    }
+
+    /// <summary>Creates the program suspended, with no handle handed on.</summary>
+    /// <param name="executable">The program's absolute path.</param>
+    /// <param name="arguments">What it is started with after its own name.</param>
+    /// <returns>Whether it was created, what Windows answered, and the error when it was not.</returns>
+    private static (bool Created, ProcessInformation Information, int Error) CreateSuspendedAlone(string executable, string[] arguments)
+    {
         // CreateProcessW writes into the command line, so it is a buffer of its
         // own and never a string.
         var spelled = "\"" + executable + "\"" + string.Concat(arguments.Select(argument => " " + argument));
@@ -91,14 +108,10 @@ internal static partial class LauncherProbe
                 ref startup,
                 out var information))
         {
-            File.WriteAllText(
-                reportPath,
-                "error " + Marshal.GetLastPInvokeError().ToString(CultureInfo.InvariantCulture));
-
-            return 1;
+            return (false, default, Marshal.GetLastPInvokeError());
         }
 
-        return Report(reportPath, information);
+        return (true, information, 0);
     }
 
     /// <summary>
@@ -124,18 +137,35 @@ internal static partial class LauncherProbe
     /// </remarks>
     /// <param name="executable">The program's absolute path.</param>
     /// <param name="reportPath">Where the pid and the main thread's id go.</param>
-    /// <param name="arguments">What the program is started with after its own name, as <see cref="LaunchSuspended"/> takes them.</param>
+    /// <param name="arguments">What the program is started with after its own name, as <see cref="LaunchSuspendedAsync"/> takes them.</param>
     /// <returns>Zero when the program was created; one with the error in the report otherwise.</returns>
-    public static int LaunchSuspendedHandingOn(string executable, string reportPath, string[] arguments)
+    public static async Task<int> LaunchSuspendedHandingOnAsync(string executable, string reportPath, string[] arguments)
     {
         ArgumentNullException.ThrowIfNull(arguments);
 
         if (Array.Exists(arguments, argument => argument.Length is 0 || argument.AsSpan().IndexOfAny(" \t\"") >= 0))
         {
-            File.WriteAllText(reportPath, "error an argument is empty or carries a space, a tab or a quote");
+            await File.WriteAllTextAsync(reportPath, "error an argument is empty or carries a space, a tab or a quote");
             return 1;
         }
 
+        var (created, information, error) = CreateSuspendedHandingOn(executable, arguments);
+
+        if (!created)
+        {
+            await File.WriteAllTextAsync(reportPath, "error " + error.ToString(CultureInfo.InvariantCulture));
+            return 1;
+        }
+
+        return await ReportAsync(reportPath, information);
+    }
+
+    /// <summary>Creates the program suspended, with this launcher's three standard handles as its own.</summary>
+    /// <param name="executable">The program's absolute path.</param>
+    /// <param name="arguments">What it is started with after its own name.</param>
+    /// <returns>Whether it was created, what Windows answered, and the error when it was not.</returns>
+    private static (bool Created, ProcessInformation Information, int Error) CreateSuspendedHandingOn(string executable, string[] arguments)
+    {
         var spelled = "\"" + executable + "\"" + string.Concat(arguments.Select(argument => " " + argument));
         Span<char> commandLine = [.. spelled, '\0'];
 
@@ -158,25 +188,21 @@ internal static partial class LauncherProbe
                 ref handedOn,
                 out var information))
         {
-            File.WriteAllText(
-                reportPath,
-                "error " + Marshal.GetLastPInvokeError().ToString(CultureInfo.InvariantCulture));
-
-            return 1;
+            return (false, default, Marshal.GetLastPInvokeError());
         }
 
-        return Report(reportPath, information);
+        return (true, information, 0);
     }
 
     /// <summary>Writes <c>&lt;pid&gt; &lt;thread id&gt;</c> and closes both handles.</summary>
     /// <param name="reportPath">Where it goes.</param>
     /// <param name="information">What <c>CreateProcessW</c> answered.</param>
     /// <returns>Zero.</returns>
-    private static int Report(string reportPath, ProcessInformation information)
+    private static async Task<int> ReportAsync(string reportPath, ProcessInformation information)
     {
         try
         {
-            File.WriteAllText(
+            await File.WriteAllTextAsync(
                 reportPath,
                 information.ProcessId.ToString(CultureInfo.InvariantCulture) + " "
                     + information.ThreadId.ToString(CultureInfo.InvariantCulture));

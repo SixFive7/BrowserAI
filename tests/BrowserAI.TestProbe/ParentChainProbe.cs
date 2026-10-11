@@ -32,9 +32,9 @@ internal static class ParentChainProbe
     /// <summary>The middle: writes its own pid and creation time, starts the leaf, and waits for it.</summary>
     /// <param name="reportPath">Where the leaf writes its reading; the middle writes its own beside it.</param>
     /// <returns>The leaf's exit code.</returns>
-    public static int Middle(string reportPath)
+    public static async Task<int> MiddleAsync(string reportPath)
     {
-        Write(reportPath + ".middle", new JsonObject
+        await WriteAsync(reportPath + ".middle", new JsonObject
         {
             ["pid"] = Environment.ProcessId,
             ["created"] = ProcessLiveness.CreationTimeOfThisProcess().ToString(CultureInfo.InvariantCulture),
@@ -52,18 +52,18 @@ internal static class ParentChainProbe
 
         using var leaf = Process.Start(start) ?? throw new InvalidOperationException("The leaf did not start.");
 
-        leaf.WaitForExit();
+        await leaf.WaitForExitAsync();
         return leaf.ExitCode;
     }
 
     /// <summary>The leaf: reads its parent as the relay does, and writes what it read.</summary>
     /// <param name="reportPath">Where to write it.</param>
     /// <returns>0.</returns>
-    public static int Leaf(string reportPath)
+    public static async Task<int> LeafAsync(string reportPath)
     {
         var reading = ProcessLiveness.ReadParent();
 
-        Write(reportPath, new JsonObject
+        await WriteAsync(reportPath, new JsonObject
         {
             ["read"] = reading is not null,
             ["pid"] = reading?.ProcessId,
@@ -77,11 +77,11 @@ internal static class ParentChainProbe
     }
 
     /// <summary>Writes a report whole or not at all: to a name beside it, then moved into place.</summary>
-    private static void Write(string path, JsonObject report)
+    private static async Task WriteAsync(string path, JsonObject report)
     {
         var partial = path + ".partial";
 
-        File.WriteAllText(partial, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        await File.WriteAllTextAsync(partial, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         File.Move(partial, path, overwrite: true);
     }
 }
