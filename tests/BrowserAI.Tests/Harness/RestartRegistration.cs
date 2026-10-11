@@ -34,6 +34,13 @@ internal static partial class RestartRegistration
     /// <summary><c>HRESULT_FROM_WIN32(ERROR_NOT_FOUND)</c> -- no registration exists.</summary>
     public const int NotRegistered = unchecked((int)0x80070490);
 
+    /// <summary>
+    /// No answer: the process had exited by the time it was asked, so there is no address
+    /// space to read a registration out of. A value no <c>HRESULT</c> this call returns
+    /// can take.
+    /// </summary>
+    public const int Gone = int.MaxValue;
+
     private const uint ProcessQueryInformation = 0x00000400;
     private const uint ProcessVmRead = 0x00000010;
 
