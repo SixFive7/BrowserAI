@@ -32,10 +32,20 @@ namespace BrowserAI.Tests;
 /// that bound is the relay's hold since that day, 150 s, so each of the two arms would
 /// wait that long.
 /// </para>
+/// <para>
+/// <b>The stop a stand-in refuses asks with the stop's own bound</b>,
+/// <see cref="BackgroundStop.Bound"/>, 45 s, which is what the uninstall hook passes, and
+/// returns as soon as the refusal arrives. <i>Corrected 2026-10-11, the maintainer's 53 as he
+/// corrected it (previously every stop here asked with
+/// <see cref="CoordinatorProtocol.HandOutBound"/>)</i>: in two full runs the refusing
+/// stand-in had not answered when 10 s ran out, and the hazard index's row for it says what
+/// is known. The two waits that run out on purpose, a question nothing answers and a process
+/// that never ends, keep the 10 s, so the suite waits no longer for them.
+/// </para>
 /// </remarks>
 internal sealed class BackgroundStopTests
 {
-    /// <summary>How long each stop here waits: for the answer, and then for the process to end.</summary>
+    /// <summary>How long a stop here waits when it is meant to run out: for the answer, and then for the process to end.</summary>
     private static TimeSpan Bound => CoordinatorProtocol.HandOutBound;
 
     /// <summary>
@@ -155,7 +165,8 @@ internal sealed class BackgroundStopTests
             await stream.FlushAsync(hang.Token);
         });
 
-        var (refusedOutcome, refusedDetail) = await Task.Run(() => BackgroundStop.AskAndWait(refusingPipe, BackgroundRecord.PathFor(data.Path, refusingPipe), Bound));
+        // The stop's own bound, which a refusal returns long before (53, 2026-10-11).
+        var (refusedOutcome, refusedDetail) = await Task.Run(() => BackgroundStop.AskAndWait(refusingPipe, BackgroundRecord.PathFor(data.Path, refusingPipe), BackgroundStop.Bound));
 
         await answering.WaitAsync(TestDefaults.InProcessHang);
 
