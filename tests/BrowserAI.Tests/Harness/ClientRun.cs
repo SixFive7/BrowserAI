@@ -1,14 +1,33 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
+using BrowserAI.Interop;
 
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// A process an arm starts for a real client, or for what drives one or answers it: its
-/// streams drained into files beside its working directory, and ended when the arm ends.
+/// A process an arm starts for a real client, or for what drives one or answers it: in a
+/// kill-on-close job of the arm's own, inheriting its three pipes and nothing else, its
+/// streams kept in files beside its working directory.
 /// </summary>
+/// <remarks>
+/// <para>
+/// ⚠️ <b>64 c (b), the maintainer's words verbatim: <i>"64 c now"</i>.</b> Until 2026-10-11
+/// these arms started a real Claude Code, Codex's driver and the API stub with
+/// <c>Process.Start</c> and no job: every inheritable handle of the test host went to the
+/// client, and what the client started could outlive the arm. That day a real Claude Code's
+/// git launcher left a suspended git behind, pid 102292, holding the test host's standard
+/// output, which held a gate driver's pipe until the git was ended by hand (HAZARDS.md, the
+/// frozen-child wedge).
+/// </para>
+/// <para>
+/// <b>Through <see cref="JobLauncher.Start"/></b>, which makes the job a creation attribute
+/// and the inherited set an explicit list of the child's three pipe ends. A child of the
+/// client is in the job from its first instruction, the job's close at the end of the arm
+/// ends every one of them, and no other handle of the test host reaches the client.
+/// <c>ClientRunTests.AClientAnArmStartedLeavesNoProcessBehindOnceTheArmEnds</c> holds it.
+/// </para>
+/// </remarks>
 internal sealed class ClientRun : IDisposable
 {
     /// <summary>
@@ -38,9 +57,14 @@ internal sealed class ClientRun : IDisposable
         "CODEX_HOME",
     ];
 
-    private readonly Process _process;
+    private readonly JobObject _job;
+    private readonly LaunchedProcess _process;
 
-    private ClientRun(Process process) => _process = process;
+    private ClientRun(JobObject job, LaunchedProcess process)
+    {
+        _job = job;
+        _process = process;
+    }
 
     /// <summary>The process's pid.</summary>
     public int Id => _process.Id;
@@ -48,12 +72,12 @@ internal sealed class ClientRun : IDisposable
     /// <summary>Whether it has exited.</summary>
     public bool HasExited => _process.HasExited;
 
-    /// <summary>Starts a process with its streams redirected and no console.</summary>
+    /// <summary>Starts a process in a job of its own, with no console.</summary>
     /// <param name="executable">What to start, by its absolute path.</param>
     /// <param name="workingDirectory">Where, and where its streams' files go.</param>
     /// <param name="environment">What to add to the inherited environment.</param>
     /// <param name="arguments">Its arguments.</param>
-    /// <returns>The run.</returns>
+    /// <returns>The run. Disposing it ends the process and everything it started.</returns>
     public static ClientRun Start(
         string executable,
         string workingDirectory,
@@ -65,45 +89,48 @@ internal sealed class ClientRun : IDisposable
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(arguments);
 
-        var start = new ProcessStartInfo(executable)
-        {
-            WorkingDirectory = workingDirectory,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        foreach (var argument in arguments)
-        {
-            start.ArgumentList.Add(argument);
-        }
+        // The whole of the test host's environment, as Process.Start passed it, without
+        // the variables that would make the client a nested one.
+        var block = PublishedSlice.InheritedEnvironment();
 
         foreach (var inherited in ParentClientVariables)
         {
-            _ = start.Environment.Remove(inherited);
+            _ = block.Remove(inherited);
         }
 
         foreach (var (name, value) in environment)
         {
-            start.Environment[name] = value;
+            block[name] = value;
         }
 
-        var process = Process.Start(start)
-            ?? throw new InvalidOperationException($"'{executable}' did not start.");
+        var job = JobObject.CreateKillOnClose();
 
-        // Drained INTO FILES, not into nowhere. A child whose redirected pipe fills
-        // stops writing and then stops working, so the drain is mandatory, and a real
-        // client's own complaint is the only thing that explains a run that did
-        // nothing, so it is kept where a failure can quote it.
-        var stem = StemOf(workingDirectory, executable);
+        try
+        {
+            var process = JobLauncher.Start(job, executable, arguments, workingDirectory, block);
 
-        _ = Drain(process.StandardOutput, $"{stem}.stdout.txt");
-        _ = Drain(process.StandardError, $"{stem}.stderr.txt");
-        process.StandardInput.Close();
+            // Written where the NEXT run can read it, as JobObjectScope does: the job is
+            // what contains this process while this run is alive, and the record is what
+            // names it if this run is killed and the job dies with it.
+            SpawnRecord.Add(process.Id);
 
-        return new ClientRun(process);
+            // Drained INTO FILES, not into nowhere. A child whose redirected pipe fills
+            // stops writing and then stops working, so the drain is mandatory, and a real
+            // client's own complaint is the only thing that explains a run that did
+            // nothing, so it is kept where a failure can quote it.
+            var stem = StemOf(workingDirectory, executable);
+
+            _ = Drain(process.StandardOutput, $"{stem}.stdout.txt");
+            _ = Drain(process.StandardError, $"{stem}.stderr.txt");
+            process.StandardInput.Dispose();
+
+            return new ClientRun(job, process);
+        }
+        catch
+        {
+            job.Dispose();
+            throw;
+        }
     }
 
     /// <summary>Where a run's two streams are kept, without their suffixes.</summary>
@@ -113,58 +140,40 @@ internal sealed class ClientRun : IDisposable
     public static string StemOf(string workingDirectory, string executable) =>
         Path.Combine(workingDirectory, Path.GetFileNameWithoutExtension(executable));
 
-    /// <summary>Waits for the process to exit.</summary>
+    /// <summary>Waits for the process to exit, through a wait registration that parks no thread.</summary>
     /// <param name="timeout">The hang detector.</param>
     /// <returns>Whether it exited within it.</returns>
-    public async Task<bool> WaitForExitAsync(TimeSpan timeout)
-    {
-        using var deadline = new CancellationTokenSource(timeout);
+    public Task<bool> WaitForExitAsync(TimeSpan timeout) => _process.WaitForExitAsync(timeout);
 
-        try
-        {
-            await _process.WaitForExitAsync(deadline.Token);
-            return true;
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>Ends the process this run started, if it is still running.</summary>
+    /// <summary>Ends the process and everything it started, through the job's close.</summary>
     /// <remarks>
-    /// ⚠️ <b>Because <c>Process.Dispose</c> releases a handle and does not end a process,
-    /// and an API stub never exits on its own.</b> Measured: four leaked <c>node.exe</c>
-    /// stubs from four runs of the real-client arms held four scratch directories open,
-    /// which the next run's reclaim pass could not delete.
+    /// <b>The job first</b>: it is what ends the client and every process the client
+    /// started, and disposing the process object only closes handles. An API stub never
+    /// exits on its own, and four leaked <c>node.exe</c> stubs from four runs once held four
+    /// scratch directories open, which the next run's reclaim pass could not delete.
     /// </remarks>
     public void Dispose()
     {
-        try
-        {
-            if (!_process.HasExited)
-            {
-                // This one and not the tree: Process.Kill(entireProcessTree: true) is
-                // banned repository-wide.
-                _process.Kill();
-            }
-        }
-        catch (Exception failure) when (failure is InvalidOperationException or System.ComponentModel.Win32Exception or AggregateException)
-        {
-            // It has already gone, which is the ordinary case.
-        }
-
+        _job.Dispose();
         _process.Dispose();
     }
 
-    /// <summary>Copies a redirected stream into a file as it arrives.</summary>
-    /// <param name="stream">The reader.</param>
+    /// <summary>Copies a stream into a file as it arrives, the file readable as it grows.</summary>
+    /// <param name="stream">The child's end of one of its streams.</param>
     /// <param name="path">Where to put it.</param>
     /// <returns>The copy.</returns>
-    private static async Task Drain(StreamReader stream, string path)
+    private static async Task Drain(Stream stream, string path)
     {
-        var text = await stream.ReadToEndAsync();
+        await using var file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete, bufferSize: 0, FileOptions.Asynchronous);
 
-        await File.WriteAllTextAsync(path, text);
+        try
+        {
+            await stream.CopyToAsync(file);
+        }
+        catch (Exception failure) when (failure is IOException or ObjectDisposedException)
+        {
+            // The job's close ended the writer, or the run's disposal closed the stream
+            // under the read: either is how a drain ends, and what it copied stays.
+        }
     }
 }
