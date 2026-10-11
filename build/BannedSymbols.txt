@@ -124,16 +124,25 @@ M:System.Diagnostics.Process.WaitForExit(System.Int32);Never WaitForExit, any ov
 ; else happens, so each is banned here, repository-wide, product and suite
 ; alike, and the build is red wherever one stands.
 ;
-; TWO PLACES KEEP A WAIT, and each is listed for his review and carries no
-; suppression until he has read the reasoning, so the build stays red at both
-; until then. The owner thread of a named kernel mutex
-; (Sessions/MachineMutex.cs): a Win32 mutex belongs to the thread that took it
-; and only that thread can release it, so a mutex held across an await needs a
-; thread that takes it, parks until the hold ends and releases it, and that
-; thread is the mutex's own, never a pool worker. And the process log's sink
-; (Logging/RollingFileWriter.cs): ILogger.Log is synchronous, and a record must
-; be in the file before Log returns, so that a process that dies on the next
-; line leaves the line that explains it.
+; SIX PLACES KEEP A WAIT, ten calls in all, and each is listed for his review
+; and carries no suppression until he has read the reasoning, so the build
+; stays red at every one until then. The owner thread of a named kernel mutex
+; (Sessions/MachineMutex.cs, two calls): a Win32 mutex belongs to the thread
+; that took it and only that thread can release it, so a mutex held across an
+; await needs a thread that takes it, parks until the hold ends and releases
+; it, and that thread is the mutex's own, never a pool worker. The process
+; log's sink (Logging/RollingFileWriter.cs): ILogger.Log is synchronous, and a
+; record must be in the file before Log returns, so that a process that dies
+; on the next line leaves the line that explains it. The relay's standard
+; input and output (Protocol/StdioChannel.cs, a read and a write): the handles
+; are the client's and none of them was opened for overlapped I/O, so each is
+; read and written on a thread of its own. Corrected the same day (previously
+; "TWO PLACES KEEP A WAIT", the mutex and the log), when the conversion reached
+; the channel and the suite: the suite's read of an anonymous pipe
+; (JobContainmentTests, whose subject is one, and an anonymous pipe has no
+; overlapped read), and the four waits two arms of SessionLockTests make from
+; inside the product's synchronous delete callback, which runs under its lock,
+; to watch a second thread contend for it.
 ;
 ; NEVER READ OR WRITE A FILE SYNCHRONOUSLY -- the maintainer's decision 63, in
 ; his words verbatim: "convert disk writes as well. Some users have slow
@@ -151,7 +160,13 @@ M:System.Diagnostics.Process.WaitForExit(System.Int32);Never WaitForExit, any ov
 ; them), a P/Invoke that waits (WaitForSingleObject, LockFileEx, ReadFile on a
 ; synchronous handle), SQLite's own file I/O, which is native and has no
 ; asynchronous form, and the file system's metadata calls (File.Exists, a
-; directory listing, File.Move), which Windows offers synchronously only.
+; directory listing, File.Move), which Windows offers synchronously only. And an
+; asynchronous read or write of a stream that was not opened for overlapped
+; I/O, which the framework serves as a synchronous call on a pool thread: a
+; System.Diagnostics.Process's redirected streams are such streams (kb,
+; windows/processes.md, measured 2026-10-11), and the suite still reads its own
+; children through them, where the product reads its children through
+; Interop/JobLauncher's overlapped pipes.
 ; -----------------------------------------------------------------------------
 
 M:System.Runtime.CompilerServices.TaskAwaiter.GetResult;Never block a worker on a task (decision 54): await it. GetResult on a task that has not finished parks this thread until another thread finishes it, and on a pool thread the task's own completion may need the thread it took.

@@ -64,15 +64,21 @@ internal static class StatusReport
             _ = Directory.CreateDirectory(directory);
         }
 
-        await File.WriteAllBytesAsync(path, ToUtf8(state)).ConfigureAwait(false);
+        // The apartment of the thread the shell's calls run on, asked of one such thread.
+        var apartment = await Interop.ShellInterop.OnAShellThreadAsync(
+            static () => Thread.CurrentThread.GetApartmentState(),
+            "BrowserAI report apartment").ConfigureAwait(false);
+
+        await File.WriteAllBytesAsync(path, ToUtf8(state, apartment)).ConfigureAwait(false);
 
         return Path.GetFullPath(path);
     }
 
     /// <summary>Renders the report.</summary>
     /// <param name="state">What to render.</param>
+    /// <param name="shellApartment">The apartment the shell's calls run in, which the report names.</param>
     /// <returns>The bytes, UTF-8, LF, no BOM.</returns>
-    public static byte[] ToUtf8(AppState state)
+    public static byte[] ToUtf8(AppState state, ApartmentState shellApartment)
     {
         ArgumentNullException.ThrowIfNull(state);
 
@@ -89,17 +95,20 @@ internal static class StatusReport
             writer.WriteString("version", state.Version);
             writer.WriteString("writtenAt", DateTimeOffset.Now.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
 
-            // ⚠️ THE APARTMENT OF THE THREAD THAT RAN Main, AND IT IS NOT
-            // COSMETIC -- 2026-09-16. [STAThread] is an attribute the CLR reads;
-            // whether NativeAOT honours it was ASSUMED and never measured, and
-            // two things depend on it with no diagnostic if it is wrong. The
-            // folder picker's BIF_NEWDIALOGSTYLE silently falls back to the
-            // pre-Vista dialog on a thread that is not in a single-threaded
-            // apartment, and the version 6 common controls a task dialog is made
-            // of expect one. Writing it here is what lets a run off the PUBLISHED
-            // binary assert it, which is the only place the question is real --
-            // the suite's own host is not this executable.
-            writer.WriteString("apartment", Thread.CurrentThread.GetApartmentState().ToString());
+            // ⚠️ THE APARTMENT OF THE THREAD THE SHELL'S CALLS RUN ON, AND IT IS
+            // NOT COSMETIC. The folder picker's BIF_NEWDIALOGSTYLE silently falls
+            // back to the pre-Vista dialog on a thread that is not in a single-
+            // threaded apartment, and whether NativeAOT puts a thread in one is
+            // a question only the PUBLISHED binary answers -- the suite's own host
+            // is not this executable. Corrected 2026-10-11 (previously "THE
+            // APARTMENT OF THE THREAD THAT RAN Main ... [STAThread] is an
+            // attribute the CLR reads"): Main is asynchronous since that day,
+            // the maintainer's decision 54, and [STAThread] on an asynchronous
+            // Main puts no thread in the apartment, measured that day, so every
+            // shell call runs on a thread that asks for one
+            // (Interop/ShellInterop.OnAShellThreadAsync), and that thread's
+            // apartment is the one the picker meets.
+            writer.WriteString("apartment", shellApartment.ToString());
 
             WriteNullable(writer, "installRoot", state.InstallRoot);
             writer.WriteString("dataRoot", state.DataRoot);

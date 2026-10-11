@@ -311,6 +311,30 @@ on the console arm cannot tell a console-specific behaviour from a general one.
 Write the report to a file and not to stdout: on the console arm there is
 nowhere for stdout to go that anybody will read.
 
+### A child's redirected streams are synchronous `FileStream`s -- measured 2026-10-11
+
+**`System.Diagnostics.Process` hands back its redirected standard input, output and
+error as `System.IO.FileStream` with `IsAsync` false**, measured 2026-10-11 on .NET
+10.0.12, Windows 10.0.26300: a console program started `cmd.exe /d /c echo hello` with
+all three redirected and printed each `BaseStream`'s type and `IsAsync`, and read
+`System.IO.FileStream isAsync=False` three times. `[FLOATS]`
+
+**Why it matters to a process that waits without a thread**: on a stream not opened
+for overlapped I/O, *"the actual I/O operation is performed synchronously"*
+(learn.microsoft.com, `FileStream.IsAsync`, read 2026-10-11), so every `ReadAsync` on a
+child's quiet standard error is a pool thread parked in a synchronous read for as long
+as the child says nothing. **BrowserAI starts its children through
+`Interop/JobLauncher` since the maintainer's decision 54**, whose pipes are named,
+overlapped at BrowserAI's end and handed to the child without the flag, so the reads
+are overlapped and park no thread. **The suite still starts children through
+`Process`**, and every read of one of their streams, its event-driven readers included,
+is such a parked thread for as long as the child is quiet; no analyzer sees it, which
+is why `build/BannedSymbols.txt` names it among what its list cannot see.
+
+**To re-establish it**, start any console child through `ProcessStartInfo` with
+`UseShellExecute = false` and the three streams redirected, and print
+`process.StandardOutput.BaseStream.GetType()` and `((FileStream)process.StandardOutput.BaseStream).IsAsync`.
+
 ### `SW_SHOWNOACTIVATE` keeps a headed Chromium off the foreground, and Firefox never takes it -- measured 2026-08-24
 
 > ⚠️ *Corrected 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`)

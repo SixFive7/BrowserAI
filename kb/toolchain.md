@@ -709,7 +709,12 @@ is deleted with the configuration window, and the folder picker runs on a thread
 of its own that asks for the apartment itself, which
 `HouseRuleTests.EveryFolderPickerRunsOnAThreadThatAsksForASingleThreadedApartment`
 holds. Explorer is still opened on the coordinator's own thread, which is
-`Main`'s.*
+`Main`'s.* *Corrected 2026-10-11 by addition: `Main` is asynchronous since the
+maintainer's decision 54, and `[STAThread]` on an asynchronous `Main` puts its thread
+in no single-threaded apartment ([measured that day](#stathread-on-an-asynchronous-main-leaves-its-thread-in-the-multithreaded-apartment----measured-2026-10-11)),
+so Explorer is opened on a thread made for it that asks for one, and the report's
+`apartment` field below is read on such a thread since that day. The measurement
+below is of `Main`'s thread and is left as measured.*
 
 Measured by running the published `BrowserAI.exe --report <path>` and reading the
 field it writes: **`"apartment": "STA"`**, at
@@ -727,6 +732,48 @@ every release gate and not on a day somebody remembered to look.
 Re-establish it by hand with
 `src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe --report out.json`
 and reading `apartment`.
+
+### `[STAThread]` on an asynchronous `Main` leaves its thread in the multithreaded apartment -- measured 2026-10-11
+
+**The attribute takes effect on a synchronous entry point only.** A console program
+of eleven lines, `[STAThread]` on `private static async Task<int> Main()`, printing
+`Thread.CurrentThread.GetApartmentState()` and the managed thread id before and after
+its first `await Task.Yield()`, read **MTA and MTA** both ways it was run: on thread 1
+then thread 2 published with NativeAOT (ILC 10.0.12), and on thread 2 then thread 4
+under CoreCLR (`dotnet run -c Release`, runtime 10.0.12), SDK 10.0.401, Windows
+10.0.26300. `[FLOATS]`
+
+**Microsoft's own page on single-threaded apartments shows that program as the
+correct one**, *"[STAThread] static async Task Main() ... continuation resumes on STA
+via SynchronizationContext"* (learn.microsoft.com, windows/win32/com/single-threaded-apartments,
+read 2026-10-11), and on .NET 10 the thread is not in an STA before the first await,
+and a console program has no `SynchronizationContext` to bring a continuation back to
+it. **What BrowserAI does about it**: the maintainer's decision 54 made the one
+executable's `Main` asynchronous that day, so every call that needs a single-threaded
+apartment runs on a thread made for it that asks for one before it starts
+(`Interop/ShellInterop.OnAShellThreadAsync` for Explorer and the browser,
+the folder picker's own thread, and the question box's in `Interop/UserPrompt`), and
+the status report's `apartment` field is read on such a thread, so
+`AppBinaryTests.ThePublishedConfigurationAppRunsInASingleThreadedApartment` still asks
+the published binary the question that matters.
+
+**To re-establish it**, run this both ways, `dotnet run -c Release` and
+`dotnet publish -c Release -r win-x64 -p:PublishAot=true` then the published
+executable; both lines read `MTA` while it holds:
+
+```csharp
+internal static class Program
+{
+    [STAThread]
+    private static async Task<int> Main()
+    {
+        Console.WriteLine("before await: " + Thread.CurrentThread.GetApartmentState() + " thread " + Environment.CurrentManagedThreadId);
+        await Task.Yield();
+        Console.WriteLine("after await: " + Thread.CurrentThread.GetApartmentState() + " thread " + Environment.CurrentManagedThreadId);
+        return 0;
+    }
+}
+```
 
 ### The embedded manifest is readable out of the built file -- measured 2026-09-16
 

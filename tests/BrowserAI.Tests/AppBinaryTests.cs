@@ -284,10 +284,20 @@ internal sealed class AppBinaryTests
     }
 
     /// <summary>
-    /// The published configuration app really does run <c>Main</c> in a
+    /// The published configuration app really does run its shell calls in a
     /// single-threaded apartment.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The thread the shell's calls run on, since 2026-10-11</b> (previously
+    /// "really does run <c>Main</c> in a single-threaded apartment"): <c>Main</c> is
+    /// asynchronous since that day, the maintainer's decision 54, and <c>[STAThread]</c>
+    /// on an asynchronous <c>Main</c> leaves its thread in the multithreaded apartment,
+    /// measured that day. The picker and Explorer's open run on a thread made for them
+    /// that asks for the single-threaded apartment, and the report names that thread's,
+    /// so the question this arm asks of the published binary is the same one: whether
+    /// NativeAOT gives the picker the apartment it needs.
+    /// </para>
     /// <para>
     /// ⚠️ <b><c>[STAThread]</c> under NativeAOT was an assumption, not a
     /// measurement, and two things depend on it with no diagnostic if it is
