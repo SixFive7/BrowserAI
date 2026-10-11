@@ -59,7 +59,7 @@ namespace BrowserAI.Updates;
 /// 2026-09-15.</b> Velopack invokes all four on <c>--mainExe</c> and on nothing
 /// else, and the main exe is <c>BrowserAI.exe</c>, which is now the
 /// configuration app. So the server called <c>RunWithoutLifecycleHooks</c>
-/// and the app called <see cref="RunAndServeLifecycleHooks"/>. They were two
+/// and the app called <c>RunAndServeLifecycleHooks</c>. They were two
 /// methods and not a flag because the difference was a <i>capability</i>: a
 /// binary that registers no callbacks cannot serve a hook even if somebody
 /// passes it one by hand.
@@ -68,7 +68,7 @@ namespace BrowserAI.Updates;
 /// ⚠️ <b>ONE CALL AGAIN SINCE 2026-10-08, D7 a, the maintainer's words verbatim:
 /// <i>"d7 a"</i></b> (previously the two calls above). There is one executable,
 /// it is the main exe, and its one <c>Main</c> calls
-/// <see cref="RunAndServeLifecycleHooks"/> first, whatever its arguments; a hook
+/// <see cref="RunAndServeLifecycleHooksAsync"/> first, whatever its arguments; a hook
 /// argument is Velopack's and is served before any mode is chosen.
 /// <c>RunWithoutLifecycleHooks</c> is deleted, because nothing calls it.
 /// </para>
@@ -116,36 +116,112 @@ internal static class VelopackStartup
     /// </summary>
     /// <param name="args">The process arguments.</param>
     /// <param name="log">Where Velopack's own output goes.</param>
+    /// <returns>The startup, which for a hook never completes: the process exits once the hook's work is done.</returns>
     /// <remarks>
+    /// <para>
     /// The lifecycle hooks below take no injected seam. They are served only
     /// inside a real installed process -- every test host reaches
     /// <see cref="Registration.HookRegistration"/> directly, which is why that
     /// type carries the overload that takes an image path and a command seam.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A HOOK'S WORK RUNS AFTER <c>Run()</c> RETURNS, since 2026-10-11</b>, the
+    /// maintainer's decision 54, in his words verbatim: <i>"Never block a worker
+    /// anywhere."</i> Velopack calls a fast callback synchronously and then exits the
+    /// process through its locator's <see cref="IProcessImpl.Exit"/>
+    /// (<c>VelopackApp.Run</c> at 1.2.161, read in its source), so a hook whose work is
+    /// asynchronous could only have been waited for inside the callback. For a hook's
+    /// arguments the locator is now the platform's own, built with a process seam whose
+    /// exit is held: the callback records which hook was called, <c>Run()</c> returns, the
+    /// work is awaited, and the process then exits with the code Velopack asked for, or the
+    /// hook's own (<see cref="ExitCodeFor"/>). <i>Previously the callback did the work and
+    /// exited with <see cref="Environment.Exit"/> itself when the hook had a code of its own.</i>
+    /// </para>
+    /// <para>
+    /// <b>What a reader of Velopack's log sees changed with it</b>: Velopack writes
+    /// <i>Completed hook, exiting...</i> when the callback returns, so the hook's own lines
+    /// now follow that one. Setup reads the exit code and the hook's time, and both are
+    /// what they were: the work runs in the same process, inside the same timeout.
+    /// </para>
     /// </remarks>
-    public static void RunAndServeLifecycleHooks(string[] args, Action<VelopackLogLevel, string, Exception?> log)
+    public static async Task RunAndServeLifecycleHooksAsync(string[] args, Action<VelopackLogLevel, string, Exception?> log)
     {
         ArgumentNullException.ThrowIfNull(log);
 
-        Common(args, log)
+        Served? served = null;
 
-            // ⚠️ THE THREE THAT DO WORK. Their records are written inside the
-            // callback and not buffered, because VelopackApp.Run() exits the
-            // process once it has served a hook and anything buffered dies with
-            // it. ⚠️ And so is what they say to the installer's log, since
-            // 2026-10-10: it goes through Velopack's own logger, which writes the
-            // file, and no longer only into the caller's delegate, which in the
-            // product is a list nothing reads before the process exits.
+        var velopack = Common(args, log)
+
+            // ⚠️ THE THREE THAT DO WORK. A callback records which hook it is, and the work
+            // runs once Run() has returned, for the reason the remarks give. Its records
+            // are on disk before the process exits, and what it says to the installer's
+            // log goes through Velopack's own logger, which writes the file (2026-10-10).
             //
             // ⚠️ And an install that set nothing up exits with a code of its own, since
             // 2026-10-10 (the maintainer's 21): Setup records it as the hook's failure, which
             // is the one thing of a hook's that reaches Setup's own log.
-            .OnAfterInstallFastCallback(version => ExitAsConcluded(RegistrationIntent.Install, Register(RegistrationIntent.Install, Describe(version), ThroughVelopacksLog(log))))
-            .OnAfterUpdateFastCallback(version => ExitAsConcluded(RegistrationIntent.Update, Register(RegistrationIntent.Update, Describe(version), ThroughVelopacksLog(log))))
-            .OnBeforeUninstallFastCallback(version => ExitAsConcluded(RegistrationIntent.Uninstall, Register(RegistrationIntent.Uninstall, Describe(version), ThroughVelopacksLog(log))))
+            .OnAfterInstallFastCallback(version => served = new(RegistrationIntent.Install, Describe(version)))
+            .OnAfterUpdateFastCallback(version => served = new(RegistrationIntent.Update, Describe(version)))
+            .OnBeforeUninstallFastCallback(version => served = new(RegistrationIntent.Uninstall, Describe(version)))
 
-            .OnBeforeUpdateFastCallback(version => log(VelopackLogLevel.Information, $"BrowserAI {version} is being replaced.", null))
-            .Run();
+            .OnBeforeUpdateFastCallback(version => log(VelopackLogLevel.Information, $"BrowserAI {version} is being replaced.", null));
+
+        if (!IsHookCall(args))
+        {
+            velopack.Run();
+            return;
+        }
+
+        var logger = new DelegateVelopackLogger(log);
+        var exit = new HeldExit(logger);
+
+        velopack.SetLocator(VelopackLocator.CreateDefaultForPlatform(exit, logger)).Run();
+
+        var code = exit.Asked ?? 0;
+
+        if (served is { } hook)
+        {
+            try
+            {
+                var outcome = await RegisterAsync(hook.Intent, hook.Version, ThroughVelopacksLog(log)).ConfigureAwait(false);
+                code = ExitCodeFor(hook.Intent, outcome) ?? code;
+            }
+#pragma warning disable CA1031 // What Velopack does with a callback that throws, which this work did inside its callback until 2026-10-11: a line in its log and the exit code -1.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                ThroughVelopacksLog(log)(VelopackLogLevel.Error, $"Error occurred executing user defined Velopack hook. ({args[0]})", failure);
+                code = -1;
+            }
+        }
+
+        // Environment.Exit is what Velopack's own handler does, with 0, once the callback
+        // returns; measured on 2026-10-10 with 5, which Setup read.
+        Environment.Exit(code);
     }
+
+    /// <summary>Whether a start is one of Velopack's hook calls, read exactly as <c>VelopackApp.Run</c> reads it.</summary>
+    /// <param name="args">The process arguments.</param>
+    /// <returns>Whether <c>Run()</c> will serve a hook and then exit.</returns>
+    /// <remarks>
+    /// <b>The arguments and the test are Velopack's</b>, at 1.2.161 (<c>VelopackApp.Run</c>,
+    /// read in its source): a first argument of these eight, in any case, and a version
+    /// after it. A start that is not one keeps the default locator and Velopack's own exit.
+    /// </remarks>
+    internal static bool IsHookCall(string[]? args) =>
+        args is { Length: >= 2 } && HookArguments.Contains(args[0], StringComparer.OrdinalIgnoreCase);
+
+    private static readonly string[] HookArguments =
+    [
+        "--veloapp-install",
+        "--veloapp-updated",
+        "--veloapp-obsolete",
+        "--veloapp-uninstall",
+        "--squirrel-install",
+        "--squirrel-updated",
+        "--squirrel-obsolete",
+        "--squirrel-uninstall",
+    ];
 
     /// <summary>
     /// Where a hook's lines for the installer's log go: Velopack's own logger, which
@@ -336,9 +412,9 @@ internal static class VelopackStartup
     /// opens first and the only one that exists before BrowserAI has ever run.
     /// </remarks>
     /// <returns>What the hook did.</returns>
-    public static HookOutcome Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
+    public static async Task<HookOutcome> RegisterAsync(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
     {
-        var outcome = HookRegistration.Run(intent, version);
+        var outcome = await HookRegistration.RunAsync(intent, version).ConfigureAwait(false);
         Mirror(outcome, intent, version, log);
         return outcome;
     }
@@ -363,25 +439,12 @@ internal static class VelopackStartup
         return intent is RegistrationIntent.Install && outcome.NotSetUp is not null ? StandardLocation.RefusedExitCode : null;
     }
 
-    /// <summary>Ends the hook's process with its own code, when it has one.</summary>
-    /// <param name="intent">Which hook it was.</param>
-    /// <param name="outcome">What it did.</param>
-    private static void ExitAsConcluded(RegistrationIntent intent, HookOutcome outcome)
-    {
-        if (ExitCodeFor(intent, outcome) is { } code)
-        {
-            // Environment.Exit inside the callback is what Velopack's own handler does, with
-            // 0, once the callback returns; measured on 2026-10-10 with 5, which Setup read.
-            Environment.Exit(code);
-        }
-    }
-
     /// <summary>
     /// Writes what one hook did into the installer's own log, one line per thing it
     /// changed.
     /// </summary>
     /// <remarks>
-    /// <b>Split out of <see cref="Register"/> on 2026-09-25</b>, so the suite can hand
+    /// <b>Split out of <see cref="RegisterAsync"/> on 2026-09-25</b>, so the suite can hand
     /// it an outcome the real hook produced nowhere near a test: a sign-in task that
     /// could not be registered, which must reach this log as a warning and must not
     /// fail the hook.
@@ -462,5 +525,36 @@ internal static class VelopackStartup
     {
         public void Log(VelopackLogLevel logLevel, string? message, Exception? exception) =>
             write(logLevel, message ?? string.Empty, exception);
+    }
+
+    /// <summary>Which hook Velopack called, and with which version.</summary>
+    /// <param name="Intent">The hook.</param>
+    /// <param name="Version">The version, as everything downstream records it.</param>
+    private sealed record Served(RegistrationIntent Intent, string Version);
+
+    /// <summary>
+    /// The platform's own process seam, with the one exit a hook's <c>Run()</c> asks for
+    /// held, so the hook's work is awaited before the process exits.
+    /// </summary>
+    /// <param name="log">Where the platform's seam writes, as it does for the default locator.</param>
+    private sealed class HeldExit(IVelopackLogger log) : IProcessImpl
+    {
+        private readonly DefaultProcessImpl _process = new(log);
+
+        /// <summary>The exit code Velopack asked for, or <see langword="null"/> while it has asked for none.</summary>
+        public int? Asked { get; private set; }
+
+        /// <inheritdoc />
+        public string GetCurrentProcessPath() => _process.GetCurrentProcessPath();
+
+        /// <inheritdoc />
+        public uint GetCurrentProcessId() => _process.GetCurrentProcessId();
+
+        /// <inheritdoc />
+        public void StartProcess(string exePath, IEnumerable<string> args, string? workDir, bool showWindow) =>
+            _process.StartProcess(exePath, args, workDir, showWindow);
+
+        /// <inheritdoc />
+        public void Exit(int exitCode) => Asked ??= exitCode;
     }
 }

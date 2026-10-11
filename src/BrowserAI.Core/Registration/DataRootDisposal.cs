@@ -157,11 +157,11 @@ internal static class DataRootDisposal
     /// <param name="silent">Whether the uninstall is unattended.</param>
     /// <param name="ask">Asks the question. Never called when <paramref name="silent"/>.</param>
     /// <returns>What to do.</returns>
-    public static DataRootChoice Decide(bool silent, Func<bool> ask)
+    public static async Task<DataRootChoice> DecideAsync(bool silent, Func<Task<bool>> ask)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return !silent && ask() ? DataRootChoice.Remove : DataRootChoice.Keep;
+        return !silent && await ask().ConfigureAwait(false) ? DataRootChoice.Remove : DataRootChoice.Keep;
     }
 
     /// <summary>
@@ -181,11 +181,11 @@ internal static class DataRootDisposal
     /// <param name="ask">
     /// The question seam: given the composed message, whether the answer was
     /// yes. The suite supplies its own; the product supplies
-    /// <see cref="UserPrompt.AskYesNo"/>.
+    /// <see cref="UserPrompt.AskYesNoAsync"/>.
     /// </param>
     /// <param name="logger">Where the decision is recorded.</param>
     /// <returns>What was decided.</returns>
-    public static DataRootDisposalReport Choose(IAppPaths paths, bool silent, Func<string, bool> ask, ILogger logger)
+    public static async Task<DataRootDisposalReport> ChooseAsync(IAppPaths paths, bool silent, Func<string, Task<bool>> ask, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(paths);
         ArgumentNullException.ThrowIfNull(ask);
@@ -209,11 +209,11 @@ internal static class DataRootDisposal
         var size = Describe(bytes);
         var asked = false;
 
-        var choice = Decide(silent, () =>
+        var choice = await DecideAsync(silent, () =>
         {
             asked = true;
             return ask(Question(dataRoot, bytes));
-        });
+        }).ConfigureAwait(false);
 
         if (choice is DataRootChoice.Keep)
         {
@@ -239,7 +239,7 @@ internal static class DataRootDisposal
     /// junction anywhere under a browser profile would otherwise empty whatever
     /// it points at, on a path nobody typed.
     /// </remarks>
-    /// <param name="decision">What <see cref="Choose"/> returned.</param>
+    /// <param name="decision">What <see cref="ChooseAsync"/> returned.</param>
     /// <returns>The same report, carrying whatever would not go.</returns>
     public static DataRootDisposalReport Remove(DataRootDisposalReport decision)
     {

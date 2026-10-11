@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using BrowserAI.Interop;
 
 namespace BrowserAI.Registration;
 
@@ -35,7 +35,7 @@ internal interface IRegisterAi
     /// <param name="arguments">The command line, one element per argument.</param>
     /// <param name="budget">How long it may run.</param>
     /// <returns>What it did. Never throws for a tool that is missing, fails or hangs.</returns>
-    ToolRun Run(IReadOnlyList<string> arguments, TimeSpan budget);
+    Task<ToolRun> RunAsync(IReadOnlyList<string> arguments, TimeSpan budget);
 }
 
 /// <summary>
@@ -80,7 +80,7 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
     /// <param name="imagePath">The running image, normally <see cref="Environment.ProcessPath"/>.</param>
     /// <returns>
     /// The tool at <c>&lt;image folder&gt;\payload\registerai\RegisterAI.exe</c>. An image
-    /// with no folder gives the same path without one, which <c>Run</c> refuses as not
+    /// with no folder gives the same path without one, which <c>RunAsync</c> refuses as not
     /// there, so nothing is looked for in a working directory or on PATH.
     /// </returns>
     /// <remarks>
@@ -95,7 +95,7 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
             : Path.Combine("payload", FolderName, FileName));
 
     /// <inheritdoc/>
-    public ToolRun Run(IReadOnlyList<string> arguments, TimeSpan budget)
+    public async Task<ToolRun> RunAsync(IReadOnlyList<string> arguments, TimeSpan budget)
     {
         ArgumentNullException.ThrowIfNull(arguments);
 
@@ -106,116 +106,112 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
             return new ToolRun(null, string.Empty, string.Empty, TimedOut: false, $"'{Executable}' is not there");
         }
 
-        return RunAndRead(arguments, budget);
+        return await RunAndReadAsync(arguments, budget).ConfigureAwait(false);
     }
 
-    private ToolRun RunAndRead(IReadOnlyList<string> arguments, TimeSpan budget)
+    private async Task<ToolRun> RunAndReadAsync(IReadOnlyList<string> arguments, TimeSpan budget)
     {
-        var start = new ProcessStartInfo(Executable)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = Utf8,
-            StandardErrorEncoding = Utf8,
-            WorkingDirectory = Path.GetDirectoryName(Executable)!,
-        };
+        // This process's environment, as Process.Start passed it, with the run's own
+        // variables on top.
+        var block = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var argument in arguments)
+        foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
         {
-            start.ArgumentList.Add(argument);
+            if (entry.Key is string name && entry.Value is string value)
+            {
+                block[name] = value;
+            }
         }
 
         foreach (var (name, value) in environment ?? new Dictionary<string, string>())
         {
-            start.Environment[name] = value;
+            block[name] = value;
         }
 
-        using var process = new Process { StartInfo = start };
+        LaunchedProcess? process = null;
 
         try
         {
-            _ = process.Start();
-        }
-        catch (Exception failure) when (failure is System.ComponentModel.Win32Exception or InvalidOperationException)
-        {
-            return new ToolRun(null, string.Empty, string.Empty, TimedOut: false, failure.Message);
-        }
-
-        process.StandardInput.Close();
-
-        // ⚠️ EACH PIPE IS READ ON A THREAD OF ITS OWN, AND WHAT IT READ IS KEPT -- since
-        // 2026-10-10, after the gate at a557aa0f read no document from a RegisterAI that had
-        // written its entry (the hazard index). Until that day both pipes were read with
-        // ReadToEndAsync and kept only if they ended within the drain bound, so a process
-        // that inherited a pipe and outlived RegisterAI, or a test host too busy to run the
-        // reads' continuations, threw the whole document away. A thread of its own needs
-        // nothing from the thread pool, and the text it has read when the bound runs out is
-        // the text RegisterAI wrote.
-        var output = PipeText.Read(process.StandardOutput);
-        var error = PipeText.Read(process.StandardError);
-        var timedOut = false;
-
-        using (var limit = new CancellationTokenSource(budget))
-        {
             try
             {
-                process.WaitForExitAsync(limit.Token).GetAwaiter().GetResult();
+                // ⚠️ OUTSIDE ANY JOB, AND OVER PIPES THAT ARE OVERLAPPED AT THIS END -- since
+                // 2026-10-11, the maintainer's decision 54. Until that day this ran under
+                // Process.Start, whose redirected streams Windows makes synchronous, so each of
+                // the two reads held a thread for as long as RegisterAI ran. No job, because
+                // what RegisterAI's clients start, a client's own updater among them, must keep
+                // running after it has gone, as it did.
+                process = JobLauncher.StartOutsideAnyJob(Executable, arguments, Path.GetDirectoryName(Executable)!, block);
             }
-            catch (OperationCanceledException)
+            catch (System.ComponentModel.Win32Exception failure)
+            {
+                return new ToolRun(null, string.Empty, string.Empty, TimedOut: false, failure.Message);
+            }
+
+            await process.StandardInput.DisposeAsync().ConfigureAwait(false);
+
+            // ⚠️ EACH PIPE'S TEXT IS KEPT AS IT ARRIVES -- since 2026-10-10, after the gate at
+            // a557aa0f read no document from a RegisterAI that had written its entry (the
+            // hazard index). A process that inherited a pipe and outlived RegisterAI holds
+            // the pipe open, so a read to the end may not end: what was read by the time the
+            // drain bound runs out is the text RegisterAI wrote. The reads are overlapped
+            // since 2026-10-11 and hold no thread while they wait (previously a thread of
+            // its own each).
+            var output = new PipeText(process.StandardOutput);
+            var error = new PipeText(process.StandardError);
+            var timedOut = false;
+
+            if (!await process.WaitForExitAsync(budget).ConfigureAwait(false))
             {
                 timedOut = true;
-                Stop(process);
+
+                // The process this runner started, and nothing else, by its own handle.
+                _ = process.TryTerminate();
             }
+
+            // A child that kept the pipes open would hold them for ever, so the wait is
+            // bounded, and shared by the two.
+            using var drain = new CancellationTokenSource(ProcessBounds.RegisterAiOutputDrain);
+            var said = await output.WithinAsync(drain.Token).ConfigureAwait(false);
+            var complained = await error.WithinAsync(drain.Token).ConfigureAwait(false);
+
+            return timedOut
+                ? new ToolRun(null, said, complained, TimedOut: true, null)
+                : new ToolRun(process.TryReadExitCode(), said, complained, TimedOut: false, null);
         }
-
-        // A child that kept the pipes open would hold them for ever, so the wait is bounded,
-        // and shared by the two.
-        var deadline = Environment.TickCount64 + (long)ProcessBounds.RegisterAiOutputDrain.TotalMilliseconds;
-        var said = output.Within(deadline);
-        var complained = error.Within(deadline);
-
-        return timedOut
-            ? new ToolRun(null, said, complained, TimedOut: true, null)
-            : new ToolRun(process.ExitCode, said, complained, TimedOut: false, null);
+        finally
+        {
+            process?.Dispose();
+        }
     }
 
-    /// <summary>One pipe, read to its end on a thread of its own, its text kept as it arrives.</summary>
+    /// <summary>One pipe, read to its end without a thread, its text kept as it arrives.</summary>
     private sealed class PipeText
     {
         private readonly StringBuilder _text = new();
         private readonly Lock _gate = new();
-        private readonly Thread _reader;
-        private readonly StreamReader _pipe;
-
-        private PipeText(StreamReader pipe)
-        {
-            _pipe = pipe;
-            _reader = new Thread(Drain) { IsBackground = true, Name = "RegisterAI output" };
-        }
+        private readonly Task _reading;
 
         /// <summary>Starts reading a pipe.</summary>
-        /// <param name="pipe">The pipe.</param>
-        /// <returns>What is read from it.</returns>
-        public static PipeText Read(StreamReader pipe)
-        {
-            var reading = new PipeText(pipe);
-            reading._reader.Start();
-            return reading;
-        }
+        /// <param name="pipe">The pipe, overlapped at this end.</param>
+        public PipeText(Stream pipe) => _reading = DrainAsync(pipe);
 
-        /// <summary>The text read by the deadline: all of it when the pipe ended in time.</summary>
+        /// <summary>The text read by the time the token is cancelled: all of it when the pipe ended first.</summary>
         /// <remarks>
-        /// A pipe that has not ended by then leaves its thread reading: a background thread
-        /// holds no process open, and it ends with the pipe.
+        /// A pipe that has not ended by then is left reading: the read is a pending I/O
+        /// request and holds nothing, and it ends with the pipe.
         /// </remarks>
-        /// <param name="deadline">The tick count to wait until.</param>
+        /// <param name="cancellationToken">The drain bound.</param>
         /// <returns>The text.</returns>
-        public string Within(long deadline)
+        public async Task<string> WithinAsync(CancellationToken cancellationToken)
         {
-            _ = _reader.Join(TimeSpan.FromMilliseconds(Math.Max(0, deadline - Environment.TickCount64)));
+            try
+            {
+                await _reading.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // The bound ran out first: what was read is the answer.
+            }
 
             lock (_gate)
             {
@@ -223,41 +219,32 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
             }
         }
 
-        private void Drain()
+        private async Task DrainAsync(Stream pipe)
         {
-            var buffer = new char[4096];
+            var decoder = Utf8.GetDecoder();
+            var bytes = new byte[4096];
+            var characters = new char[Utf8.GetMaxCharCount(bytes.Length)];
 
             try
             {
                 int read;
 
-                while ((read = _pipe.Read(buffer, 0, buffer.Length)) > 0)
+                while ((read = await pipe.ReadAsync(bytes).ConfigureAwait(false)) > 0)
                 {
+                    var decoded = decoder.GetChars(bytes, 0, read, characters, 0, flush: false);
+
                     lock (_gate)
                     {
-                        _ = _text.Append(buffer, 0, read);
+                        _ = _text.Append(characters, 0, decoded);
                     }
                 }
             }
-#pragma warning disable CA1031 // A pipe disposed under its reader ends the read; nothing may escape a thread.
+#pragma warning disable CA1031 // A pipe disposed under its reader ends the read; nothing may escape the drain.
             catch (Exception)
 #pragma warning restore CA1031
             {
                 // What was read is kept.
             }
-        }
-    }
-
-    /// <summary>Stops the process this runner started, and nothing else.</summary>
-    private static void Stop(Process process)
-    {
-        try
-        {
-            process.Kill();
-        }
-        catch (Exception failure) when (failure is InvalidOperationException or System.ComponentModel.Win32Exception)
-        {
-            // It exited between the deadline and the kill.
         }
     }
 }

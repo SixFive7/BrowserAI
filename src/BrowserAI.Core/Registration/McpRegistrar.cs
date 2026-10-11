@@ -169,7 +169,7 @@ internal static class McpRegistrar
     /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
     /// <param name="commandArguments">The arguments the command is registered with, or <see langword="null"/> for the target's own, <c>--mcp</c>.</param>
     /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
-    public static RegistrationReport Apply(
+    public static async Task<RegistrationReport> ApplyAsync(
         RegistrationClient who,
         RegistrationIntent intent,
         string? imagePath,
@@ -180,7 +180,7 @@ internal static class McpRegistrar
     {
         ArgumentNullException.ThrowIfNull(who);
 
-        return Apply([who], intent, imagePath, tool, logger, replace, commandArguments)[0].Report;
+        return (await ApplyAsync([who], intent, imagePath, tool, logger, replace, commandArguments).ConfigureAwait(false))[0].Report;
     }
 
     /// <summary>Runs one user-scope pass for several clients, with one run of RegisterAI.</summary>
@@ -192,7 +192,7 @@ internal static class McpRegistrar
     /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
     /// <param name="commandArguments">The arguments the command is registered with, or <see langword="null"/> for the target's own, <c>--mcp</c>.</param>
     /// <returns>One pass per client, in the order given. Never throws.</returns>
-    public static IReadOnlyList<ClientRegistration> Apply(
+    public static async Task<IReadOnlyList<ClientRegistration>> ApplyAsync(
         IReadOnlyList<RegistrationClient> clients,
         RegistrationIntent intent,
         string? imagePath,
@@ -214,18 +214,22 @@ internal static class McpRegistrar
 
         try
         {
-            if (!RegistrationTarget.TryResolve(imagePath, out var target, out var refusal))
+            var resolution = await RegistrationTarget.ResolveAsync(imagePath).ConfigureAwait(false);
+
+            if (resolution.Target is not { } target)
             {
+                var refusal = resolution.Refusal;
+
                 RegistrationLog.Refused(logger, refusal);
                 return [.. clients.Select(who => new ClientRegistration(who.Key, who.DisplayName, new RegistrationReport(RegistrationStatus.Refused, refusal, null, imagePath)))];
             }
 
-            var command = target!.Command;
+            var command = target.Command;
             var arguments = commandArguments ?? target.Arguments;
             var verb = intent is RegistrationIntent.Uninstall ? "unregister" : "register";
-            var run = tool.Run(
+            var run = await tool.RunAsync(
                 Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command, arguments),
-                ToolBudget);
+                ToolBudget).ConfigureAwait(false);
 
             if (!ToolDocuments.TryRead(run, out var document, out var problem))
             {
@@ -282,7 +286,7 @@ internal static class McpRegistrar
     /// server (<see cref="RegistrationClient.ProjectCommandFor"/>).
     /// </param>
     /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
-    public static RegistrationReport ApplyToProject(
+    public static async Task<RegistrationReport> ApplyToProjectAsync(
         RegistrationClient who,
         bool register,
         string project,
@@ -298,23 +302,25 @@ internal static class McpRegistrar
 
         try
         {
-            if (!RegistrationTarget.TryResolve(imagePath, out var target, out var refusal))
+            var resolution = await RegistrationTarget.ResolveAsync(imagePath).ConfigureAwait(false);
+
+            if (resolution.Target is not { } target)
             {
-                RegistrationLog.Refused(logger, refusal);
-                return new RegistrationReport(RegistrationStatus.Refused, refusal, null, imagePath);
+                RegistrationLog.Refused(logger, resolution.Refusal);
+                return new RegistrationReport(RegistrationStatus.Refused, resolution.Refusal, null, imagePath);
             }
 
-            var command = commandToRegister is { Length: > 0 } spelled ? spelled : who.ProjectCommandFor(target!.Command, target.InstallRoot).Command;
+            var command = commandToRegister is { Length: > 0 } spelled ? spelled : who.ProjectCommandFor(target.Command, target.InstallRoot).Command;
             var verb = register ? "register" : "unregister";
 
             // A bare name is found through the PATH, so RegisterAI is told which
             // folder that has to be: the install's current\, which the hooks put on
             // the user's PATH (Q294 b).
-            var pathFolder = register && IsBareName(command) ? Path.GetDirectoryName(target!.Command) : null;
+            var pathFolder = register && IsBareName(command) ? Path.GetDirectoryName(target.Command) : null;
 
-            var run = tool.Run(
-                Arguments(verb, [who], "project", project, target!.InstallRoot, replace: false, pathFolder, command, target.Arguments),
-                ToolBudget);
+            var run = await tool.RunAsync(
+                Arguments(verb, [who], "project", project, target.InstallRoot, replace: false, pathFolder, command, target.Arguments),
+                ToolBudget).ConfigureAwait(false);
 
             // ⚠️ A project's own advice when nothing could be read back, since 2026-10-10
             // (previously ToolFailed, which offers the user-scope lines).

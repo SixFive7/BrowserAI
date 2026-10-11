@@ -320,18 +320,18 @@ internal static partial class SignInTask
     /// ⚠️ <i>Corrected 2026-10-09 by addition (previously "The definition the hooks last
     /// registered for an install, or null when there is none.")</i>: what the hooks last
     /// wrote, registered or not. A person's start registers a missing task from it, and
-    /// <see cref="InstallerSettings.Read"/> reads the data root and the update source
+    /// <see cref="InstallerSettings.ReadAsync"/> reads the data root and the update source
     /// back from it for a hook that runs without the installer's environment.
     /// </remarks>
     /// <param name="installRoot">The install root.</param>
     /// <returns>The XML.</returns>
-    public static string? SavedDefinition(string installRoot)
+    public static async Task<string?> SavedDefinitionAsync(string installRoot)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
 
         try
         {
-            return File.ReadAllText(Path.Combine(installRoot, SavedDefinitionFileName));
+            return await File.ReadAllTextAsync(Path.Combine(installRoot, SavedDefinitionFileName)).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -347,7 +347,7 @@ internal static partial class SignInTask
     /// <param name="logger">Where the outcome is recorded.</param>
     /// <param name="arguments">The action's arguments (<see cref="ArgumentsFor"/>).</param>
     /// <returns>What happened.</returns>
-    public static SignInTaskReport Apply(
+    public static async Task<SignInTaskReport> ApplyAsync(
         RegistrationIntent intent,
         RegistrationTarget target,
         string? appId,
@@ -370,7 +370,7 @@ internal static partial class SignInTask
         }
         else
         {
-            report = ChangeTheTaskAndItsCopy(intent, target, NameFor(appId, target.InstallRoot), tasks, arguments);
+            report = await ChangeTheTaskAndItsCopyAsync(intent, target, NameFor(appId, target.InstallRoot), tasks, arguments).ConfigureAwait(false);
         }
 
         SignInTaskLog.Changed(logger, report.Detail);
@@ -399,7 +399,7 @@ internal static partial class SignInTask
     /// <param name="tasks">The scheduler.</param>
     /// <param name="arguments">The action's arguments.</param>
     /// <returns>What happened.</returns>
-    private static SignInTaskReport ChangeTheTaskAndItsCopy(
+    private static async Task<SignInTaskReport> ChangeTheTaskAndItsCopyAsync(
         RegistrationIntent intent,
         RegistrationTarget target,
         string name,
@@ -415,7 +415,7 @@ internal static partial class SignInTask
         {
             if (removing)
             {
-                outcome = tasks.Remove(name);
+                outcome = await tasks.RemoveAsync(name).ConfigureAwait(false);
             }
             else
             {
@@ -425,7 +425,7 @@ internal static partial class SignInTask
                     target.InstallRoot,
                     arguments);
 
-                outcome = tasks.Register(name, definition);
+                outcome = await tasks.RegisterAsync(name, definition).ConfigureAwait(false);
             }
         }
 #pragma warning disable CA1031 // A hook must not fail on the task: a sentence in the installer's log, and the install goes on.
@@ -445,7 +445,7 @@ internal static partial class SignInTask
                 // and a task the hook could not register is the one that will be
                 // missing, so the file was absent in exactly the case it is for
                 // (hazard row 331).
-                File.WriteAllText(saved, written);
+                await File.WriteAllTextAsync(saved, written).ConfigureAwait(false);
             }
             else
             {

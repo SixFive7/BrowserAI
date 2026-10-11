@@ -102,7 +102,9 @@ internal sealed record HookOutcome(
 /// a hook, because <c>VelopackApp.Run()</c> <b>exits the process</b> when it has
 /// served one. Anything a hook merely buffers is discarded at that exit. So the
 /// destination is established here, inside the hook, and every record is on disk
-/// before the callback returns.
+/// before the hook's process exits. <i>Corrected 2026-10-11 (previously "before the
+/// callback returns"): the work runs once <c>Run()</c> has returned and is awaited
+/// before the exit Velopack asked for (<c>VelopackStartup.RunAndServeLifecycleHooksAsync</c>).</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>The log and the record go to the DATA root, and the image path decides
@@ -140,19 +142,21 @@ internal static class HookRegistration
     /// <param name="intent">Which hook is asking.</param>
     /// <param name="version">The version Velopack handed the callback.</param>
     /// <returns>What happened.</returns>
-    public static HookOutcome Run(RegistrationIntent intent, string version) =>
-        Run(
-            intent,
-            version,
-            InstallerSettings.Read(RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out _) ? target!.InstallRoot : null, InstallLocation.AppId));
+    public static async Task<HookOutcome> RunAsync(RegistrationIntent intent, string version)
+    {
+        var running = await RegistrationTarget.ResolveAsync(Environment.ProcessPath).ConfigureAwait(false);
+        var overridden = await InstallerSettings.ReadAsync(running.Target?.InstallRoot, InstallLocation.AppId).ConfigureAwait(false);
+
+        return await RunAsync(intent, version, overridden).ConfigureAwait(false);
+    }
 
     /// <summary>Runs one pass with what the installer's environment named, read once.</summary>
     /// <param name="intent">Which hook is asking.</param>
     /// <param name="version">The version Velopack handed the callback.</param>
     /// <param name="overridden">The hooks' one read of the installer's environment, the override every start is then handed.</param>
     /// <returns>What happened.</returns>
-    private static HookOutcome Run(RegistrationIntent intent, string version, InstallerSettings overridden) =>
-        Run(
+    private static Task<HookOutcome> RunAsync(RegistrationIntent intent, string version, InstallerSettings overridden) =>
+        RunAsync(
             intent,
             version,
             Environment.ProcessPath,
@@ -162,7 +166,7 @@ internal static class HookRegistration
             ScheduledTasks.Instance,
             InstallLocation.AppId,
             DataRootDisposal.IsSilent(ProcessLiveness.ParentCommandLine()),
-            message => UserPrompt.AskYesNo(DataRootDisposal.PromptTitle, message),
+            message => UserPrompt.AskYesNoAsync(DataRootDisposal.PromptTitle, message),
             settings: overridden,
             toastActivator: ToastActivatorStep.Apply);
 
@@ -202,14 +206,14 @@ internal static class HookRegistration
     /// Whether the uninstall that started this hook was unattended. Ignored by
     /// every other intent.
     /// </param>
-    /// <param name="ask">The question seam. See <see cref="DataRootDisposal.Choose"/>.</param>
+    /// <param name="ask">The question seam. See <see cref="DataRootDisposal.ChooseAsync"/>.</param>
     /// <param name="clients">
     /// Which clients to register with, or <see langword="null"/> for
     /// <see cref="RegistrationClient.All"/>.
     /// </param>
     /// <param name="settings">
     /// What the installer's environment named, read once by the caller
-    /// (<see cref="InstallerSettings.Read"/>), or <see langword="null"/> for nothing.
+    /// (<see cref="InstallerSettings.ReadAsync"/>), or <see langword="null"/> for nothing.
     /// </param>
     /// <param name="toastActivator">
     /// Registers or removes the toasts' activator for an install root and says what it
@@ -235,7 +239,7 @@ internal static class HookRegistration
     /// the set only narrows which clients a pass is about.</i>
     /// </para>
     /// </remarks>
-    public static HookOutcome Run(
+    public static async Task<HookOutcome> RunAsync(
         RegistrationIntent intent,
         string version,
         string? imagePath,
@@ -245,7 +249,7 @@ internal static class HookRegistration
         ILogonTasks tasks,
         string? appId,
         bool silent = true,
-        Func<string, bool>? ask = null,
+        Func<string, Task<bool>>? ask = null,
         IReadOnlyList<RegistrationClient>? clients = null,
         InstallerSettings? settings = null,
         Func<RegistrationIntent, string, string>? toastActivator = null,
@@ -265,10 +269,13 @@ internal static class HookRegistration
         // a failing hook undoes nothing, so this is where the refusal is: no client entry, no
         // task, no PATH entry, no toast activator, and on an uninstall nothing of the standard
         // install's, its data root and the clients above all.
-        if (RegistrationTarget.TryResolve(imagePath, out var located, out _)
-            && StandardLocation.Judge(appId, located!.InstallRoot, standardRoot ?? StandardLocation.InstallRoot) is { } notSetUp)
+        // The image is judged once, and every step of the hook reads that one judgement.
+        var located = (await RegistrationTarget.ResolveAsync(imagePath).ConfigureAwait(false)).Target;
+
+        if (located is not null
+            && StandardLocation.Judge(appId, located.InstallRoot, standardRoot ?? StandardLocation.InstallRoot) is { } notSetUp)
         {
-            return NotSetUp(intent, notSetUp, imagePath, located, paths, userPath, tasks, appId);
+            return await NotSetUpAsync(intent, notSetUp, located, paths, userPath, tasks, appId).ConfigureAwait(false);
         }
 
         try
@@ -292,10 +299,10 @@ internal static class HookRegistration
                 // end, never through the task's End, which would end every browser
                 // with no clean close, and waits for it within its bound before the
                 // task, the registrations and the PATH entry go.
-                if (intent is RegistrationIntent.Uninstall && RegistrationTarget.TryResolve(imagePath, out var installing, out _))
+                if (intent is RegistrationIntent.Uninstall && located is not null)
                 {
-                    var pipe = BackgroundPipe.NameFor(installing!.InstallRoot, paths.RootAppDir);
-                    var (_, detail) = BackgroundStop.AskAndWait(pipe, BackgroundRecord.PathFor(paths.RootAppDir, pipe), BackgroundStop.Bound);
+                    var pipe = BackgroundPipe.NameFor(located.InstallRoot, paths.RootAppDir);
+                    var (_, detail) = await BackgroundStop.AskAndWaitAsync(pipe, BackgroundRecord.PathFor(paths.RootAppDir, pipe), BackgroundStop.Bound).ConfigureAwait(false);
 
                     RegistrationHookLog.BackgroundStopped(logger, detail);
                 }
@@ -312,9 +319,9 @@ internal static class HookRegistration
                 // the relay a client starts finds the background for that root.
                 var installed = settings ?? InstallerSettings.None;
 
-                passes = McpRegistrar.Apply(who, intent, imagePath, tool, logger, commandArguments: installed.RelayArguments);
+                passes = await McpRegistrar.ApplyAsync(who, intent, imagePath, tool, logger, commandArguments: installed.RelayArguments).ConfigureAwait(false);
 
-                WriteRecord(paths.RootAppDir, passes, intent, version, logger);
+                await WriteRecordAsync(paths.RootAppDir, passes, intent, version, logger).ConfigureAwait(false);
 
                 // ⚠️ THE INSTALL'S FOLDER ON THE USER'S PATH -- Q294 b, 2026-09-24. A
                 // Codex project entry names `BrowserAI.exe --mcp` alone (since
@@ -326,7 +333,7 @@ internal static class HookRegistration
                 // the record, so a failure here cannot cost the registration its
                 // account; before the data root's question, which is the one step that
                 // may wait for a human.
-                pathEntry = ChangeThePath(intent, imagePath, userPath, logger);
+                pathEntry = ChangeThePath(intent, located, userPath, logger);
 
                 // ⚠️ THE PER-USER LOGON TASK -- Q282 a, 2026-09-25. The install and
                 // update hooks register one task per install root, named for the
@@ -334,8 +341,8 @@ internal static class HookRegistration
                 // PATH for the same reason the PATH is after the record: a failure
                 // here costs this step its own sentence and nothing before it, and
                 // SignInTask.Apply never throws.
-                signIn = RegistrationTarget.TryResolve(imagePath, out var target, out _)
-                    ? SignInTask.Apply(intent, target!, appId, tasks, logger, SignInTask.ArgumentsFor(installed.DataRoot, installed.UpdateSource))
+                signIn = located is not null
+                    ? await SignInTask.ApplyAsync(intent, located, appId, tasks, logger, SignInTask.ArgumentsFor(installed.DataRoot, installed.UpdateSource)).ConfigureAwait(false)
                     : null;
 
                 // ⚠️ THE TOASTS' ACTIVATOR -- T, decided 2026-10-08. A click on one of
@@ -343,9 +350,9 @@ internal static class HookRegistration
                 // classes for this install's application id, which the install and
                 // update hooks register and the uninstall hook removes. It never fails
                 // a hook: a toast with no activator shows and opens nothing.
-                if (target is not null && toastActivator is not null)
+                if (located is not null && toastActivator is not null)
                 {
-                    var activator = toastActivator(intent, target.InstallRoot);
+                    var activator = toastActivator(intent, located.InstallRoot);
                     RegistrationHookLog.ToastActivator(logger, activator);
                 }
 
@@ -357,7 +364,7 @@ internal static class HookRegistration
                 // kept by the same default every other unanswered case takes.
                 if (intent is RegistrationIntent.Uninstall)
                 {
-                    disposal = DataRootDisposal.Choose(paths, silent, ask ?? (_ => false), logger);
+                    disposal = await DataRootDisposal.ChooseAsync(paths, silent, ask ?? (_ => Task.FromResult(false)), logger).ConfigureAwait(false);
                 }
             }
 
@@ -386,7 +393,7 @@ internal static class HookRegistration
                         imagePath)))
                 .ToList();
 
-            TryWriteWithoutALogger(paths.RootAppDir, failed, intent, version);
+            await TryWriteWithoutALoggerAsync(paths.RootAppDir, failed, intent, version).ConfigureAwait(false);
 
             // The data root is KEPT on this path and nothing is asked. A hook
             // that could not open a log is a hook that cannot report what it
@@ -420,17 +427,15 @@ internal static class HookRegistration
     /// </remarks>
     /// <param name="intent">Which hook is running.</param>
     /// <param name="notSetUp">Why nothing is set up.</param>
-    /// <param name="imagePath">The running image.</param>
     /// <param name="target">The copy.</param>
     /// <param name="paths">The data root, read and never written: the background's record is under it.</param>
     /// <param name="userPath">Where the user's PATH is.</param>
     /// <param name="tasks">The task scheduler.</param>
     /// <param name="appId">The pack id the task is named for.</param>
     /// <returns>What happened.</returns>
-    private static HookOutcome NotSetUp(
+    private static async Task<HookOutcome> NotSetUpAsync(
         RegistrationIntent intent,
         StandardLocationRefusal notSetUp,
-        string? imagePath,
         RegistrationTarget target,
         IAppPaths paths,
         IUserPathStore userPath,
@@ -444,11 +449,11 @@ internal static class HookRegistration
             if (intent is RegistrationIntent.Uninstall)
             {
                 var pipe = BackgroundPipe.NameFor(target.InstallRoot, paths.RootAppDir);
-                _ = BackgroundStop.AskAndWait(pipe, BackgroundRecord.PathFor(paths.RootAppDir, pipe), BackgroundStop.Bound);
+                _ = await BackgroundStop.AskAndWaitAsync(pipe, BackgroundRecord.PathFor(paths.RootAppDir, pipe), BackgroundStop.Bound).ConfigureAwait(false);
             }
 
-            var pathEntry = ChangeThePath(RegistrationIntent.Uninstall, imagePath, userPath, logger);
-            var signIn = SignInTask.Apply(RegistrationIntent.Uninstall, target, appId, tasks, logger);
+            var pathEntry = ChangeThePath(RegistrationIntent.Uninstall, target, userPath, logger);
+            var signIn = await SignInTask.ApplyAsync(RegistrationIntent.Uninstall, target, appId, tasks, logger).ConfigureAwait(false);
 
             return new HookOutcome([], null, pathEntry, signIn, notSetUp);
         }
@@ -462,20 +467,20 @@ internal static class HookRegistration
 
     /// <summary>Puts this install's folder on the user's PATH, or takes it off.</summary>
     /// <param name="intent">Which hook is asking.</param>
-    /// <param name="imagePath">The running image, which decides the folder.</param>
+    /// <param name="target">The install the running image is, which decides the folder, or <see langword="null"/> when it is none.</param>
     /// <param name="userPath">Where the PATH is.</param>
     /// <param name="logger">Where the change is reported.</param>
     /// <returns>What happened, or <see langword="null"/> when the image is not an install.</returns>
-    private static UserPathReport? ChangeThePath(RegistrationIntent intent, string? imagePath, IUserPathStore userPath, ILogger logger)
+    private static UserPathReport? ChangeThePath(RegistrationIntent intent, RegistrationTarget? target, IUserPathStore userPath, ILogger logger)
     {
         // The same refusal the registration took: an image that is not an install
         // has no folder of its own to put anywhere, and it said why already.
-        if (!RegistrationTarget.TryResolve(imagePath, out var target, out _))
+        if (target is null)
         {
             return null;
         }
 
-        var entry = UserPath.EntryFor(target!);
+        var entry = UserPath.EntryFor(target);
         var report = intent is RegistrationIntent.Uninstall
             ? UserPath.Remove(userPath, entry)
             : UserPath.Add(userPath, entry);
@@ -485,13 +490,13 @@ internal static class HookRegistration
         return report;
     }
 
-    private static void WriteRecord(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version, ILogger logger)
+    private static async Task WriteRecordAsync(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version, ILogger logger)
     {
         var path = RegistrationRecord.PathFor(root);
 
         try
         {
-            _ = RegistrationRecord.Write(root, passes, intent, version, DateTimeOffset.Now);
+            _ = await RegistrationRecord.WriteAsync(root, passes, intent, version, DateTimeOffset.Now).ConfigureAwait(false);
 
             foreach (var pass in passes)
             {
@@ -506,11 +511,11 @@ internal static class HookRegistration
         }
     }
 
-    private static void TryWriteWithoutALogger(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version)
+    private static async Task TryWriteWithoutALoggerAsync(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version)
     {
         try
         {
-            _ = RegistrationRecord.Write(root, passes, intent, version, DateTimeOffset.Now);
+            _ = await RegistrationRecord.WriteAsync(root, passes, intent, version, DateTimeOffset.Now).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // Last resort. If this fails too there is nothing left that could report it, and an installer must still succeed.
         catch (Exception)

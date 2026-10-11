@@ -47,14 +47,14 @@ internal sealed record InstallerSettings(string? DataRoot, string? UpdateSource)
     /// <b>For the dashboard's Register and Repair</b> (2026-10-10), which run in the
     /// background, where no <c>BROWSERAI_</c> variable is read: the definition the hooks
     /// saved carries the data root and the update source the installer named, exactly
-    /// as <see cref="Read"/> falls back to them.
+    /// as <see cref="ReadAsync"/> falls back to them.
     /// </remarks>
     /// <param name="installRoot">The install whose saved definition is read; <see langword="null"/> when there is none.</param>
     /// <param name="packId">The pack id the install came from: the shipping install's saved data root is never read.</param>
     /// <returns>What the install saved, or <see cref="None"/>.</returns>
-    public static InstallerSettings SavedFor(string? installRoot, string? packId)
+    public static async Task<InstallerSettings> SavedForAsync(string? installRoot, string? packId)
     {
-        var saved = installRoot is { Length: > 0 } root ? SignInTask.SavedDefinition(root) : null;
+        var saved = installRoot is { Length: > 0 } root ? await SignInTask.SavedDefinitionAsync(root).ConfigureAwait(false) : null;
 
         return new(StandardLocation.DataRootFor(packId, SignInTask.DataRootIn(saved)), SignInTask.UpdateSourceIn(saved));
     }
@@ -96,11 +96,11 @@ internal sealed record InstallerSettings(string? DataRoot, string? UpdateSource)
     /// </param>
     /// <param name="environment">The environment, a seam for the suite; the process's own when <see langword="null"/>.</param>
     /// <returns>What the installer named, or the install saved.</returns>
-    public static InstallerSettings Read(string? installRoot, string? packId, Func<string, string?>? environment = null)
+    public static async Task<InstallerSettings> ReadAsync(string? installRoot, string? packId, Func<string, string?>? environment = null)
     {
         environment ??= Environment.GetEnvironmentVariable;
 
-        var saved = installRoot is { Length: > 0 } root ? SignInTask.SavedDefinition(root) : null;
+        var saved = installRoot is { Length: > 0 } root ? await SignInTask.SavedDefinitionAsync(root).ConfigureAwait(false) : null;
 
         return new(
             StandardLocation.DataRootFor(

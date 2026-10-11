@@ -152,34 +152,31 @@ internal sealed record RegistrationTarget
     /// The path of the binary being asked about, normally
     /// <see cref="Environment.ProcessPath"/> inside a Velopack hook.
     /// </param>
-    /// <param name="target">The target, when there is one.</param>
-    /// <param name="refusal">
-    /// Why there is not, as a sentence naming the path and what was expected.
-    /// Empty when <paramref name="target"/> is set.
-    /// </param>
-    /// <returns>Whether a client may be pointed at this path.</returns>
-    public static bool TryResolve(string? imagePath, out RegistrationTarget? target, out string refusal)
+    /// <returns>The target, or why a client may not be pointed at this path.</returns>
+    /// <remarks>
+    /// <b>Asynchronous since 2026-10-11</b>, the maintainer's decision 63, in his words
+    /// verbatim: <i>"convert disk writes as well. Some users have slow spinning rust."</i>
+    /// The header is read with asynchronous reads (<see cref="Runtime.PeSubsystem.OfAsync"/>).
+    /// <i>Previously <c>TryResolve</c>, with the target and the refusal as two
+    /// <see langword="out"/> parameters, which an asynchronous method cannot have.</i>
+    /// </remarks>
+    public static async Task<RegistrationResolution> ResolveAsync(string? imagePath)
     {
-        target = null;
-
         if (imagePath is not { Length: > 0 })
         {
-            refusal = "The running image has no path, so there is nothing to register. BrowserAI composes the server's path from the directory it is itself running out of, and a process that cannot name its own image has no directory to compose from.";
-            return false;
+            return RegistrationResolution.Refused("The running image has no path, so there is nothing to register. BrowserAI composes the server's path from the directory it is itself running out of, and a process that cannot name its own image has no directory to compose from.");
         }
 
         if (!Path.IsPathFullyQualified(imagePath))
         {
-            refusal = $"'{imagePath}' is not a fully qualified path. A registered command is resolved by the client, in whatever working directory the client happens to have, so a relative one would name a different file on every launch -- or none.";
-            return false;
+            return RegistrationResolution.Refused($"'{imagePath}' is not a fully qualified path. A registered command is resolved by the client, in whatever working directory the client happens to have, so a relative one would name a different file on every launch -- or none.");
         }
 
         var directory = Path.GetDirectoryName(imagePath);
 
         if (directory is not { Length: > 0 })
         {
-            refusal = $"'{imagePath}' has no parent directory, so it cannot be an installed BrowserAI.";
-            return false;
+            return RegistrationResolution.Refused($"'{imagePath}' has no parent directory, so it cannot be an installed BrowserAI.");
         }
 
         var directoryName = Path.GetFileName(directory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
@@ -188,16 +185,14 @@ internal sealed record RegistrationTarget
         {
             // The one refusal that exists to stop a specific 392,704-byte file
             // from reaching a client's configuration.
-            refusal = $"'{imagePath}' is not inside a '{CurrentDirectoryName}' directory, so it is not the binary an installed BrowserAI serves stdio from. The execution stub sits beside that directory, is compiled as a Windows-subsystem binary and exits in 59 ms without waiting -- a client registered against it sees its MCP server die at the handshake. Nothing is registered.";
-            return false;
+            return RegistrationResolution.Refused($"'{imagePath}' is not inside a '{CurrentDirectoryName}' directory, so it is not the binary an installed BrowserAI serves stdio from. The execution stub sits beside that directory, is compiled as a Windows-subsystem binary and exits in 59 ms without waiting -- a client registered against it sees its MCP server die at the handshake. Nothing is registered.");
         }
 
         var root = Path.GetDirectoryName(directory);
 
         if (root is not { Length: > 0 })
         {
-            refusal = $@"'{imagePath}' is inside a '{CurrentDirectoryName}' directory with no parent, so it is not an installed layout: an installed BrowserAI runs out of '<install root>\{CurrentDirectoryName}\{AppFileName}'.";
-            return false;
+            return RegistrationResolution.Refused($@"'{imagePath}' is inside a '{CurrentDirectoryName}' directory with no parent, so it is not an installed layout: an installed BrowserAI runs out of '<install root>\{CurrentDirectoryName}\{AppFileName}'.");
         }
 
         // ⚠️ THE FILE, COMPOSED AND THEN CHECKED. Everything above this line is
@@ -212,11 +207,10 @@ internal sealed record RegistrationTarget
             // 'BrowserAI.exe --mcp' from ..." and "Reinstall BrowserAI, or run the installer
             // again over this root."): one action, and a registration does not always carry
             // --mcp alone.
-            refusal = $"'{server}' is not there. BrowserAI registers the {AppFileName} in the folder its hooks run in, and this install has no such file. Nothing is registered: a client pointed at a missing file reports a server that will not start, without saying which file is missing. Reinstall BrowserAI.";
-            return false;
+            return RegistrationResolution.Refused($"'{server}' is not there. BrowserAI registers the {AppFileName} in the folder its hooks run in, and this install has no such file. Nothing is registered: a client pointed at a missing file reports a server that will not start, without saying which file is missing. Reinstall BrowserAI.");
         }
 
-        var subsystem = Runtime.PeSubsystem.Of(server);
+        var subsystem = await Runtime.PeSubsystem.OfAsync(server).ConfigureAwait(false);
 
         if (subsystem is not Runtime.PeSubsystem.WindowsGui)
         {
@@ -230,12 +224,27 @@ internal sealed record RegistrationTarget
                 _ => $"its subsystem is {subsystem.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}",
             };
 
-            refusal = $"'{server}' is not a Windows-subsystem file: {kind}. BrowserAI is one Windows-subsystem file, so that nothing that starts it, a client included, gives it a console window. A file of another kind at that name is a mispacked release or an older build, and registering it would put a console window on the screen at every session start. Nothing is registered.";
-            return false;
+            return RegistrationResolution.Refused($"'{server}' is not a Windows-subsystem file: {kind}. BrowserAI is one Windows-subsystem file, so that nothing that starts it, a client included, gives it a console window. A file of another kind at that name is a mispacked release or an older build, and registering it would put a console window on the screen at every session start. Nothing is registered.");
         }
 
-        target = new RegistrationTarget { Command = server, InstallRoot = root };
-        refusal = string.Empty;
-        return true;
+        return new RegistrationResolution(new RegistrationTarget { Command = server, InstallRoot = root }, string.Empty);
     }
+}
+
+/// <summary>What <see cref="RegistrationTarget.ResolveAsync"/> decided about an image path.</summary>
+/// <param name="Target">The target, when there is one.</param>
+/// <param name="Refusal">
+/// Why there is not, as a sentence naming the path and what was expected. Empty when
+/// <paramref name="Target"/> is set.
+/// </param>
+internal sealed record RegistrationResolution(RegistrationTarget? Target, string Refusal)
+{
+    /// <summary>Whether a client may be pointed at this path.</summary>
+    [System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, nameof(Target))]
+    public bool Resolved => Target is not null;
+
+    /// <summary>A refusal.</summary>
+    /// <param name="refusal">Why.</param>
+    /// <returns>The resolution.</returns>
+    public static RegistrationResolution Refused(string refusal) => new(null, refusal);
 }

@@ -71,18 +71,18 @@ internal interface ILogonTasks
     /// <param name="name">The task's name.</param>
     /// <param name="definition">Its Task Scheduler 1.2 XML.</param>
     /// <returns>What happened.</returns>
-    TaskReport Register(string name, string definition);
+    Task<TaskReport> RegisterAsync(string name, string definition);
 
     /// <summary>Removes a task from the root folder.</summary>
     /// <param name="name">The task's name.</param>
     /// <returns>What happened; a task that was not there is <see cref="TaskChange.Absent"/>.</returns>
-    TaskReport Remove(string name);
+    Task<TaskReport> RemoveAsync(string name);
 
     /// <summary>Starts a task now, with one argument filling its action's <c>$(Arg0)</c>.</summary>
     /// <param name="name">The task's name.</param>
     /// <param name="argument">The argument.</param>
     /// <returns>What happened.</returns>
-    TaskReport Run(string name, string argument);
+    Task<TaskReport> RunAsync(string name, string argument);
 }
 
 /// <summary>The real task scheduler, through its COM interface.</summary>
@@ -130,7 +130,7 @@ internal sealed class ScheduledTasks : ILogonTasks
     public static TimeSpan CallBound { get; } = ProcessBounds.ScheduledTasksCallBound;
 
     /// <inheritdoc />
-    public TaskReport Register(string name, string definition)
+    public Task<TaskReport> RegisterAsync(string name, string definition)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(definition);
@@ -151,7 +151,7 @@ internal sealed class ScheduledTasks : ILogonTasks
     }
 
     /// <inheritdoc />
-    public TaskReport Remove(string name)
+    public Task<TaskReport> RemoveAsync(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
@@ -170,7 +170,7 @@ internal sealed class ScheduledTasks : ILogonTasks
     }
 
     /// <inheritdoc />
-    public TaskReport Run(string name, string argument)
+    public Task<TaskReport> RunAsync(string name, string argument)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(argument);
@@ -207,13 +207,13 @@ internal sealed class ScheduledTasks : ILogonTasks
     /// <remarks>Read by the suite, to say what a registration left behind.</remarks>
     /// <param name="name">The task's name.</param>
     /// <returns>The XML.</returns>
-    public static string? DefinitionOf(string name)
+    public static async Task<string?> DefinitionOfAsync(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         string? xml = null;
 
-        var report = Call($"read '{name}'", folder =>
+        var report = await Call($"read '{name}'", folder =>
         {
             try
             {
@@ -224,7 +224,7 @@ internal sealed class ScheduledTasks : ILogonTasks
             {
                 return new TaskReport(TaskChange.Absent, name);
             }
-        });
+        }).ConfigureAwait(false);
 
         return report.Change is TaskChange.Failed ? throw new InvalidOperationException(report.Detail) : xml;
     }
@@ -233,13 +233,13 @@ internal sealed class ScheduledTasks : ILogonTasks
     /// <remarks>Read by the suite, which starts a task and then asks what came of it.</remarks>
     /// <param name="name">The task's name.</param>
     /// <returns>The last result, and when it ran in UTC.</returns>
-    public static (int Result, DateTime RanAt)? LastRunOf(string name)
+    public static async Task<(int Result, DateTime RanAt)?> LastRunOfAsync(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         (int, DateTime)? last = null;
 
-        var report = Call($"read '{name}'", folder =>
+        var report = await Call($"read '{name}'", folder =>
         {
             try
             {
@@ -251,7 +251,7 @@ internal sealed class ScheduledTasks : ILogonTasks
             {
                 return new TaskReport(TaskChange.Absent, name);
             }
-        });
+        }).ConfigureAwait(false);
 
         return report.Change is TaskChange.Failed ? throw new InvalidOperationException(report.Detail) : last;
     }
@@ -276,13 +276,13 @@ internal sealed class ScheduledTasks : ILogonTasks
     /// </remarks>
     /// <param name="name">The task's name.</param>
     /// <returns>What was found; <see cref="ScheduledTaskState.Unknown"/> with the scheduler's own failure when it could not be asked.</returns>
-    public static ScheduledTaskReading StateOf(string name)
+    public static async Task<ScheduledTaskReading> StateOfAsync(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         ScheduledTaskReading? reading = null;
 
-        var report = Call($"read '{name}'", folder =>
+        var report = await Call($"read '{name}'", folder =>
         {
             try
             {
@@ -299,18 +299,33 @@ internal sealed class ScheduledTasks : ILogonTasks
                 reading = new ScheduledTaskReading(ScheduledTaskState.Missing, null);
                 return new TaskReport(TaskChange.Absent, name);
             }
-        });
+        }).ConfigureAwait(false);
 
         return reading ?? new ScheduledTaskReading(ScheduledTaskState.Unknown, report.Detail);
     }
 
-    /// <summary>Runs one call against the root folder on a thread of its own.</summary>
+    /// <summary>Runs one call against the root folder on a thread of its own, and awaits it.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A thread of its own, because the Task Scheduler's COM calls are synchronous
+    /// calls into its service and have no asynchronous form</b>, and a call that hangs
+    /// must not hold a pool worker while it does. The caller waits for the thread's report
+    /// without a thread, through a <see cref="TaskCompletionSource{TResult}"/>, bounded by
+    /// <see cref="CallBound"/>; a call that overruns it is left to finish on its own thread,
+    /// as before.
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-11 (previously the caller parked in <c>Thread.Join(CallBound)</c>
+    /// until the thread ended)</i>, the maintainer's decision 54, in his words verbatim:
+    /// <i>"Never block a worker anywhere."</i>
+    /// </para>
+    /// </remarks>
     /// <param name="what">What the call does, for a failure's sentence.</param>
     /// <param name="work">The call.</param>
     /// <returns>What it reported, or a failure.</returns>
-    private static TaskReport Call(string what, Func<ITaskFolder, TaskReport> work)
+    private static async Task<TaskReport> Call(string what, Func<ITaskFolder, TaskReport> work)
     {
-        TaskReport? report = null;
+        var report = new TaskCompletionSource<TaskReport>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var thread = new Thread(() =>
         {
@@ -322,18 +337,18 @@ internal sealed class ScheduledTasks : ILogonTasks
 
                 if (created < 0)
                 {
-                    report = Failed(what, $"the scheduler could not be created (0x{created:X8})");
+                    _ = report.TrySetResult(Failed(what, $"the scheduler could not be created (0x{created:X8})"));
                     return;
                 }
 
                 service.Connect(default, default, default, default);
-                report = work(service.GetFolder(Folder));
+                _ = report.TrySetResult(work(service.GetFolder(Folder)));
             }
 #pragma warning disable CA1031 // The boundary of every scheduler call: a failure is a sentence in a report, never a crash of a hook or a server.
             catch (Exception failure)
 #pragma warning restore CA1031
             {
-                report = Failed(what, string.Create(CultureInfo.InvariantCulture, $"0x{failure.HResult:X8}, {failure.Message}"));
+                _ = report.TrySetResult(Failed(what, string.Create(CultureInfo.InvariantCulture, $"0x{failure.HResult:X8}, {failure.Message}")));
             }
             finally
             {
@@ -343,6 +358,8 @@ internal sealed class ScheduledTasks : ILogonTasks
                 {
                     TaskSchedulerInterop.CoUninitialize();
                 }
+
+                _ = report.TrySetResult(Failed(what, "the call ended without saying what it did"));
             }
         })
         {
@@ -352,9 +369,14 @@ internal sealed class ScheduledTasks : ILogonTasks
 
         thread.Start();
 
-        return !thread.Join(CallBound)
-            ? Failed(what, string.Create(CultureInfo.InvariantCulture, $"the scheduler did not answer within {CallBound.TotalSeconds:F0} s"))
-            : report ?? Failed(what, "the call ended without saying what it did");
+        try
+        {
+            return await report.Task.WaitAsync(CallBound).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            return Failed(what, string.Create(CultureInfo.InvariantCulture, $"the scheduler did not answer within {CallBound.TotalSeconds:F0} s"));
+        }
     }
 
     /// <summary>A call's failure, as the one sentence its report carries.</summary>

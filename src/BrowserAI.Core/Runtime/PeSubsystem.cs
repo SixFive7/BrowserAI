@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using Microsoft.Win32.SafeHandles;
+
 namespace BrowserAI.Runtime;
 
 /// <summary>
@@ -88,21 +90,27 @@ internal static class PeSubsystem
     /// <param name="path">The file to read.</param>
     /// <returns><see cref="WindowsGui"/>, <see cref="WindowsCui"/>, another
     /// documented subsystem value, or <see langword="null"/>.</returns>
-    public static int? Of(string path)
+    /// <remarks>
+    /// <b>Read asynchronously since 2026-10-11</b>, the maintainer's decision 63, in his
+    /// words verbatim: <i>"convert disk writes as well. Some users have slow spinning
+    /// rust."</i> <i>Previously <c>Of</c>, over a <see cref="FileStream"/> read synchronously.</i>
+    /// </remarks>
+    public static async Task<int?> OfAsync(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
         try
         {
-            using var file = new FileStream(
+            using var file = File.OpenHandle(
                 path,
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 1,
-                FileOptions.None);
+                FileOptions.Asynchronous);
 
-            if (file.Length < SmallestPossible)
+            var length = RandomAccess.GetLength(file);
+
+            if (length < SmallestPossible)
             {
                 return null;
             }
@@ -110,12 +118,12 @@ internal static class PeSubsystem
             // "MZ". Checked before the offset it guards is believed, because
             // `e_lfanew` in a file that is not a PE is four arbitrary bytes and
             // seeking to them lands anywhere.
-            if (ReadUInt16(file, 0) is not 0x5A4D)
+            if (await ReadUInt16Async(file, 0).ConfigureAwait(false) is not 0x5A4D)
             {
                 return null;
             }
 
-            var peHeader = ReadUInt32(file, LfaNewOffset);
+            var peHeader = await ReadUInt32Async(file, LfaNewOffset).ConfigureAwait(false);
 
             if (peHeader is 0 or > (uint)(int.MaxValue - OptionalHeaderOffset - SubsystemOffset - 2))
             {
@@ -123,14 +131,14 @@ internal static class PeSubsystem
             }
 
             // "PE\0\0".
-            if (ReadUInt32(file, (long)peHeader) is not 0x0000_4550)
+            if (await ReadUInt32Async(file, (long)peHeader).ConfigureAwait(false) is not 0x0000_4550)
             {
                 return null;
             }
 
             var optional = (long)peHeader + OptionalHeaderOffset;
 
-            if (file.Length < optional + SubsystemOffset + 2)
+            if (length < optional + SubsystemOffset + 2)
             {
                 return null;
             }
@@ -138,12 +146,12 @@ internal static class PeSubsystem
             // 0x10B is PE32 and 0x20B is PE32+. Anything else is a ROM image or
             // a file this does not understand, and either way the offset below
             // is not where Subsystem is.
-            if (ReadUInt16(file, optional) is not (0x010B or 0x020B))
+            if (await ReadUInt16Async(file, optional).ConfigureAwait(false) is not (0x010B or 0x020B))
             {
                 return null;
             }
 
-            return ReadUInt16(file, optional + SubsystemOffset);
+            return await ReadUInt16Async(file, optional + SubsystemOffset).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A file that cannot be read is a file that may not be registered, which is the same answer as a file of the wrong kind.
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
@@ -156,7 +164,7 @@ internal static class PeSubsystem
     /// <summary>Whether the file is a console-subsystem executable.</summary>
     /// <param name="path">The file to read.</param>
     /// <returns>Whether it declares <see cref="WindowsCui"/>.</returns>
-    public static bool IsConsole(string path) => Of(path) is WindowsCui;
+    public static async Task<bool> IsConsoleAsync(string path) => await OfAsync(path).ConfigureAwait(false) is WindowsCui;
 
     /// <summary>How a subsystem value reads in a refusal.</summary>
     /// <param name="subsystem">What was read, or <see langword="null"/>.</param>
@@ -169,17 +177,17 @@ internal static class PeSubsystem
         _ => $"subsystem {subsystem.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}",
     };
 
-    private static ushort ReadUInt16(FileStream file, long offset)
+    private static async Task<ushort> ReadUInt16Async(SafeFileHandle file, long offset)
     {
-        Span<byte> buffer = stackalloc byte[2];
-        Fill(file, buffer, offset);
+        var buffer = new byte[2];
+        await FillAsync(file, buffer, offset).ConfigureAwait(false);
         return (ushort)(buffer[0] | (buffer[1] << 8));
     }
 
-    private static uint ReadUInt32(FileStream file, long offset)
+    private static async Task<uint> ReadUInt32Async(SafeFileHandle file, long offset)
     {
-        Span<byte> buffer = stackalloc byte[4];
-        Fill(file, buffer, offset);
+        var buffer = new byte[4];
+        await FillAsync(file, buffer, offset).ConfigureAwait(false);
         return (uint)(buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24));
     }
 
@@ -187,15 +195,26 @@ internal static class PeSubsystem
     /// Fills the buffer from an absolute offset, or throws.
     /// </summary>
     /// <remarks>
-    /// <c>ReadExactly</c>, not <c>Read</c>: a short read at a file
-    /// boundary would otherwise leave the tail of the buffer at zero and be
-    /// indistinguishable from a field that really is zero -- which for
-    /// <c>Subsystem</c> is <c>IMAGE_SUBSYSTEM_UNKNOWN</c>, a value that reads
-    /// like an answer.
+    /// <b>Read until it is full, never once</b>: a short read at a file boundary would
+    /// otherwise leave the tail of the buffer at zero and be indistinguishable from a
+    /// field that really is zero -- which for <c>Subsystem</c> is
+    /// <c>IMAGE_SUBSYSTEM_UNKNOWN</c>, a value that reads like an answer. <i>Corrected
+    /// 2026-10-11 (previously "<c>ReadExactly</c>, not <c>Read</c>"), when the reads became
+    /// asynchronous reads at an offset.</i>
     /// </remarks>
-    private static void Fill(FileStream file, Span<byte> buffer, long offset)
+    private static async Task FillAsync(SafeFileHandle file, Memory<byte> buffer, long offset)
     {
-        file.Position = offset;
-        file.ReadExactly(buffer);
+        while (!buffer.IsEmpty)
+        {
+            var read = await RandomAccess.ReadAsync(file, buffer, offset).ConfigureAwait(false);
+
+            if (read is 0)
+            {
+                throw new EndOfStreamException();
+            }
+
+            buffer = buffer[read..];
+            offset += read;
+        }
     }
 }

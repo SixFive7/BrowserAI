@@ -52,7 +52,7 @@ internal static class RegistrationReader
     /// <param name="server">This install's server, absolute, or null when there is none to name.</param>
     /// <param name="workingDirectory">Where the walk for a project file starts.</param>
     /// <returns>One reading per client, in the order given. Never throws for a tool that fails.</returns>
-    public static IReadOnlyList<ClientReading> Read(
+    public static async Task<IReadOnlyList<ClientReading>> ReadAsync(
         IRegisterAi tool,
         IReadOnlyList<RegistrationClient> clients,
         string? installRoot,
@@ -63,9 +63,9 @@ internal static class RegistrationReader
         ArgumentNullException.ThrowIfNull(clients);
         ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
 
-        var run = tool.Run(
+        var run = await tool.RunAsync(
             McpRegistrar.Arguments("status", clients, "user", project: null, installRoot, replace: false, pathFolder: null, server),
-            McpRegistrar.ToolBudget);
+            McpRegistrar.ToolBudget).ConfigureAwait(false);
 
         var answered = ToolDocuments.TryRead(run, out var document, out var problem);
         var readings = new List<ClientReading>(clients.Count);
@@ -93,7 +93,7 @@ internal static class RegistrationReader
                 ViewOf(RegistrationScope.User, result),
                 project,
                 project is { Length: > 0 } && result.ClientPath is { Length: > 0 }
-                    ? ReadProject(tool, who, project, installRoot, server)
+                    ? await ReadProjectAsync(tool, who, project, installRoot, server).ConfigureAwait(false)
                     : null,
                 result.Advice));
         }
@@ -125,12 +125,12 @@ internal static class RegistrationReader
     }
 
     /// <summary>One client's entry in one project.</summary>
-    private static RegistrationView ReadProject(IRegisterAi tool, RegistrationClient who, string project, string? installRoot, string? server)
+    private static async Task<RegistrationView> ReadProjectAsync(IRegisterAi tool, RegistrationClient who, string project, string? installRoot, string? server)
     {
         var command = server is { Length: > 0 } ? who.ProjectCommandFor(server, installRoot).Command : null;
-        var run = tool.Run(
+        var run = await tool.RunAsync(
             McpRegistrar.Arguments("status", [who], "project", project, installRoot, replace: false, pathFolder: null, command),
-            McpRegistrar.ToolBudget);
+            McpRegistrar.ToolBudget).ConfigureAwait(false);
 
         if (!ToolDocuments.TryRead(run, out var document, out var problem))
         {

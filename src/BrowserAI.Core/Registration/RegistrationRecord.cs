@@ -152,7 +152,7 @@ internal static class RegistrationRecord
     /// <param name="version">The BrowserAI version the hook was given.</param>
     /// <param name="when">When it ran.</param>
     /// <returns>The path written.</returns>
-    public static string Write(
+    public static async Task<string> WriteAsync(
         string dataRoot,
         IReadOnlyList<ClientRegistration> passes,
         RegistrationIntent intent,
@@ -162,7 +162,7 @@ internal static class RegistrationRecord
         var path = PathFor(dataRoot);
 
         _ = Directory.CreateDirectory(dataRoot);
-        File.WriteAllBytes(path, ToUtf8(passes, intent, version, when));
+        await File.WriteAllBytesAsync(path, ToUtf8(passes, intent, version, when)).ConfigureAwait(false);
 
         return path;
     }
