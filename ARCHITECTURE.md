@@ -1353,7 +1353,9 @@ sibling-sessions line in the answer alone. **What did go is `destroy`'s walk** -
 it followed the index only to rewrite that file.
 
 **The guard's write is durable and atomic, and it happens once.**
-`WriteThrough` + `Flush(flushToDisk: true)` + `File.Move(overwrite: true)`, with
+`WriteThrough`, asynchronously, + `File.Move(overwrite: true)` ⚠️ *(corrected 2026-10-11,
+previously "`WriteThrough` + `Flush(flushToDisk: true)` + `File.Move(overwrite: true)`", by
+the maintainer's 63 and 77 a: nothing is flushed to the media after the write)*, with
 the temp file in the target's own directory, because a rename is atomic only
 within one volume and cheap only within one directory. A rename cannot replace a
 file whose handle is open under any share mode, so acquisition is write → rename

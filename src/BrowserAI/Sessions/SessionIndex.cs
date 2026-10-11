@@ -55,8 +55,9 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>The write is <i>not</i> durable, and that is the difference from
 /// <see cref="SessionLock"/>.</b> <c>browserai.lock</c> is written
-/// <c>WriteThrough</c> plus <c>Flush(flushToDisk: true)</c> -- measured at ~17 ms
-/// -- because it is the whole ownership guard and its loss cannot be
+/// <c>WriteThrough</c> -- with <c>Flush(flushToDisk: true)</c> as well until
+/// 2026-10-11, measured then at ~17 ms, and without it since the maintainer's 77 a --
+/// because it is the whole ownership guard and its loss cannot be
 /// reconstructed. An index entry can: it is a pure function of a directory that
 /// is about to be used again. Paying a disk round trip on every <c>init</c> and
 /// every <c>resume</c> to protect a fact that regenerates itself would be the

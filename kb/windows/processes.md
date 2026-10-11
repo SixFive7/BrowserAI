@@ -628,6 +628,48 @@ intermediate file buffers in the operating system."* Surviving a power cut needs
 an atomic `File.Move` into place so no reader ever observes a half-written file.
 Verified against MS Learn 2026-08-16. `[STABLE]`
 
+⚠️ **Added 2026-10-11 by addition: write-through hands the drive the data at once and
+does not ask the drive to empty its own cache, and since the maintainer's 77 a that is
+what BrowserAI's two durable writes rely on.** His words, verbatim: *"77 a - hard power
+cuts break the context anyway. What is a few records of us in that? I assume the buffer
+does not stay unflushed for minutes?"* Read 2026-10-11 on MS Learn, each quoted:
+
+- **The system cache holds a write-through write for no time.** `CreateFileW`, *Caching
+  Behavior*: *"If FILE_FLAG_WRITE_THROUGH is used but FILE_FLAG_NO_BUFFERING is not also
+  specified, so that system caching is in effect, then the data is written to the system
+  cache but is flushed to disk without delay."* *File Caching*: *"With write-through
+  caching enabled, data is still written into the cache, but the cache manager writes the
+  data immediately to disk rather than incurring a delay by using the lazy writer."*
+- **The drive is asked to write its own cache through only for an unbuffered handle.**
+  The same section, of the two flags together: *"The operating system also requests a
+  write-through of the hard disk's local hardware cache to persistent media."* and
+  *"Not all hard disk hardware supports this write-through capability."* Nothing on the
+  page says so of write-through alone, which is what BrowserAI opens with. *Deploying
+  Transactional NTFS* names the mechanism, Force Unit Access, *"the drive should write the
+  data to stable media storage before signaling complete"*, and says *"Starting in Vista,
+  Windows supports the FUA flag only for SCSI and Fiber Channel disks."*
+- **What the drive's cache does is the drive's.** *Querying for the Write Cache
+  Property*: *"Storage devices often buffer data in a write cache before writing the data
+  to nonvolatile media ... If the write cache does not have a battery backup, a power
+  failure can cause the loss of cached data"*, and *"With a write-back cache, the device
+  does not copy cache data to nonvolatile media until absolutely necessary."* No page read
+  here bounds how long that is: it is a firmware property, and nobody here measured this
+  machine's drives or any other.
+- **Every other write waits for the lazy writer.** *File Caching*: *"the cache manager
+  spawns a process every second called a lazy writer. The lazy writer process queues
+  one-eighth of the pages that have not been flushed recently to be written to disk."*
+  That is the process log's path, and the path of the rename that puts a durable record in
+  place: *"File system metadata is always cached"*, and `File.Move` takes no write-through
+  option where `MoveFileEx` has `MOVEFILE_WRITE_THROUGH`, *"The function does not return
+  until the file is actually moved on the disk."* The flush BrowserAI dropped did not cover
+  the rename either: it was taken on the temporary file, before the move.
+
+So a durable record reaches the drive as the write returns, the rename that publishes it
+reaches it with the lazy writer, on a cadence Microsoft describes in seconds and does not
+bound, and the drive's own cache is the one interval nobody can answer from here.
+`FlushFileBuffers` is the call that reaches that cache, and no asynchronous form of it
+exists. `[STABLE]`
+
 **A working reference implementation was read, not designed**, verified
 2026-08-16 in an unpublished first-party C# test rig: its `WriteAllTextDurable`
 does all three steps -- a temp file **in the same

@@ -243,9 +243,11 @@ internal sealed class MaintenanceLock : IDisposable
     /// disk writes as well. Some users have slow spinning rust."</i> <i>Previously a
     /// <c>StreamWriter</c> written and flushed, then <c>Flush(flushToDisk: true)</c></i>:
     /// what write-through keeps and what the flush added are said at
-    /// <c>Storage.LockFile.TakeAndWriteAsync</c>, the other durable write, and the
-    /// difference is put to the maintainer with the batch. The out parameters became the
-    /// claim's own fields, because an asynchronous method cannot have any.
+    /// <c>Storage.LockFile.TakeAndWriteAsync</c>, the other durable write, which carries
+    /// the maintainer's 77 a of 2026-10-11 that kept it so. <i>Corrected that day
+    /// (previously "and the difference is put to the maintainer with the batch").</i> The
+    /// out parameters became the claim's own fields, because an asynchronous method cannot
+    /// have any.
     /// </para>
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root. Created if absent.</param>

@@ -108,7 +108,10 @@ internal static class LockFile
     /// rename operation, that result from processing the request". What the flush added
     /// and this gives up: Windows asks the disk to write its own cache through to its
     /// media only for a handle that is also unbuffered, and a flush asked it for this one.
-    /// That difference is the maintainer's to weigh, and it is put to him with the batch.
+    /// ⚠️ <b>Kept by the maintainer on 2026-10-11, 77 a</b>, in his words verbatim: <i>"77 a - hard power cuts break the context anyway. What is a few records of us in that? I assume the buffer does not stay unflushed for minutes?"</i>
+    /// <i>Corrected that day (previously "That difference is the maintainer's to weigh, and
+    /// it is put to him with the batch").</i> What the drive does with its own cache is the
+    /// drive's, and Microsoft's pages say so (kb, windows/processes.md).
     /// </para>
     /// <para>
     /// <b>The rename is the only one this file will ever see.</b> Everything
