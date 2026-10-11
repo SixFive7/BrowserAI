@@ -60,36 +60,45 @@ internal static class BackgroundStop
     /// <param name="recordPath">Its record, which names the process to wait for.</param>
     /// <param name="bound">How long to wait.</param>
     /// <returns>How it came out, and a sentence for the log.</returns>
-    public static (BackgroundStopOutcome Outcome, string Detail) AskAndWait(string pipeName, string recordPath, TimeSpan bound)
+    /// <remarks>
+    /// ⚠️ <b>The wait for the background's end parks no thread since 2026-10-11</b>, the
+    /// maintainer's decision 54: <see cref="HandleWaits.WhenSignaledAsync"/> watches the held
+    /// process through the pool's wait registration. <i>Corrected 2026-10-11 (previously
+    /// <c>AskAndWait</c>, which waited on the held process with <c>WaitOne</c>).</i>
+    /// </remarks>
+    public static async Task<(BackgroundStopOutcome Outcome, string Detail)> AskAndWaitAsync(string pipeName, string recordPath, TimeSpan bound)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(pipeName);
         ArgumentException.ThrowIfNullOrWhiteSpace(recordPath);
 
         // Held before it is asked, so the process waited for is the one that was
         // asked and never a later one that took its pid.
-        using var held = BackgroundRecord.Read(recordPath) is { Ended: null } record
+        using var held = await BackgroundRecord.ReadAsync(recordPath).ConfigureAwait(false) is { Ended: null } record
             ? BrowserProcesses.Hold(record.ProcessId, record.CreatedFileTime)
             : null;
 
-        var answer = BackgroundClient.Ask(pipeName, BackgroundPipe.Stop, null, bound);
+        var answer = await BackgroundClient.AskAsync(pipeName, BackgroundPipe.Stop, null, bound).ConfigureAwait(false);
 
-        return answer.Outcome switch
+        if (answer.Outcome is BackgroundAnswerOutcome.NoBackground)
         {
-            BackgroundAnswerOutcome.NoBackground =>
-                (BackgroundStopOutcome.NoneRunning, "No BrowserAI background was running, so none was stopped."),
+            return (BackgroundStopOutcome.NoneRunning, "No BrowserAI background was running, so none was stopped.");
+        }
 
-            BackgroundAnswerOutcome.Answered when held is null =>
-                (BackgroundStopOutcome.NotWaitedFor, "BrowserAI's background was asked to stop; its record named no process to wait for."),
+        if (answer.Outcome is not BackgroundAnswerOutcome.Answered)
+        {
+            return (BackgroundStopOutcome.NotAsked, $"BrowserAI's background could not be asked to stop: {answer.Sentence}");
+        }
 
-            BackgroundAnswerOutcome.Answered when held!.WaitOne(bound) =>
-                (BackgroundStopOutcome.Ended, $"BrowserAI's background, pid {held.ProcessId}, closed its sessions and ended."),
+        if (held is null)
+        {
+            return (BackgroundStopOutcome.NotWaitedFor, "BrowserAI's background was asked to stop; its record named no process to wait for.");
+        }
 
-            BackgroundAnswerOutcome.Answered =>
-                // The texts polish, 2026-10-10, page #177 (previously "... still closing its
-                // sessions when the hook moved on."): the wait it ran out of.
-                (BackgroundStopOutcome.StillRunning, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"BrowserAI's background, pid {held!.ProcessId}, was asked to stop and was still closing its sessions after {bound.TotalSeconds:0} s, when the hook moved on.")),
+        return await HandleWaits.WhenSignaledAsync(held, bound).ConfigureAwait(false)
+            ? (BackgroundStopOutcome.Ended, $"BrowserAI's background, pid {held.ProcessId}, closed its sessions and ended.")
 
-            _ => (BackgroundStopOutcome.NotAsked, $"BrowserAI's background could not be asked to stop: {answer.Sentence}"),
-        };
+            // The texts polish, 2026-10-10, page #177 (previously "... still closing its
+            // sessions when the hook moved on."): the wait it ran out of.
+            : (BackgroundStopOutcome.StillRunning, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"BrowserAI's background, pid {held.ProcessId}, was asked to stop and was still closing its sessions after {bound.TotalSeconds:0} s, when the hook moved on."));
     }
 }

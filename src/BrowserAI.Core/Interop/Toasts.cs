@@ -130,6 +130,29 @@ internal static partial class ToastInterop
     [LibraryImport("ole32.dll", EntryPoint = "CoRevokeClassObject", SetLastError = false)]
     internal static partial int CoRevokeClassObject(uint cookie);
 
+    /// <summary>
+    /// Keeps the process's multithreaded apartment alive with no thread in it, so a class
+    /// object registered there stays registered while the caller awaits its click.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 with the maintainer's decision 54</b>: until that day a thread was
+    /// kept in the apartment for the registration's whole life, parked on the click's task.
+    /// A thread that has not initialised COM is in the process's implicit multithreaded
+    /// apartment while this count stands, which is where the registration and its click live.
+    /// </remarks>
+    /// <param name="cookie">What <see cref="CoDecrementMTAUsage"/> takes back.</param>
+    /// <returns>The <c>HRESULT</c>.</returns>
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("ole32.dll", EntryPoint = "CoIncrementMTAUsage", SetLastError = false)]
+    internal static partial int CoIncrementMTAUsage(out nint cookie);
+
+    /// <summary>Takes back what <see cref="CoIncrementMTAUsage"/> counted.</summary>
+    /// <param name="cookie">Its cookie.</param>
+    /// <returns>The <c>HRESULT</c>.</returns>
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("ole32.dll", EntryPoint = "CoDecrementMTAUsage", SetLastError = false)]
+    internal static partial int CoDecrementMTAUsage(nint cookie);
+
     /// <summary>The application id this process runs under, or <see langword="null"/> when none is set.</summary>
     /// <returns>The id.</returns>
     public static string? CurrentAppUserModelId() =>

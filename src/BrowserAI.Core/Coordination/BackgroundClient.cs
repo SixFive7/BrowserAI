@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Buffers;
 using System.ComponentModel;
 using System.Globalization;
 using System.Text;
@@ -58,20 +59,37 @@ internal sealed record BackgroundAnswer(BackgroundAnswerOutcome Outcome, string?
 /// <c>show</c>, the uninstall hook's <c>stop</c>, the suite's.
 /// </summary>
 /// <remarks>
+/// <para>
 /// <b>One request, one answer, one connection</b>, in the JSON-RPC framing of the pipe
 /// (<see cref="BackgroundPipe"/>). The wait is bounded by the caller: a person's start
 /// waits <c>HandOutBound</c> and judges a background that did not answer within it hung
 /// (RESOLUTIONS 10).
+/// </para>
+/// <para>
+/// ⚠️ <b>Asynchronous end to end since 2026-10-11</b>, the maintainer's decision 54, in his
+/// words verbatim: <i>"Never block a worker anywhere."</i> <i>Corrected 2026-10-11
+/// (previously <c>Ask</c>, which waited on its write and on every byte of the answer with
+/// <c>GetAwaiter().GetResult()</c> on an overlapped pipe, so each read held its own thread
+/// and its completion needed a second; and <c>WaitNamedPipeW</c> while every instance was
+/// busy).</i> The answer is read in buffers, since nothing follows it on the connection,
+/// and a busy pipe is asked again after <see cref="ProcessBounds.PipeBusyRetry"/>.
+/// <c>StarvedPoolTests.ThePipeClientGetsItsAnswerOnAPoolOfOneWorker</c> runs this on a
+/// pool of one worker.
+/// </para>
 /// </remarks>
 internal static class BackgroundClient
 {
+    /// <summary>How much of the answer one read takes: the size the background's pipe buffers a reply in.</summary>
+    private const int ReadBufferBytes = NamedPipes.OutBufferBytes;
+
     /// <summary>Asks the background one thing.</summary>
     /// <param name="pipeName">The background's pipe.</param>
     /// <param name="method">The method, <see cref="BackgroundPipe.Show"/> or <see cref="BackgroundPipe.Stop"/>.</param>
     /// <param name="parameters">Its parameters, as a JSON object's text, or <see langword="null"/>.</param>
     /// <param name="bound">How long to wait for the answer.</param>
+    /// <param name="cancellationToken">Ends the question early, as a bound that ran out does.</param>
     /// <returns>What came back.</returns>
-    public static BackgroundAnswer Ask(string pipeName, string method, string? parameters, TimeSpan bound)
+    public static async Task<BackgroundAnswer> AskAsync(string pipeName, string method, string? parameters, TimeSpan bound, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(pipeName);
         ArgumentException.ThrowIfNullOrWhiteSpace(method);
@@ -88,10 +106,10 @@ internal static class BackgroundClient
                 {
                     var owned = handle;
 
-                    // Converse owns it from here, and closes it on every path.
+                    // ConverseAsync owns it from here, and closes it on every path.
                     handle = null;
 
-                    return Converse(owned, method, parameters, bound);
+                    return await ConverseAsync(owned, method, parameters, bound, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally
@@ -106,13 +124,21 @@ internal static class BackgroundClient
                 return new BackgroundAnswer(BackgroundAnswerOutcome.NoBackground, null, new Win32Exception(error).Message, null);
             }
 
-            // Returns as soon as an instance is free; a name that has gone fails the
-            // next open with something other than busy.
-            _ = NamedPipes.WaitForFreeInstance(pipeName, (uint)left);
+            // Every instance is busy, which lasts the instant between a connect and the
+            // background's next instance. A name that has gone fails the next open with
+            // something other than busy.
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(left, (long)ProcessBounds.PipeBusyRetry.TotalMilliseconds)), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return new BackgroundAnswer(BackgroundAnswerOutcome.NoBackground, null, new Win32Exception(error).Message, null);
+            }
         }
     }
 
-    private static BackgroundAnswer Converse(SafeFileHandle handle, string method, string? parameters, TimeSpan bound)
+    private static async Task<BackgroundAnswer> ConverseAsync(SafeFileHandle handle, string method, string? parameters, TimeSpan bound, CancellationToken cancellationToken)
     {
         var server = NamedPipes.ServerProcessIdOf(handle);
         FileStream stream;
@@ -128,16 +154,18 @@ internal static class BackgroundClient
             throw;
         }
 
-        using (stream)
-        using (var timeout = new CancellationTokenSource(bound))
+        await using (stream.ConfigureAwait(false))
+        using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
         {
+            timeout.CancelAfter(bound);
+
             try
             {
                 var request = $$"""{"jsonrpc":"2.0","id":"{{BackgroundPipe.IdPrefix}}start-1","method":"{{method}}","params":{{parameters ?? "{}"}}}""" + "\n";
-                stream.WriteAsync(Encoding.UTF8.GetBytes(request), timeout.Token).AsTask().GetAwaiter().GetResult();
-                stream.Flush();
+                await stream.WriteAsync(Encoding.UTF8.GetBytes(request), timeout.Token).ConfigureAwait(false);
+                await stream.FlushAsync(timeout.Token).ConfigureAwait(false);
 
-                var line = ReadLine(stream, timeout.Token);
+                var line = await ReadLineAsync(stream, timeout.Token).ConfigureAwait(false);
 
                 if (line is null)
                 {
@@ -174,26 +202,32 @@ internal static class BackgroundClient
         }
     }
 
-    private static string? ReadLine(Stream stream, CancellationToken cancellationToken)
+    /// <summary>The answer's one line, read in buffers: nothing follows it on the connection.</summary>
+    /// <param name="stream">The connection.</param>
+    /// <param name="cancellationToken">The bound.</param>
+    /// <returns>The line without its newline, or <see langword="null"/> when the connection closed with nothing.</returns>
+    private static async Task<string?> ReadLineAsync(Stream stream, CancellationToken cancellationToken)
     {
-        var bytes = new List<byte>();
-        var one = new byte[1];
+        var line = new ArrayBufferWriter<byte>();
+        var buffer = new byte[ReadBufferBytes];
 
         while (true)
         {
-            var read = stream.ReadAsync(one, cancellationToken).AsTask().GetAwaiter().GetResult();
+            var read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
 
             if (read is 0)
             {
-                return bytes.Count is 0 ? null : Encoding.UTF8.GetString([.. bytes]);
+                return line.WrittenCount is 0 ? null : Encoding.UTF8.GetString(line.WrittenSpan);
             }
 
-            if (one[0] is (byte)'\n')
+            var newline = Array.IndexOf(buffer, (byte)'\n', 0, read);
+
+            line.Write(buffer.AsSpan(0, newline < 0 ? read : newline));
+
+            if (newline >= 0)
             {
-                return Encoding.UTF8.GetString([.. bytes]);
+                return Encoding.UTF8.GetString(line.WrittenSpan);
             }
-
-            bytes.Add(one[0]);
         }
     }
 }

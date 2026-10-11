@@ -14,7 +14,7 @@ namespace BrowserAI.Interop;
 /// <b>There are exactly two callers.</b> The uninstall hook
 /// (<c>Registration.DataRootDisposal</c>) asks whether the data root should go with the
 /// program; and since 2026-10-10 a person's start of a shipping copy outside the
-/// standard folder says why nothing was set up (<see cref="Tell"/>, the maintainer's 21).
+/// standard folder says why nothing was set up (<see cref="TellAsync"/>, the maintainer's 21).
 /// Nothing on the serving path may reach this: a dialog from a background MCP server is
 /// an invisible hang, which is the whole reason <c>Runtime.BrowserConfiguration</c>
 /// refuses the browser features that prompt. <i>Corrected 2026-10-10 (previously "There
@@ -38,6 +38,14 @@ namespace BrowserAI.Interop;
 /// <b>The default answer is the safe one, twice over.</b> The dialog opens with
 /// the second button -- <i>No</i> -- focused, and a call that fails for any reason
 /// answers <see langword="false"/>. Every path that cannot ask keeps the data.
+/// </para>
+/// <para>
+/// ⚠️ <b>The box is shown on a thread of its own, and the caller awaits it</b>, since
+/// 2026-10-11, the maintainer's decision 54, in his words verbatim: <i>"Never block a
+/// worker anywhere."</i> <c>MessageBoxW</c> returns when the person answers, which may be
+/// a minute later, and has no asynchronous form; its own modal loop runs on that thread,
+/// and no thread-pool thread waits for a human. <i>Previously the caller's own thread
+/// showed it.</i>
 /// </para>
 /// </remarks>
 internal static partial class UserPrompt
@@ -66,14 +74,14 @@ internal static partial class UserPrompt
     /// Whether the answer was <i>yes</i>. Anything else -- <i>no</i>, a closed
     /// window, a failed call -- is <see langword="false"/>.
     /// </returns>
-    public static bool AskYesNo(string title, string message) =>
-        MessageBoxW(
+    public static Task<bool> AskYesNoAsync(string title, string message) =>
+        OnAThreadOfItsOwnAsync(() => MessageBoxW(
             IntPtr.Zero,
             message,
             title,
-            YesNo | IconQuestion | DefaultButtonTwo | TaskModal | SetForeground | TopMost) == IdYes;
+            YesNo | IconQuestion | DefaultButtonTwo | TaskModal | SetForeground | TopMost) == IdYes);
 
-    /// <summary>Shows a notice with one button, and returns when it is closed.</summary>
+    /// <summary>Shows a notice with one button, and completes when it is closed.</summary>
     /// <param name="title">The window title.</param>
     /// <param name="message">The notice, already composed.</param>
     /// <remarks>
@@ -82,8 +90,41 @@ internal static partial class UserPrompt
     /// A call that fails shows nothing and returns, because the line in the log says the
     /// same.
     /// </remarks>
-    public static void Tell(string title, string message) =>
-        _ = MessageBoxW(IntPtr.Zero, message, title, IconWarning | TaskModal | SetForeground | TopMost);
+    /// <returns>The notice, which completes once it is closed.</returns>
+    public static Task TellAsync(string title, string message) =>
+        OnAThreadOfItsOwnAsync(() => MessageBoxW(IntPtr.Zero, message, title, IconWarning | TaskModal | SetForeground | TopMost));
+
+    /// <summary>Shows one box on a thread of its own, and completes with its answer.</summary>
+    /// <typeparam name="T">What the box answers.</typeparam>
+    /// <param name="show">The call that shows it.</param>
+    /// <returns>Its answer, or the default one when the call failed.</returns>
+    private static Task<T> OnAThreadOfItsOwnAsync<T>(Func<T> show)
+    {
+        var answered = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                _ = answered.TrySetResult(show());
+            }
+#pragma warning disable CA1031 // A box that could not be shown answers the default, which keeps the data: the remarks' second safe default.
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+                _ = answered.TrySetResult(default!);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "BrowserAI question",
+        };
+
+        // The apartment the box was shown in until 2026-10-11, Main's own.
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return answered.Task;
+    }
 
     // System32 only, on every P/Invoke in this repository (CA5392). user32 is a
     // KnownDLL, so the attribute cannot change this one's outcome; the rule is

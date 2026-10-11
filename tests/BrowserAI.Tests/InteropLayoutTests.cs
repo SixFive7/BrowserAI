@@ -86,7 +86,10 @@ internal sealed class InteropLayoutTests
         (nameof(JobLauncher), "StartupInfo", 104),
         (nameof(JobLauncher), "StartupInfoEx", 112),
         (nameof(JobLauncher), "ProcessInformation", 24),
-        (nameof(JobLauncher), "SecurityAttributes", 24),
+
+        // JobLauncher's SecurityAttributes went on 2026-10-11 with CreatePipe, when a
+        // child's pipes became NamedPipes.CreateChildPipe's (the maintainer's decision 54);
+        // the one that row checked is the NamedPipes row below.
         (nameof(JobObject), "IoCounters", 48),
         (nameof(JobObject), "JobObjectBasicLimitInformation", 64),
         (nameof(JobObject), "JobObjectExtendedLimitInformation", 144),

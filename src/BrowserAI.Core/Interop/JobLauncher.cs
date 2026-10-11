@@ -82,7 +82,6 @@ internal static partial class JobLauncher
     private const uint StartFUseStdHandles = 0x00000100;
     private const uint StartFUseShowWindow = 0x00000001;
     private const ushort ShowNoActivate = 4;
-    private const uint HandleFlagInherit = 0x00000001;
     private const int ErrorInsufficientBuffer = 122;
 
     // ProcThreadAttributeJobList = 13, marked as a thread-creation attribute:
@@ -131,6 +130,43 @@ internal static partial class JobLauncher
         string? desktop = null)
     {
         ArgumentNullException.ThrowIfNull(job);
+
+        return StartCore(job, command, arguments, workingDirectory, environment, desktop);
+    }
+
+    /// <summary>
+    /// Starts <paramref name="command"/> in <b>no</b> job, with the three pipes
+    /// <see cref="Start"/> gives a child and the same exact set of inherited handles.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 for RegisterAI</b>, the maintainer's decision 54: its runner read
+    /// a <c>Process</c>'s redirected streams, which Windows makes synchronous, so each read
+    /// held a thread. A child started here has overlapped pipes at the parent's end, and what
+    /// it starts in turn keeps running after it has gone, as it did under
+    /// <c>Process.Start</c>: a client's own updater, which a job's close would end mid-write,
+    /// is the reason it is no job's.
+    /// </remarks>
+    /// <param name="command">The executable's absolute path. Nothing resolves it and no shell sees it.</param>
+    /// <param name="arguments">Arguments, quoted for <c>CreateProcessW</c> here.</param>
+    /// <param name="workingDirectory">The child's working directory. Required, never inherited.</param>
+    /// <param name="environment">The child's complete environment block. It replaces ours instead of adding to it.</param>
+    /// <returns>The running child, with its three streams.</returns>
+    /// <exception cref="Win32Exception">Windows refused some step of the launch, named in the message.</exception>
+    public static LaunchedProcess StartOutsideAnyJob(
+        string command,
+        IReadOnlyList<string> arguments,
+        string workingDirectory,
+        IReadOnlyDictionary<string, string> environment) =>
+        StartCore(null, command, arguments, workingDirectory, environment, desktop: null);
+
+    private static LaunchedProcess StartCore(
+        JobObject? job,
+        string command,
+        IReadOnlyList<string> arguments,
+        string workingDirectory,
+        IReadOnlyDictionary<string, string> environment,
+        string? desktop)
+    {
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(arguments);
         ArgumentNullException.ThrowIfNull(workingDirectory);
@@ -639,13 +675,6 @@ internal static partial class JobLauncher
         public uint ThreadId;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    private struct SecurityAttributes
-    {
-        public uint Length;
-        public nint SecurityDescriptor;
-        public int InheritHandle;
-    }
 #pragma warning restore CS0649
 
     /// <summary>
@@ -695,11 +724,11 @@ internal static partial class JobLauncher
         /// <summary>The job alone, for a launch that inherits nothing.</summary>
         private const int JobOnly = 1;
 
-        private readonly SafeJobHandle _job;
+        private readonly SafeJobHandle? _job;
         private readonly nint _jobHandleStorage;
         private readonly nint _handleListStorage;
 
-        private ProcessAttributeList(nint list, SafeJobHandle job, nint jobHandleStorage, nint handleListStorage)
+        private ProcessAttributeList(nint list, SafeJobHandle? job, nint jobHandleStorage, nint handleListStorage)
         {
             Pointer = list;
             _job = job;
@@ -710,13 +739,17 @@ internal static partial class JobLauncher
         /// <summary>The attribute list, for the one call that reads it.</summary>
         public nint Pointer { get; }
 
-        public static ProcessAttributeList For(JobObject job, IReadOnlyList<nint> inheritable)
+        public static ProcessAttributeList For(JobObject? job, IReadOnlyList<nint> inheritable)
         {
             // ⚠️ NO HANDLE LIST WHEN NOTHING IS INHERITED -- added 2026-10-03 with
             // StartInJob. The list is the exact set a launch with bInheritHandles
             // TRUE may pass on; a launch that passes FALSE inherits nothing, and a
             // list of none is not a list Windows accepts.
-            var attributes = inheritable.Count is 0 ? JobOnly : AttributeCount;
+            //
+            // ⚠️ AND NO JOB FOR A LAUNCH OUTSIDE ANY JOB -- added 2026-10-11 with
+            // StartOutsideAnyJob, whose child keeps what it starts running after it
+            // has gone, as a process started without a job always has.
+            var attributes = (job is null ? 0 : JobOnly) + (inheritable.Count is 0 ? 0 : AttributeCount - JobOnly);
 
             // The documented two-call shape: the first call fails with
             // ERROR_INSUFFICIENT_BUFFER and reports the size.
@@ -757,23 +790,26 @@ internal static partial class JobLauncher
                 // ANOTHER SESSION'S JOB, which nothing downstream looks for
                 // because Contains and ProcessIds are only ever asked of the job
                 // the caller believes it has.
-                job.Handle.DangerousAddRef(ref counted);
-
-                // Both buffers have to stay at a fixed address until
-                // CreateProcessW returns -- the attribute list stores pointers,
-                // not copies -- so they live on the native heap and not as
-                // pinned managed locals.
-                jobStorage = Marshal.AllocHGlobal(nint.Size);
-                Marshal.WriteIntPtr(jobStorage, job.Handle.DangerousGetHandle());
-
-                if (!UpdateProcThreadAttribute(list, 0, ProcThreadAttributeJobList, jobStorage, (nuint)nint.Size, nint.Zero, nint.Zero))
+                if (job is not null)
                 {
-                    throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not put the job object on the process attribute list.");
+                    job.Handle.DangerousAddRef(ref counted);
+
+                    // Both buffers have to stay at a fixed address until
+                    // CreateProcessW returns -- the attribute list stores pointers,
+                    // not copies -- so they live on the native heap and not as
+                    // pinned managed locals.
+                    jobStorage = Marshal.AllocHGlobal(nint.Size);
+                    Marshal.WriteIntPtr(jobStorage, job.Handle.DangerousGetHandle());
+
+                    if (!UpdateProcThreadAttribute(list, 0, ProcThreadAttributeJobList, jobStorage, (nuint)nint.Size, nint.Zero, nint.Zero))
+                    {
+                        throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not put the job object on the process attribute list.");
+                    }
                 }
 
                 if (inheritable.Count is 0)
                 {
-                    return new ProcessAttributeList(list, job.Handle, jobStorage, handleStorage);
+                    return new ProcessAttributeList(list, job?.Handle, jobStorage, handleStorage);
                 }
 
                 var handleListBytes = nint.Size * inheritable.Count;
@@ -791,13 +827,13 @@ internal static partial class JobLauncher
                         "Could not restrict the child's inherited handles to this launch's own three. Every handle in the list must be inheritable and valid.");
                 }
 
-                return new ProcessAttributeList(list, job.Handle, jobStorage, handleStorage);
+                return new ProcessAttributeList(list, job?.Handle, jobStorage, handleStorage);
             }
             catch
             {
                 if (counted)
                 {
-                    job.Handle.DangerousRelease();
+                    job!.Handle.DangerousRelease();
                 }
 
                 Free(jobStorage);
@@ -820,7 +856,7 @@ internal static partial class JobLauncher
             // the reference is what keeps the handle open across CreateProcessW,
             // and the field is what keeps the handle itself from being
             // collected. The `using` in Start puts this after the launch.
-            _job.DangerousRelease();
+            _job?.DangerousRelease();
         }
 
         private static void Free(nint storage)
@@ -836,11 +872,21 @@ internal static partial class JobLauncher
     /// The three pipe pairs, with the inheritance flags that make redirection
     /// safe and not a containment hole.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The parent's ends are overlapped since 2026-10-11</b>, the maintainer's decision
+    /// 54: <see cref="NamedPipes.CreateChildPipe"/> makes each pair, and the streams handed to
+    /// the caller are asynchronous, so a read that waits on a quiet child holds no thread.
+    /// <i>Corrected 2026-10-11 (previously three <c>CreatePipe</c> pairs, synchronous at both
+    /// ends, with the parent's end made uninheritable by <c>SetHandleInformation</c>).</i> The
+    /// child's ends are synchronous and inheritable, and the parent's never were inheritable.
+    /// <c>StarvedPoolTests.AChildsOutputIsReadOnAPoolOfOneWorker</c> reads a child here on a pool
+    /// of one worker while another child's read is pending.
+    /// </remarks>
     private sealed class ChildPipes : IDisposable
     {
-        private nint _parentStandardInput;
-        private nint _parentStandardOutput;
-        private nint _parentStandardError;
+        private SafeFileHandle? _parentStandardInput;
+        private SafeFileHandle? _parentStandardOutput;
+        private SafeFileHandle? _parentStandardError;
         private nint _childStandardInput;
         private nint _childStandardOutput;
         private nint _childStandardError;
@@ -857,20 +903,9 @@ internal static partial class JobLauncher
 
             try
             {
-                // bInheritHandle on the security attributes makes BOTH ends
-                // inheritable; the parent's end is cleared immediately
-                // afterwards. Doing it in that order is what makes the child's
-                // end inheritable at all -- SetHandleInformation cannot add
-                // inheritance to a handle created without it.
-                var attributes = new SecurityAttributes
-                {
-                    Length = (uint)Unsafe.SizeOf<SecurityAttributes>(),
-                    InheritHandle = 1,
-                };
-
-                (pipes._childStandardInput, pipes._parentStandardInput) = CreateOnePipe(ref attributes, parentEndIsRead: false);
-                (pipes._parentStandardOutput, pipes._childStandardOutput) = CreateOnePipe(ref attributes, parentEndIsRead: true);
-                (pipes._parentStandardError, pipes._childStandardError) = CreateOnePipe(ref attributes, parentEndIsRead: true);
+                (pipes._parentStandardInput, pipes._childStandardInput) = NamedPipes.CreateChildPipe(childReads: true);
+                (pipes._parentStandardOutput, pipes._childStandardOutput) = NamedPipes.CreateChildPipe(childReads: false);
+                (pipes._parentStandardError, pipes._childStandardError) = NamedPipes.CreateChildPipe(childReads: false);
 
                 return pipes;
             }
@@ -882,20 +917,20 @@ internal static partial class JobLauncher
         }
 
         /// <summary>
-        /// Hands the parent's three ends to the caller as streams and forgets
+        /// Hands the parent's three ends to the caller as asynchronous streams and forgets
         /// them, so <see cref="Dispose"/> closes only the child's.
         /// </summary>
         public (Stream StandardInput, Stream StandardOutput, Stream StandardError) ReleaseParentEnds()
         {
 #pragma warning disable CA2000 // The FileStream takes ownership of the SafeFileHandle and closes it; the caller owns the stream.
-            var input = new FileStream(new SafeFileHandle(_parentStandardInput, ownsHandle: true), FileAccess.Write, bufferSize: 1);
-            _parentStandardInput = nint.Zero;
+            var input = new FileStream(_parentStandardInput!, FileAccess.Write, bufferSize: 0, isAsync: true);
+            _parentStandardInput = null;
 
-            var output = new FileStream(new SafeFileHandle(_parentStandardOutput, ownsHandle: true), FileAccess.Read, bufferSize: 1);
-            _parentStandardOutput = nint.Zero;
+            var output = new FileStream(_parentStandardOutput!, FileAccess.Read, bufferSize: 0, isAsync: true);
+            _parentStandardOutput = null;
 
-            var error = new FileStream(new SafeFileHandle(_parentStandardError, ownsHandle: true), FileAccess.Read, bufferSize: 1);
-            _parentStandardError = nint.Zero;
+            var error = new FileStream(_parentStandardError!, FileAccess.Read, bufferSize: 0, isAsync: true);
+            _parentStandardError = null;
 #pragma warning restore CA2000
 
             return (input, output, error);
@@ -903,32 +938,12 @@ internal static partial class JobLauncher
 
         public void Dispose()
         {
-            Close(ref _parentStandardInput);
-            Close(ref _parentStandardOutput);
-            Close(ref _parentStandardError);
+            _parentStandardInput?.Dispose();
+            _parentStandardOutput?.Dispose();
+            _parentStandardError?.Dispose();
             Close(ref _childStandardInput);
             Close(ref _childStandardOutput);
             Close(ref _childStandardError);
-        }
-
-        private static (nint Read, nint Write) CreateOnePipe(ref SecurityAttributes attributes, bool parentEndIsRead)
-        {
-            if (!CreatePipe(out var read, out var write, ref attributes, 0))
-            {
-                throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not create a pipe for the child's standard streams.");
-            }
-
-            var parentEnd = parentEndIsRead ? read : write;
-
-            if (!SetHandleInformation(parentEnd, HandleFlagInherit, 0))
-            {
-                var error = Marshal.GetLastPInvokeError();
-                _ = CloseHandle(read);
-                _ = CloseHandle(write);
-                throw new Win32Exception(error, "Could not clear inheritance on our end of a pipe.");
-            }
-
-            return (read, write);
         }
 
         private static void Close(ref nint handle)
@@ -980,20 +995,6 @@ internal static partial class JobLauncher
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll")]
     private static partial void DeleteProcThreadAttributeList(nint lpAttributeList);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool CreatePipe(
-        out nint hReadPipe,
-        out nint hWritePipe,
-        ref SecurityAttributes lpPipeAttributes,
-        uint nSize);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool SetHandleInformation(nint hObject, uint dwMask, uint dwFlags);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]

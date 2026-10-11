@@ -981,9 +981,10 @@ internal sealed class WatchedProcess : IDisposable
 /// </summary>
 /// <remarks>
 /// <b>It is a <see cref="WaitHandle"/></b>, owning the process handle through its
-/// <see cref="WaitHandle.SafeWaitHandle"/>, so a caller can wait on it beside other
-/// handles with <see cref="WaitHandle.WaitAny(WaitHandle[])"/> and no raw value is
-/// ever read out of it. The pid and the creation time are its identity; the handle
+/// <see cref="WaitHandle.SafeWaitHandle"/>, so a caller waits on it through
+/// <see cref="HandleWaits.WhenSignaledAsync"/>, which parks no thread, and no raw value is
+/// ever read out of it. <i>Corrected 2026-10-11 (previously "so a caller can wait on it
+/// beside other handles with <c>WaitHandle.WaitAny</c>"), the maintainer's decision 54.</i> The pid and the creation time are its identity; the handle
 /// is what keeps the pid from being reused while it is held.
 /// </remarks>
 internal sealed class HeldProcess : WaitHandle

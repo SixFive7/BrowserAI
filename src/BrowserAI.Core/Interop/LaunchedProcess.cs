@@ -60,7 +60,19 @@ internal sealed partial class LaunchedProcess(
 
     /// <summary>Whether the child has already exited.</summary>
     /// <exception cref="Win32Exception">The wait failed.</exception>
-    public bool HasExited => Wait(0);
+    public bool HasExited => IsSignaledNow();
+
+    /// <summary>Ends the child, which is this object's own process, by its handle.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 for a child started in no job of its own</b>, whose runner has to
+    /// end it when its bound has passed: the handle this object holds is the child's and no
+    /// other process's, so nothing is found by its pid or its name.
+    /// </remarks>
+    /// <returns>Whether it was ended here; <see langword="false"/> when it had already exited.</returns>
+    public bool TryTerminate() => TerminateProcess(handle, TerminatedExitCode);
+
+    /// <summary>The exit code a child ended by <see cref="TryTerminate"/> carries: 1, so it never reads as a clean exit.</summary>
+    public const uint TerminatedExitCode = 1;
 
     /// <summary>
     /// The child's exit code, or <see langword="null"/> if it is still running.
@@ -171,9 +183,10 @@ internal sealed partial class LaunchedProcess(
         handle.Dispose();
     }
 
-    private bool Wait(uint milliseconds)
+    /// <summary>Whether the process has exited, read with a zero timeout that never parks the thread.</summary>
+    private bool IsSignaledNow()
     {
-        var result = WaitForSingleObject(handle, milliseconds);
+        var result = WaitForSingleObject(handle, 0);
         GC.KeepAlive(handle);
 
         return result switch
@@ -193,4 +206,9 @@ internal sealed partial class LaunchedProcess(
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool GetExitCodeProcess(SafeProcessHandle hProcess, out uint lpExitCode);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool TerminateProcess(SafeProcessHandle hProcess, uint uExitCode);
 }

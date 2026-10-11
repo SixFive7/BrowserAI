@@ -154,7 +154,7 @@ internal static class BackgroundRecord
     /// <param name="image">This process's image.</param>
     /// <param name="now">The time.</param>
     /// <returns>What was written.</returns>
-    public static BackgroundRecordState Started(string path, string build, string image, DateTimeOffset now)
+    public static async Task<BackgroundRecordState> StartedAsync(string path, string build, string image, DateTimeOffset now)
     {
         var state = new BackgroundRecordState(
             Environment.ProcessId,
@@ -167,7 +167,7 @@ internal static class BackgroundRecord
             ExitCode: null,
             ExitedAt: null);
 
-        Write(path, state);
+        await WriteAsync(path, state).ConfigureAwait(false);
         return state;
     }
 
@@ -183,9 +183,9 @@ internal static class BackgroundRecord
     /// is answered <see langword="false"/>, and the end then reads as a crash, which is
     /// the direction the record is built to err in.
     /// </remarks>
-    public static bool EndedCleanly(string path, BackgroundEnd how, DateTimeOffset now)
+    public static async Task<bool> EndedCleanlyAsync(string path, BackgroundEnd how, DateTimeOffset now)
     {
-        if (Read(path) is not { } state
+        if (await ReadAsync(path).ConfigureAwait(false) is not { } state
             || state.ProcessId != Environment.ProcessId
             || state.CreatedFileTime != ProcessLiveness.CreationTimeOfThisProcess())
         {
@@ -194,7 +194,7 @@ internal static class BackgroundRecord
 
         try
         {
-            Write(path, state with { Ended = how, EndedAt = now });
+            await WriteAsync(path, state with { Ended = how, EndedAt = now }).ConfigureAwait(false);
             return true;
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -221,7 +221,7 @@ internal static class BackgroundRecord
     /// <returns>What was written.</returns>
     /// <exception cref="IOException">The record could not be written.</exception>
     /// <exception cref="UnauthorizedAccessException">The record's folder may not be written.</exception>
-    public static BackgroundRecordState Refused(string path, string build, string image, RootRefusal refusal, DateTimeOffset now)
+    public static async Task<BackgroundRecordState> RefusedAsync(string path, string build, string image, RootRefusal refusal, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(refusal);
 
@@ -237,7 +237,7 @@ internal static class BackgroundRecord
             ExitedAt: null,
             Refusal: refusal);
 
-        Write(path, state);
+        await WriteAsync(path, state).ConfigureAwait(false);
         return state;
     }
 
@@ -251,9 +251,9 @@ internal static class BackgroundRecord
     /// <param name="exitCode">Its exit code, or <see langword="null"/> when the relay found it gone and could not read one.</param>
     /// <param name="now">The time.</param>
     /// <returns>Whether the record was that background's, carried no clean end, and is written now.</returns>
-    public static bool Exited(string path, int processId, long createdFileTime, int? exitCode, DateTimeOffset now)
+    public static async Task<bool> ExitedAsync(string path, int processId, long createdFileTime, int? exitCode, DateTimeOffset now)
     {
-        if (Read(path) is not { } state
+        if (await ReadAsync(path).ConfigureAwait(false) is not { } state
             || state.ProcessId != processId
             || state.CreatedFileTime != createdFileTime
             || state.Ended is not null)
@@ -261,7 +261,7 @@ internal static class BackgroundRecord
             return false;
         }
 
-        Write(path, state with { ExitCode = exitCode, ExitedAt = now });
+        await WriteAsync(path, state with { ExitCode = exitCode, ExitedAt = now }).ConfigureAwait(false);
         return true;
     }
 
@@ -282,13 +282,13 @@ internal static class BackgroundRecord
     /// <summary>Reads a record, or <see langword="null"/> when there is none or it does not parse.</summary>
     /// <param name="path">The record's path.</param>
     /// <returns>The record.</returns>
-    public static BackgroundRecordState? Read(string path)
+    public static async Task<BackgroundRecordState?> ReadAsync(string path)
     {
         byte[] bytes;
 
         try
         {
-            bytes = File.ReadAllBytes(path);
+            bytes = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException or IOException or UnauthorizedAccessException)
         {
@@ -381,7 +381,7 @@ internal static class BackgroundRecord
             ? DateTimeOffset.Parse(value.GetString()!, CultureInfo.InvariantCulture)
             : null;
 
-    private static void Write(string path, BackgroundRecordState state)
+    private static async Task WriteAsync(string path, BackgroundRecordState state)
     {
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
@@ -432,7 +432,7 @@ internal static class BackgroundRecord
         // Beside the record and renamed over it, so a reader never meets half a file.
         var temporary = path + "." + Environment.ProcessId.ToString(CultureInfo.InvariantCulture) + ".tmp";
 
-        File.WriteAllBytes(temporary, buffer.ToArray());
+        await File.WriteAllBytesAsync(temporary, buffer.ToArray()).ConfigureAwait(false);
 
         // ⚠️ A READER HOLDS THE RENAME OFF. Windows renames a file over another only
         // when nobody has the target open, sharing it for deletion or not, measured
@@ -465,7 +465,7 @@ internal static class BackgroundRecord
                     throw;
                 }
 
-                Thread.Sleep(WriteRetry);
+                await Task.Delay(WriteRetry).ConfigureAwait(false);
             }
         }
     }

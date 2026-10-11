@@ -83,6 +83,9 @@ internal static partial class NamedPipes
     /// <summary>An overlapped operation was started and has not finished yet.</summary>
     public const int ErrorIoPending = 997;
 
+    /// <summary>An overlapped operation was cancelled before it finished.</summary>
+    public const int ErrorOperationAborted = 995;
+
     /// <summary>
     /// How much of a reply the pipe buffers before a server's write waits for
     /// its client to read.
@@ -161,7 +164,7 @@ internal static partial class NamedPipes
     /// <b>Q366 b, 2026-10-03.</b> The session host serves one MCP conversation per
     /// connection for as long as the client lives, and there may be hundreds of them.
     /// A synchronous handle holds a thread in every idle read, so this one is opened
-    /// for overlapped I/O: <see cref="WaitForClient(SafeFileHandle, WaitHandle)"/>
+    /// for overlapped I/O: <see cref="WaitForClientAsync(SafeFileHandle, CancellationToken)"/>
     /// accepts on it, and a <see cref="FileStream"/> opened asynchronously over it
     /// reads and writes through the thread pool's completion port.
     /// </para>
@@ -209,31 +212,46 @@ internal static partial class NamedPipes
         Create(name, FileFlagOverlapped, UnlimitedInstances, StreamBufferBytes);
 
     /// <summary>
-    /// Waits on an overlapped server end for a client to connect, or for
-    /// <paramref name="stop"/>.
+    /// Waits on an overlapped server end for a client to connect, or for the token, without
+    /// a thread.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>The OVERLAPPED lives in a pinned array</b>, so the address Windows writes
     /// the result to never moves while the connect is pending, and an event is its
-    /// completion signal. Nothing is bound to the thread pool here: the handle is
-    /// bound once, by the <see cref="FileStream"/> the caller opens over it after
+    /// completion signal. Nothing is bound to the thread pool's completion port here: the
+    /// handle is bound once, by the <see cref="FileStream"/> the caller opens over it after
     /// this returns.
     /// </para>
     /// <para>
-    /// <b>A stop cancels the pending connect and waits for Windows to say so</b>
-    /// before the array is let go, because memory a pending operation still names
-    /// is memory Windows may still write into.
+    /// ⚠️ <b>The event is waited on by the pool's wait thread, and no worker waits</b>, the
+    /// maintainer's decision 54, in his words verbatim: <i>"Never block a worker
+    /// anywhere."</i> <i>Corrected 2026-10-11 (previously <c>WaitForClient(server,
+    /// stop)</c>, which parked its caller's thread in a wait on the event and on a stop
+    /// handle, and <c>WaitForClient(server)</c>, which called <c>ConnectNamedPipe</c> with
+    /// no OVERLAPPED and so parked its thread until a client came)</i>: the background's
+    /// listener held a thread of its own in that wait for the whole of its life.
+    /// </para>
+    /// <para>
+    /// <b>A cancellation cancels the pending connect and waits for Windows to say so</b>
+    /// before the array is let go, because memory a pending operation still names is memory
+    /// Windows may still write into. A connect that completed in the instant before the
+    /// cancel still answers <see langword="true"/>, and the caller drops that client with the
+    /// instance.
     /// </para>
     /// </remarks>
     /// <param name="server">An overlapped server end from <see cref="CreateStreamServer"/> or <see cref="CreateStreamInstance"/>.</param>
-    /// <param name="stop">Set when the caller stops listening.</param>
-    /// <returns><see langword="true"/> when a client is connected; <see langword="false"/> when the stop came first.</returns>
-    /// <exception cref="IOException">The connect failed for a reason other than a stop.</exception>
-    public static bool WaitForClient(SafeFileHandle server, WaitHandle stop)
+    /// <param name="cancellationToken">Set when the caller stops listening.</param>
+    /// <returns><see langword="true"/> when a client is connected; <see langword="false"/> when the token came first.</returns>
+    /// <exception cref="IOException">The connect failed for a reason other than the token.</exception>
+    public static async Task<bool> WaitForClientAsync(SafeFileHandle server, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(server);
-        ArgumentNullException.ThrowIfNull(stop);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
 
         var overlapped = GC.AllocateArray<Overlapped>(1, pinned: true);
 
@@ -269,15 +287,12 @@ internal static partial class NamedPipes
                 throw new IOException($"Waiting for a client on a pipe failed: {new Win32Exception(error).Message}", HResultFromWin32(error));
             }
 
-            if (WaitHandle.WaitAny([connected, stop]) is 1)
+            // The connect ends its event whichever way it ends: a client, a failure, or the
+            // cancel this registration asks for. The wait is for that and nothing else, so the
+            // pinned OVERLAPPED is never let go while Windows still names it.
+            await using (cancellationToken.Register(() => _ = CancelIoEx(server, ref overlapped[0])).ConfigureAwait(false))
             {
-                // Cancelled, and then waited out: a connect that completed in the
-                // instant before the cancel still answers true below, and the
-                // caller drops that client with the instance.
-                _ = CancelIoEx(server, ref overlapped[0]);
-                _ = GetOverlappedResult(server, ref overlapped[0], out _, bWait: true);
-
-                return false;
+                _ = await HandleWaits.WhenSignaledAsync(connected, Timeout.InfiniteTimeSpan, CancellationToken.None).ConfigureAwait(false);
             }
 
             if (GetOverlappedResult(server, ref overlapped[0], out _, bWait: false))
@@ -286,6 +301,11 @@ internal static partial class NamedPipes
             }
 
             var failed = Marshal.GetLastPInvokeError();
+
+            if (failed is ErrorOperationAborted && cancellationToken.IsCancellationRequested)
+            {
+                return false;
+            }
 
             throw new IOException($"A client's connect to a pipe failed: {new Win32Exception(failed).Message}", HResultFromWin32(failed));
         }
@@ -298,15 +318,109 @@ internal static partial class NamedPipes
         }
     }
 
+    /// <summary>
+    /// Creates one pipe for a child's standard stream: the parent's end overlapped, the
+    /// child's end synchronous and inheritable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-10-11, the maintainer's decision 54, in his words verbatim: <i>"Never
+    /// block a worker anywhere."</i></b> Until that day a child's three streams were
+    /// <c>CreatePipe</c>'s anonymous pipes, which Windows makes synchronous at both ends:
+    /// every asynchronous read of a child's output was carried out by a pool thread parked in
+    /// <c>ReadFile</c> for as long as the child said nothing, two for every child the product
+    /// and the suite started (<c>FileStream.IsAsync</c> read <c>False</c> on a redirected
+    /// stream of .NET 10.0.12, 2026-10-11). The parent's end here is opened for overlapped
+    /// I/O, so a read that waits is a pending I/O request and holds no thread.
+    /// </para>
+    /// <para>
+    /// <b>The child's end is synchronous, and it has to be</b>: a process reads and writes
+    /// its standard handles with no OVERLAPPED, which a handle opened for overlapped I/O does
+    /// not allow. It is the shape libuv gives every child node starts: an overlapped server
+    /// end with one instance, a client end opened without <c>FILE_FLAG_OVERLAPPED</c>, the
+    /// reading end with <c>FILE_WRITE_ATTRIBUTES</c> and the writing end with
+    /// <c>FILE_READ_ATTRIBUTES</c>, so the child can ask for and set its pipe's state.
+    /// </para>
+    /// <para>
+    /// <b>The pipe has the three properties every pipe of ours has</b>: the first and only
+    /// instance of a name nobody else can know, remote clients refused, and a DACL whose one
+    /// entry is the current user. The client end is opened at once, so the one instance is
+    /// connected before this returns and no other process can take it.
+    /// </para>
+    /// </remarks>
+    /// <param name="childReads">Whether the child reads this pipe: its standard input.</param>
+    /// <returns>The parent's end, which the caller owns, and the child's end as a raw, inheritable handle the caller closes once the child has it.</returns>
+    /// <exception cref="IOException">The pipe or its client end could not be created.</exception>
+    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
+    internal static (SafeFileHandle Parent, nint Child) CreateChildPipe(bool childReads)
+    {
+        var name = $@"\\.\pipe\BrowserAI-child-{Environment.ProcessId}-{Guid.NewGuid():N}";
+        var parent = Create(name, FileFlagFirstPipeInstance | FileFlagOverlapped, maxInstances: 1, ChildPipeBufferBytes, childReads ? PipeAccessOutbound : PipeAccessInbound);
+
+        try
+        {
+            var inheritable = new SecurityAttributes
+            {
+                Length = (uint)Unsafe.SizeOf<SecurityAttributes>(),
+                SecurityDescriptor = nint.Zero,
+                InheritHandle = 1,
+            };
+
+            var child = CreateFileW(
+                name,
+                childReads ? GenericRead | FileWriteAttributes : GenericWrite | FileReadAttributes,
+                0,
+                ref inheritable,
+                OpenExisting,
+                0,
+                nint.Zero);
+
+            if (child == InvalidHandleValue)
+            {
+                var error = Marshal.GetLastPInvokeError();
+
+                throw new IOException(
+                    $"The child's end of the pipe '{name}' could not be opened: {new Win32Exception(error).Message}",
+                    HResultFromWin32(error));
+            }
+
+            return (parent, child);
+        }
+        catch
+        {
+            parent.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>How much a child's standard stream buffers: libuv's 64 KiB for the same pipe.</summary>
+    private const int ChildPipeBufferBytes = 64 * 1024;
+
+    /// <summary>The server end only reads: the child writes.</summary>
+    private const uint PipeAccessInbound = 0x00000001;
+
+    /// <summary>The server end only writes: the child reads.</summary>
+    private const uint PipeAccessOutbound = 0x00000002;
+
+    /// <summary>Lets the child read its pipe's state.</summary>
+    private const uint FileReadAttributes = 0x00000080;
+
+    /// <summary>Lets the child set its pipe's state.</summary>
+    private const uint FileWriteAttributes = 0x00000100;
+
+    /// <summary>What <c>CreateFileW</c> answers when it could not open.</summary>
+    private static readonly nint InvalidHandleValue = -1;
+
     /// <summary>The one creation every pipe of ours goes through.</summary>
     /// <param name="name">The full pipe name.</param>
     /// <param name="flags"><see cref="FileFlagFirstPipeInstance"/> for a first instance, and <see cref="FileFlagOverlapped"/> for a stream pipe.</param>
     /// <param name="maxInstances">How many instances the name may have at once.</param>
     /// <param name="buffers">How much each direction buffers, or zero for the request-and-answer pipe's own sizes.</param>
+    /// <param name="access">Which way the server end moves data: both ways, or one for a child's standard stream.</param>
     /// <returns>The server end. The caller owns it.</returns>
     /// <exception cref="IOException">The pipe was not created; <see cref="Exception.HResult"/> says why.</exception>
     /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
-    private static SafeFileHandle Create(string name, uint flags, uint maxInstances, int buffers = 0)
+    private static SafeFileHandle Create(string name, uint flags, uint maxInstances, int buffers = 0, uint access = PipeAccessDuplex)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
@@ -323,7 +437,7 @@ internal static partial class NamedPipes
 
             var handle = CreateNamedPipeW(
                 name,
-                PipeAccessDuplex | flags,
+                access | flags,
                 PipeRejectRemoteClients,
                 maxInstances,
                 (uint)(buffers is 0 ? OutBufferBytes : buffers),
@@ -351,22 +465,6 @@ internal static partial class NamedPipes
         }
     }
 
-    /// <summary>Waits for a client, or answers at once when one is already connected.</summary>
-    /// <param name="server">The server end.</param>
-    /// <returns><see langword="true"/> when a client is connected.</returns>
-    public static bool WaitForClient(SafeFileHandle server)
-    {
-        if (ConnectNamedPipe(server, nint.Zero))
-        {
-            return true;
-        }
-
-        // A client that connected between the pipe's creation (or the last
-        // disconnect) and this call is connected already; Windows says so with
-        // an error code and not with a success.
-        return Marshal.GetLastPInvokeError() is ErrorPipeConnected;
-    }
-
     /// <summary>Ends the current client's connection so the instance can serve the next.</summary>
     /// <param name="server">The server end.</param>
     public static void Disconnect(SafeFileHandle server) => _ = DisconnectNamedPipe(server);
@@ -383,11 +481,20 @@ internal static partial class NamedPipes
         return handle;
     }
 
-    /// <summary>Waits for an instance of a busy pipe to become free.</summary>
+    /// <summary>Whether a pipe of that name has an instance free to open, asked without connecting to it.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-10-11 (previously <c>WaitForFreeInstance(name, milliseconds)</c>,
+    /// which parked its caller for as long as it was given while every instance was busy)</b>,
+    /// the maintainer's decision 54. What is left is the question with the shortest bound
+    /// <c>WaitNamedPipeW</c> takes, one millisecond: zero would mean the pipe's own default.
+    /// A caller that must wait for a free instance waits between two asks, awaiting a delay.
+    /// </remarks>
     /// <param name="name">The full pipe name.</param>
-    /// <param name="milliseconds">How long to wait.</param>
-    /// <returns><see langword="true"/> when an instance is free to open.</returns>
-    public static bool WaitForFreeInstance(string name, uint milliseconds) => WaitNamedPipeW(name, milliseconds);
+    /// <returns><see langword="true"/> when an instance was free to open at the instant of the ask.</returns>
+    public static bool HasFreeInstanceNow(string name) => WaitNamedPipeW(name, ShortestPipeWait);
+
+    /// <summary>The shortest bound <c>WaitNamedPipeW</c> takes, in milliseconds: zero is its default wait.</summary>
+    private const uint ShortestPipeWait = 1;
 
     /// <summary>The pid of the process serving the other end of a client handle.</summary>
     /// <param name="client">The client end.</param>
@@ -568,11 +675,6 @@ internal static partial class NamedPipes
         ref SecurityAttributes lpSecurityAttributes);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool ConnectNamedPipe(SafeFileHandle hNamedPipe, nint lpOverlapped);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", EntryPoint = "ConnectNamedPipe", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool ConnectNamedPipe(SafeFileHandle hNamedPipe, ref Overlapped lpOverlapped);
@@ -603,6 +705,17 @@ internal static partial class NamedPipes
         uint dwDesiredAccess,
         uint dwShareMode,
         nint lpSecurityAttributes,
+        uint dwCreationDisposition,
+        uint dwFlagsAndAttributes,
+        nint hTemplateFile);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "CreateFileW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial nint CreateFileW(
+        string lpFileName,
+        uint dwDesiredAccess,
+        uint dwShareMode,
+        ref SecurityAttributes lpSecurityAttributes,
         uint dwCreationDisposition,
         uint dwFlagsAndAttributes,
         nint hTemplateFile);

@@ -53,6 +53,19 @@ internal static class ProcessBounds
     public static TimeSpan BackgroundBusyBound { get; } = TimeSpan.FromSeconds(2);
 
     /// <summary>
+    /// How long a client waits before it asks again for a pipe whose every instance was
+    /// busy: 10 ms. Read by <c>BackgroundClient.AskAsync</c> and <c>BackgroundFinder</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 with the maintainer's decision 54</b>, in place of
+    /// <c>WaitNamedPipeW</c>, which parked its caller until an instance was free. The
+    /// background makes its next instance before it hands a connection over, so a busy
+    /// pipe lasts the instant between the two, and a short delay between two asks is all
+    /// that window needs.
+    /// </remarks>
+    public static TimeSpan PipeBusyRetry { get; } = TimeSpan.FromMilliseconds(10);
+
+    /// <summary>
     /// How long a relay waits for a background whose pipe has closed to finish exiting:
     /// 2 s. The value of <c>BackgroundFinder.ExitBound</c>.
     /// </summary>
