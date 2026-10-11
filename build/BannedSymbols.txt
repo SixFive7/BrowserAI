@@ -124,9 +124,16 @@ M:System.Diagnostics.Process.WaitForExit(System.Int32);Never WaitForExit, any ov
 ; else happens, so each is banned here, repository-wide, product and suite
 ; alike, and the build is red wherever one stands.
 ;
-; SIX PLACES KEEP A WAIT, ten calls in all, and each is listed for his review
+; FIVE PLACES KEEP A WAIT, and four of them are approved: the maintainer's
+; 76 b, 2026-10-11, in his words verbatim: "76 b - but also, why is the session-delete path not async? Is it just the test that is sync or is there another path still not async?"
+; The four places' eight calls carry a suppression with the reason beside it:
+; the mutex's owner thread, the log's sink, JobContainmentTests' read of an
+; anonymous pipe and SessionLockTests' four waits. The fifth, the relay's
+; standard input and output, is measured before he decides, and the build
+; stays red at its three calls until he does. Corrected 2026-10-11 (previously
+; "SIX PLACES KEEP A WAIT, ten calls in all, and each is listed for his review
 ; and carries no suppression until he has read the reasoning, so the build
-; stays red at every one until then. The owner thread of a named kernel mutex
+; stays red at every one until then"). The owner thread of a named kernel mutex
 ; (Sessions/MachineMutex.cs, two calls): a Win32 mutex belongs to the thread
 ; that took it and only that thread can release it, so a mutex held across an
 ; await needs a thread that takes it, parks until the hold ends and releases

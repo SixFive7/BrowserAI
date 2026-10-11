@@ -1528,12 +1528,16 @@ internal sealed class SessionLockTests
         await held.ReleaseAndDeleteAsync(() =>
         {
             disposal.Start();
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the product's delete callback is synchronous and runs under its lock, and the race is watched from inside it.
             _ = disposalReached.Wait(TestDefaults.InProcessHang);
+#pragma warning restore RS0030
 
             // True is the defect: the second disposal ran to completion -- and
             // therefore disposed the gate -- while this one was between its own
             // check and its own release.
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the product's delete callback is synchronous and runs under its lock, and the race is watched from inside it.
             disposalReturnedMidDelete = disposal.Join(StillBlocked);
+#pragma warning restore RS0030
 
             TreeDelete.Remove(path.FullPath, []);
         });
@@ -1629,12 +1633,16 @@ internal sealed class SessionLockTests
         await held.ReleaseAndDeleteAsync(() =>
         {
             rewrite.Start();
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the product's delete callback is synchronous and runs under its lock, and the race is watched from inside it.
             _ = rewriteReached.Wait(TestDefaults.InProcessHang);
+#pragma warning restore RS0030
 
             // True is the defect: the mutation reached a decision about a
             // half-torn-down lock, on a field the thread running this delete is
             // in the middle of writing.
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the product's delete callback is synchronous and runs under its lock, and the race is watched from inside it.
             rewriteReturnedMidDelete = rewrite.Join(StillBlocked);
+#pragma warning restore RS0030
 
             TreeDelete.Remove(path.FullPath, []);
         });

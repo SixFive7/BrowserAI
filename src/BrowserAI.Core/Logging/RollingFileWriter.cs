@@ -268,7 +268,9 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
             return false;
         }
 
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b: ILogger.Log is synchronous, and a record is in the file before it returns.
         RandomAccess.Write(handle, bytes, length);
+#pragma warning restore RS0030
         return true;
     }
 

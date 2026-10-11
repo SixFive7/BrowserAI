@@ -235,7 +235,9 @@ internal sealed class MutexHold : IAsyncDisposable
             try
             {
                 // KEPT, for the maintainer's review: the owner thread's wait for its mutex.
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b: a Win32 mutex is released only by the thread that took it, so its own thread waits for it.
                 acquisition = mutex.WaitOne(timeout) ? MutexAcquisition.Acquired : MutexAcquisition.NotAcquired;
+#pragma warning restore RS0030
             }
             catch (AbandonedMutexException)
             {
@@ -264,7 +266,9 @@ internal sealed class MutexHold : IAsyncDisposable
             {
                 // KEPT, for the maintainer's review: the owner thread parks until the hold
                 // ends, because only this thread can release what it took.
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b: only the thread that took the mutex can release it, so it waits for the hold to end.
                 _ = release.WaitOne();
+#pragma warning restore RS0030
             }
             finally
             {

@@ -429,7 +429,9 @@ internal sealed class JobContainmentTests
         {
             try
             {
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the arm's subject is an anonymous pipe, which has no overlapped read, so a thread of its own reads it.
                 _ = read.TrySetResult(pipe.ReadByte());
+#pragma warning restore RS0030
             }
 #pragma warning disable CA1031 // The thread's boundary: the failure goes to the caller, who awaits it.
             catch (Exception failure)
