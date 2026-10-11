@@ -134,7 +134,7 @@ internal sealed partial class RelayEngine
 
         Enter();
 
-        var reading = Task.Run(() => _finder.Explain(lastPid), CancellationToken.None);
+        var reading = Task.Run(() => _finder.ExplainAsync(lastPid), CancellationToken.None);
 
         _ = reading.ContinueWith(
             (done, state) =>

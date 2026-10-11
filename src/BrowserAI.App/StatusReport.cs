@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Buffers;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using BrowserAI.Registration;
@@ -51,7 +52,7 @@ internal static class StatusReport
     /// <param name="state">What to write.</param>
     /// <param name="path">Where to write it.</param>
     /// <returns>The path it was written to.</returns>
-    public static string Write(AppState state, string path)
+    public static async Task<string> WriteAsync(AppState state, string path)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -63,7 +64,7 @@ internal static class StatusReport
             _ = Directory.CreateDirectory(directory);
         }
 
-        File.WriteAllBytes(path, ToUtf8(state));
+        await File.WriteAllBytesAsync(path, ToUtf8(state)).ConfigureAwait(false);
 
         return Path.GetFullPath(path);
     }
@@ -75,7 +76,7 @@ internal static class StatusReport
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        using var buffer = new MemoryStream();
+        var buffer = new ArrayBufferWriter<byte>();
 
         using (var writer = new Utf8JsonWriter(
             buffer,
@@ -148,9 +149,9 @@ internal static class StatusReport
         }
 
         // The trailing newline every other file this repository writes carries.
-        buffer.WriteByte((byte)'\n');
+        buffer.Write("\n"u8);
 
-        return buffer.ToArray();
+        return buffer.WrittenSpan.ToArray();
     }
 
     private static void WriteScope(Utf8JsonWriter writer, RegistrationView view)

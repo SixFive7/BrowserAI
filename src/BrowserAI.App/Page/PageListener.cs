@@ -59,7 +59,7 @@ internal interface IPageRoutes
 /// ([kb](../../../kb/windows/loopback-page.md)).
 /// </para>
 /// </remarks>
-internal sealed partial class PageListener : IAsyncDisposable, IDisposable
+internal sealed partial class PageListener : IAsyncDisposable
 {
     /// <summary>How many connections the listener holds at once, every open tab's event stream included.</summary>
     public const int MaximumConnections = 64;
@@ -115,7 +115,7 @@ internal sealed partial class PageListener : IAsyncDisposable, IDisposable
     /// on. The 2026-09-25 probes were listening 46 to 82 ms after their process
     /// started; how much of that is Kestrel's own start was not measured.
     /// </remarks>
-    public static PageListener Start(IPageRoutes routes, ILogger logger)
+    public static async Task<PageListener> StartAsync(IPageRoutes routes, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(routes);
         ArgumentNullException.ThrowIfNull(logger);
@@ -158,7 +158,7 @@ internal sealed partial class PageListener : IAsyncDisposable, IDisposable
         try
         {
             listener._application.Run(listener.ServeAsync);
-            listener._application.StartAsync(CancellationToken.None).GetAwaiter().GetResult();
+            await listener._application.StartAsync(CancellationToken.None).ConfigureAwait(false);
             listener._gate = new PageGate(port, PageGate.NewToken());
 
             PageListenerLog.Listening(logger, port);
@@ -172,7 +172,10 @@ internal sealed partial class PageListener : IAsyncDisposable, IDisposable
         }
         finally
         {
-            listener?.Dispose();
+            if (listener is not null)
+            {
+                await listener.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 
@@ -190,13 +193,6 @@ internal sealed partial class PageListener : IAsyncDisposable, IDisposable
             await _application.DisposeAsync().ConfigureAwait(false);
         }
     }
-
-    /// <summary>Stops listening, waiting for the stop on the calling thread.</summary>
-    /// <remarks>
-    /// For the coordinator's own thread and the pipe's, neither of which has a
-    /// synchronization context to deadlock on.
-    /// </remarks>
-    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 
     /// <summary>What a request shows the gate, read off Kestrel's own view of it.</summary>
     /// <param name="context">The request.</param>

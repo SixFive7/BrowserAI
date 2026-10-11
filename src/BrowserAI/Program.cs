@@ -147,14 +147,27 @@ internal static partial class Program
     /// <para>
     /// ⚠️ <b>One <c>Main</c> since 2026-10-08, D7 a</b> (previously two: this file's,
     /// asynchronous and serving stdio, and the configuration app's, on a
-    /// single-threaded apartment). The app's apartment is kept, for the reason its
-    /// own remarks give: Explorer, which the tab opens on the coordinator's thread,
-    /// expects one. A mode that serves stdio blocks this thread on its asynchronous
-    /// work, and nothing that work owns needs the thread to pump.
+    /// single-threaded apartment).
     /// </para>
     /// <para>
-    /// <b>The hooks are served first, by Velopack's own <c>Run()</c></b>, which
-    /// exits the process when it serves one, so nothing below runs inside a hook.
+    /// ⚠️ <b>Asynchronous, with no apartment of its own, since 2026-10-11</b>, the
+    /// maintainer's decision 54, in his words verbatim: <i>"Remove all such occurances and
+    /// go fully async like a nice person. Never block a worker anywhere."</i> <i>Corrected
+    /// that day (previously "The app's apartment is kept, for the reason its own remarks
+    /// give: Explorer, which the tab opens on the coordinator's thread, expects one. A mode
+    /// that serves stdio blocks this thread on its asynchronous work, and nothing that work
+    /// owns needs the thread to pump"), with <c>[STAThread]</c> on a synchronous
+    /// <c>Main</c> that waited for the server's task with <c>GetAwaiter().GetResult()</c>.</i>
+    /// Every call that wants a single-threaded apartment makes a thread that asks for one,
+    /// because an asynchronous <c>Main</c> is not given the apartment <c>[STAThread]</c> asks
+    /// for: measured that day, .NET SDK 10.0.401, the main thread reads <c>MTA</c> before
+    /// its first await and a pool thread after it. The runtime's own entry waits for the
+    /// task this returns on the process's main thread, which is no pool thread.
+    /// </para>
+    /// <para>
+    /// <b>The hooks are served first, by Velopack's own <c>Run()</c></b>, and a hook's
+    /// process exits once its work is done, so nothing below runs inside a hook
+    /// (<see cref="VelopackStartup.RunAndServeLifecycleHooksAsync"/>).
     /// It also carries <c>SetAutoApplyOnStartup(false)</c>, whose default would
     /// make a server exit at handshake time and relaunch detached with dead pipes.
     /// The two variables the installer and Velopack's restart set are read before
@@ -164,8 +177,7 @@ internal static partial class Program
     /// </remarks>
     /// <param name="args">The command line.</param>
     /// <returns>The exit code of the job the arguments named.</returns>
-    [STAThread]
-    private static int Main(string[] args)
+    private static async Task<int> Main(string[] args)
     {
         args ??= [];
 
@@ -176,13 +188,13 @@ internal static partial class Program
         // exist yet, because WHERE it goes depends on the install root this call
         // is what establishes. Each mode replays them into its log.
         var velopack = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
-        VelopackStartup.RunAndServeLifecycleHooks(args, (level, message, failure) => velopack.Add((level, message, failure)));
+        await VelopackStartup.RunAndServeLifecycleHooksAsync(args, (level, message, failure) => velopack.Add((level, message, failure))).ConfigureAwait(false);
 
         App.Program.ClearTheInstallersOwnVariables();
 
         return ServesStdio(args) || IsTheTasksStart(args)
-            ? ServeAsync(args, velopack).GetAwaiter().GetResult()
-            : App.Program.Run(args, firstRun, restarted, velopack);
+            ? await ServeAsync(args, velopack).ConfigureAwait(false)
+            : await App.Program.RunAsync(args, firstRun, restarted, velopack).ConfigureAwait(false);
     }
 
     /// <summary>Whether the arguments name a mode that serves stdio.</summary>
@@ -370,7 +382,7 @@ internal static partial class Program
         // where until that day it became the coordinator. See Program.Background.cs.
         if (IsTheTasksStart(args))
         {
-            return RunTheBackground(args, paths, log, logger);
+            return await RunTheBackgroundAsync(args, paths, log, logger).ConfigureAwait(false);
         }
 
         // ⚠️ ONE SWEEP, FOR A KB RE-VERIFICATION ROW, AND NOTHING ELSE. A person's
@@ -391,7 +403,7 @@ internal static partial class Program
                 return 1;
             }
 
-            return SweepOnce(paths, InstallLocation.RootAppDir ?? paths.RootAppDir, log.Factory, logger);
+            return await SweepOnceAsync(paths, InstallLocation.RootAppDir ?? paths.RootAppDir, log.Factory, logger).ConfigureAwait(false);
         }
 
         // ⚠️ A CLIENT'S START WITH NO PIPE ON STANDARD INPUT IS NOBODY TO SERVE --
@@ -426,14 +438,14 @@ internal static partial class Program
     /// index it keeps.
     /// </summary>
     /// <remarks>
-    /// Called on the sweep's own thread, never on the startup path: it reads the
+    /// Called inside the sweep's own catch, never on the startup path: it reads the
     /// payload's <c>browsers.json</c>, and a payload that is absent or broken
     /// must not be able to stop BrowserAI serving.
     /// </remarks>
-    private static StraySweep CreateSweep(IAppPaths paths, string installRoot, ILoggerFactory factory)
+    private static async Task<StraySweep> CreateSweepAsync(IAppPaths paths, string installRoot, ILoggerFactory factory)
     {
         var payload = new PayloadLayout();
-        var manifest = BrowsersManifest.Read(payload);
+        var manifest = await BrowsersManifest.ReadAsync(payload).ConfigureAwait(false);
         var logger = factory.CreateLogger("BrowserAI.Sweep");
 
         return new StraySweep(
@@ -464,11 +476,11 @@ internal static partial class Program
     }
 
     /// <summary>Runs one sweep and exits, for <see cref="SweepArgument"/>.</summary>
-    private static int SweepOnce(IAppPaths paths, string installRoot, ILoggerFactory factory, ILogger logger)
+    private static async Task<int> SweepOnceAsync(IAppPaths paths, string installRoot, ILoggerFactory factory, ILogger logger)
     {
         try
         {
-            _ = CreateSweep(paths, installRoot, factory).Run();
+            _ = await (await CreateSweepAsync(paths, installRoot, factory).ConfigureAwait(false)).RunAsync().ConfigureAwait(false);
             return 0;
         }
 #pragma warning disable CA1031 // Same boundary as the background thread's: a sweep failure is a log line and an exit code, never a crash dialog.

@@ -42,7 +42,7 @@ internal interface IBackgroundVerbs
     /// <summary>A person's start: a new tab's address on a page.</summary>
     /// <param name="page">The page asked for, or <see langword="null"/> for the status page.</param>
     /// <returns>The address, or <see langword="null"/> with the reason when none could be handed out.</returns>
-    (string? Address, string? Refusal) Show(string? page);
+    Task<(string? Address, string? Refusal)> ShowAsync(string? page);
 
     /// <summary>The uninstall hook's stop, or the suite's: close every session cleanly and end.</summary>
     void Stop();
@@ -114,11 +114,10 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     private readonly IBackgroundVerbs _verbs;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger _logger;
-    private readonly ManualResetEvent _stop = new(initialState: false);
     private readonly CancellationTokenSource _stopping = new();
     private readonly List<Task> _serving = [];
-    private readonly Thread _listener;
 
+    private Task _listening = Task.CompletedTask;
     private SafeFileHandle? _first;
     private int _started;
     private int _disposed;
@@ -151,27 +150,23 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
 
         // ⚠️ IN THE CONSTRUCTOR, so a second background fails here and says why.
         _first = NamedPipes.CreateStreamServer(identity.PipeName);
-
-        _listener = new Thread(Listen)
-        {
-            IsBackground = true,
-            Name = "BrowserAI background pipe",
-        };
     }
 
     /// <summary>The pipe it serves.</summary>
     public string Name => _identity.PipeName;
 
     /// <summary>
-    /// Called on the listener's thread once a connection is accepted and before it is
-    /// served: the suite's seam, which holds the listener there.
+    /// Awaited by the listener once a connection is accepted and before it is served: the
+    /// suite's seam, which holds the listener there.
     /// </summary>
     /// <remarks>
     /// <b>Added 2026-10-10</b> for the arm that connects while a stop is under way
     /// (<c>BackgroundServerTests</c>): nothing else can hold the listener between taking
-    /// a connection and handing it over. The product sets nothing here.
+    /// a connection and handing it over. The product sets nothing here. <i>Awaited since
+    /// 2026-10-11 (previously called on the listener's own thread, which the arm held by
+    /// waiting on it).</i>
     /// </remarks>
-    internal Action? Accepted { get; init; }
+    internal Func<Task>? Accepted { get; init; }
 
     /// <summary>
     /// The clock <see cref="FirstFrameBound"/> runs on: the suite's seam, which moves it by
@@ -204,6 +199,13 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     }
 
     /// <summary>Starts accepting.</summary>
+    /// <remarks>
+    /// <b>The listener is a loop of awaits since 2026-10-11</b>, the maintainer's decision
+    /// 54, in his words verbatim: <i>"Never block a worker anywhere."</i> It awaits each
+    /// connection through an overlapped connect (<see cref="NamedPipes.WaitForClientAsync"/>),
+    /// and a stop cancels the wait. <i>Previously a thread of its own, which waited for each
+    /// connection or the stop's event.</i>
+    /// </remarks>
     public void Start()
     {
         if (Interlocked.Exchange(ref _started, 1) is not 0)
@@ -211,15 +213,13 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
             return;
         }
 
-        _listener.Start();
+        _listening = Task.Run(ListenAsync, CancellationToken.None);
         BackgroundServerLog.Listening(_logger, _identity.PipeName);
     }
 
     /// <summary>Stops accepting and ends every connection.</summary>
     public void Stop()
     {
-        _ = _stop.Set();
-
         try
         {
             _stopping.Cancel();
@@ -232,12 +232,13 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
 
     /// <inheritdoc />
     /// <remarks>
-    /// ⚠️ <b>The listener is joined BEFORE the list of connections is taken</b>, so a
+    /// ⚠️ <b>The listener is awaited BEFORE the list of connections is taken</b>, so a
     /// connection it accepted while the stop was under way is in the list and is waited
     /// for, and none runs on past the stop's own events. <i>Corrected 2026-10-10
     /// (previously the list was taken first and the listener joined after it), found by
     /// a reading of the code on 2026-10-09 and held by
-    /// <c>BackgroundServerTests.AConnectionAcceptedWhileTheBackgroundStopsIsWaitedFor</c>.</i>
+    /// <c>BackgroundServerTests.AConnectionAcceptedWhileTheBackgroundStopsIsWaitedFor</c>.
+    /// Awaited and not joined since 2026-10-11, with the listener.</i>
     /// </remarks>
     public async ValueTask DisposeAsync()
     {
@@ -249,10 +250,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         Stop();
 
         // Nothing adds a connection once the listener has left its loop.
-        if (Volatile.Read(ref _started) is not 0)
-        {
-            _listener.Join();
-        }
+        await _listening.ConfigureAwait(false);
 
         Task[] serving;
 
@@ -282,11 +280,10 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         }
 
         _first?.Dispose();
-        _stop.Dispose();
         _stopping.Dispose();
     }
 
-    private void Listen()
+    private async Task ListenAsync()
     {
         var listening = Interlocked.Exchange(ref _first, null)!;
 
@@ -294,7 +291,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         {
             while (!_stopping.IsCancellationRequested)
             {
-                if (!NamedPipes.WaitForClient(listening, _stop))
+                if (!await NamedPipes.WaitForClientAsync(listening, _stopping.Token).ConfigureAwait(false))
                 {
                     break;
                 }
@@ -305,7 +302,11 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
                 // name never stands without an instance of ours.
                 var next = NamedPipes.CreateStreamInstance(_identity.PipeName);
 
-                Accepted?.Invoke();
+                if (Accepted is { } accepted)
+                {
+                    await accepted().ConfigureAwait(false);
+                }
+
                 Serve(listening, client);
                 listening = next;
             }
@@ -407,10 +408,10 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     private async Task AnswerShowAsync(FileStream stream, JsonRpcRequest request)
     {
         var page = request.Params?["page"] is JsonValue value && value.TryGetValue<string>(out var named) ? named : null;
-        var (address, refusal) = _verbs.Show(page);
+        var (address, refusal) = await _verbs.ShowAsync(page).ConfigureAwait(false);
 
         // The fallback is for a verbs that gives neither, which the product's never does:
-        // BackgroundVerbs.Show says why with every address it does not give. Kept because
+        // BackgroundVerbs.ShowAsync says why with every address it does not give. Kept because
         // IBackgroundVerbs is a seam a double fills, and an error needs a message (the
         // texts review's #134, 2026-10-10).
         await WriteAsync(

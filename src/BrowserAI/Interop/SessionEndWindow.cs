@@ -49,10 +49,20 @@ internal enum SessionEndNotice
 /// </para>
 /// <para>
 /// <b>Its own thread, with its own message loop</b>, because a window's messages are
-/// delivered to the thread that created it, and the background's other threads wait
-/// on pipes, timers and the page. The callback runs on that thread and must return
-/// quickly: Windows waits on the window procedure, and a sign-out gives it five
-/// seconds in all.
+/// delivered to the thread that created it. The callback is started on that thread and
+/// must finish quickly: Windows waits on the window procedure, and a sign-out gives it
+/// five seconds in all.
+/// </para>
+/// <para>
+/// ⚠️ <b>The window procedure waits for the callback's task, dispatching messages while
+/// it does</b>, since 2026-10-11, the maintainer's decisions 54 and 63: the record a
+/// notice writes is written asynchronously, and the procedure may not return before it is
+/// on disk, because the process may end the moment it does. <i>Previously the callback
+/// was synchronous and wrote the record on this thread.</i> The wait is a message loop
+/// of its own, which ends when the task posts that it is done; a second notice that
+/// arrives meanwhile finds the first still being told, and returns. It is a wait of the
+/// window's own thread, never of a pool thread, and is listed for the maintainer's review
+/// with the batch.
 /// </para>
 /// <para>
 /// <b>Never shown, never activated</b>: it is created without <c>WS_VISIBLE</c> and
@@ -65,14 +75,17 @@ internal enum SessionEndNotice
 /// callback was until 2026-10-03. Everything else passes through the marshaller.
 /// </para>
 /// </remarks>
-internal sealed partial class SessionEndWindow : IDisposable
+internal sealed partial class SessionEndWindow : IAsyncDisposable
 {
     private const uint WmClose = 0x0010;
     private const uint WmQueryEndSession = 0x0011;
     private const uint WmEndSession = 0x0016;
 
-    /// <summary><c>WM_APP</c>: the one message this class posts to itself, to leave its loop.</summary>
+    /// <summary><c>WM_APP</c>: the message this class posts to itself to leave its loop.</summary>
     private const uint WmLeave = 0x8000;
+
+    /// <summary><c>WM_APP + 1</c>: the message a notice's task posts once it is done.</summary>
+    private const uint WmTold = 0x8001;
 
     /// <summary><c>ERROR_CLASS_ALREADY_EXISTS</c>.</summary>
     private const int ErrorClassAlreadyExists = 1410;
@@ -82,15 +95,17 @@ internal sealed partial class SessionEndWindow : IDisposable
     /// <summary>The one window of the process; the window procedure finds its owner through it.</summary>
     private static SessionEndWindow? _current;
 
-    private readonly Action<SessionEndNotice> _notice;
+    private readonly Func<SessionEndNotice, Task> _notice;
     private readonly Thread _thread;
-    private readonly ManualResetEventSlim _created = new(initialState: false);
+    private readonly TaskCompletionSource _created = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _left = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private nint _window;
     private int _disposed;
-    private Exception? _failure;
+    private int _telling;
+    private bool _leaveAsked;
 
-    private SessionEndWindow(Action<SessionEndNotice> notice)
+    private SessionEndWindow(Func<SessionEndNotice, Task> notice)
     {
         _notice = notice;
         _thread = new Thread(Pump)
@@ -103,12 +118,15 @@ internal sealed partial class SessionEndWindow : IDisposable
     /// <summary>The window's handle, for the suite to post messages to.</summary>
     public nint Handle => Volatile.Read(ref _window);
 
-    /// <summary>Creates the window on a thread of its own and waits until it exists.</summary>
-    /// <param name="notice">What to do when Windows says something; runs on the window's thread, and must return quickly.</param>
+    /// <summary>Creates the window on a thread of its own and completes once it exists.</summary>
+    /// <param name="notice">
+    /// What to do when Windows says something: started on the window's thread, and awaited
+    /// there before the window procedure returns, so it must finish quickly.
+    /// </param>
     /// <returns>The window. Disposing it destroys the window and ends its thread.</returns>
     /// <exception cref="Win32Exception">The class or the window could not be created.</exception>
     /// <exception cref="InvalidOperationException">The process already has one.</exception>
-    public static SessionEndWindow Create(Action<SessionEndNotice> notice)
+    public static async Task<SessionEndWindow> CreateAsync(Func<SessionEndNotice, Task> notice)
     {
         ArgumentNullException.ThrowIfNull(notice);
 
@@ -116,25 +134,30 @@ internal sealed partial class SessionEndWindow : IDisposable
 
         if (Interlocked.CompareExchange(ref _current, window, null) is not null)
         {
-            window._created.Dispose();
             throw new InvalidOperationException("This process already has its session-end window, and a second would hear every message twice.");
         }
 
         window._thread.Start();
-        window._created.Wait();
 
-        if (window._failure is { } failure)
+        try
+        {
+            await window._created.Task.ConfigureAwait(false);
+        }
+        catch
         {
             _ = Interlocked.Exchange(ref _current, null);
-            window._created.Dispose();
-            throw failure;
+            throw;
         }
 
         return window;
     }
 
     /// <inheritdoc />
-    public void Dispose()
+    /// <remarks>
+    /// <b>It waits for the thread to leave its loop within <see cref="LeaveBound"/></b>,
+    /// awaited since 2026-10-11 (previously a <c>Join</c> of the thread).
+    /// </remarks>
+    public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) is not 0)
         {
@@ -146,9 +169,17 @@ internal sealed partial class SessionEndWindow : IDisposable
             _ = PostMessageW(Handle, WmLeave, 0, 0);
         }
 
-        _ = _thread.Join(LeaveBound);
+        try
+        {
+            await _left.Task.WaitAsync(LeaveBound).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            // A thread still inside a notice when the bound ran out: the process is
+            // ending, and the thread is a background one.
+        }
+
         _ = Interlocked.CompareExchange(ref _current, null, this);
-        _created.Dispose();
     }
 
     /// <summary>
@@ -201,21 +232,21 @@ internal sealed partial class SessionEndWindow : IDisposable
 
             Volatile.Write(ref _window, window);
         }
-#pragma warning disable CA1031 // The creating thread hands every failure to Create, which throws it on the caller's thread.
+#pragma warning disable CA1031 // The creating thread hands every failure to CreateAsync, which throws it to its caller.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            _failure = failure;
             Marshal.FreeHGlobal(className);
-            _created.Set();
+            _ = _created.TrySetException(failure);
+            _ = _left.TrySetResult();
             return;
         }
 
-        _created.Set();
+        _ = _created.TrySetResult();
 
         try
         {
-            while (GetMessageW(out var message, 0, 0, 0) > 0)
+            while (!_leaveAsked && GetMessageW(out var message, 0, 0, 0) > 0)
             {
                 if (message.Message is WmLeave)
                 {
@@ -229,6 +260,44 @@ internal sealed partial class SessionEndWindow : IDisposable
         {
             _ = DestroyWindow(Volatile.Read(ref _window));
             Marshal.FreeHGlobal(className);
+            _ = _left.TrySetResult();
+        }
+    }
+
+    /// <summary>
+    /// Waits, on the window's thread and dispatching what Windows sends meanwhile, until a
+    /// notice's task posts that it is done.
+    /// </summary>
+    /// <param name="told">The notice's task.</param>
+    private void DispatchUntilTold(Task told)
+    {
+        var window = Volatile.Read(ref _window);
+
+        _ = told.ContinueWith(
+            static (done, state) =>
+            {
+                _ = PostMessageW((nint)state!, WmTold, 0, 0);
+            },
+            window,
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+
+        while (GetMessageW(out var message, 0, 0, 0) > 0)
+        {
+            if (message.Message is WmTold)
+            {
+                return;
+            }
+
+            if (message.Message is WmLeave)
+            {
+                // The loop above leaves once this notice is told.
+                _leaveAsked = true;
+                continue;
+            }
+
+            _ = DispatchMessageW(in message);
         }
     }
 
@@ -259,14 +328,30 @@ internal sealed partial class SessionEndWindow : IDisposable
 
     private static void Tell(SessionEndNotice notice)
     {
+        if (Volatile.Read(ref _current) is not { } window)
+        {
+            return;
+        }
+
+        // A notice while one is being told is the same notice: the first one's record says
+        // the background ended cleanly, and Windows ends the process either way.
+        if (Interlocked.Exchange(ref window._telling, 1) is not 0)
+        {
+            return;
+        }
+
         try
         {
-            Volatile.Read(ref _current)?._notice(notice);
+            window.DispatchUntilTold(window._notice(notice));
         }
 #pragma warning disable CA1031 // An exception may not cross into the window manager; the notice is best effort by nature.
         catch (Exception)
 #pragma warning restore CA1031
         {
+        }
+        finally
+        {
+            Volatile.Write(ref window._telling, 0);
         }
     }
 

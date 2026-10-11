@@ -52,23 +52,18 @@ internal sealed class DirectStdioServerTransport : JsonLinesTransport
     }
 
     /// <inheritdoc />
-    protected override ValueTask WriteFrameAsync(ReadOnlyMemory<byte> utf8Payload, CancellationToken cancellationToken)
+    protected override async ValueTask WriteFrameAsync(ReadOnlyMemory<byte> utf8Payload, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        // Synchronous, and honestly so: an async write queues the same blocking
-        // call to the thread pool and reads as if it did not block. Corrected
-        // 2026-08-18 (previously "the handle behind stdout is not opened for
-        // overlapped I/O"). Measured 2026-08-18 on .NET 10:
-        // Console.OpenStandardOutput returns a WindowsConsoleStream and not a
-        // FileStream, redirected to a file and to a pipe alike, so the
-        // thread-pool fallback comes from Stream's own base implementation
-        // and not from how a handle was opened. Same conclusion, different
-        // mechanism.
-        // The base class holds the send lock across this, so frames cannot
-        // interleave.
-        _channel.WriteFrame(utf8Payload.Span);
-        return ValueTask.CompletedTask;
+        // Awaited since 2026-10-11, the maintainer's decision 54: the channel puts the
+        // frame on the wire from a thread of its own (StdioChannel.OpenStandardStreams).
+        // Corrected that day (previously "Synchronous, and honestly so: an async write
+        // queues the same blocking call to the thread pool and reads as if it did not
+        // block"), which was true of the console stream and is why the write has a
+        // thread of its own. The base class holds the send lock across this, so frames
+        // cannot interleave.
+        await _channel.WriteFrameAsync(utf8Payload, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

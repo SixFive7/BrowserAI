@@ -104,8 +104,8 @@ internal sealed record NamedRelay(RelayGreeting Greeting, DateTimeOffset IdleAt,
 /// <para>
 /// <b>Which conversation each relay serves is read when somebody draws it, and only
 /// then</b> (1.3 c, the maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I accept
-/// all your recommendations"</i>): <see cref="ConnectedWithNames"/>, which the snapshot
-/// the dashboard and the toast draw is made from, and <see cref="Named"/>, which the
+/// all your recommendations"</i>): <see cref="ConnectedWithNamesAsync"/>, which the snapshot
+/// the dashboard and the toast draw is made from, and <see cref="NamedAsync"/>, which the
 /// sessions page reads, each ask the <see cref="ConversationReader"/> for every relay, out
 /// of the lock. <see cref="Connected"/>, which the update core decides by, reads no file.
 /// The log says where a relay's conversation and its name were found each time that
@@ -266,9 +266,9 @@ internal sealed class RelayRoster : IUpdateRelays
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<RelayState> ConnectedWithNames() =>
+    public async Task<IReadOnlyList<RelayState>> ConnectedWithNamesAsync() =>
     [
-        .. Named().Select(static relay => new RelayState(
+        .. (await NamedAsync().ConfigureAwait(false)).Select(static relay => new RelayState(
             relay.Greeting.Id,
             relay.Greeting.ClientName,
             relay.Greeting.ClientVersion,
@@ -293,7 +293,7 @@ internal sealed class RelayRoster : IUpdateRelays
     /// last time.
     /// </remarks>
     /// <returns>The relays, in no particular order.</returns>
-    public IReadOnlyList<NamedRelay> Named()
+    public async Task<IReadOnlyList<NamedRelay>> NamedAsync()
     {
         List<(RelayGreeting Greeting, DateTimeOffset IdleAt, bool CallInFlight, string? ThreadId, ConversationMemo Memo)> entries;
 
@@ -306,7 +306,7 @@ internal sealed class RelayRoster : IUpdateRelays
 
         foreach (var (greeting, idleAt, callInFlight, threadId, memo) in entries)
         {
-            var reading = _reader.Read(greeting.ClientName, greeting.Conversation, greeting.ClientPid, threadId, greeting.Folder, memo);
+            var reading = await _reader.ReadAsync(greeting.ClientName, greeting.Conversation, greeting.ClientPid, threadId, greeting.Folder, memo).ConfigureAwait(false);
 
             // Where it was found, each time that moves; never what it is.
             if (reading.Name is not null && memo.Moved(reading.Source, reading.NameSource))

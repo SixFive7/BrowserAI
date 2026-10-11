@@ -158,7 +158,7 @@ internal static class CodexThreads
     /// <param name="threadId">The thread.</param>
     /// <param name="readAll">How a whole file is read.</param>
     /// <returns>The name, or <see langword="null"/>.</returns>
-    public static string? NameOf(string home, string threadId, Func<string, string?> readAll)
+    public static async Task<string?> NameOfAsync(string home, string threadId, Func<string, Task<string?>> readAll)
     {
         ArgumentNullException.ThrowIfNull(home);
         ArgumentNullException.ThrowIfNull(threadId);
@@ -168,7 +168,7 @@ internal static class CodexThreads
 
         for (var attempt = 0; attempt < 2; attempt++)
         {
-            if (readAll(path) is not { } text)
+            if (await readAll(path).ConfigureAwait(false) is not { } text)
             {
                 return null;
             }

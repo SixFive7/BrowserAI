@@ -22,7 +22,7 @@ internal sealed class DeferredUpdateHolds : IUpdateHoldsReader
     public IUpdateHoldsReader? Target { get; set; }
 
     /// <inheritdoc />
-    public UpdateHoldSnapshot Read() => Target?.Read() ?? UpdateHoldSnapshot.Nothing(TimeProvider.System.GetUtcNow());
+    public Task<UpdateHoldSnapshot> ReadAsync() => Target?.ReadAsync() ?? Task.FromResult(UpdateHoldSnapshot.Nothing(TimeProvider.System.GetUtcNow()));
 
     /// <inheritdoc />
     public UpdateHoldSnapshot ReadCountdown() => Target?.ReadCountdown() ?? UpdateHoldSnapshot.Nothing(TimeProvider.System.GetUtcNow());

@@ -59,7 +59,7 @@ internal static partial class Program
     /// <param name="log">The process log.</param>
     /// <param name="logger">Startup's logger.</param>
     /// <returns>The exit code.</returns>
-    private static int RunTheBackground(string[] args, LocalAppDataPaths paths, ProcessLog log, ILogger logger)
+    private static async Task<int> RunTheBackgroundAsync(string[] args, LocalAppDataPaths paths, ProcessLog log, ILogger logger)
     {
         const int Refused = 1;
 
@@ -96,7 +96,7 @@ internal static partial class Program
             // and over the published background by
             // InstallRootScopeTests.ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog.
             StartupLog.AppRootIsShared(logger, scope.Refusal!);
-            RecordTheRefusal(recordPath, scope.Detail!, clock, backgroundLogger);
+            await RecordTheRefusalAsync(recordPath, scope.Detail!, clock, backgroundLogger).ConfigureAwait(false);
             return Refused;
         }
 
@@ -141,12 +141,14 @@ internal static partial class Program
             {
                 try
                 {
+#pragma warning disable CA2000 // The finally below awaits its disposal, which the rule's dataflow does not follow into an await.
                     server = new BackgroundServer(
                         host,
                         new BackgroundIdentity(pipeName, BuildVersion.Current, paths.RootAppDir),
                         roster,
                         verbs,
                         log.Factory);
+#pragma warning restore CA2000
                 }
                 catch (IOException taken) when (taken.HResult == NamedPipes.HResultFromWin32(NamedPipes.ErrorAccessDenied))
                 {
@@ -158,7 +160,7 @@ internal static partial class Program
                     return 0;
                 }
 
-                return Serve(args, paths, log, logger, backgroundLogger, host, server, roster, verbs, install, recordPath, startedBy, installRoot, clock);
+                return await ServeTheBackgroundAsync(args, paths, log, logger, backgroundLogger, host, server, roster, verbs, install, recordPath, startedBy, installRoot, clock).ConfigureAwait(false);
             }
             finally
             {
@@ -167,14 +169,17 @@ internal static partial class Program
                 // reason: the texts review's #24, 2026-10-10.
                 host.Sessions.ShuttingDownBecause(WhySessionsClose(verbs.State));
 
-                server?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                if (server is not null)
+                {
+                    await server.DisposeAsync().ConfigureAwait(false);
+                }
 
                 // Every session is closed cleanly, each within the minute's cap.
-                host.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                await host.DisposeAsync().ConfigureAwait(false);
 
                 if (server is not null && verbs.State is BackgroundState.Stopping)
                 {
-                    _ = BackgroundRecord.EndedCleanly(recordPath, BackgroundEnd.Stopped, clock.GetUtcNow());
+                    _ = await BackgroundRecord.EndedCleanlyAsync(recordPath, BackgroundEnd.Stopped, clock.GetUtcNow()).ConfigureAwait(false);
                 }
             }
         }
@@ -236,9 +241,10 @@ internal static partial class Program
     /// <param name="refusal">What was refused, in its parts.</param>
     /// <param name="clock">The clock.</param>
     /// <param name="logger">The background's logger.</param>
-    private static void RecordTheRefusal(string recordPath, RootRefusal refusal, TimeProvider clock, ILogger logger)
+    /// <returns>The write, which never faults on a record that cannot be written.</returns>
+    private static async Task RecordTheRefusalAsync(string recordPath, RootRefusal refusal, TimeProvider clock, ILogger logger)
     {
-        if (BackgroundRecord.Read(recordPath) is { } other
+        if (await BackgroundRecord.ReadAsync(recordPath).ConfigureAwait(false) is { } other
             && other.ProcessId != Environment.ProcessId
             && ProcessLiveness.IsAlive(other.ProcessId, other.CreatedFileTime))
         {
@@ -247,7 +253,7 @@ internal static partial class Program
 
         try
         {
-            _ = BackgroundRecord.Refused(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, refusal, clock.GetUtcNow());
+            _ = await BackgroundRecord.RefusedAsync(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, refusal, clock.GetUtcNow()).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -271,7 +277,17 @@ internal static partial class Program
     /// <param name="installRoot">The install root, or <see langword="null"/>.</param>
     /// <param name="clock">The clock.</param>
     /// <returns>The exit code.</returns>
-    private static int Serve(
+    /// <remarks>
+    /// ⚠️ <b>Awaited from end to end since 2026-10-11</b>, the maintainer's decision 54, in
+    /// his words verbatim: <i>"Never block a worker anywhere."</i> <i>Corrected that day
+    /// (previously "This thread is the background's single-threaded apartment: the shell
+    /// calls the tab asks for run here, and it waits for nothing else", a loop of
+    /// <c>WaitHandle.WaitAny</c> over the stop and the page's wake on <c>Main</c>'s thread)</i>:
+    /// the loop awaits the page's wake and is cancelled by the stop, and every shell call
+    /// the tab asks for makes a thread of its own that asks for the apartment
+    /// (<c>DesktopPageHost</c>).
+    /// </remarks>
+    private static async Task<int> ServeTheBackgroundAsync(
         string[] args,
         LocalAppDataPaths paths,
         ProcessLog log,
@@ -287,8 +303,8 @@ internal static partial class Program
         string? installRoot,
         TimeProvider clock)
     {
-        using var stop = new ManualResetEventSlim(initialState: false);
-        verbs.StopRequested = stop.Set;
+        using var stopping = new CancellationTokenSource();
+        verbs.StopRequested = stopping.Cancel;
 
         // R: written once the pipe is ours and before anything can fail, so that
         // an end without the mark the clean ends write reads as the crash it is. The
@@ -297,7 +313,7 @@ internal static partial class Program
 
         try
         {
-            _ = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, startedAt);
+            _ = await BackgroundRecord.StartedAsync(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, startedAt).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -310,13 +326,13 @@ internal static partial class Program
 
         BackgroundLog.Started(backgroundLogger, server.Name, how, recordPath);
 
-        using var window = SessionEndWindow.Create(notice =>
+        var window = await SessionEndWindow.CreateAsync(async notice =>
         {
             // Windows waits on this: mark the record and return. The process ends
             // either way, by Windows at a sign-out and by the Task Scheduler about
             // a second after its End.
             var how = notice is SessionEndNotice.SessionEnding ? BackgroundEnd.SessionEnding : BackgroundEnd.EndCommand;
-            _ = BackgroundRecord.EndedCleanly(recordPath, how, clock.GetUtcNow());
+            _ = await BackgroundRecord.EndedCleanlyAsync(recordPath, how, clock.GetUtcNow()).ConfigureAwait(false);
 
             // In words, since 2026-10-10, round 2 of the texts review, #180 (previously
             // the BackgroundEnd member's name, SessionEnding or EndCommand).
@@ -325,11 +341,13 @@ internal static partial class Program
                 how is BackgroundEnd.SessionEnding
                     ? "the session is ending, for a sign-out or a shutdown"
                     : "the Task Scheduler's End command, or schtasks /end, closed its window");
-        });
+        }).ConfigureAwait(false);
+
+        await using var windowScope = window.ConfigureAwait(false);
 
         // The only stray sweep in the product, once, before this process holds a
         // session (the design, risk 5).
-        StraySweep.StartInBackground(() => CreateSweep(paths, installRoot ?? paths.RootAppDir, log.Factory), logger);
+        StraySweep.StartInBackground(() => CreateSweepAsync(paths, installRoot ?? paths.RootAppDir, log.Factory), logger);
 
         // The toasts read the holds once a second, and the update core raises the
         // toasts: each needs the other, so the toasts are handed the holds through
@@ -344,11 +362,11 @@ internal static partial class Program
             new BackgroundSessions(host),
             UpdateToasts.ForThisProcess(holds, paths, backgroundLogger),
             UpdateCheckStampFile.In(paths.RootAppDir),
-            () =>
+            async () =>
             {
                 verbs.State = BackgroundState.Updating;
-                _ = BackgroundRecord.EndedCleanly(recordPath, BackgroundEnd.Update, clock.GetUtcNow());
-                stop.Set();
+                _ = await BackgroundRecord.EndedCleanlyAsync(recordPath, BackgroundEnd.Update, clock.GetUtcNow()).ConfigureAwait(false);
+                await stopping.CancelAsync().ConfigureAwait(false);
             },
             clock,
             log.Factory.CreateLogger("BrowserAI.Updates"));
@@ -358,9 +376,9 @@ internal static partial class Program
         using var inbox = new CoordinatorInbox();
         var tool = RegisterAiTool.Beside(Environment.ProcessPath);
 
-        using var page = new PageService(
+        var page = new PageService(
             // 43 b, 2026-10-11: when the background started and how, which the page says.
-            PageOpener.FactsFor(paths, RelayConstants.IdleCountdown) with { StartedAt = startedAt, StartedHow = BackgroundStartOf(startedBy) },
+            await PageOpener.FactsForAsync(paths, RelayConstants.IdleCountdown).ConfigureAwait(false) with { StartedAt = startedAt, StartedHow = BackgroundStartOf(startedBy) },
 
             // The occasion the first tab is handed out on: a person's start after an
             // install, or Velopack's restart after an update, says so through the
@@ -376,8 +394,8 @@ internal static partial class Program
             // of the texts review, #177 (previously the background's logger): its records
             // are numbered from 1, as BackgroundLog's are, so under the background's
             // category Background[1] named two lines and more.
-            new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.Read(tool, Environment.CurrentDirectory, paths.RootAppDir), log.Factory.CreateLogger("BrowserAI.Registration")),
-            new DesktopPageHost(inbox, backgroundLogger),
+            new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.ReadAsync(tool, Environment.CurrentDirectory, paths.RootAppDir), log.Factory.CreateLogger("BrowserAI.Registration")),
+            new DesktopPageHost(backgroundLogger),
             inbox.Wake,
             clock,
             PageTabs.ProductLinger,
@@ -389,27 +407,33 @@ internal static partial class Program
             Install = install,
         };
 
+        await using var pageScope = page.ConfigureAwait(false);
+
         install.Changed = page.InstallHealthChanged;
 
         verbs.Page = page;
         roster.TellUpdatesThrough(updates.Changed, updates.RelayWithdrew);
 
         server.Start();
-        updates.Start();
+        await updates.StartAsync().ConfigureAwait(false);
 
-        // This thread is the background's single-threaded apartment: the shell
-        // calls the tab asks for run here, and it waits for nothing else.
-        WaitHandle[] waits = [stop.WaitHandle, inbox.Arrived];
-
-        while (WaitHandle.WaitAny(waits) is not 0)
+        // The background's loop: it awaits the page's wake, and the stop cancels it.
+        try
         {
-            page.RunQueuedWork();
+            while (true)
+            {
+                await inbox.ArrivedAsync(stopping.Token).ConfigureAwait(false);
 
-            // Q336 a: the tab's listener ends a minute after its last tab has gone, so
-            // a reload keeps working, and the next person's start opens a new one. The
-            // page decides whether the minute has run out; this only asks, on every
-            // wake the page's own timers make.
-            _ = page.TryStop(final: false);
+                // Q336 a: the tab's listener ends a minute after its last tab has gone, so
+                // a reload keeps working, and the next person's start opens a new one. The
+                // page decides whether the minute has run out; this only asks, on every
+                // wake the page's own timers make.
+                _ = await page.TryStopAsync(final: false).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (stopping.IsCancellationRequested)
+        {
+            // The stop, an update's hand-over or the end of the session.
         }
 
         if (verbs.State is BackgroundState.Serving)

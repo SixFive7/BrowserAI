@@ -182,14 +182,14 @@ internal sealed class ConversationReader(ClientRecordAccess access)
     /// <param name="folder">The folder the client runs in, or <see langword="null"/>.</param>
     /// <param name="memo">What this reader kept of the relay since its last read.</param>
     /// <returns>The reading; <see cref="ConversationReading.Unread"/> for a client whose records BrowserAI does not read.</returns>
-    public ConversationReading Read(string? clientName, ConversationFacts? facts, int? clientPid, string? threadId, string? folder, ConversationMemo memo)
+    public async Task<ConversationReading> ReadAsync(string? clientName, ConversationFacts? facts, int? clientPid, string? threadId, string? folder, ConversationMemo memo)
     {
         ArgumentNullException.ThrowIfNull(memo);
 
         try
         {
-            return KnownClients.Matches(clientName, KnownClients.Codex) ? Codex(facts, threadId, folder, memo)
-                : KnownClients.Matches(clientName, KnownClients.ClaudeCode) ? ClaudeCode(facts, clientPid, folder, memo)
+            return KnownClients.Matches(clientName, KnownClients.Codex) ? await CodexAsync(facts, threadId, folder, memo).ConfigureAwait(false)
+                : KnownClients.Matches(clientName, KnownClients.ClaudeCode) ? await ClaudeCodeAsync(facts, clientPid, folder, memo).ConfigureAwait(false)
                 : ConversationReading.Unread;
         }
 #pragma warning disable CA1031 // Another product's records: whatever reading them throws is a name not read, never a draw that fails.
@@ -202,7 +202,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
         }
     }
 
-    private ConversationReading Codex(ConversationFacts? facts, string? threadId, string? folder, ConversationMemo memo)
+    private async Task<ConversationReading> CodexAsync(ConversationFacts? facts, string? threadId, string? folder, ConversationMemo memo)
     {
         if (SessionIds.Valid(threadId) is not { } thread)
         {
@@ -211,7 +211,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
 
         if (facts?.CodexHome is { Length: > 0 } home)
         {
-            if (CodexThreads.NameOf(home, thread, access.ReadAll) is { } name && ConversationName.Titled(name) is { } titled)
+            if (await CodexThreads.NameOfAsync(home, thread, access.ReadAll).ConfigureAwait(false) is { } name && ConversationName.Titled(name) is { } titled)
             {
                 return new(thread, titled, ConversationSource.CodexCall, NameSource.CodexIndex);
             }
@@ -223,7 +223,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
                 return new(thread, stated, ConversationSource.CodexCall, NameSource.CodexState);
             }
 
-            if (FirstMessageOf(home, thread, memo) is { } message && AsFirstMessage(message) is { } rolled)
+            if (await FirstMessageOfAsync(home, thread, memo).ConfigureAwait(false) is { } message && AsFirstMessage(message) is { } rolled)
             {
                 return new(thread, rolled, ConversationSource.CodexCall, NameSource.CodexRollout);
             }
@@ -233,7 +233,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
     }
 
     /// <summary>A thread's first message from its rollout, which is looked for once and read at every draw.</summary>
-    private string? FirstMessageOf(string home, string thread, ConversationMemo memo)
+    private async Task<string?> FirstMessageOfAsync(string home, string thread, ConversationMemo memo)
     {
         var rollout = memo.RecordOf(thread) ?? CodexThreads.RolloutOf(home, thread, access.FilesUnder);
 
@@ -246,7 +246,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
 
         for (var attempt = 0; attempt < 2; attempt++)
         {
-            if (access.ReadHead(rollout, CodexThreads.RolloutHead) is not { } head)
+            if (await access.ReadHead(rollout, CodexThreads.RolloutHead).ConfigureAwait(false) is not { } head)
             {
                 return null;
             }
@@ -266,7 +266,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
     private static ConversationName? AsFirstMessage(string text) =>
         ConversationName.Titled(text) is { } line ? line with { Text = ClaudeCodeTitle.CutPrompt(line.Text) } : null;
 
-    private ConversationReading ClaudeCode(ConversationFacts? facts, int? clientPid, string? folder, ConversationMemo memo)
+    private async Task<ConversationReading> ClaudeCodeAsync(ConversationFacts? facts, int? clientPid, string? folder, ConversationMemo memo)
     {
         if (facts?.ClaudeConfig is not { Length: > 0 } config)
         {
@@ -278,7 +278,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
         ConversationSource source;
 
         if (clientPid is { } pid && facts.ClientStarted is { } started
-            && ClaudeCodeRecords.FromProcessFile(config, pid, started, access.ReadAll) is { } file)
+            && await ClaudeCodeRecords.FromProcessFileAsync(config, pid, started, access.ReadAll).ConfigureAwait(false) is { } file)
         {
             (sessionId, source) = (file.SessionId, ConversationSource.ProcessFile);
             projectFolder = file.Folder ?? folder;
@@ -304,7 +304,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
         }
 
         return record is not null
-            && access.ReadEnds(record, ClaudeCodeTitle.Window) is { } ends
+            && await access.ReadEnds(record, ClaudeCodeTitle.Window).ConfigureAwait(false) is { } ends
             && ClaudeCodeTitle.Of(ends.Head, ends.Tail) is { } title
             && ConversationName.Titled(title.Title) is { } titled
                 ? new(sessionId, titled, source, NameSourceOf(title.Source))

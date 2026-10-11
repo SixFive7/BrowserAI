@@ -39,7 +39,7 @@ internal interface IBackgroundFinder
     /// or <see langword="null"/> when this relay never reached one.
     /// </param>
     /// <returns>The reason, read from the crash record, the processes and the task.</returns>
-    BackgroundAbsence Explain(int? lastBackgroundPid);
+    Task<BackgroundAbsence> ExplainAsync(int? lastBackgroundPid);
 }
 
 /// <summary>Where the user's scheduled task for BrowserAI stands, read without changing it.</summary>
@@ -73,7 +73,7 @@ internal enum TaskState
 }
 
 /// <summary>
-/// Why a relay has no background to talk to, as <see cref="IBackgroundFinder.Explain"/>
+/// Why a relay has no background to talk to, as <see cref="IBackgroundFinder.ExplainAsync"/>
 /// reads it.
 /// </summary>
 /// <remarks>

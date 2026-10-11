@@ -48,7 +48,7 @@ internal sealed record PersonStartSettings
     public required string? TaskName { get; init; }
 
     /// <summary>The task's definition, for a task that is missing.</summary>
-    public required Func<string?> Definition { get; init; }
+    public required Func<Task<string?>> Definition { get; init; }
 
     /// <summary>The Task Scheduler: the suite's seam.</summary>
     public required ILogonTasks Tasks { get; init; }
@@ -123,13 +123,13 @@ internal static partial class PersonStart
     /// <param name="page">The page asked for, or <see langword="null"/> for the status page.</param>
     /// <param name="logger">Where it reports.</param>
     /// <returns>The address, or <see langword="null"/> with the outcome when none was handed out.</returns>
-    public static (PersonStartOutcome Outcome, string? Address) Show(PersonStartSettings settings, string? page, ILogger logger)
+    public static async Task<(PersonStartOutcome Outcome, string? Address)> ShowAsync(PersonStartSettings settings, string? page, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(logger);
 
         var parameters = page is { Length: > 0 } named ? $"{{\"page\":\"{JsonEncodedText.Encode(named)}\"}}" : null;
-        var answer = BackgroundClient.Ask(settings.PipeName, BackgroundPipe.Show, parameters, settings.HandOutBound);
+        var answer = await BackgroundClient.AskAsync(settings.PipeName, BackgroundPipe.Show, parameters, settings.HandOutBound).ConfigureAwait(false);
 
         switch (answer.Outcome)
         {
@@ -141,7 +141,7 @@ internal static partial class PersonStart
                 return (PersonStartOutcome.NotShown, null);
 
             case BackgroundAnswerOutcome.NoAnswer:
-                if (!EndTheHungBackground(settings, answer.ServerProcessId, answer.Sentence, logger))
+                if (!await EndTheHungBackgroundAsync(settings, answer.ServerProcessId, answer.Sentence, logger).ConfigureAwait(false))
                 {
                     return (PersonStartOutcome.NotShown, null);
                 }
@@ -149,14 +149,14 @@ internal static partial class PersonStart
                 break;
 
             default:
-                ClearARecordedCrash(settings, logger);
+                await ClearARecordedCrashAsync(settings, logger).ConfigureAwait(false);
                 break;
         }
 
-        return StartThroughTheTask(settings, parameters, logger);
+        return await StartThroughTheTaskAsync(settings, parameters, logger).ConfigureAwait(false);
     }
 
-    private static (PersonStartOutcome Outcome, string? Address) StartThroughTheTask(PersonStartSettings settings, string? parameters, ILogger logger)
+    private static async Task<(PersonStartOutcome Outcome, string? Address)> StartThroughTheTaskAsync(PersonStartSettings settings, string? parameters, ILogger logger)
     {
         if (settings.InstallRoot is not { } installRoot)
         {
@@ -174,13 +174,13 @@ internal static partial class PersonStart
             return (PersonStartOutcome.NotShown, null);
         }
 
-        var run = settings.Tasks.Run(taskName, settings.StartedBy);
+        var run = await settings.Tasks.RunAsync(taskName, settings.StartedBy).ConfigureAwait(false);
 
         if (run.Change is TaskChange.NotRegistered)
         {
             // RESOLUTIONS 9: a person's start registers a missing task again, from the
             // definition the install hook wrote, and only then runs it.
-            var definition = settings.Definition();
+            var definition = await settings.Definition().ConfigureAwait(false);
 
             if (definition is null)
             {
@@ -188,7 +188,7 @@ internal static partial class PersonStart
                 return (PersonStartOutcome.NotShown, null);
             }
 
-            var registered = settings.Tasks.Register(taskName, definition);
+            var registered = await settings.Tasks.RegisterAsync(taskName, definition).ConfigureAwait(false);
 
             // Said once the outcome is known. Corrected 2026-10-10 (previously 6104 was
             // written first, whatever the scheduler answered, so a refusal read "is
@@ -200,7 +200,7 @@ internal static partial class PersonStart
             }
 
             PersonStartLog.Registered(logger, taskName);
-            run = settings.Tasks.Run(taskName, settings.StartedBy);
+            run = await settings.Tasks.RunAsync(taskName, settings.StartedBy).ConfigureAwait(false);
         }
 
         if (run.Change is not TaskChange.Started)
@@ -218,7 +218,7 @@ internal static partial class PersonStart
 
         while (Environment.TickCount64 < deadline)
         {
-            var answer = BackgroundClient.Ask(settings.PipeName, BackgroundPipe.Show, parameters, settings.HandOutBound);
+            var answer = await BackgroundClient.AskAsync(settings.PipeName, BackgroundPipe.Show, parameters, settings.HandOutBound).ConfigureAwait(false);
 
             switch (answer.Outcome)
             {
@@ -234,7 +234,7 @@ internal static partial class PersonStart
                     return (PersonStartOutcome.NotShown, null);
             }
 
-            Thread.Sleep(LookInterval);
+            await Task.Delay(LookInterval).ConfigureAwait(false);
         }
 
         // In seconds, as a person reads a bound. Corrected 2026-10-10 (previously the
@@ -243,9 +243,9 @@ internal static partial class PersonStart
         return (PersonStartOutcome.NotShown, null);
     }
 
-    private static void ClearARecordedCrash(PersonStartSettings settings, ILogger logger)
+    private static async Task ClearARecordedCrashAsync(PersonStartSettings settings, ILogger logger)
     {
-        if (BackgroundRecord.Read(settings.RecordPath) is not { Ended: null } record
+        if (await BackgroundRecord.ReadAsync(settings.RecordPath).ConfigureAwait(false) is not { Ended: null } record
             || ProcessLiveness.IsAlive(record.ProcessId, record.CreatedFileTime))
         {
             return;
@@ -274,12 +274,12 @@ internal static partial class PersonStart
     /// <returns>The reason, ending in no full stop.</returns>
     private static string Clause(string why) => why.TrimEnd().TrimEnd('.');
 
-    private static bool EndTheHungBackground(PersonStartSettings settings, int? processId, string? why, ILogger logger)
+    private static async Task<bool> EndTheHungBackgroundAsync(PersonStartSettings settings, int? processId, string? why, ILogger logger)
     {
         PersonStartLog.Hung(logger, processId ?? 0, Clause(why ?? "no reason given"));
 
         if (processId is not { } pid
-            || BackgroundRecord.Read(settings.RecordPath) is not { } record
+            || await BackgroundRecord.ReadAsync(settings.RecordPath).ConfigureAwait(false) is not { } record
             || record.ProcessId != pid)
         {
             PersonStartLog.HungNotEnded(logger, processId ?? 0, "its pid is not the one the background's record names, so it is not known to be BrowserAI's");

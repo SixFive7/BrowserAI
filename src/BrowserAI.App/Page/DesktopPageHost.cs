@@ -1,33 +1,34 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Collections.Concurrent;
 using BrowserAI.App.Interop;
-using BrowserAI.Coordination;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.App.Page;
 
 /// <summary>
-/// The page's desktop in the product: Explorer, Windows' folder picker, and the
-/// coordinator's own thread.
+/// The page's desktop in the product: Explorer and Windows' folder picker, each on a
+/// thread of its own.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Explorer is opened on the coordinator's own thread</b>, which is the
-/// process's main thread and a single-threaded apartment. The shell's calls want
-/// one, and a request thread of Kestrel's is in the multithreaded apartment, so an
-/// action queues its work here and wakes the coordinator through its inbox; the
-/// loop runs it on its next pass.
+/// <b>Explorer is opened on a thread of its own, in a single-threaded apartment</b>,
+/// since 2026-10-11, the maintainer's decision 54, in his words verbatim: <i>"Never block
+/// a worker anywhere."</i> The shell's calls want that apartment, and a request thread of
+/// Kestrel's is a pool thread in the multithreaded one. <i>Corrected 2026-10-11
+/// (previously "Explorer is opened on the coordinator's own thread, which is the
+/// process's main thread and a single-threaded apartment", through a queue its loop ran
+/// on each wake)</i>: <c>Main</c> is asynchronous since that day, no thread of the
+/// background waits in a loop of its own, and an asynchronous <c>Main</c> is not given
+/// the apartment <c>[STAThread]</c> asks for.
 /// </para>
 /// <para>
 /// <b>The folder picker gets a thread of its own, Q311</b>, a single-threaded
 /// apartment as <see cref="ShellInterop.PickFolder"/> requires, because it is modal
-/// and waits for a person: on the coordinator's thread it would hold the loop, and
-/// with it an update the loop would otherwise apply, for as long as the picker is
-/// open. It has no owner window, so by Windows' focus rules it may open behind the
-/// browser; the page says so while it is open, and looking at that on the real
-/// desktop is in TODO.md.
+/// and waits for a person: on a shared thread it would hold everything else that thread
+/// does for as long as the picker is open. It has no owner window, so by Windows' focus
+/// rules it may open behind the browser; the page says so while it is open, and looking
+/// at that on the real desktop is in TODO.md.
 /// </para>
 /// <para>
 /// <b>Nothing here may run in the suite</b>: every call opens something on the
@@ -35,14 +36,16 @@ namespace BrowserAI.App.Page;
 /// list refuses the shell calls underneath it.
 /// </para>
 /// </remarks>
-/// <param name="inbox">The coordinator's inbox, whose wake runs the queue.</param>
 /// <param name="logger">Where a failed call is recorded.</param>
-internal sealed partial class DesktopPageHost(CoordinatorInbox inbox, ILogger logger) : IPageHost
+internal sealed partial class DesktopPageHost(ILogger logger) : IPageHost
 {
-    private readonly ConcurrentQueue<Action> _work = new();
-
     /// <inheritdoc />
-    public void OpenFolder(string directory) => Post(() => _ = ShellInterop.OpenInExplorer(directory));
+    public void OpenFolder(string directory) =>
+        _ = ShellInterop.OnAShellThreadAsync(() => ShellInterop.OpenInExplorer(directory), "the page's Explorer").ContinueWith(
+            opened => DesktopLog.Failed(logger, opened.Exception!),
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
 
     /// <inheritdoc />
     public string? OpenTrace(string trace) =>
@@ -58,7 +61,7 @@ internal sealed partial class DesktopPageHost(CoordinatorInbox inbox, ILogger lo
             {
                 picked.SetResult(ShellInterop.PickFolder(0, prompt));
             }
-#pragma warning disable CA1031 // A picker that threw is a sentence on the page, and the coordinator keeps coordinating.
+#pragma warning disable CA1031 // A picker that threw is a sentence on the page, and the background keeps serving.
             catch (Exception failure)
 #pragma warning restore CA1031
             {
@@ -75,30 +78,6 @@ internal sealed partial class DesktopPageHost(CoordinatorInbox inbox, ILogger lo
         thread.Start();
 
         return picked.Task;
-    }
-
-    /// <inheritdoc />
-    public void RunQueuedWork()
-    {
-        while (_work.TryDequeue(out var work))
-        {
-            try
-            {
-                work();
-            }
-#pragma warning disable CA1031 // A shell call that threw is a line in the log; the coordinator keeps coordinating.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                DesktopLog.Failed(logger, failure);
-            }
-        }
-    }
-
-    private void Post(Action work)
-    {
-        _work.Enqueue(work);
-        inbox.Wake();
     }
 
     /// <summary>The desktop's own records.</summary>

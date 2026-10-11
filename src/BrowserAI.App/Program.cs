@@ -56,7 +56,9 @@ namespace BrowserAI.App;
 /// app's <c>Main</c>, on a single-threaded apartment). There is one executable,
 /// and its <c>Main</c> in <c>src/BrowserAI/Program.cs</c> serves the hooks,
 /// reads the installer's two variables, clears them, and hands every start that
-/// is not a server's to <see cref="Run"/> on the same single-threaded thread.
+/// is not a server's to <see cref="RunAsync"/>, which it awaits. <i>Corrected 2026-10-11
+/// (previously "to Run on the same single-threaded thread"): <c>Main</c> is asynchronous
+/// since that day, by the maintainer's decision 54.</i>
 /// </para>
 /// </remarks>
 internal static class Program
@@ -129,22 +131,32 @@ internal static class Program
     /// server's through the task, or a report.
     /// </summary>
     /// <remarks>
-    /// <b>Called on the one executable's main thread, which is a single-threaded
-    /// apartment, and that is load-bearing.</b> The shell's folder picker falls back
-    /// to the pre-Vista dialog on a thread that is not in one -- silently, with no
-    /// error -- so it runs on a single-threaded thread of its own
-    /// (<see cref="Page.DesktopPageHost"/>), and Explorer, which the page opens on
-    /// the coordinator's thread, is this one. <i>Corrected 2026-10-08 (previously
-    /// this was <c>Main</c>, carrying the attribute itself, and read the installer's
-    /// variables and served the hooks before anything else): the one executable's
-    /// <c>Main</c> does both, first, and passes what it read.</i>
+    /// <para>
+    /// <b>Awaited from the one executable's asynchronous <c>Main</c>, since 2026-10-11</b>,
+    /// the maintainer's decision 54, in his words verbatim: <i>"Never block a worker
+    /// anywhere."</i> Every call that wants a single-threaded apartment makes a thread that
+    /// asks for one: the shell's folder picker falls back to the pre-Vista dialog on a thread
+    /// that is not in one -- silently, with no error -- so it runs on a single-threaded
+    /// thread of its own (<see cref="Page.DesktopPageHost"/>), and so do Explorer, the tab's
+    /// address and the person's box (<see cref="Interop.ShellInterop.OnAShellThreadAsync"/>).
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-11 (previously "Called on the one executable's main thread,
+    /// which is a single-threaded apartment, and that is load-bearing ... and Explorer,
+    /// which the page opens on the coordinator's thread, is this one")</i>: an asynchronous
+    /// <c>Main</c> is not given the apartment <c>[STAThread]</c> asks for, measured that day,
+    /// and nothing here waits on a thread of its own. <i>Corrected 2026-10-08 before that
+    /// (previously this was <c>Main</c>, carrying the attribute itself, and read the
+    /// installer's variables and served the hooks before anything else): the one
+    /// executable's <c>Main</c> does both, first, and passes what it read.</i>
+    /// </para>
     /// </remarks>
     /// <param name="args">The command line.</param>
     /// <param name="firstRun">Whether the installer started this process, read before Velopack's <c>Run()</c> cleared it.</param>
     /// <param name="restarted">Whether Velopack's restart after an update started it, read the same way: such a start raises a toast and opens no tab.</param>
     /// <param name="buffered">What Velopack said before the log existed.</param>
     /// <returns>Zero when what was asked for happened.</returns>
-    public static int Run(
+    public static async Task<int> RunAsync(
         string[] args,
         bool firstRun,
         bool restarted,
@@ -162,7 +174,7 @@ internal static class Program
         // keeps its data in %LOCALAPPDATA%\BrowserAI.
         var overridden = StandardLocation.DataRootFor(
             InstallLocation.AppId,
-            DataRootFrom(args) ?? (InstallLocation.RootAppDir is { } installed ? SignInTask.DataRootIn(SignInTask.SavedDefinition(installed)) : null));
+            DataRootFrom(args) ?? (InstallLocation.RootAppDir is { } installed ? SignInTask.DataRootIn(await SignInTask.SavedDefinitionAsync(installed).ConfigureAwait(false)) : null));
         var paths = new LocalAppDataPaths(overridden);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
@@ -190,7 +202,7 @@ internal static class Program
 
             if (TellsThePersonItWasNotSetUp(args, restarted))
             {
-                UserPrompt.Tell(StandardLocation.NoticeTitle, notSetUp.Sentence);
+                await UserPrompt.TellAsync(StandardLocation.NoticeTitle, notSetUp.Sentence).ConfigureAwait(false);
             }
 
             return 1;
@@ -203,13 +215,13 @@ internal static class Program
         if (ToastActivation.IsActivation(args))
         {
             string[]? opening = null;
-            var click = ToastInterop.CurrentAppUserModelId() is { } id ? ToastActivation.Receive(id, logger) : null;
+            var click = ToastInterop.CurrentAppUserModelId() is { } id ? await ToastActivation.ReceiveAsync(id, logger).ConfigureAwait(false) : null;
 
-            _ = ToastActivation.Act(click, UpdateToastMemoryFile.In(paths.RootAppDir), page =>
+            _ = await ToastActivation.ActAsync(click, UpdateToastMemoryFile.In(paths.RootAppDir), page =>
             {
                 opening = StartModes.ArgumentsFor(page);
-                return 0;
-            });
+                return Task.FromResult(0);
+            }).ConfigureAwait(false);
 
             if (opening is null)
             {
@@ -228,7 +240,7 @@ internal static class Program
         // here, and the page reads it each time a tab loads its status page.
         if (ReportPathFrom(args) is { Length: > 0 } report)
         {
-            var written = StatusReport.Write(AppState.Read(tool, Environment.CurrentDirectory, paths.RootAppDir), report);
+            var written = await StatusReport.WriteAsync(await AppState.ReadAsync(tool, Environment.CurrentDirectory, paths.RootAppDir).ConfigureAwait(false), report).ConfigureAwait(false);
             AppLog.ReportWritten(logger, written);
             return 0;
         }
@@ -245,15 +257,15 @@ internal static class Program
         // such a restart went on below as a person's start, which opens one.
         if (AfterUpdate.TargetOf(args, restarted, BuildVersion.Current) is { } target)
         {
-            AfterUpdate.Report(
+            _ = await AfterUpdate.ReportAsync(
                 target,
                 BuildVersion.Current,
                 InstallLocation.AppId is { Length: > 0 } packId
                     ? AfterUpdate.VelopackLogPath(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), packId)
                     : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "velopack"),
                 UpdateToasts.ForThisProcess(null, paths, logger),
-                () => AskTheTaskForTheBackground(PersonStart.StartedAfterAnUpdate, logger),
-                logger);
+                () => AskTheTaskForTheBackgroundAsync(PersonStart.StartedAfterAnUpdate, logger),
+                logger).ConfigureAwait(false);
 
             return 0;
         }
@@ -271,7 +283,7 @@ internal static class Program
         var installRoot = InstallLocation.RootAppDir;
         var pipe = PipeFrom(args) ?? BackgroundPipe.NameFor(installRoot, paths.RootAppDir);
 
-        var (outcome, address) = PersonStart.Show(
+        var (outcome, address) = await PersonStart.ShowAsync(
             new PersonStartSettings
             {
                 PipeName = pipe,
@@ -280,19 +292,19 @@ internal static class Program
                 DataRoot = paths.RootAppDir,
                 Executable = Environment.ProcessPath ?? RegistrationTarget.AppFileName,
                 TaskName = TaskNameForThisInstall(),
-                Definition = () => installRoot is null ? null : SignInTask.SavedDefinition(installRoot),
+                Definition = () => installRoot is null ? Task.FromResult<string?>(null) : SignInTask.SavedDefinitionAsync(installRoot),
                 Tasks = ScheduledTasks.Instance,
                 StartedBy = firstRun ? PersonStart.StartedByTheInstaller : PersonStart.StartedByPerson,
             },
             page,
-            logger);
+            logger).ConfigureAwait(false);
 
         if (outcome is not PersonStartOutcome.Shown)
         {
             return 1;
         }
 
-        _ = PageOpener.Deliver(address, writeAddress, ShellInterop.OpenUrl, logger);
+        _ = await PageOpener.DeliverAsync(address, writeAddress, ShellInterop.OpenUrlAsync, logger).ConfigureAwait(false);
         return 0;
     }
 
@@ -377,14 +389,15 @@ internal static class Program
     /// <summary>Asks the Task Scheduler to run this install's task, for a start that is not a person's.</summary>
     /// <param name="startedBy">What <c>$(Arg0)</c> carries.</param>
     /// <param name="logger">Where the outcome is recorded.</param>
-    private static void AskTheTaskForTheBackground(string startedBy, ILogger logger)
+    /// <returns>The ask.</returns>
+    private static async Task AskTheTaskForTheBackgroundAsync(string startedBy, ILogger logger)
     {
         if (TaskNameForThisInstall() is not { } name)
         {
             return;
         }
 
-        var run = ScheduledTasks.Instance.Run(name, startedBy);
+        var run = await ScheduledTasks.Instance.RunAsync(name, startedBy).ConfigureAwait(false);
         AppLog.TaskAsked(logger, run.Detail);
     }
 

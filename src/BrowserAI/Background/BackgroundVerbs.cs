@@ -34,7 +34,7 @@ internal sealed partial class BackgroundVerbs(ILogger logger) : IBackgroundVerbs
     }
 
     /// <inheritdoc />
-    public (string? Address, string? Refusal) Show(string? page)
+    public async Task<(string? Address, string? Refusal)> ShowAsync(string? page)
     {
         if (State is not BackgroundState.Serving)
         {
@@ -53,7 +53,7 @@ internal sealed partial class BackgroundVerbs(ILogger logger) : IBackgroundVerbs
             return (null, "BrowserAI's background is still starting, so it has no page to open yet. Start it again in a few seconds.");
         }
 
-        var address = served.HandOut(PageNames.Parse(page));
+        var address = await served.HandOutAsync(PageNames.Parse(page)).ConfigureAwait(false);
 
         return address is null
             ? (null, "BrowserAI's page could not start its listener; the log says why.")

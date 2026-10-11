@@ -33,7 +33,7 @@ namespace BrowserAI.Background;
 /// <para>
 /// <b>Each relay carries its conversation's name and its VS Code window</b>, added
 /// 2026-10-10 by the maintainer's 1.2 a and 1.5 a, read from the client's own records
-/// each time the page is read (<see cref="RelayRoster.Named"/>).
+/// each time the page is read (<see cref="RelayRoster.NamedAsync"/>).
 /// </para>
 /// </remarks>
 /// <param name="host">The sessions.</param>
@@ -48,10 +48,10 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
     public const string RelayMarkerPrefix = "relay:";
 
     /// <inheritdoc />
-    public Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken) =>
+    public async Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken) =>
         // Named, so the page shows each conversation as the person sees it, read from the
         // client's records now (1.2 a, 1.3 c, 2026-10-10).
-        Task.FromResult(Compose([.. roster.Named().Select(static relay => (relay.Greeting, relay.CallInFlight, (ConversationName?)relay.Reading.Name))]));
+        Compose([.. (await roster.NamedAsync().ConfigureAwait(false)).Select(static relay => (relay.Greeting, relay.CallInFlight, (ConversationName?)relay.Reading.Name))]);
 
     /// <inheritdoc />
     /// <remarks>

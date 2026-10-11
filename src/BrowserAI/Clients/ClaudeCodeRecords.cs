@@ -60,7 +60,7 @@ internal static class ClaudeCodeRecords
     /// <param name="clientStarted">The client's creation time, as a Windows FILETIME.</param>
     /// <param name="readAll">How a whole file is read.</param>
     /// <returns>The session id and the folder Claude Code runs in, or <see langword="null"/>.</returns>
-    public static (string SessionId, string? Folder)? FromProcessFile(string config, int clientPid, long clientStarted, Func<string, string?> readAll)
+    public static async Task<(string SessionId, string? Folder)?> FromProcessFileAsync(string config, int clientPid, long clientStarted, Func<string, Task<string?>> readAll)
     {
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(readAll);
@@ -69,7 +69,7 @@ internal static class ClaudeCodeRecords
 
         for (var attempt = 0; attempt < 2; attempt++)
         {
-            if (readAll(path) is not { } text)
+            if (await readAll(path).ConfigureAwait(false) is not { } text)
             {
                 return null;
             }

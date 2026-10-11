@@ -118,29 +118,30 @@ internal sealed record AppState
     /// from <c>BROWSERAI_ROOT</c>), step 5 of the one-binary build.</i>
     /// </param>
     /// <returns>What is true right now.</returns>
-    public static AppState Read(IRegisterAi tool, string workingDirectory, string dataRoot)
+    public static async Task<AppState> ReadAsync(IRegisterAi tool, string workingDirectory, string dataRoot)
     {
         ArgumentNullException.ThrowIfNull(tool);
         ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
 
         var installRoot = InstallLocation.RootAppDir;
-        var resolved = RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out var refusal);
-        var readings = RegistrationReader.Read(
+        var resolution = await RegistrationTarget.ResolveAsync(Environment.ProcessPath).ConfigureAwait(false);
+        var target = resolution.Target;
+        var readings = await RegistrationReader.ReadAsync(
             tool,
             RegistrationClient.All,
             installRoot ?? target?.InstallRoot,
-            resolved ? target!.Command : null,
-            workingDirectory);
+            target?.Command,
+            workingDirectory).ConfigureAwait(false);
 
         return new AppState
         {
             Version = BuildVersion.Current,
             InstallRoot = installRoot,
             DataRoot = dataRoot,
-            ServerCommand = resolved ? target!.Command : null,
-            ServerRefusal = resolved ? null : refusal,
-            Clients = [.. readings.Select(reading => ClientState.From(reading, resolved))],
+            ServerCommand = target?.Command,
+            ServerRefusal = resolution.Resolved ? null : resolution.Refusal,
+            Clients = [.. readings.Select(reading => ClientState.From(reading, resolution.Resolved))],
         };
     }
 
@@ -159,6 +160,6 @@ internal sealed record AppState
     /// RegisterAI once, and once more per client that has a project file at or above
     /// <paramref name="workingDirectory"/>, so it belongs off a UI thread.
     /// </remarks>
-    public static AppState Read(string workingDirectory, string dataRoot) =>
-        Read(RegisterAiTool.Beside(Environment.ProcessPath), workingDirectory, dataRoot);
+    public static Task<AppState> ReadAsync(string workingDirectory, string dataRoot) =>
+        ReadAsync(RegisterAiTool.Beside(Environment.ProcessPath), workingDirectory, dataRoot);
 }

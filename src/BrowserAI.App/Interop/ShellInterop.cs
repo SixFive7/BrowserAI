@@ -77,9 +77,12 @@ internal readonly record struct FolderPick(FolderPickOutcome Outcome, string? Pa
 /// <para>
 /// ⚠️ <b><c>BIF_NEWDIALOGSTYLE</c> requires the thread to be in a
 /// single-threaded apartment</b>, and a thread that is not gets the old dialog
-/// with no error. That is why the entry point is <c>[STAThread]</c> -- a fact
+/// with no error. That is why every shell call runs on a thread that asks for one
+/// (<see cref="OnAShellThreadAsync"/>, and the page's own picker thread) -- a fact
 /// that is invisible at the call site and is therefore written down at both
-/// ends.
+/// ends. <i>Corrected 2026-10-11 (previously "That is why the entry point is
+/// <c>[STAThread]</c>"): <c>Main</c> is asynchronous since that day, and an
+/// asynchronous <c>Main</c> is not given the apartment the attribute asks for.</i>
 /// </para>
 /// </remarks>
 internal static partial class ShellInterop
@@ -231,11 +234,65 @@ internal static partial class ShellInterop
     /// </summary>
     /// <param name="url">The address.</param>
     /// <returns>Whether the shell accepted the request.</returns>
-    public static bool OpenUrl(string url)
+    /// <remarks>
+    /// <b>On a thread of its own, in a single-threaded apartment, since 2026-10-11</b>, the
+    /// maintainer's decision 54, in his words verbatim: <i>"Never block a worker
+    /// anywhere."</i> <c>ShellExecuteW</c> returns when the shell has taken the request,
+    /// which may take as long as it takes the browser to answer, and the shell's calls
+    /// want the apartment <c>Main</c>'s thread had until that day
+    /// (<see cref="OnAShellThreadAsync"/>). <i>Previously <c>OpenUrl</c>, called on the
+    /// caller's thread.</i>
+    /// </remarks>
+    public static Task<bool> OpenUrlAsync(string url)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
 
-        return ShellExecuteW(0, "open", url, null, null, ShowNormal) > 32;
+        return OnAShellThreadAsync(() => ShellExecuteW(0, "open", url, null, null, ShowNormal) > 32, "BrowserAI shell open");
+    }
+
+    /// <summary>
+    /// Runs one shell call on a thread of its own, in a single-threaded apartment, and
+    /// completes with its answer.
+    /// </summary>
+    /// <remarks>
+    /// <b>Why a thread and its apartment</b>: the shell's calls want a single-threaded
+    /// apartment, and since 2026-10-11 no thread of this program is one on its own:
+    /// <c>Main</c> is asynchronous, and <c>[STAThread]</c> on an asynchronous <c>Main</c> is
+    /// not honoured (measured that day, .NET SDK 10.0). The call may wait for the shell,
+    /// so it never runs on a thread-pool thread.
+    /// </remarks>
+    /// <typeparam name="T">What the call answers.</typeparam>
+    /// <param name="call">The call.</param>
+    /// <param name="name">The thread's name.</param>
+    /// <returns>What the call answered.</returns>
+    public static Task<T> OnAShellThreadAsync<T>(Func<T> call, string name)
+    {
+        ArgumentNullException.ThrowIfNull(call);
+
+        var answered = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                _ = answered.TrySetResult(call());
+            }
+#pragma warning disable CA1031 // The thread's boundary: the failure goes to the caller, who awaits it.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                _ = answered.TrySetException(failure);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = name,
+        };
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        return answered.Task;
     }
 
     /// <summary>SW_SHOWNORMAL.</summary>

@@ -54,11 +54,14 @@ internal interface IPageRegistration
 /// <remarks>
 /// <para>
 /// <b>Every call is the one the configuration window made, moved off a click
-/// handler.</b> <see cref="McpRegistrar.Apply(RegistrationClient, RegistrationIntent, string?, IRegisterAi, ILogger, bool, IReadOnlyList{string}?)"/>
-/// and <see cref="McpRegistrar.ApplyToProject(RegistrationClient, bool, string, string?, IRegisterAi, ILogger, string?)"/>
-/// start RegisterAI and wait for it within <see cref="McpRegistrar.ToolBudget"/>,
-/// so each runs on the thread pool and never on a request thread of Kestrel's
-/// that the page is waiting on.
+/// handler.</b> <see cref="McpRegistrar.ApplyAsync(RegistrationClient, RegistrationIntent, string?, IRegisterAi, ILogger, bool, IReadOnlyList{string}?)"/>
+/// and <see cref="McpRegistrar.ApplyToProjectAsync(RegistrationClient, bool, string, string?, IRegisterAi, ILogger, string?)"/>
+/// start RegisterAI and wait for it within <see cref="McpRegistrar.ToolBudget"/>, and
+/// each is awaited, so no request thread of Kestrel's that the page is waiting on
+/// waits for RegisterAI. <i>Corrected 2026-10-11 (previously "so each runs on the thread
+/// pool and never on a request thread"), the maintainer's decision 54, in his words
+/// verbatim: "Never block a worker anywhere."</i> The calls held a pool thread for as
+/// long as RegisterAI ran, and they hold none since.
 /// </para>
 /// <para>
 /// <b>A register rewrites an entry of ours that is already there</b>, which is
@@ -69,33 +72,49 @@ internal interface IPageRegistration
 /// <b>The image path and the read are handed in</b>, the seam the window's session
 /// had since Q289 b, so the suite drives the real registrar against an in-process
 /// RegisterAI, a scratch install and a state it built. The product passes
-/// <c>Environment.ProcessPath</c> and <see cref="AppState.Read(IRegisterAi, string, string)"/>.
+/// <c>Environment.ProcessPath</c> and <see cref="AppState.ReadAsync(IRegisterAi, string, string)"/>.
 /// </para>
 /// </remarks>
 /// <param name="tool">RegisterAI.</param>
 /// <param name="imagePath">This process's own image, which every registration is judged from.</param>
-/// <param name="read">Reads every client's registration; it starts RegisterAI, so it runs on the thread pool.</param>
+/// <param name="read">Reads every client's registration; it starts RegisterAI, and is awaited.</param>
 /// <param name="logger">Where the registrar reports.</param>
-internal sealed class RegisterAiPageRegistration(IRegisterAi tool, string? imagePath, Func<AppState> read, ILogger logger) : IPageRegistration
+internal sealed class RegisterAiPageRegistration(IRegisterAi tool, string? imagePath, Func<Task<AppState>> read, ILogger logger) : IPageRegistration
 {
     /// <inheritdoc />
-    public Task<AppState> ReadAsync(CancellationToken cancellationToken) => Task.Run(read, cancellationToken);
+    public async Task<AppState> ReadAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return await read().ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
-    public Task<RegistrationReport> RegisterAsync(RegistrationClient who, CancellationToken cancellationToken) =>
-        Task.Run(() => McpRegistrar.Apply(who, RegistrationIntent.Install, imagePath, tool, logger, replace: true, RelayArguments()), cancellationToken);
+    public async Task<RegistrationReport> RegisterAsync(RegistrationClient who, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return await McpRegistrar.ApplyAsync(who, RegistrationIntent.Install, imagePath, tool, logger, replace: true, await RelayArgumentsAsync().ConfigureAwait(false)).ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
-    public Task<RegistrationReport> UnregisterAsync(RegistrationClient who, CancellationToken cancellationToken) =>
-        Task.Run(() => McpRegistrar.Apply(who, RegistrationIntent.Uninstall, imagePath, tool, logger), cancellationToken);
+    public async Task<RegistrationReport> UnregisterAsync(RegistrationClient who, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return await McpRegistrar.ApplyAsync(who, RegistrationIntent.Uninstall, imagePath, tool, logger).ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
-    public Task<RegistrationReport> RegisterInProjectAsync(RegistrationClient who, string folder, string command, CancellationToken cancellationToken) =>
-        Task.Run(() => McpRegistrar.ApplyToProject(who, register: true, folder, imagePath, tool, logger, command), cancellationToken);
+    public async Task<RegistrationReport> RegisterInProjectAsync(RegistrationClient who, string folder, string command, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return await McpRegistrar.ApplyToProjectAsync(who, register: true, folder, imagePath, tool, logger, command).ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
-    public Task<RegistrationReport> UnregisterFromProjectAsync(RegistrationClient who, string folder, CancellationToken cancellationToken) =>
-        Task.Run(() => McpRegistrar.ApplyToProject(who, register: false, folder, imagePath, tool, logger), cancellationToken);
+    public async Task<RegistrationReport> UnregisterFromProjectAsync(RegistrationClient who, string folder, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return await McpRegistrar.ApplyToProjectAsync(who, register: false, folder, imagePath, tool, logger).ConfigureAwait(false);
+    }
 
     /// <summary>The arguments this install registers its relay with, read as its hooks wrote them.</summary>
     /// <remarks>
@@ -106,9 +125,9 @@ internal sealed class RegisterAiPageRegistration(IRegisterAi tool, string? image
     /// hooks saved, never from a variable.
     /// </remarks>
     /// <returns>The arguments.</returns>
-    private IReadOnlyList<string> RelayArguments() =>
-        RegistrationTarget.TryResolve(imagePath, out var target, out _)
-            ? InstallerSettings.SavedFor(target!.InstallRoot, InstallLocation.AppId).RelayArguments
+    private async Task<IReadOnlyList<string>> RelayArgumentsAsync() =>
+        (await RegistrationTarget.ResolveAsync(imagePath).ConfigureAwait(false)).Target is { } target
+            ? (await InstallerSettings.SavedForAsync(target.InstallRoot, InstallLocation.AppId).ConfigureAwait(false)).RelayArguments
             : InstallerSettings.None.RelayArguments;
 }
 

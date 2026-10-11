@@ -21,7 +21,7 @@ namespace BrowserAI.Relay;
 /// ends anything.
 /// </para>
 /// <para>
-/// <b>The order of <see cref="Explain"/> is the order in which a reason outranks
+/// <b>The order of <see cref="ExplainAsync"/> is the order in which a reason outranks
 /// another.</b> An updater running from this install comes first, because a relay
 /// that started during an install is answered with the update sentence whatever else
 /// is true (U2). Then the background's record: a root it refused is said as the
@@ -46,7 +46,7 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
     public static TimeSpan BusyBound { get; } = ProcessBounds.BackgroundBusyBound;
 
     /// <summary>
-    /// How long <see cref="Explain"/> waits for a background whose pipe has closed to
+    /// How long <see cref="ExplainAsync"/> waits for a background whose pipe has closed to
     /// finish exiting, so its exit code can be read: a hang detector, since a pipe
     /// closes as its process ends.
     /// </summary>
@@ -72,12 +72,12 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
 
     /// <inheritdoc />
     public async Task<Stream?> TryConnectAsync(CancellationToken cancellationToken) =>
-        await Task.Run(() => Connect(cancellationToken), cancellationToken).ConfigureAwait(false);
+        await ConnectAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc />
-    public BackgroundAbsence Explain(int? lastBackgroundPid)
+    public async Task<BackgroundAbsence> ExplainAsync(int? lastBackgroundPid)
     {
-        RecordWhatTheLastBackgroundLeft(lastBackgroundPid);
+        await RecordWhatTheLastBackgroundLeftAsync(lastBackgroundPid).ConfigureAwait(false);
 
         // 21, 2026-10-10: a shipping copy outside the standard folder set nothing up, and
         // nothing that happens later changes where it is, so it is said before anything.
@@ -91,7 +91,7 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
             return new BackgroundAbsence.UpdateInstalling();
         }
 
-        var record = BackgroundRecord.Read(_settings.RecordPath);
+        var record = await BackgroundRecord.ReadAsync(_settings.RecordPath).ConfigureAwait(false);
 
         if (record is { Ended: BackgroundEnd.Refused })
         {
@@ -124,7 +124,7 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
             // has written when it went and its exit code; with neither, the first
             // relay that finds it gone writes the moment it found that, so every relay
             // names the same time.
-            var at = record.ExitedAt ?? FoundGone(record);
+            var at = record.ExitedAt ?? await FoundGoneAsync(record).ConfigureAwait(false);
             return new BackgroundAbsence.Crashed(at, record.ExitCode, _settings.LogPath);
         }
 
@@ -142,7 +142,7 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
             return new BackgroundAbsence.NotRunning(TaskState.Unnamed, string.Empty, null);
         }
 
-        var reading = _settings.ReadTask(taskName);
+        var reading = await _settings.ReadTask(taskName).ConfigureAwait(false);
 
         return new BackgroundAbsence.NotRunning(
             reading.State switch
@@ -166,7 +166,18 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
         }
     }
 
-    private FileStream? Connect(CancellationToken cancellationToken)
+    /// <summary>Opens the pipe, waiting out a busy one within <see cref="BusyBound"/>.</summary>
+    /// <remarks>
+    /// <b>A busy pipe is looked at again after <see cref="ProcessBounds.PipeBusyRetry"/></b>,
+    /// awaited, since 2026-10-11, the maintainer's decision 54, in his words verbatim:
+    /// <i>"Never block a worker anywhere."</i> <i>Previously a thread of the pool waited in
+    /// <c>WaitNamedPipe</c> for a free instance, inside a <c>Task.Run</c>.</i> Windows has no
+    /// overlapped form of that wait, and a background makes its next instance before it
+    /// hands a connection over, so a busy pipe frees in the time it takes to make one.
+    /// </remarks>
+    /// <param name="cancellationToken">Ends the attempt.</param>
+    /// <returns>The connected stream, or <see langword="null"/> when no background serves the pipe.</returns>
+    private async Task<FileStream?> ConnectAsync(CancellationToken cancellationToken)
     {
         var deadline = Environment.TickCount64 + (long)BusyBound.TotalMilliseconds;
 
@@ -202,7 +213,14 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
                 return null;
             }
 
-            _ = NamedPipes.WaitForFreeInstance(_settings.PipeName, (uint)left);
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(left, (long)ProcessBounds.PipeBusyRetry.TotalMilliseconds)), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
         }
 
         return null;
@@ -223,7 +241,8 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
 
     /// <summary>Writes the exit of the background this relay held into its record, once it has gone.</summary>
     /// <param name="lastBackgroundPid">The pid the background answered the greeting with.</param>
-    private void RecordWhatTheLastBackgroundLeft(int? lastBackgroundPid)
+    /// <returns>The write, which never faults on a record that cannot be written.</returns>
+    private async Task RecordWhatTheLastBackgroundLeftAsync(int? lastBackgroundPid)
     {
         HeldProcess? held;
 
@@ -237,14 +256,14 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
             return;
         }
 
-        if (!held.WaitOne(ExitBound) || held.ExitCodeOnceEnded() is not { } code)
+        if (!await HandleWaits.WhenSignaledAsync(held, ExitBound).ConfigureAwait(false) || held.ExitCodeOnceEnded() is not { } code)
         {
             return;
         }
 
         try
         {
-            _ = BackgroundRecord.Exited(_settings.RecordPath, held.ProcessId, held.CreatedFileTime, code, _settings.Clock.GetUtcNow());
+            _ = await BackgroundRecord.ExitedAsync(_settings.RecordPath, held.ProcessId, held.CreatedFileTime, code, _settings.Clock.GetUtcNow()).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -265,13 +284,13 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
     /// <summary>The moment a crashed background was first found gone, written into its record.</summary>
     /// <param name="record">The record.</param>
     /// <returns>The moment.</returns>
-    private DateTimeOffset FoundGone(BackgroundRecordState record)
+    private async Task<DateTimeOffset> FoundGoneAsync(BackgroundRecordState record)
     {
         var now = _settings.Clock.GetUtcNow();
 
         try
         {
-            _ = BackgroundRecord.Exited(_settings.RecordPath, record.ProcessId, record.CreatedFileTime, exitCode: null, now);
+            _ = await BackgroundRecord.ExitedAsync(_settings.RecordPath, record.ProcessId, record.CreatedFileTime, exitCode: null, now).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -339,7 +358,7 @@ internal sealed record BackgroundFinderSettings
     public Hosting.RootRefusal? NotSetUp { get; init; }
 
     /// <summary>Reads the task without changing it: the suite's seam.</summary>
-    public Func<string, ScheduledTaskReading> ReadTask { get; init; } = ScheduledTasks.StateOf;
+    public Func<string, Task<ScheduledTaskReading>> ReadTask { get; init; } = ScheduledTasks.StateOfAsync;
 
     /// <summary>Finds this install's updater by its full image path: the suite's seam.</summary>
     public Func<string, IDisposable?> FindUpdater { get; init; } =

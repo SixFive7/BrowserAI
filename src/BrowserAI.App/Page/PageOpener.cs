@@ -56,10 +56,10 @@ internal static partial class PageOpener
     /// <summary>Opens a tab's address, or writes it where it was asked to go.</summary>
     /// <param name="address">The address, or <see langword="null"/> when none was handed out.</param>
     /// <param name="writeTo">The file to write it to instead, or <see langword="null"/> to open it.</param>
-    /// <param name="open">Opens an address with the shell; <c>ShellInterop.OpenUrl</c> in the product.</param>
+    /// <param name="open">Opens an address with the shell; <c>ShellInterop.OpenUrlAsync</c> in the product.</param>
     /// <param name="logger">Where the outcome is recorded, never with the token.</param>
     /// <returns>Whether the address went where it was meant to.</returns>
-    public static bool Deliver(string? address, string? writeTo, Func<string, bool> open, ILogger logger)
+    public static async Task<bool> DeliverAsync(string? address, string? writeTo, Func<string, Task<bool>> open, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(open);
         ArgumentNullException.ThrowIfNull(logger);
@@ -74,12 +74,12 @@ internal static partial class PageOpener
 
         if (writeTo is { Length: > 0 })
         {
-            File.WriteAllText(writeTo, address, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            await File.WriteAllTextAsync(writeTo, address, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)).ConfigureAwait(false);
             OpenerLog.Written(logger, port, writeTo);
             return true;
         }
 
-        var opened = open(address);
+        var opened = await open(address).ConfigureAwait(false);
 
         OpenerLog.Opened(logger, port, opened);
         return opened;
@@ -89,11 +89,12 @@ internal static partial class PageOpener
     /// <param name="paths">Where the data and the log are.</param>
     /// <param name="relayHold">How long a conversation holds an update after its app's last message: the relay's countdown.</param>
     /// <returns>The facts.</returns>
-    public static PageFacts FactsFor(IAppPaths paths, TimeSpan relayHold)
+    public static async Task<PageFacts> FactsForAsync(IAppPaths paths, TimeSpan relayHold)
     {
         ArgumentNullException.ThrowIfNull(paths);
 
-        var resolved = RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out var refusal);
+        var resolution = await RegistrationTarget.ResolveAsync(Environment.ProcessPath).ConfigureAwait(false);
+        var target = resolution.Target;
 
         return new PageFacts
         {
@@ -101,9 +102,9 @@ internal static partial class PageOpener
             InstallRoot = InstallLocation.RootAppDir,
             DataRoot = paths.RootAppDir,
             LogDirectory = paths.LogDirectory,
-            ServerCommand = resolved ? target!.Command : null,
-            ServerArguments = resolved ? InstallerSettings.SavedFor(target!.InstallRoot, InstallLocation.AppId).RelayArguments : InstallerSettings.None.RelayArguments,
-            ServerRefusal = resolved ? null : refusal,
+            ServerCommand = target?.Command,
+            ServerArguments = target is not null ? (await InstallerSettings.SavedForAsync(target.InstallRoot, InstallLocation.AppId).ConfigureAwait(false)).RelayArguments : InstallerSettings.None.RelayArguments,
+            ServerRefusal = resolution.Resolved ? null : resolution.Refusal,
             RelayHold = relayHold,
         };
     }

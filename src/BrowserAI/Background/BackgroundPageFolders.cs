@@ -38,11 +38,11 @@ internal sealed class BackgroundPageFolders(SessionIndex index, Func<IEnumerable
     };
 
     /// <inheritdoc />
-    public FolderMeasure Measure()
+    public async Task<FolderMeasure> MeasureAsync()
     {
         var folders = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        foreach (var session in index.Present())
+        foreach (var session in await index.PresentAsync().ConfigureAwait(false))
         {
             _ = folders.TryAdd(session.Key, session.FullPath);
         }

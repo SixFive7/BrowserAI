@@ -273,7 +273,7 @@ internal sealed record ClientState
     /// <exception cref="ArgumentNullException">A required argument is null.</exception>
     /// <remarks>
     /// <i>Until 2026-10-03 this read the client itself, through each client's own
-    /// command line and files; <see cref="RegistrationReader.Read"/> asks RegisterAI
+    /// command line and files; <see cref="RegistrationReader.ReadAsync"/> asks RegisterAI
     /// now, and this keeps the shape the window and the report were built on.</i>
     /// </remarks>
     public static ClientState From(ClientReading reading, bool serverComposed)

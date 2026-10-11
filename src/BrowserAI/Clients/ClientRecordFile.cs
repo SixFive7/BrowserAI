@@ -27,17 +27,19 @@ namespace BrowserAI.Clients;
 internal static class ClientRecordFile
 {
     /// <summary>Every source of names the background reads, as the product reads them.</summary>
-    public static ClientRecordAccess Files { get; } = new(ReadAll, ReadEnds, FoldersIn, ReadHead, FilesUnder, CodexState.TitleOf);
+    public static ClientRecordAccess Files { get; } = new(ReadAllAsync, ReadEndsAsync, FoldersIn, ReadHeadAsync, FilesUnder, CodexState.TitleOf);
 
     /// <summary>The first bytes of a file, as UTF-8 text, for a record whose start is all that names anything.</summary>
     /// <param name="path">The file.</param>
     /// <param name="bytes">How many bytes of its start.</param>
     /// <returns>The text, or <see langword="null"/> when the file is empty or cannot be read.</returns>
-    public static string? ReadHead(string path, int bytes)
+    public static async Task<string?> ReadHeadAsync(string path, int bytes)
     {
         try
         {
-            using var stream = Open(path);
+            var stream = Open(path);
+
+            await using var opened = stream.ConfigureAwait(false);
             var buffer = new byte[(int)Math.Min(bytes, stream.Length)];
 
             if (buffer.Length is 0)
@@ -45,7 +47,7 @@ internal static class ClientRecordFile
                 return null;
             }
 
-            var read = stream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
+            var read = await stream.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false).ConfigureAwait(false);
 
             return read is 0 ? null : Encoding.UTF8.GetString(buffer, 0, read);
         }
@@ -93,14 +95,13 @@ internal static class ClientRecordFile
     /// <summary>The whole of a small file, as UTF-8 text.</summary>
     /// <param name="path">The file.</param>
     /// <returns>Its text, or <see langword="null"/> when it cannot be read.</returns>
-    public static string? ReadAll(string path)
+    public static async Task<string?> ReadAllAsync(string path)
     {
         try
         {
-            using var stream = Open(path);
-            using var reader = new StreamReader(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), detectEncodingFromByteOrderMarks: true);
+            using var reader = new StreamReader(Open(path), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), detectEncodingFromByteOrderMarks: true);
 
-            return reader.ReadToEnd();
+            return await reader.ReadToEndAsync().ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
@@ -118,11 +119,13 @@ internal static class ClientRecordFile
     /// Both ends; the same text twice when the file is no longer than the window; or
     /// <see langword="null"/> when it is empty or cannot be read.
     /// </returns>
-    public static (string Head, string Tail)? ReadEnds(string path, int window)
+    public static async Task<(string Head, string Tail)?> ReadEndsAsync(string path, int window)
     {
         try
         {
-            using var stream = Open(path);
+            var stream = Open(path);
+
+            await using var opened = stream.ConfigureAwait(false);
             var length = stream.Length;
 
             if (length is 0)
@@ -131,7 +134,7 @@ internal static class ClientRecordFile
             }
 
             var buffer = new byte[(int)Math.Min(window, length)];
-            var read = stream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
+            var read = await stream.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false).ConfigureAwait(false);
 
             if (read is 0)
             {
@@ -145,7 +148,7 @@ internal static class ClientRecordFile
             {
                 stream.Position = length - window;
 
-                var tailRead = stream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
+                var tailRead = await stream.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false).ConfigureAwait(false);
 
                 tail = Encoding.UTF8.GetString(buffer, 0, tailRead);
             }
@@ -173,12 +176,22 @@ internal static class ClientRecordFile
         }
     }
 
+    /// <summary>Opens a record for reading beside its writer, for asynchronous reads.</summary>
+    /// <remarks>
+    /// <b>Asynchronous since 2026-10-11</b>, the maintainer's decision 63, in his words
+    /// verbatim: <i>"convert disk writes as well. Some users have slow spinning rust."</i>
+    /// The coordinator added reads to it the same day. <i>Previously opened for
+    /// synchronous reads.</i>
+    /// </remarks>
+    /// <param name="path">The file.</param>
+    /// <returns>The stream.</returns>
     private static FileStream Open(string path) => new(path, new FileStreamOptions
     {
         Mode = FileMode.Open,
         Access = FileAccess.Read,
         Share = FileShare.ReadWrite | FileShare.Delete,
         BufferSize = 0,
+        Options = FileOptions.Asynchronous,
     });
 }
 
@@ -195,9 +208,9 @@ internal static class ClientRecordFile
 /// <param name="FilesUnder">The files under a folder whose names match a pattern.</param>
 /// <param name="StateTitle">A Codex thread's first message from Codex's state database, or <see langword="null"/>.</param>
 internal sealed record ClientRecordAccess(
-    Func<string, string?> ReadAll,
-    Func<string, int, (string Head, string Tail)?> ReadEnds,
+    Func<string, Task<string?>> ReadAll,
+    Func<string, int, Task<(string Head, string Tail)?>> ReadEnds,
     Func<string, IReadOnlyList<string>> FoldersIn,
-    Func<string, int, string?> ReadHead,
+    Func<string, int, Task<string?>> ReadHead,
     Func<string, string, IReadOnlyList<string>> FilesUnder,
     Func<string, string, string?> StateTitle);

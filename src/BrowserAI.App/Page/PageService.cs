@@ -37,8 +37,6 @@ internal interface IPageHost
     /// <returns>What the person chose, or that they chose nothing.</returns>
     Task<FolderPick> PickFolderAsync(string prompt);
 
-    /// <summary>Runs what was queued for the coordinator's own thread. Called by the coordinator's loop.</summary>
-    void RunQueuedWork();
 }
 
 /// <summary>What the page reads of the background's sessions and the clients connected to it.</summary>
@@ -77,7 +75,7 @@ internal interface IPageFolders
 {
     /// <summary>Finds every session folder and weighs each one.</summary>
     /// <returns>The measurement.</returns>
-    FolderMeasure Measure();
+    Task<FolderMeasure> MeasureAsync();
 }
 
 /// <summary>
@@ -93,7 +91,7 @@ internal interface IPageFolders
 /// </para>
 /// <para>
 /// <b>A listener exists only while it is wanted.</b> The first address handed out
-/// starts one, on a fresh port with a fresh token, and <see cref="TryStop"/> ends it
+/// starts one, on a fresh port with a fresh token, and <see cref="TryStopAsync"/> ends it
 /// once no tab is connected and a minute has passed (Q336 a). A later hand-out
 /// starts a new one, so an address outlives its listener only in a tab nobody is
 /// using.
@@ -104,10 +102,27 @@ internal interface IPageFolders
 /// the coordinator's thread decides whether to stop. Rendering reads a snapshot
 /// taken under the lock and never the fields themselves.
 /// </para>
+/// <para>
+/// <b>No lock is held across an await</b>, since 2026-10-11, the maintainer's decision
+/// 54: the lock guards fields and nothing else, a listener's start and stop are awaited
+/// outside it, and the hand-outs take their turn at starting one on a semaphore awaited
+/// with <see cref="SemaphoreSlim.WaitAsync()"/>. <i>Previously the first hand-out started
+/// the listener under the lock and waited for it there, and a stop waited for the
+/// listener on the caller's thread.</i> The "threads" above are pool threads since that
+/// day, and the coordinator's is the background's loop.
+/// </para>
 /// </remarks>
-internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisposable
+internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 {
     private readonly Lock _gate = new();
+
+    /// <summary>
+    /// Taken by a hand-out for as long as it may start a listener, so a second hand-out
+    /// finds the first one's: the lock above is never held across the start, which is
+    /// awaited (decision 54, 2026-10-11).
+    /// </summary>
+    private readonly SemaphoreSlim _starting = new(1, 1);
+    private int _disposed;
     private readonly PageFacts _facts;
     private readonly IPageSessions _sessions;
     private readonly IPageRegistration _registrar;
@@ -128,6 +143,22 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     private bool _readingRegistration;
     private bool _installingNow;
     private string? _holdsSignature;
+
+    /// <summary>
+    /// What holds the update, every conversation named, as it was last read: before a page
+    /// that shows it is drawn, and by the watch once a second; <see langword="null"/> where
+    /// the read failed or before the first.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11</b>, the maintainer's decision 63: the names are read from the
+    /// clients' files with asynchronous reads, and a page is drawn from what was read,
+    /// as its sessions are (<see cref="_snapshot"/>). <i>Previously every draw read the holds
+    /// itself, on the drawing thread.</i>
+    /// </remarks>
+    private UpdateHoldSnapshot? _holds;
+
+    /// <summary>Whether a second of the watch is running, so a slow one is not overtaken by the next.</summary>
+    private int _watching;
 
     /// <summary>What the watch last saw of the sessions, every name left out (46 a).</summary>
     private string? _sessionsSignature;
@@ -248,36 +279,79 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// </summary>
     /// <param name="kind">Which page the tab opens on.</param>
     /// <returns>The address, or <see langword="null"/> once the coordinator is stopping.</returns>
-    public string? HandOut(PageKind kind)
+    /// <remarks>
+    /// <b>The listener is started outside the lock and awaited</b>, since 2026-10-11, the
+    /// maintainer's decision 54. <i>Corrected that day (previously "Started here, under the
+    /// lock and synchronously: the pipe's thread is the caller, it has a bound of its own,
+    /// and a second hand-out must find this listener and not start another")</i>: a second
+    /// hand-out still finds it, because hand-outs take <see cref="_starting"/> in turn, and
+    /// the tab is still taken under the lock, from the listener that is up at that moment.
+    /// </remarks>
+    public async Task<string?> HandOutAsync(PageKind kind)
     {
-        lock (_gate)
+        if (Volatile.Read(ref _disposed) is not 0)
         {
-            if (_stopping)
-            {
-                return null;
-            }
+            return null;
+        }
 
-            if (_current is null || _current.Tabs.Closing)
+        await _starting.WaitAsync().ConfigureAwait(false);
+
+        try
+        {
+            while (true)
             {
-                // Started here, under the lock and synchronously: the pipe's thread
-                // is the caller, it has a bound of its own, and a second hand-out
-                // must find this listener and not start another.
-                _current = new Served(this, _clock, _linger, _wake, _logger)
+                lock (_gate)
                 {
-                    // While a listener is up, what holds the update and what the
-                    // sessions are are read once a second, and every tab is sent a new
-                    // state when either has changed (46 a).
-                    HoldsWatch = _clock.CreateTimer(_ => Watch(), null, HoldsWatchPeriod, HoldsWatchPeriod),
-                };
+                    if (_stopping)
+                    {
+                        return null;
+                    }
+
+                    if (_current is { Tabs.Closing: false } current)
+                    {
+                        var tab = current.Tabs.HandOut()!.Value;
+
+                        _occasionTab ??= (current, tab);
+
+                        var route = PageNames.RouteOf(kind);
+
+                        return string.Create(CultureInfo.InvariantCulture, $"{current.Listener.Gate.Root}{route}?tab={tab}");
+                    }
+                }
+
+#pragma warning disable CA2000 // The service keeps the listener it takes and stops it; the finally stops one it does not take.
+                var started = await Served.StartAsync(this, _clock, _linger, _wake, _logger).ConfigureAwait(false);
+#pragma warning restore CA2000
+                var taken = false;
+
+                try
+                {
+                    // While a listener is up, what holds the update and what the sessions
+                    // are are read once a second, and every tab is sent a new state when
+                    // either has changed (46 a).
+                    started.HoldsWatch = _clock.CreateTimer(_ => _ = WatchAsync(), null, HoldsWatchPeriod, HoldsWatchPeriod);
+
+                    lock (_gate)
+                    {
+                        if (!_stopping && _current is null or { Tabs.Closing: true })
+                        {
+                            _current = started;
+                            taken = true;
+                        }
+                    }
+                }
+                finally
+                {
+                    if (!taken)
+                    {
+                        await started.DisposeAsync().ConfigureAwait(false);
+                    }
+                }
             }
-
-            var tab = _current.Tabs.HandOut()!.Value;
-
-            _occasionTab ??= (_current, tab);
-
-            var route = PageNames.RouteOf(kind);
-
-            return string.Create(CultureInfo.InvariantCulture, $"{_current.Listener.Gate.Root}{route}?tab={tab}");
+        }
+        finally
+        {
+            _ = _starting.Release();
         }
     }
 
@@ -290,7 +364,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// running.
     /// </param>
     /// <returns>Whether no listener is up now.</returns>
-    public bool TryStop(bool final)
+    public async Task<bool> TryStopAsync(bool final)
     {
         Served? ending;
 
@@ -308,7 +382,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         if (ending is not null)
         {
-            ending.Dispose();
+            await ending.DisposeAsync().ConfigureAwait(false);
             PageServiceLog.Stopped(_logger, ending.Listener.Gate.Port);
         }
 
@@ -332,9 +406,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         Tabs?.CloseAll(Json(writer => writer.WriteString("sentence", sentence)));
     }
 
-    /// <inheritdoc />
-    public void RunQueuedWork() => _host.RunQueuedWork();
-
     /// <summary>
     /// The install's state changed: a session was refused as a broken install, or one
     /// matched again, so every open tab is sent its new state (10 b, 2026-10-10).
@@ -350,7 +421,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         // Read outside the lock: the background answers both from its own memory, and a
         // page that waited on the background under its own lock would wait twice. The
         // home, the conversations page's BrowserAI and the install page say them too.
-        var holds = kind is PageKind.Update or PageKind.Status or PageKind.Sessions ? ReadHolds() : null;
+        var holds = kind is PageKind.Update or PageKind.Status or PageKind.Sessions ? LastHolds() : null;
         var updates = kind is PageKind.Update or PageKind.Status or PageKind.Sessions or PageKind.Install ? ReadWatch() : UpdateWatch.Unreported;
 
         lock (_gate)
@@ -408,19 +479,41 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     }
 
     /// <inheritdoc />
-    public ValueTask DisposeAsync()
+    /// <remarks>
+    /// <b>It waits for a hand-out that is starting a listener</b>, so the listener it
+    /// starts is the one stopped here, or is never kept.
+    /// </remarks>
+    public async ValueTask DisposeAsync()
     {
-        Served? ending;
-
-        lock (_gate)
+        if (Interlocked.Exchange(ref _disposed, 1) is not 0)
         {
-            ending = _current;
-            _current = null;
-            _stopping = true;
+            return;
         }
 
-        ending?.Dispose();
-        return ValueTask.CompletedTask;
+        Served? ending;
+
+        await _starting.WaitAsync().ConfigureAwait(false);
+
+        try
+        {
+            lock (_gate)
+            {
+                ending = _current;
+                _current = null;
+                _stopping = true;
+            }
+        }
+        finally
+        {
+            _ = _starting.Release();
+        }
+
+        if (ending is not null)
+        {
+            await ending.DisposeAsync().ConfigureAwait(false);
+        }
+
+        _starting.Dispose();
     }
 
     /// <summary>
@@ -446,9 +539,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         return notes;
     }
-
-    /// <summary>Stops the listener, waiting on the calling thread.</summary>
-    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 
     /// <summary>The tab number a query carries, or zero.</summary>
     /// <param name="query">The query.</param>
@@ -520,9 +610,29 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
             StartMeasure(asked: false);
         }
 
+        if (kind is PageKind.Update or PageKind.Status or PageKind.Sessions)
+        {
+            var holds = await ReadHoldsAsync().ConfigureAwait(false);
+
+            lock (_gate)
+            {
+                _holds = holds;
+            }
+        }
+
         if (kind is not (PageKind.Changelog or PageKind.Setup or PageKind.Update))
         {
             await RefreshSessionsAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>What holds the update as it was last read, or <see langword="null"/>.</summary>
+    /// <returns>The snapshot.</returns>
+    private UpdateHoldSnapshot? LastHolds()
+    {
+        lock (_gate)
+        {
+            return _holds;
         }
     }
 
@@ -632,11 +742,11 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
     /// <summary>Reads what holds the update, or <see langword="null"/> where the read failed.</summary>
     /// <returns>The snapshot.</returns>
-    private UpdateHoldSnapshot? ReadHolds()
+    private async Task<UpdateHoldSnapshot?> ReadHoldsAsync()
     {
         try
         {
-            return Holds.Read();
+            return await Holds.ReadAsync().ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A read that failed is a page that says so, never a background that stops.
         catch (Exception failure)
@@ -693,10 +803,37 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// compares the sessions with every conversation's name left out, so a second reads no
     /// client's records; a change is read again with the names, and that read is what the
     /// tabs are sent. A session that opens or goes is a folder to weigh (43 b).
+    /// <i>Asynchronous since 2026-10-11, with the holds' read; a second that is still
+    /// running when the next is due is not overtaken by it.</i>
     /// </remarks>
-    private void Watch()
+    /// <returns>The second, which never faults.</returns>
+    private async Task WatchAsync()
     {
-        var holds = UpdatePageContent.Signature(ReadHolds(), _clock.GetUtcNow());
+        if (Interlocked.Exchange(ref _watching, 1) is not 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await WatchOnceAsync().ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // A timer's second: a failure is a line in the log, and the next second looks again.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            PageServiceLog.HoldsUnread(_logger, failure);
+        }
+        finally
+        {
+            Volatile.Write(ref _watching, 0);
+        }
+    }
+
+    private async Task WatchOnceAsync()
+    {
+        var read = await ReadHoldsAsync().ConfigureAwait(false);
+        var holds = UpdatePageContent.Signature(read, _clock.GetUtcNow());
         var peeked = PeekSessions();
         var sessions = peeked is null ? null : ConversationsContent.Signature(peeked);
         var held = peeked is null ? null : ConversationsContent.HeldFolders(peeked);
@@ -706,6 +843,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         lock (_gate)
         {
+            _holds = read;
             holdsChanged = !string.Equals(holds, _holdsSignature, StringComparison.Ordinal);
             _holdsSignature = holds;
             sessionsChanged = sessions is not null && !string.Equals(sessions, _sessionsSignature, StringComparison.Ordinal);
@@ -758,7 +896,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
             Push();
         }
 
-        _ = Task.Run(RunMeasurements, CancellationToken.None);
+        _ = Task.Run(RunMeasurementsAsync, CancellationToken.None);
     }
 
     /// <summary>The storage page's <i>Measure again</i>: a measurement the person asked for.</summary>
@@ -770,7 +908,8 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     }
 
     /// <summary>Measures, and once more for every measurement asked for while one ran.</summary>
-    private void RunMeasurements()
+    /// <returns>The measurements, which never fault.</returns>
+    private async Task RunMeasurementsAsync()
     {
         while (true)
         {
@@ -778,7 +917,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
             try
             {
-                measured = Folders.Measure();
+                measured = await Folders.MeasureAsync().ConfigureAwait(false);
             }
 #pragma warning disable CA1031 // A measurement that failed leaves the last one standing and is logged; the background keeps running.
             catch (Exception failure)
@@ -1200,27 +1339,12 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     }
 
     /// <summary>One listener and its tabs, started together and stopped together.</summary>
-    private sealed class Served : IDisposable
+    private sealed class Served : IAsyncDisposable
     {
-        /// <summary>Starts a listener and its tabs.</summary>
-        /// <param name="routes">What answers an admitted request.</param>
-        /// <param name="clock">The clock the linger runs on.</param>
-        /// <param name="linger">How long to wait after the last tab leaves.</param>
-        /// <param name="wake">Wakes the coordinator.</param>
-        /// <param name="logger">Where the listener reports.</param>
-        public Served(IPageRoutes routes, TimeProvider clock, TimeSpan linger, Action wake, ILogger logger)
+        private Served(PageTabs tabs, PageListener listener)
         {
-            Tabs = new PageTabs(clock, linger, wake);
-
-            try
-            {
-                Listener = PageListener.Start(routes, logger);
-            }
-            catch
-            {
-                Tabs.Dispose();
-                throw;
-            }
+            Tabs = tabs;
+            Listener = listener;
         }
 
         public PageListener Listener { get; }
@@ -1228,12 +1352,34 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         public PageTabs Tabs { get; }
 
         /// <summary>The once-a-second read of what holds the update and what the sessions are, or <see langword="null"/> before it is set.</summary>
-        public ITimer? HoldsWatch { get; init; }
+        public ITimer? HoldsWatch { get; set; }
 
-        public void Dispose()
+        /// <summary>Starts a listener and its tabs.</summary>
+        /// <param name="routes">What answers an admitted request.</param>
+        /// <param name="clock">The clock the linger runs on.</param>
+        /// <param name="linger">How long to wait after the last tab leaves.</param>
+        /// <param name="wake">Wakes the coordinator.</param>
+        /// <param name="logger">Where the listener reports.</param>
+        /// <returns>The listener and its tabs.</returns>
+        public static async Task<Served> StartAsync(IPageRoutes routes, TimeProvider clock, TimeSpan linger, Action wake, ILogger logger)
+        {
+            var tabs = new PageTabs(clock, linger, wake);
+
+            try
+            {
+                return new Served(tabs, await PageListener.StartAsync(routes, logger).ConfigureAwait(false));
+            }
+            catch
+            {
+                tabs.Dispose();
+                throw;
+            }
+        }
+
+        public async ValueTask DisposeAsync()
         {
             HoldsWatch?.Dispose();
-            Listener.Dispose();
+            await Listener.DisposeAsync().ConfigureAwait(false);
             Tabs.Dispose();
         }
     }
