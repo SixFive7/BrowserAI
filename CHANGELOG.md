@@ -38,21 +38,23 @@ more* link to its detail; nothing else depends on it.
 
 ## [Unreleased]
 
-BrowserAI is one program now, and it runs in the background from the moment you
-sign in. It holds every session, so a session outlives the client that drove it,
-and a Start Menu click opens its dashboard in your own browser. BrowserAI also
-registers itself with Codex.
+BrowserAI gives an AI agent a real browser on Windows. It is one program now, and
+it runs in the background from the moment you sign in. It holds every session, so
+a session outlives the client that drove it. A Start Menu click opens its
+dashboard in your own browser. BrowserAI also registers itself with Codex.
 
 Since 2026-09-30 Claude Code opens its connections a new way, and 1.1.0 gave
-those sessions no BrowserAI tools. This version fixes that. It also removes the
-configuration window, through which a project file could run something.
+those connections no BrowserAI tools. This version fixes that. It also removes the
+configuration window, where clicking a link planted in a project file could run
+something.
 
-Some changes need you or your agent to act. A project's `.mcp.json` that names
-`BrowserAI.Server.exe` has to be set up again from the dashboard, and BrowserAI
-works only when it is installed in `%LocalAppData%\BrowserAI.app`.
-`browserai_init` and `browserai_resume` require four settings, `tracing` is
-`transcript`, `browserai_set_purpose` is `browserai_change_purpose`, and an
-argument a tool does not have is refused.
+A project's `.mcp.json` that names `BrowserAI.Server.exe` has to be set up again
+from the dashboard. A copy installed outside `%LocalAppData%\BrowserAI.app` sets
+nothing up: uninstall it and run the installer again without `--installto`. For an
+agent, `browserai_init` and `browserai_resume` require four settings,
+`browserai_catch_up` requires a `why`, `tracing` is `transcript`,
+`browserai_set_purpose` is `browserai_change_purpose`, and an argument a tool does
+not have is refused.
 
 ### Added
 
@@ -62,15 +64,15 @@ argument a tool does not have is refused.
   screen. Cards beside it say when a waiting update installs, how Claude Code and Codex are set
   up, how much room the session folders take and which are not open now, and where BrowserAI is
   installed, when it started and where its updates come from. Each card leads to a page of its
-  own with a way back. The setup page sets up Claude Code and Codex each on its own, or removes
+  own. The setup page sets up Claude Code and Codex each on its own, or removes
   BrowserAI from one, for all your projects or in a project you choose. The conversations page
   draws every conversation, BrowserAI and every browser session as a map joined by lines, says
   what each is when you click it, and becomes a list in a narrow window or when it would draw
   more than eight rows or twelve sessions. It and the home follow every change as it happens.
-  The dashboard follows Windows' light or dark setting, deletes nothing, and lives at an address
-  on your own machine that is made for each run and handed to nobody else.
-  [The decision](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser) and
-  [the redesign](DECISIONS.md#the-dashboard-decided-2026-10-11).
+  The dashboard deletes no session folder. It follows Windows' light or dark setting and lives
+  at an address on your own machine that is made for each run and handed to nobody else.
+  [`DECISIONS.md`](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser) has
+  [the decision and its redesign](DECISIONS.md#the-dashboard-decided-2026-10-11).
 
 - ✨ **BrowserAI registers itself with Codex as well as Claude Code.**
   The installer registers it with each client for all your projects and the uninstaller removes it
@@ -86,11 +88,11 @@ argument a tool does not have is refused.
   BrowserAI downloads an update by itself and installs it once nothing uses it. Until then the
   toast stays on screen, says what still uses BrowserAI and which conversations will need a
   reconnect afterwards, and offers **Install now** and **Wait for inactivity**. Install now opens
-  the update page, which lists what holds the update, each with its countdown, and installs at
-  once when asked. Once an update is installed a toast says so, with a button that opens the
-  release's changelog, and says what any Claude Code terminal or Codex conversation that was
-  connected has to do to get BrowserAI back. An update nothing holds raises no other toast. A
-  toast also says when an update failed.
+  the update page, which lists what keeps the update waiting, each with its countdown, and
+  installs at once when asked. Once an update is installed a toast says so, with a button that
+  opens the release's changelog, and says what any Claude Code terminal or Codex conversation
+  that was connected has to do to get BrowserAI back. An update that installs at once shows only
+  that toast. A toast also says when an update failed.
 
 - ✨ **`browserai_close` closes a session's browser and keeps the session.**
   The browser gets up to a minute to write what it holds to disk, and the profile with its logins
@@ -103,8 +105,8 @@ argument a tool does not have is refused.
   call that names the session starts the countdown again, whatever its answer, and so does a
   person typing or clicking in its visible window. The close keeps the session, and its next
   browser call is refused until `browserai_resume`, where 1.1.0 started a new blank browser
-  without a word. A time longer than the default keeps automatic updates waiting while the browser is open, so a
-  call that sets one is held back once with that warning.
+  without a word. An update installs by itself only once every session's browser has closed, so
+  a call that sets a time longer than the default is held back once with a warning saying so.
 
 - ✨ **A session outlives the client that drove it, until its own idle close.**
   Restarting VS Code or a Claude Code session no longer takes a session's browser with it.
@@ -142,8 +144,7 @@ argument a tool does not have is refused.
 - ✨ **`browserai_catch_up` names every file in a session that can hold something sensitive.**
   The profile, HTTP Archives, saved logins, traces, transcripts, what the network tools saved,
   logs, page snapshots, screenshots, PDFs, videos, downloads, files saved by name, the browser's
-  temporary files and BrowserAI's own record, each kind with what it holds. It takes a `why` now,
-  like the other tools that name a session.
+  temporary files and BrowserAI's own record, each kind with what it holds.
 
 - ✨ **A broken install is shown to you in a toast and on every page of the dashboard.**
   A session whose Playwright lists different tools from the ones the build carries is refused as
@@ -156,7 +157,8 @@ argument a tool does not have is refused.
   or its first message, and the tabs of one VS Code window are listed together. The names are read
   from the clients' own files when a page or a toast is drawn, and nothing writes a title, a
   prompt or a session id to a log.
-  [The decision](DECISIONS.md#telling-the-clients-conversations-apart-decided-2026-10-10).
+  [`DECISIONS.md`](DECISIONS.md#telling-the-clients-conversations-apart-decided-2026-10-10)
+  has the decision.
 
 - 📝 **The README says what to do when an update leaves no BrowserAI.**
   Velopack 1.2.161 can delete the old version and start nothing when another program, such as
@@ -169,18 +171,6 @@ argument a tool does not have is refused.
   anybody clicks. The risks that decided it are in
   [`DECISIONS.md`](DECISIONS.md#processes-browsers-and-session-modes).
 
-- ✅ **A run of the suite fails when it shows a window, takes the focus or starts Firefox in safe mode.**
-  Each such run names what it saw. The real-installer arms install a pack built from the tree
-  before every gate run, under a lock the suite takes itself.
-
-- ✅ **Every number BrowserAI tunes has a row in a numbers index, and the build holds the two together.**
-  [`kb/numbers.md`](kb/numbers.md) gives each number its value, what it governs, where it came
-  from and how to check it again.
-
-- ✅ **The wording scans read the product's own strings as well as its comments.**
-  The rules of [`AGENTS.md`](AGENTS.md) hold the server instructions, every tool and parameter
-  description, every refusal and log message, and what the release scripts say when they stop.
-
 ### Changed
 
 - 💥 **BrowserAI is one program, `BrowserAI.exe`, and a client starts it with `--mcp`.**
@@ -188,17 +178,17 @@ argument a tool does not have is refused.
   update registers the new command with Claude Code and Codex for all your projects, but a
   project's `.mcp.json` that names `BrowserAI.Server.exe` stops working and has to be set up
   again from the dashboard. A client session that kept the old command across the update stops
-  working as well. [The hazard row](HAZARDS.md#hazard-index).
+  working as well. [`HAZARDS.md`](HAZARDS.md#hazard-index) has the rest.
 
 - 💥 **One BrowserAI runs in the background from sign-in, and each client hands its calls to it.**
   The Task Scheduler starts it when you sign in. It holds every session and runs the dashboard and
   the update. It ends at sign-out, at an uninstall or for an update, never for being idle. The
-  BrowserAI a client starts answers the handshake itself and holds a call for up to 150 s while no
-  background is there. A call an update meets is answered with whether it ran and what the client
-  needs to reconnect, which in a Claude Code terminal is `/mcp`. If the background crashed, every
-  call says when and which log to read until it is started again, and if it refuses its data root,
-  every call says what is wrong and how to fix it.
-  [How it fits together](ARCHITECTURE.md#the-background-and-its-relays-s-a).
+  BrowserAI a client starts answers the handshake itself and holds a call for up to 150 s while the
+  background is not running. A call that meets an update is answered with whether it ran and what
+  the client needs to reconnect, which in a Claude Code terminal is `/mcp`. If the background
+  crashed, every call says when and which log to read until it is started again, and if it refuses
+  its data root, every call says what is wrong and how to fix it.
+  [`ARCHITECTURE.md`](ARCHITECTURE.md#the-background-and-its-relays-s-a) says how it fits together.
 
 - 💥 **BrowserAI works only when it is installed in `%LocalAppData%\BrowserAI.app`.**
   A copy installed into another folder with `--installto` sets nothing up and says so at every
@@ -211,6 +201,9 @@ argument a tool does not have is refused.
   written to disk in plain text, and how long a browser stays open and keeps updates waiting. A
   call that leaves one out is refused, naming every one it left out, and nothing is created or
   changed. The other settings keep their defaults.
+
+- 💥 **`browserai_catch_up` requires a `why`, and a call without one is refused.**
+  Its `why` is written to the session's log when this BrowserAI holds the session.
 
 - 💥 **`tracing` is `transcript` now, and a call that sends `tracing` is refused.**
   It writes `session.md`, a Markdown transcript of the run: every browser call with its arguments
@@ -227,23 +220,31 @@ argument a tool does not have is refused.
 
 - 🔧 **A call to a tool BrowserAI does not have is told so, with a line for every tool it does have.**
   The answer also says that after an update a tool the client's own list does not show needs a
-  reconnect or a new conversation. A call that names a withheld tool gets the same answer.
+  reconnect or a new conversation.
 
 - 🔧 **The server instructions keep only what spans tools, and six tools carry a BrowserAI note.**
   Advice about one tool follows upstream's own description of it, behind *BrowserAI note:*. The
   notes give the cost of a full-page screenshot, the `boxes: true` snapshot the three coordinate
   mouse tools need first, and the warnings on `browser_route` and `browser_network_state_set`.
 
-- 🔧 **The tool descriptions, the answers, the pages and the log say the same things in fewer words.**
+- 🔧 **The tool descriptions, the answers and the log were rewritten.**
   A session is a directory in every text, and another conversation is named by its client and its
   folder, never by a process id. A browser call whose browser download failed says so, and no
-  answer tells an agent to delete a session's directory. How to reinstall a broken install covers
-  one that takes its updates from a folder.
+  answer tells an agent to delete a session's directory. A failed browser download quotes the
+  error line of Playwright's installer whole, and the process log says in words what happened,
+  with one event id per line.
 
 - 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
   Over nine pages boxes cost 175,611 tokens against 105,804 without them, counted on 2026-09-25
   with OpenAI's o200k_base tokenizer standing in for Claude's. `browser_snapshot` still takes
   `boxes: true` for the call that needs coordinates.
+
+- 🔧 **`browserai_list` no longer measures every session it names, and says how old its sizes are.**
+  It answers from the measurement the dashboard's Storage page shows, and once that is more than
+  a minute old it says *"Sizes were measured 3 minutes ago, and are being measured again."* and
+  starts a new one. The page says *"Measured at 14:02:09, 5 min ago."* once its measurement is
+  that old. A folder that cannot be read is *"could not be measured"* in the listing, as on the
+  page, and what a junction inside a session points at is no longer counted in its size.
 
 - ⚡ **The tool list is answered at once, and no Playwright starts until a session opens.**
   It is compiled into BrowserAI, and each session's own Playwright is checked against it before
@@ -257,8 +258,8 @@ argument a tool does not have is refused.
 
 - 🔧 **A hidden Chromium sends the user agent a visible one sends.**
   It sent `HeadlessChrome` where a window sends `Chrome`. With its user agent set on the command
-  line, Chromium answers the high-entropy client hints with empty values
-  ([the hazard index](HAZARDS.md#hazard-index)).
+  line, Chromium answers the high-entropy client hints with empty values, as
+  [`HAZARDS.md`](HAZARDS.md#hazard-index) records.
 
 - 🔧 **The browser no longer offers to save a password, because nobody can answer the offer.**
   Chromium's offer is a window over the page that the snapshot an agent reads does not show, so
@@ -276,33 +277,18 @@ argument a tool does not have is refused.
 
 - ⬆️ **`@playwright/mcp` moves to 0.0.83 with Chromium 155, and Velopack to 1.2.161.**
   Chromium is 155.0.8059.12 and Firefox is Playwright's build 1553, still 156.0. Every machine
-  downloads Chromium once more, 208.8 MB. Among upstream's fixes: a dialog that opens while a page
-  loads no longer costs the navigation timeout, closing a browser while a download runs no longer
-  crashes Playwright, and a page's own tools work with Chromium 155.
+  downloads Chromium once more, 208.8 MB, and one that uses Firefox downloads it again, 130.9 MB.
+  A rollback to 1.1.0 downloads Chromium 154 again, 207.3 MB, and Firefox build 1549 on a machine
+  that uses it, 130.9 MB. Among upstream's fixes: a dialog that opens while a page loads no longer
+  costs the navigation timeout, closing a browser while a download runs no longer crashes
+  Playwright, and a page's own tools work with Chromium 155.
 
 - ⬆️ **SQLite 3.54.0 is compiled into BrowserAI, up from 3.53.4.**
-  The amalgamation was checked against the hash sqlite.org publishes before it was vendored.
+  Its source was checked against the hash sqlite.org publishes.
 
 - 📦 **A release publishes three files: the installer, the full package and the update feed.**
   The portable `BrowserAI.zip` is no longer published, and `v1.1.0` was trimmed to the same three
   files after the fact.
-
-- 🔧 **A running BrowserAI takes its update source from the install, never from a variable.**
-  `BROWSERAI_UPDATE_FEED` is read once, when BrowserAI is installed, and written into its
-  scheduled task. An install that took its updates from a folder keeps taking them from there,
-  and a variable set later moves nothing.
-
-- 📦 **A release is refused unless every dependency was checked that day and none has moved.**
-  The resolved set each release was built from is committed to the repository as well, under
-  [`docs/evidence/`](docs/evidence/README.md).
-
-- 🔧 **`browserai_list` and the Storage page show sizes from one measurement, and say how old it is.**
-  The listing no longer weighs every session it names on every call: it answers from the
-  measurement the Storage page shows, and once that is more than a minute old it says *"Sizes
-  were measured 3 minutes ago, and are being measured again."* and starts a new one. The page
-  says *"Measured at 14:02:09, 5 min ago."* once its measurement is that old. A folder that
-  cannot be read is *"could not be measured"* in the listing, as on the page, and what a junction
-  inside a session points at is no longer counted in its size.
 
 ### Removed
 
@@ -353,20 +339,12 @@ argument a tool does not have is refused.
   None of those lines ever reached a log. They go into the log Velopack's `Update.exe` writes now.
 
 - 🐛 **A failed removal offers the command that removes BrowserAI, where it offered the one that adds it.**
-  A failed browser download quotes the error line of Playwright's installer whole, and the
-  process log says in words what happened, with one event id per line.
+  The uninstaller and the dashboard print it when they cannot remove BrowserAI from a client.
 
-- 🐛 **A browser install that ends as its once-a-second look fires no longer ends BrowserAI.**
-  That look could run after the install had closed the event it sets, and the error ended the
-  process and every session in it. A look that comes that late does nothing now.
-
-- 📦 **A fresh checkout derives its version, and a gate whose test pack fails says so.**
-  In a fresh clone or a new worktree MinVer's targets had not arrived, so the version step
-  failed and blamed the tags; the script restores first now, and tells a build that failed
-  apart from a checkout with no tags. A PowerShell gate driver whose test pack stopped with an
-  error ended with it, saying nothing and leaving the installer lock behind; it runs the
-  release script in a process of its own now, says that it stopped on the test pack and lets
-  the lock go.
+- 🐛 **A browser download that finishes just as BrowserAI checks on it no longer crashes BrowserAI.**
+  BrowserAI checks on a browser download once a second, and a check that ran just after the
+  download finished ended the process and every session in it. A check that comes that late does
+  nothing now.
 
 - 🐛 **A refusal for a session another BrowserAI is opening names that session's purpose.**
   An agent that asked in the moment between that BrowserAI taking the session's folder and

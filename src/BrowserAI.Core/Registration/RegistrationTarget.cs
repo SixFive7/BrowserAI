@@ -185,7 +185,7 @@ internal sealed record RegistrationTarget
         {
             // The one refusal that exists to stop a specific 392,704-byte file
             // from reaching a client's configuration.
-            return RegistrationResolution.Refused($"'{imagePath}' is not inside a '{CurrentDirectoryName}' directory, so it is not the binary an installed BrowserAI serves stdio from. The execution stub sits beside that directory, is compiled as a Windows-subsystem binary and exits in 59 ms without waiting -- a client registered against it sees its MCP server die at the handshake. Nothing is registered.");
+            return RegistrationResolution.Refused($"'{imagePath}' is not inside a '{CurrentDirectoryName}' directory, so it is not the binary an installed BrowserAI serves stdio from. The execution stub sits beside that directory and exits in 59 ms without waiting -- a client registered against it sees its MCP server die at the handshake. Nothing is registered.");
         }
 
         var root = Path.GetDirectoryName(directory);

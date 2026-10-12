@@ -746,7 +746,10 @@ internal sealed class ModelSurfaceTests
     /// the maintainer's to tune; what must survive a re-draft is that the model
     /// is told the parameter's name, that there is <b>no</b> ceiling, and that
     /// <c>filename</c> is the way to pay nothing -- which is the actionable half
-    /// and the half the old sentence never had.
+    /// and the half the old sentence never had. ⚠️ <i>Added 2026-10-12 by addition,
+    /// the maintainer's 98 b: the phrase that says there is no ceiling on the cost is
+    /// "grows with the page" (previously "no ceiling"), for the reason on
+    /// <see cref="RequiredFullPageCostPhrases"/>.</i>
     /// </para>
     /// <para>
     /// ⚠️ <b>MOVED 2026-10-04 onto the tool, and both halves above are inverted
@@ -802,10 +805,17 @@ internal sealed class ModelSurfaceTests
     /// What the <c>fullPage</c> cost line has to keep saying, however it is
     /// reworded.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>"grows with the page" since 2026-10-12, the maintainer's 98 b</b>, in his
+    /// words verbatim: <i>"98 b"</i>. <i>Previously "no ceiling"</i>, which said the
+    /// cost has no cap and read as a statement about size once BrowserAI began refusing
+    /// a Chromium screenshot past 16,384 px on a side. The note says that refusal in a
+    /// sentence of its own, and the phrase carries the same fact about the cost.
+    /// </remarks>
     private static readonly string[] RequiredFullPageCostPhrases =
     [
         "'fullPage: true'",
-        "no ceiling",
+        "grows with the page",
         "'filename'",
     ];
 

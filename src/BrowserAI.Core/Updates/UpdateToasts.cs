@@ -880,10 +880,10 @@ internal static partial class UpdateToastsLog
     [LoggerMessage(EventId = 7103, Level = LogLevel.Warning, Message = "Windows did not remove the update toast '{Tag}'.")]
     public static partial void RemoveThrew(ILogger logger, string tag, Exception failure);
 
-    /// <summary>Windows threw on an update.</summary>
+    /// <summary>A second of the countdown failed, in Windows' update of the toast or before it.</summary>
     /// <param name="logger">Where the record goes.</param>
     /// <param name="failure">What it threw.</param>
-    [LoggerMessage(EventId = 7104, Level = LogLevel.Warning, Message = "Windows threw on an update of the ready toast's countdown.")]
+    [LoggerMessage(EventId = 7104, Level = LogLevel.Warning, Message = "A second of the ready toast's countdown failed.")]
     public static partial void UpdateThrew(ILogger logger, Exception failure);
 
     /// <summary>Windows answered an update with a failure.</summary>
@@ -907,7 +907,7 @@ internal static partial class UpdateToastsLog
     /// <summary>What holds the update could not be read.</summary>
     /// <param name="logger">Where the record goes.</param>
     /// <param name="failure">What it threw.</param>
-    [LoggerMessage(EventId = 7108, Level = LogLevel.Warning, Message = "What holds the update could not be read for the ready toast's countdown.")]
+    [LoggerMessage(EventId = 7108, Level = LogLevel.Warning, Message = "What holds the update could not be read for the ready toast.")]
     public static partial void ReadFailed(ILogger logger, Exception failure);
 
     /// <summary>The memory of a person's wait could not be read or cleared.</summary>

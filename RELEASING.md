@@ -362,9 +362,14 @@ whether it found nothing or was never run, which is the failure shape this whole
 file is about:
 
 ```
-git diff --exit-code --stat -- "**/packages.lock.json"      # the three NuGet locks
+git diff --exit-code --stat -- "**/packages.lock.json"      # the five NuGet locks
 git diff --exit-code --stat -- build/payload/package-lock.json   # the npm lock
 ```
+
+*Corrected 2026-10-12 (previously "the three NuGet locks" in the comment above): the
+glob matches five, `src/BrowserAI`, `src/BrowserAI.App`, `src/BrowserAI.Core`,
+`tests/BrowserAI.Tests` and `tests/BrowserAI.TestProbe`, and three copies under
+`docs/evidence/`, which are records and do not move.*
 
 The diff *is* the drift report, and it is the cheapest detector this policy has.
 Record both, empty or not; an empty diff is a result. Plus the resolved version
@@ -516,11 +521,16 @@ re-downloads the browser and re-extracts it. **Updated 2026-08-17 (previously
 `RevisionPrune` runs on the next successful provision and reclaims the ~430 MiB
 the old revision holds, so what the note has to carry is the download, not the
 disk. The one consequence worth a sentence is the other direction -- a **rollback**
-to the previous build re-downloads 208.8 MB, because the revision it names has
-already been pruned. *(Re-measured 2026-10-03 at chromium 1247; previously 207.3 MB, and re-measured 2026-09-16 at chromium 1244 before that; previously
-203.8 MB.)*
+to the previous build re-downloads that build's revision, because it has already
+been pruned: for a rollback to 1.1.0, Chromium 1246, 207.3 MB, and on a machine
+that uses Firefox, Firefox 1549, 130.9 MB, each the family's first-run total.
+*Corrected 2026-10-12 (previously "re-downloads 208.8 MB", re-measured 2026-10-03
+at chromium 1247; 207.3 MB and 203.8 MB before that): 208.8 MB is the first-run
+total of the new Chromium, 1247, and a rollback fetches the old revision. 1246's
+total is 207,274,189 B and 1549's 130,934,199 B, both in
+`kb/playwright/provisioning-and-timings.md`.*
 
-⚠️ **AND A MODEL-FACING TOOL NAME MAY NOT BE RENAMED OR REMOVED IN A RELEASE A LIVE SESSION CAN CROSS.** *Added 2026-09-24.* Measured that day at Claude Code **2.1.281** and codex-cli **0.155.0-alpha.9.2**, 3/3 each: a Claude Code session whose server exits is served by a re-launched one that receives `initialize` and `tools/call` and **no `tools/list`**, so the tool list the client cached before the update stands for the rest of that session; a Codex thread's list is frozen at first connect and Codex ignores `notifications/tools/list_changed` outright. An update applied under a live session therefore leaves a model calling a name that is no longer there, and what comes back is an error the model reads as its own mistake. **Adding a tool is safe; renaming one and removing one are not**, and the way through is a release that keeps the old name forwarding while the new one appears. **Evidence:** for every name `tools-list.json` or [`tool-verdicts.json`](tool-verdicts.json) removed or renamed, the statement that it moved and the forwarding decision taken for it -- and *none* where nothing moved, which is the usual answer. The behaviour is [a hazard row](HAZARDS.md#hazard-index); how a re-connected session learns anything at all is [open with the maintainer](DECISIONS.md#still-open).
+⚠️ **AND A MODEL-FACING TOOL NAME MAY NOT BE RENAMED OR REMOVED IN A RELEASE A LIVE SESSION CAN CROSS.** *Added 2026-09-24.* Measured that day at Claude Code **2.1.281** and codex-cli **0.155.0-alpha.9.2**, 3/3 each: a Claude Code session whose server exits is served by a re-launched one that receives `initialize` and `tools/call` and **no `tools/list`**, so the tool list the client cached before the update stands for the rest of that session; a Codex thread's list is frozen at first connect and Codex ignores `notifications/tools/list_changed` outright. An update applied under a live session therefore leaves a model calling a name that is no longer there, and what comes back is an error the model reads as its own mistake. **Adding a tool is safe; renaming one and removing one are not**, and the way through is a release that keeps the old name forwarding while the new one appears. **Evidence:** for every name `tools-list.json` or [`tool-verdicts.json`](tool-verdicts.json) removed or renamed, the statement that it moved and the forwarding decision taken for it -- and *none* where nothing moved, which is the usual answer. The behaviour is [a hazard row](HAZARDS.md#hazard-index); how a re-connected session learns anything at all was settled by [the maintainer's Q261 b](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client): it is told once that its tool list is stale. *Corrected 2026-10-12 (previously "is open with the maintainer", a link to "Still open", which no longer carries it).*
 
 ### 5. Upstream tool-description drift adjudicated
 
@@ -1032,8 +1042,12 @@ git describe --tags --long
 > one. `MinVerVersion` is a version string and carries no tag name, so the tag a
 > release was cut from could not be recorded from it. `git describe --tags
 > --long` prints `<tag>-<commits>-g<sha>`, which is the tag, the distance and
-> the commit in one line -- and the distance is what makes the pre-release
-> suffix legible instead of mysterious.
+> the commit in one line. At the tagged commit the distance is 0. Away from it
+> the distance and MinVer's height can disagree: at `8cdb3ee4` it read
+> `v1.1.0-437-g8cdb3ee4` while the build stamped `1.1.1-alpha.0.401`, with four
+> merges since the tag and 401 commits on its first-parent line. *Corrected
+> 2026-10-12 (previously "and the distance is what makes the pre-release suffix
+> legible instead of mysterious").*
 
 ### 10. The changelog's unreleased section is not empty
 

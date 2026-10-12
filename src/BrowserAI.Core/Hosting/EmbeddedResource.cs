@@ -38,7 +38,7 @@ internal static class EmbeddedResource
         {
             null => null,
             UnmanagedMemoryStream memory => new ReadOnlySpan<byte>(memory.PositionPointer, checked((int)(memory.Length - memory.Position))).ToArray(),
-            _ => throw new InvalidOperationException($"The resource '{name}' is not in this binary's memory, so it cannot be copied out of it."),
+            _ => throw new InvalidOperationException($"The resource '{name}' is not in this binary's memory."),
         };
     }
 }

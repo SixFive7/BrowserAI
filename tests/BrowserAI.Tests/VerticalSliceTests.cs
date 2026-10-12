@@ -370,7 +370,7 @@ internal sealed class VerticalSliceTests
         await Assert.That((bool?)run.ScreenshotEnvelope["result"]!["isError"] is true).IsFalse();
 
         // The file half. ⚠️ *Corrected 2026-08-26 (previously "a name derived
-        // from the page , not a timestamp, in the folder its generator
+        // from the page, not a timestamp, in the folder its generator
         // prefix names", asserting the path contained `output\page\`).* There
         // is no generator folder and no derived name: upstream chooses the name,
         // upstream writes the file, and it lands at the output ROOT because that

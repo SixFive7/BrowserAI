@@ -582,6 +582,54 @@ internal sealed class SessionListTests
         await Assert.That(fresh).DoesNotContain("Sizes were measured");
     }
 
+    /// <summary>
+    /// An age whose figure is one is written in the singular: a listing whose sizes are a
+    /// little over a minute old says "1 minute ago", and one second is "1 second".
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12</b>, from a reading of the product's texts that day: an age is
+    /// written in whole units, and the listing's line appears only once its sizes are older
+    /// than <see cref="SessionTimes.FolderSizesFreshFor"/>, one minute, so the first age a
+    /// listing showed read "1 minutes". <c>browserai_catch_up</c> writes its ages through the
+    /// same <see cref="SessionManager.Age"/> from the wall clock, which no arm can hold at
+    /// one second, so its half is asserted on the method itself.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnAgeOfOneIsWrittenInTheSingular()
+    {
+        var clock = new ManualClock();
+
+        await using var sessions = await RigSessionEnvironment.CreateAsync(clock: clock);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "weighed-a-minute-ago"),
+            ["purpose"] = "a session whose sizes the listing reads a little over a minute after they were measured",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        async Task<string> listAsync() => TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject { ["directory"] = sessions.Root }));
+
+        _ = await listAsync();
+
+        clock.Advance(SessionTimes.FolderSizesFreshFor + (SessionTimes.FolderSizesFreshFor / 4));
+
+        await Assert.That(await listAsync()).Contains("Sizes were measured 1 minute ago, and are being measured again.");
+
+        var second = TimeSpan.FromSeconds(1);
+
+        await Assert.That(SessionManager.Age(second)).IsEqualTo("1 second");
+
+        // The plural beside each, so the two above fail for their own reason.
+        await Assert.That(SessionManager.Age(second * 2)).IsEqualTo("2 seconds");
+        await Assert.That(SessionManager.Age(SessionTimes.FolderSizesFreshFor * 3)).IsEqualTo("3 minutes");
+    }
+
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>
         await rig.Client.RoundTripAsync("tools/call", new JsonObject
         {

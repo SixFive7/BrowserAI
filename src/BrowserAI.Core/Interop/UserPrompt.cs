@@ -117,7 +117,7 @@ internal static partial class UserPrompt
         })
         {
             IsBackground = true,
-            Name = "BrowserAI question",
+            Name = "BrowserAI message box",
         };
 
         // The apartment the box was shown in until 2026-10-11, Main's own.
