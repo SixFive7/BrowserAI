@@ -254,7 +254,7 @@ internal static class HeadedUserAgent
         try
         {
             await File.WriteAllTextAsync(partial, $"{stamp}\n{headed}\n", new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)).ConfigureAwait(false);
-            File.Move(partial, cache, overwrite: true);
+            await FileSystemThread.MoveFileAsync(partial, cache, overwrite: true).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -263,7 +263,7 @@ internal static class HeadedUserAgent
 
             try
             {
-                File.Delete(partial);
+                await FileSystemThread.DeleteFileAsync(partial).ConfigureAwait(false);
             }
             catch (Exception litter) when (litter is IOException or UnauthorizedAccessException)
             {
@@ -283,7 +283,7 @@ internal static class HeadedUserAgent
 
         try
         {
-            _ = Directory.CreateDirectory(profile);
+            _ = await FileSystemThread.CreateDirectoryAsync(profile).ConfigureAwait(false);
 
             using var job = JobObject.CreateKillOnClose();
             using var process = JobLauncher.Start(
@@ -331,7 +331,7 @@ internal static class HeadedUserAgent
         finally
         {
             List<string> failures = [];
-            TreeDelete.Remove(profile, failures);
+            await TreeDelete.RemoveAsync(profile, failures).ConfigureAwait(false);
         }
     }
 

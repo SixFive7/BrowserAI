@@ -1672,7 +1672,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // Brought into existence exactly as the product brings it, then let go:
         // what follows is a denial and not a holder.
-        using (MaintenanceLock.TakeShared(root, out _, out _))
+        using ((await MaintenanceLock.TakeSharedAsync(root)).Lock)
         {
         }
 
@@ -1685,7 +1685,10 @@ internal sealed partial class ErrorCatalogueTests
             PropagationFlags.None))
         {
             // The precondition, so the test cannot pass by the denial not taking.
-            await Assert.That(MaintenanceLock.TakeShared(root, out var denial, out _)).IsNull();
+            var shared = await MaintenanceLock.TakeSharedAsync(root);
+            var denial = shared.Denial;
+
+            await Assert.That(shared.Lock).IsNull();
             await Assert.That(denial).IsEqualTo(MaintenanceDenial.Unreachable);
 
             refused = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -1846,7 +1849,7 @@ internal sealed partial class ErrorCatalogueTests
         using var scope = new JobObjectScope();
 
         var session = SessionPath.For(Path.Combine(scratch.Path, "firefox"));
-        SessionLayout.Create(session);
+        SessionFolders.Create(session);
 
         var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
         _ = Directory.CreateDirectory(profile);
@@ -1883,7 +1886,7 @@ internal sealed partial class ErrorCatalogueTests
         ProcessIdentity.Terminate(holder.Id, holderCreated);
 
         var unreadable = SessionPath.For(Path.Combine(scratch.Path, "unreadable"));
-        SessionLayout.Create(unreadable);
+        SessionFolders.Create(unreadable);
 
         var blocked = Path.Combine(unreadable.FullPath, SessionLayout.ProfileFolderName);
         _ = Directory.CreateDirectory(FirefoxProfile.LockFileIn(blocked));

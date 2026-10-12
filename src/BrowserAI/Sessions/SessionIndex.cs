@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using BrowserAI.Hosting;
+using BrowserAI.Runtime;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Sessions;
@@ -144,7 +145,7 @@ internal sealed class SessionIndex
 
         try
         {
-            _ = Directory.CreateDirectory(Root);
+            _ = await FileSystemThread.CreateDirectoryAsync(Root).ConfigureAwait(false);
 
             try
             {
@@ -158,7 +159,7 @@ internal sealed class SessionIndex
             }
             finally
             {
-                TryDelete(temp);
+                _ = await TryDeleteAsync(temp).ConfigureAwait(false);
             }
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -184,10 +185,11 @@ internal sealed class SessionIndex
     /// same reason <see cref="RecordAsync"/> is not: the entry is re-derivable and a
     /// stale one is a report and not a fault.
     /// </remarks>
-    public void Forget(SessionPath session)
+    /// <returns>The removal, on the file-system thread since the maintainer's 81 c.</returns>
+    public async Task ForgetAsync(SessionPath session)
     {
         ArgumentNullException.ThrowIfNull(session);
-        _ = TryDelete(Path.Combine(Root, session.IndexKey));
+        _ = await TryDeleteAsync(Path.Combine(Root, session.IndexKey)).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -423,7 +425,7 @@ internal sealed class SessionIndex
                 continue;
             }
 
-            if (TryDelete(entry.EntryFile))
+            if (await TryDeleteAsync(entry.EntryFile).ConfigureAwait(false))
             {
                 SessionIndexLog.Removed(_logger, entry.Key, entry.Pointer, entry.State, entry.Problem);
                 removed.Add(entry);
@@ -442,7 +444,7 @@ internal sealed class SessionIndex
             Followed = followed.Count,
             Removed = removed,
             Kept = kept,
-            LitterRemoved = SweepLitter(),
+            LitterRemoved = await FileSystemThread.RunAsync(SweepLitter).ConfigureAwait(false),
         };
     }
 
@@ -490,7 +492,9 @@ internal sealed class SessionIndex
 
         var entries = new List<SessionIndexEntry>();
 
-        foreach (var file in Directory.EnumerateFiles(Root).Order(StringComparer.OrdinalIgnoreCase))
+        var listed = await FileSystemThread.RunAsync(() => FileSystemThread.Here.Files(Root)).ConfigureAwait(false);
+
+        foreach (var file in listed.Order(StringComparer.OrdinalIgnoreCase))
         {
             var key = Path.GetFileName(file);
 
@@ -685,7 +689,7 @@ internal sealed class SessionIndex
 
         if (depth is SessionIndexDepth.Guard)
         {
-            return AtTheGuard(file, key, pointer, session);
+            return await AtTheGuardAsync(file, key, pointer, session).ConfigureAwait(false);
         }
 
         // 43 b, 2026-10-11: whether the record is there, and nothing else, for the page.
@@ -700,7 +704,7 @@ internal sealed class SessionIndex
                     Session = session,
                     State = SessionIndexEntryState.Session,
                 }
-                : Absent(file, key, pointer, session);
+                : await AbsentAsync(file, key, pointer, session).ConfigureAwait(false);
         }
 
         try
@@ -708,7 +712,7 @@ internal sealed class SessionIndex
             var record = await SessionLock.ReadRecordAsync(session).ConfigureAwait(false);
 
             return record is null
-                ? Absent(file, key, pointer, session)
+                ? await AbsentAsync(file, key, pointer, session).ConfigureAwait(false)
                 : new SessionIndexEntry
                 {
                     Key = key,
@@ -782,13 +786,13 @@ internal sealed class SessionIndex
     /// <param name="pointer">What the entry holds.</param>
     /// <param name="session">The directory it names.</param>
     /// <returns>The entry, in whichever of the two states applies.</returns>
-    private static SessionIndexEntry Absent(string file, string key, string pointer, SessionPath session)
+    private static async Task<SessionIndexEntry> AbsentAsync(string file, string key, string pointer, SessionPath session)
     {
-        string[] inFlight;
+        IReadOnlyList<string> inFlight;
 
         try
         {
-            inFlight = Directory.GetFiles(session.FullPath, SessionLayout.NewLockFilePattern);
+            inFlight = await FileSystemThread.RunAsync(() => FileSystemThread.Here.Files(session.FullPath, SessionLayout.NewLockFilePattern)).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -805,7 +809,7 @@ internal sealed class SessionIndex
             };
         }
 
-        return inFlight.Length is 0
+        return inFlight.Count is 0
             ? new SessionIndexEntry
             {
                 Key = key,
@@ -837,7 +841,7 @@ internal sealed class SessionIndex
     /// acts on -- <see cref="SessionIndexEntryState.DirectoryMissing"/>,
     /// <see cref="SessionIndexEntryState.NotASession"/>,
     /// <see cref="SessionIndexEntryState.Unusable"/> -- is settled above this line
-    /// or by <see cref="Absent"/>, and none of them ever needed the record. What
+    /// or by <see cref="AbsentAsync"/>, and none of them ever needed the record. What
     /// the record decided was the difference between two states a sweep
     /// <i>keeps</i>: <see cref="SessionIndexEntryState.Session"/> and
     /// <see cref="SessionIndexEntryState.LockUnreadable"/>. A directory whose
@@ -870,7 +874,7 @@ internal sealed class SessionIndex
     /// <param name="pointer">What the entry holds.</param>
     /// <param name="session">The directory it names.</param>
     /// <returns>The entry, with no record and no store opened.</returns>
-    private static SessionIndexEntry AtTheGuard(string file, string key, string pointer, SessionPath session)
+    private static async Task<SessionIndexEntry> AtTheGuardAsync(string file, string key, string pointer, SessionPath session)
     {
         if (SessionLock.ProbeLiveness(session).State is SessionLiveness.Held)
         {
@@ -906,7 +910,7 @@ internal sealed class SessionIndex
                 Session = session,
                 State = SessionIndexEntryState.Session,
             }
-            : Absent(file, key, pointer, session);
+            : await AbsentAsync(file, key, pointer, session).ConfigureAwait(false);
     }
 
     private static SessionIndexEntry Unusable(string file, string key, string pointer, string why) =>
@@ -929,12 +933,12 @@ internal sealed class SessionIndex
         var cutoff = DateTime.UtcNow - LitterAge;
         var cleared = 0;
 
-        foreach (var file in Directory.EnumerateFiles(Root))
+        foreach (var file in FileSystemThread.Here.Files(Root))
         {
             // Only ever this store's own rename temps, and only ones far too old
             // to belong to a writer that is still running. A file this product
             // did not write is never deleted by anything here.
-            if (IsLitter(Path.GetFileName(file)) && File.GetLastWriteTimeUtc(file) < cutoff && TryDelete(file))
+            if (IsLitter(Path.GetFileName(file)) && File.GetLastWriteTimeUtc(file) < cutoff && TryDeleteHere(file))
             {
                 cleared++;
             }
@@ -968,7 +972,7 @@ internal sealed class SessionIndex
                 // MoveFileEx with MOVEFILE_REPLACE_EXISTING. A concurrent reader
                 // sees the old entry or the new one and never a torn one, which
                 // is the whole reason the write is not made in place.
-                File.Move(temp, entry, overwrite: true);
+                await FileSystemThread.MoveFileAsync(temp, entry, overwrite: true).ConfigureAwait(false);
                 return;
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -995,11 +999,13 @@ internal sealed class SessionIndex
         }
     }
 
-    private static bool TryDelete(string path)
+    private static Task<bool> TryDeleteAsync(string path) => FileSystemThread.RunAsync(() => TryDeleteHere(path));
+
+    private static bool TryDeleteHere(string path)
     {
         try
         {
-            File.Delete(path);
+            FileSystemThread.Here.DeleteFile(path);
             return true;
         }
 #pragma warning disable CA1031 // A file that will not delete is the next sweep's problem, never this call's failure.

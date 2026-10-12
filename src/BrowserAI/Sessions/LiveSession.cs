@@ -1334,7 +1334,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
         // delete the directory holding it.
         Logging.Dispose();
 
-        TryDeleteConfig();
+        await TryDeleteConfigAsync().ConfigureAwait(false);
 
         // Every close has finished by here. A waiter that asks later holds the
         // token read at construction, which registers nothing once this is gone.
@@ -1818,11 +1818,11 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
         }
     }
 
-    private void TryDeleteConfig()
+    private async Task TryDeleteConfigAsync()
     {
         try
         {
-            File.Delete(ConfigFile);
+            await FileSystemThread.DeleteFileAsync(ConfigFile).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A generated config that will not delete is litter in a per-run directory the next run sweeps.
         catch (Exception)

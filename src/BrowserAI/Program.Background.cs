@@ -107,7 +107,7 @@ internal static partial class Program
         var roster = new RelayRoster(clock, ConversationReader.Files, backgroundLogger);
         var verbs = new BackgroundVerbs(backgroundLogger);
 
-        var run = InstanceDirectory.CreateFresh(paths, logger);
+        var run = await InstanceDirectory.CreateFreshAsync(paths, logger).ConfigureAwait(false);
         var instance = run.Directory;
 
         try
@@ -193,7 +193,7 @@ internal static partial class Program
         finally
         {
             run.Dispose();
-            InstanceDirectory.Delete(instance, logger);
+            await InstanceDirectory.DeleteAsync(instance, logger).ConfigureAwait(false);
         }
     }
 

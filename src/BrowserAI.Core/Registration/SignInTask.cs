@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
+using BrowserAI.Runtime;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 
@@ -450,7 +451,7 @@ internal static partial class SignInTask
             else
             {
                 // The uninstall hook's: the copy goes with the task.
-                File.Delete(saved);
+                await FileSystemThread.DeleteFileAsync(saved).ConfigureAwait(false);
             }
         }
 #pragma warning disable CA1031 // As above: the copy's failure is a sentence too, and the install goes on.

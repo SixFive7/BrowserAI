@@ -166,7 +166,7 @@ internal static class ChildLaunch
 
         if (temporaryDirectory is not null)
         {
-            _ = Directory.CreateDirectory(temporaryDirectory);
+            _ = await FileSystemThread.CreateDirectoryAsync(temporaryDirectory).ConfigureAwait(false);
 
             // Both names, because Node reads TEMP first and TMP second and an
             // inherited TMP would otherwise win where only TMP is set -- the

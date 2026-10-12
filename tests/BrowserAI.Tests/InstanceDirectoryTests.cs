@@ -59,7 +59,7 @@ internal sealed class InstanceDirectoryTests
         // ~100-process design point, minutes.
         await WaitUntilNothingHoldsAsync(abandoned);
 
-        using var created = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
+        using var created = await InstanceDirectory.CreateFreshAsync(paths, NullLogger.Instance);
 
         await Assert.That(Directory.Exists(created.Directory)).IsTrue();
         await Assert.That(Directory.Exists(abandoned)).IsFalse();
@@ -130,7 +130,7 @@ internal sealed class InstanceDirectoryTests
         var young = Path.Combine(paths.InstanceRoot, "5678-just-started");
         _ = Directory.CreateDirectory(young);
 
-        using var mine = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
+        using var mine = await InstanceDirectory.CreateFreshAsync(paths, NullLogger.Instance);
 
         await Assert.That(Directory.Exists(young)).IsTrue();
     }
@@ -180,7 +180,7 @@ internal sealed class InstanceDirectoryTests
         var paths = new LocalAppDataPaths(scratch.Path);
 
         // A live run, exactly as Program.cs starts one.
-        using var mine = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
+        using var mine = await InstanceDirectory.CreateFreshAsync(paths, NullLogger.Instance);
 
         await Assert.That(mine.IsMarked).IsTrue();
 
@@ -194,7 +194,7 @@ internal sealed class InstanceDirectoryTests
 
         // The next BrowserAI's startup sweep, which is what CreateFresh runs
         // before it makes a directory of its own.
-        using var theirs = InstanceDirectory.CreateFresh(paths, provider.CreateLogger("BrowserAI.Tests"));
+        using var theirs = await InstanceDirectory.CreateFreshAsync(paths, provider.CreateLogger("BrowserAI.Tests"));
 
         await Assert.That(Directory.Exists(mine.Directory)).IsTrue();
         await Assert.That(File.Exists(config)).IsTrue();
@@ -217,7 +217,7 @@ internal sealed class InstanceDirectoryTests
         await WaitUntilNothingHoldsAsync(mine.Directory);
         Directory.SetLastWriteTimeUtc(mine.Directory, DateTime.UtcNow.AddHours(-1));
 
-        using var afterwards = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
+        using var afterwards = await InstanceDirectory.CreateFreshAsync(paths, NullLogger.Instance);
 
         await Assert.That(Directory.Exists(mine.Directory)).IsFalse();
     }
@@ -265,7 +265,7 @@ internal sealed class InstanceDirectoryTests
         // like to a delete, without needing a browser to produce one.
         await using (var holder = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
-            InstanceDirectory.Delete(instance, provider.CreateLogger("BrowserAI.Tests"));
+            await InstanceDirectory.DeleteAsync(instance, provider.CreateLogger("BrowserAI.Tests"));
         }
 
         // Everything that could go, went -- including the two directories that
@@ -336,7 +336,7 @@ internal sealed class InstanceDirectoryTests
         _ = await scope.LaunchAsync(ProbePath, live, "hold-file", elsewhere, ready);
         await WaitForFileAsync(ready);
 
-        using var mine = InstanceDirectory.CreateFresh(paths, provider.CreateLogger("BrowserAI.Tests"));
+        using var mine = await InstanceDirectory.CreateFreshAsync(paths, provider.CreateLogger("BrowserAI.Tests"));
 
         await Assert.That(Directory.Exists(live)).IsTrue();
         await Assert.That(File.Exists(config)).IsTrue();

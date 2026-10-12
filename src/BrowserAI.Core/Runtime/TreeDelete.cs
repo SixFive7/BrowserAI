@@ -106,21 +106,63 @@ namespace BrowserAI.Runtime;
 /// two of them end up with the framework call and the third with this one, and
 /// nothing reports the difference until a locked file appears in production.
 /// </para>
+/// <para>
+/// ⚠️ <b>The product's walk runs on the file-system thread since 2026-10-12</b>, the
+/// maintainer's 79 c and 80 b, in his words verbatim: <i>"78-82 your
+/// recommendation"</i>. <see cref="RemoveAsync"/> hands the whole walk to
+/// <see cref="FileSystemThread"/> as one item and awaits it, so a nine-thousand-file
+/// profile holds that thread and no pool worker. The walk takes the four calls it makes
+/// as an <see cref="ITreeCalls"/>: the product's are <see cref="FileSystemThread.Here"/>'s,
+/// which refuse any other thread, and the suite passes its own for its scratch, which
+/// the product's ban does not reach. <i>Corrected that day (previously a synchronous
+/// <c>Remove</c> on the caller's thread).</i>
+/// </para>
 /// </remarks>
 internal static class TreeDelete
 {
     /// <summary>
-    /// Deletes a directory and everything under it, recording what would not go.
+    /// Deletes a directory and everything under it on the file-system thread, recording
+    /// what would not go.
     /// </summary>
     /// <param name="directory">The directory to remove. A path that does not exist is not a failure.</param>
     /// <param name="failures">
     /// Every node that could not be deleted, one line each, already indented for
-    /// a report. The list is appended to, not cleared.
+    /// a report. The list is appended to, not cleared, and it is complete once the
+    /// returned task is.
     /// </param>
-    public static void Remove(string directory, List<string> failures)
+    /// <returns>The walk.</returns>
+    public static Task RemoveAsync(string directory, List<string> failures)
     {
         ArgumentNullException.ThrowIfNull(directory);
         ArgumentNullException.ThrowIfNull(failures);
+
+        return FileSystemThread.RunAsync(() => Walk(directory, failures, OnTheFileSystemThread.Instance));
+    }
+
+    /// <summary>
+    /// The product's walk inside an item already running on the file-system thread, for a
+    /// walk that deletes a tree as one step of a larger one.
+    /// </summary>
+    /// <param name="directory">The directory to remove. A path that does not exist is not a failure.</param>
+    /// <param name="failures">Every node that could not be deleted, appended to.</param>
+    /// <exception cref="InvalidOperationException">The caller is not on the file-system thread.</exception>
+    internal static void RemoveHere(string directory, List<string> failures) =>
+        Walk(directory, failures, OnTheFileSystemThread.Instance);
+
+    /// <summary>
+    /// The walk itself, on the calling thread, through the calls it is handed.
+    /// </summary>
+    /// <param name="directory">The directory to remove. A path that does not exist is not a failure.</param>
+    /// <param name="failures">Every node that could not be deleted, appended to.</param>
+    /// <param name="calls">
+    /// The listings and deletions the walk makes. The product's are the file-system
+    /// thread's, through <see cref="RemoveAsync"/>, and refuse any other thread.
+    /// </param>
+    internal static void Walk(string directory, List<string> failures, ITreeCalls calls)
+    {
+        ArgumentNullException.ThrowIfNull(directory);
+        ArgumentNullException.ThrowIfNull(failures);
+        ArgumentNullException.ThrowIfNull(calls);
 
         if (IsReparsePoint(directory))
         {
@@ -128,19 +170,19 @@ internal static class TreeDelete
             // removed AS A LINK. Descending into one would delete files that
             // are not under the tree this call was given, on a path a caller
             // named -- see the remarks above.
-            RemoveOneDirectory(directory, failures);
+            RemoveOneDirectory(directory, failures, calls);
             return;
         }
 
-        foreach (var file in SafeEnumerate(() => Directory.EnumerateFiles(directory)))
+        foreach (var file in SafeEnumerate(() => calls.Files(directory)))
         {
             try
             {
-                File.Delete(file);
+                calls.DeleteFile(file);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
-                var second = RetryWithoutTheReadOnlyAttribute(file, failure);
+                var second = RetryWithoutTheReadOnlyAttribute(file, failure, calls);
 
                 if (second is not null)
                 {
@@ -149,14 +191,14 @@ internal static class TreeDelete
             }
         }
 
-        foreach (var child in SafeEnumerate(() => Directory.EnumerateDirectories(directory)))
+        foreach (var child in SafeEnumerate(() => calls.Directories(directory)))
         {
-            Remove(child, failures);
+            Walk(child, failures, calls);
         }
 
         // Post-order: a directory cannot be removed while it still holds
         // entries, so this is the last thing that happens at every level.
-        RemoveOneDirectory(directory, failures);
+        RemoveOneDirectory(directory, failures, calls);
     }
 
     /// <summary>
@@ -237,8 +279,9 @@ internal static class TreeDelete
     /// </remarks>
     /// <param name="path">The file or directory the first delete refused.</param>
     /// <param name="first">What that delete threw.</param>
+    /// <param name="calls">The deletions to retry with.</param>
     /// <returns>The failure to report, or <see langword="null"/> if the node is gone.</returns>
-    private static Exception? RetryWithoutTheReadOnlyAttribute(string path, Exception first)
+    private static Exception? RetryWithoutTheReadOnlyAttribute(string path, Exception first, ITreeCalls calls)
     {
         try
         {
@@ -262,11 +305,11 @@ internal static class TreeDelete
         {
             if (Directory.Exists(path))
             {
-                Directory.Delete(path);
+                calls.DeleteEmptyDirectory(path);
             }
             else
             {
-                File.Delete(path);
+                calls.DeleteFile(path);
             }
 
             return null;
@@ -282,11 +325,11 @@ internal static class TreeDelete
     }
 
     /// <summary>Removes one directory, recording it if it will not go.</summary>
-    private static void RemoveOneDirectory(string directory, List<string> failures)
+    private static void RemoveOneDirectory(string directory, List<string> failures, ITreeCalls calls)
     {
         try
         {
-            Directory.Delete(directory);
+            calls.DeleteEmptyDirectory(directory);
         }
         catch (DirectoryNotFoundException)
         {
@@ -296,7 +339,7 @@ internal static class TreeDelete
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
-            var second = RetryWithoutTheReadOnlyAttribute(directory, failure);
+            var second = RetryWithoutTheReadOnlyAttribute(directory, failure, calls);
 
             if (second is not null)
             {
@@ -314,7 +357,7 @@ internal static class TreeDelete
     /// what it enumerates, and a lazy enumerator over a directory being emptied
     /// under it is undefined.
     /// </remarks>
-    private static IReadOnlyList<string> SafeEnumerate(Func<IEnumerable<string>> enumerate)
+    private static IReadOnlyList<string> SafeEnumerate(Func<IReadOnlyList<string>> enumerate)
     {
         try
         {
@@ -325,4 +368,47 @@ internal static class TreeDelete
             return [];
         }
     }
+
+    /// <summary>The product's calls: the file-system thread's, which refuse any other thread.</summary>
+    private sealed class OnTheFileSystemThread : ITreeCalls
+    {
+        public static readonly OnTheFileSystemThread Instance = new();
+
+        public IReadOnlyList<string> Files(string directory) => FileSystemThread.Here.Files(directory);
+
+        public IReadOnlyList<string> Directories(string directory) => FileSystemThread.Here.Directories(directory);
+
+        public void DeleteFile(string path) => FileSystemThread.Here.DeleteFile(path);
+
+        public void DeleteEmptyDirectory(string path) => FileSystemThread.Here.DeleteEmptyDirectory(path);
+    }
+}
+
+/// <summary>
+/// The four calls <see cref="TreeDelete"/>'s walk makes: list a directory's files and its
+/// directories, delete a file and delete an empty directory.
+/// </summary>
+/// <remarks>
+/// The product's are <see cref="FileSystemThread.Here"/>'s, which the product's ban keeps
+/// on the file-system thread. The suite hands the walk its own, for the scratch it removes.
+/// </remarks>
+internal interface ITreeCalls
+{
+    /// <summary>The files directly in a directory, by full path.</summary>
+    /// <param name="directory">The directory.</param>
+    /// <returns>Their paths, read to the end.</returns>
+    IReadOnlyList<string> Files(string directory);
+
+    /// <summary>The directories directly in a directory, by full path.</summary>
+    /// <param name="directory">The directory.</param>
+    /// <returns>Their paths, read to the end.</returns>
+    IReadOnlyList<string> Directories(string directory);
+
+    /// <summary>Deletes a file.</summary>
+    /// <param name="path">The file.</param>
+    void DeleteFile(string path);
+
+    /// <summary>Deletes an empty directory.</summary>
+    /// <param name="path">The directory.</param>
+    void DeleteEmptyDirectory(string path);
 }

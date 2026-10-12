@@ -5,6 +5,7 @@ using System.Buffers;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using BrowserAI.Registration;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.App;
 
@@ -61,7 +62,7 @@ internal static class StatusReport
 
         if (directory is { Length: > 0 })
         {
-            _ = Directory.CreateDirectory(directory);
+            _ = await FileSystemThread.CreateDirectoryAsync(directory).ConfigureAwait(false);
         }
 
         // The apartment of the thread the shell's calls run on, asked of one such thread.

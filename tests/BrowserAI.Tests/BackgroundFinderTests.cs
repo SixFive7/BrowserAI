@@ -84,7 +84,7 @@ internal sealed class BackgroundFinderTests
 
         // An updater that cannot be looked for is read as none, and the log says so.
         seams.UpdaterUnreadable = true;
-        BackgroundRecord.Clear(settings.RecordPath);
+        await BackgroundRecord.ClearAsync(settings.RecordPath);
 
         await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Missing, TaskName, null));
         // 23 since 2026-10-10, round 2 of the texts review, #195 (previously 1, which the

@@ -1306,7 +1306,9 @@ internal sealed class SessionManager : IAsyncDisposable
         // root -- see MaintenanceLock. Nothing below may run while a reinstall
         // holds it exclusively, and once this handle exists no reinstall can
         // take it away.
-        var claim = MaintenanceLock.TakeShared(_environment.Paths.BrowsersDirectory, out var denial, out var denialDetail);
+        var shared = await MaintenanceLock.TakeSharedAsync(_environment.Paths.BrowsersDirectory).ConfigureAwait(false);
+        var claim = shared.Lock;
+        var (denial, denialDetail) = (shared.Denial, shared.Detail);
 
         // Ownership moves to the session when OpenAsync is reached -- the local
         // is nulled at that moment, which is what makes the finally below cover
@@ -1380,7 +1382,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
             try
             {
-                SessionLayout.Create(location);
+                await SessionLayout.CreateAsync(location).ConfigureAwait(false);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or NotSupportedException)
             {
@@ -1432,7 +1434,9 @@ internal sealed class SessionManager : IAsyncDisposable
         // ⚠️ FIRST, exactly as `init` does and for the same reason: a resume
         // opens a browser into an existing profile under the same tree, so it is
         // exactly as unsafe while a reinstall is replacing it.
-        var claim = MaintenanceLock.TakeShared(_environment.Paths.BrowsersDirectory, out var denial, out var denialDetail);
+        var shared = await MaintenanceLock.TakeSharedAsync(_environment.Paths.BrowsersDirectory).ConfigureAwait(false);
+        var claim = shared.Lock;
+        var (denial, denialDetail) = (shared.Denial, shared.Detail);
 
         // Ownership moves at the same point `init` moves it, by the same
         // mechanism. See there.
@@ -2440,7 +2444,7 @@ internal sealed class SessionManager : IAsyncDisposable
         _ = text
             .Append("  total: ").Append(Sizes.Describe(contents.Bytes)).Append(" in ")
             .Append(contents.Files.ToString(CultureInfo.InvariantCulture)).Append(" file(s)\n")
-            .Append("  ").Append(OutputSize(location)).Append('\n');
+            .Append("  ").Append(await OutputSizeAsync(location).ConfigureAwait(false)).Append('\n');
 
         if (contents.LastWritten is { } written)
         {
@@ -2690,10 +2694,10 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     /// <param name="location">The session directory.</param>
     /// <returns>The line.</returns>
-    private static string OutputSize(SessionPath location)
+    private static async Task<string> OutputSizeAsync(SessionPath location)
     {
         var output = Path.Combine(location.FullPath, SessionLayout.OutputFolderName);
-        var (bytes, files) = SessionLayout.SizeAndFiles(output);
+        var (bytes, files) = await SessionLayout.SizeAndFilesAsync(output).ConfigureAwait(false);
 
         return $"output: {Sizes.Describe(bytes)} in {files.ToString(CultureInfo.InvariantCulture)} file(s) -- "
             + $"BrowserAI never deletes any of it, on any schedule or at any size; {SessionToolSurface.Destroy} is what removes a session and everything under it.";
@@ -2725,13 +2729,14 @@ internal sealed class SessionManager : IAsyncDisposable
             }
 
             found++;
-            var size = SessionLayout.SizeOnDisk(session.FullPath);
+            var size = await SessionLayout.SizeOnDiskAsync(session.FullPath).ConfigureAwait(false);
+            var output = await OutputSizeAsync(session).ConfigureAwait(false);
 
             lines.Add(
                 $"{session.FullPath}\n"
                 + $"  browser: {record.Browser}   size on disk: {Megabytes(size)}\n"
                 + $"  created: {Stamp(record.Created)}   last used: {Stamp(record.LastUsed)}\n"
-                + $"  {OutputSize(session)}\n"
+                + $"  {output}\n"
                 + $"  {InUse(session)}\n"
                 + $"  {SessionErrors.Recorded(record.Purpose)}");
         }
@@ -2839,7 +2844,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// 2026-08-20 at <b>0.035 ms</b> free and <b>0.049 ms</b>
     /// held
     /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report----measured-2026-08-20)),
-    /// against <b>0.6-2.3 ms</b> for the <see cref="SessionLayout.SizeOnDisk"/>
+    /// against <b>0.6-2.3 ms</b> for the <see cref="SessionLayout.SizeOnDiskAsync"/>
     /// recursive enumeration this same loop already performs for every entry --
     /// measured on the same day over a 310-file tree, and a session whose
     /// profile has been used is far larger than that. <b>It is a seventeenth of
@@ -2993,7 +2998,9 @@ internal sealed class SessionManager : IAsyncDisposable
         // reported the peer's own open files as "something still has them open".
         // The window is a full walk of a Chromium profile wide, not microseconds
         // (docs/reviews/2026-08-18-adversarial-locking.md, A1).
-        var size = SessionLayout.SizeOnDisk(location.FullPath);
+        // The size walk and both delete passes run on the file-system thread and are
+        // awaited, the maintainer's 79 c.
+        var size = await SessionLayout.SizeOnDiskAsync(location.FullPath).ConfigureAwait(false);
         var failures = new List<string>();
 
         // §E's one shared routine, which browserai_reinstall_browser also uses:
@@ -3007,14 +3014,14 @@ internal sealed class SessionManager : IAsyncDisposable
         // discarded because those two are in it by construction and neither is
         // news; the pass below is the one whose survivors the caller is told
         // about, and it re-tries anything this one could not take.
-        TreeDelete.Remove(location.FullPath, []);
+        await TreeDelete.RemoveAsync(location.FullPath, []).ConfigureAwait(false);
 
         // Release and finish inside one hold of the per-directory gate, so the
         // instant in which browserai.lock is unheld and still on disk is an
         // instant no peer's create-or-take can be inside.
-        await held.ReleaseAndDeleteAsync(() => TreeDelete.Remove(location.FullPath, failures)).ConfigureAwait(false);
+        await held.ReleaseAndDeleteAsync(() => TreeDelete.RemoveAsync(location.FullPath, failures)).ConfigureAwait(false);
 
-        _index.Forget(location);
+        await _index.ForgetAsync(location).ConfigureAwait(false);
         SessionToolLog.Destroyed(_logger, location.FullPath, failures.Count);
 
         var summary =
@@ -3309,7 +3316,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 tool,
                 _environment.Paths.BrowsersDirectory,
                 await MaintenanceLock.DescribeAsync(_environment.Paths.BrowsersDirectory).ConfigureAwait(false),
-                MaintenanceLock.ProgressOf(_environment.Paths.BrowsersDirectory)),
+                await MaintenanceLock.ProgressOfAsync(_environment.Paths.BrowsersDirectory).ConfigureAwait(false)),
             IsError: true);
 
     /// <summary>
@@ -3409,7 +3416,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolSurface.ReinstallBrowser,
                 root,
                 await MaintenanceLock.DescribeAsync(root).ConfigureAwait(false),
-                MaintenanceLock.ProgressOf(root));
+                await MaintenanceLock.ProgressOfAsync(root).ConfigureAwait(false));
         }
 
         return $"{SessionToolSurface.ReinstallBrowser} was not run: it needs this machine's browsers root to itself, and {claimants.Count.ToString(CultureInfo.InvariantCulture)} session(s) are holding it:\n"
@@ -4353,7 +4360,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// and it is deleted: nothing read it, and this line already carried its
     /// content to the only reader either had. <b>So the entries this returns are
     /// directories and nothing else.</b> They used to carry purpose, created,
-    /// last-used and a <see cref="SessionLayout.SizeOnDisk"/> per sibling -- a
+    /// last-used and a <see cref="SessionLayout.SizeOnDiskAsync"/> per sibling -- a
     /// recursive enumeration of every session under the root, on every session
     /// open -- and only the file printed them.
     /// </para>

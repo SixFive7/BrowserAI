@@ -187,7 +187,8 @@ internal static class RevisionPrune
                 held.Add(hold);
             }
 
-            return Sweep(browsersDirectory, manifest, logger, census ?? BrowserProcesses.RunningFrom);
+            // The sweep lists, weighs and deletes, all of it on the file-system thread (80 b).
+            return await FileSystemThread.RunAsync(() => Sweep(browsersDirectory, manifest, logger, census ?? BrowserProcesses.RunningFrom)).ConfigureAwait(false);
         }
         finally
         {
@@ -262,7 +263,7 @@ internal static class RevisionPrune
             var before = SizeOf(candidate);
             var failures = new List<string>();
 
-            TreeDelete.Remove(candidate, failures);
+            TreeDelete.RemoveHere(candidate, failures);
 
             var after = SizeOf(candidate);
             reclaimed += Math.Max(0, before - after);
@@ -354,7 +355,7 @@ internal static class RevisionPrune
     {
         try
         {
-            return [.. Directory.EnumerateDirectories(browsersDirectory)];
+            return FileSystemThread.Here.Directories(browsersDirectory);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -367,7 +368,7 @@ internal static class RevisionPrune
         try
         {
             return Directory.Exists(directory)
-                ? Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories).Sum(file => new FileInfo(file).Length)
+                ? FileSystemThread.Here.Files(directory, "*", SearchOption.AllDirectories).Sum(file => new FileInfo(file).Length)
                 : 0;
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Clients;
 
@@ -75,7 +76,7 @@ internal static class ClientRecordFile
                 return [];
             }
 
-            var found = Directory.EnumerateFiles(folder, pattern, new EnumerationOptions
+            var found = FileSystemThread.Here.Files(folder, pattern, new EnumerationOptions
             {
                 RecurseSubdirectories = true,
                 MaxRecursionDepth = 3,
@@ -168,7 +169,7 @@ internal static class ClientRecordFile
     {
         try
         {
-            return Directory.Exists(path) ? [.. Directory.EnumerateDirectories(path)] : [];
+            return Directory.Exists(path) ? FileSystemThread.Here.Directories(path) : [];
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {

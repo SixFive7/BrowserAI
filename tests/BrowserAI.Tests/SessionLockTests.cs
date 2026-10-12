@@ -85,18 +85,14 @@ internal sealed class SessionLockTests
     /// event-driven.
     /// </para>
     /// <para>
-    /// <b>Its three users are sized against three different defects and the
-    /// argument is the same for each.</b>
-    /// <see cref="AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate"/> is the
-    /// original;
-    /// <see cref="ADisposalArrivingDuringAReleaseAndDeleteWaitsForItInsteadOfLeakingTheHandle"/>
-    /// and
-    /// <see cref="AMutationArrivingDuringAReleaseAndDeleteWaitsForItRatherThanReadingAFieldItIsWriting"/>
-    /// were added 2026-08-24 for adversarial review B4, where the excluded
-    /// behaviour is a disposal that contends with nothing and returns in
-    /// microseconds, and the required behaviour is a wait that <b>cannot</b> end
-    /// until the thread doing the watching lets it -- so there is no load under
-    /// which the fixed code reaches this bound at all.
+    /// <b>Its users are <see cref="AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate"/>
+    /// and <see cref="ATransientHandleIsWaitedOutByTheHoldAndAPermanentOneIsStillReported"/></b>,
+    /// each sized against the defect it excludes. <i>Corrected 2026-10-12
+    /// (previously "Its three users are sized against three different defects", with the
+    /// two B4 arms that watched a disposal and a mutation stay blocked from inside a
+    /// synchronous delete): the maintainer's 79 c took the delete out of the in-process
+    /// lock, and the two arms that replaced them await, with the in-process hang detector,
+    /// what no longer waits.</i>
     /// </para>
     /// </remarks>
     private static readonly TimeSpan StillBlocked = TimeSpan.FromSeconds(3);
@@ -1441,56 +1437,34 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
-    /// A second disposal arriving while <c>ReleaseAndDelete</c> is mid-delete
-    /// waits for it, instead of disposing the gate out from under it and
-    /// leaving <c>browserai.lock</c> held by a <c>FileStream</c> nothing will
-    /// ever close.
+    /// A second disposal arriving while <c>ReleaseAndDelete</c> deletes the tree returns
+    /// at once and disposes nothing, so the release finishes with the gate and the hold
+    /// it took and <c>browserai.lock</c> is left held by nobody.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>This is finding B4 of
     /// [the 2026-08-18 adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
     /// and it is the one whose failure does not heal.</b> <c>SessionManager</c>
-    /// serialises nothing -- <c>_live</c> is a <c>ConcurrentDictionary</c> and is
-    /// the only synchronisation there is -- so two tool calls naming one session
-    /// run concurrently by design. A <c>_disposed</c> check taken <i>outside</i>
-    /// the exclusion is a decision made by reading a field another thread is
-    /// writing, and the disposal disposes the very object a blocked caller would
-    /// wake holding: after that, every <c>TryAcquire</c> on the directory
-    /// answers <c>Held</c> naming a pid with no session, for the life of the
-    /// process, while the destroy reports a partial failure blaming
-    /// <i>"something still has them open"</i>.
+    /// serialises nothing, so two tool calls naming one session run concurrently by
+    /// design, and a disposal that disposed the gate under a release would leave every
+    /// later <c>TryAcquire</c> on the directory answering <c>Held</c> naming a pid with
+    /// no session, for the life of the process.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-26 (previously
+    /// ⚠️ <b>Rewritten 2026-10-12 for the maintainer's 79 c</b>, in his words verbatim:
+    /// <i>"78-82 your recommendation"</i>. The delete runs outside the in-process lock
+    /// since that day, so the second disposal no longer waits for it: it meets the mark
+    /// the release set first and returns. What the arm holds is the half of B4 that never
+    /// moved: nothing leaks. <i>Corrected that day (previously
     /// <c>ADisposalArrivingDuringAReleaseAndDeleteWaitsForItInsteadOfLeakingTheHandle</c>,
-    /// which forced the interleaving through <c>Rewrite</c>'s <c>update</c>
-    /// delegate).</b> There is no <c>Rewrite</c> and no <c>update</c> delegate:
-    /// a mutation is a single <c>INSERT</c> with no caller code inside it. The
-    /// one seam left in a path that holds the exclusion is
-    /// <c>ReleaseAndDelete</c>'s own <c>delete</c>, so what this now forces is
-    /// the other pairing -- <c>Dispose</c> against <c>ReleaseAndDelete</c> -- and
-    /// its sibling below forces a mutation against the same delete.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Coverage bounded, and stated, not implied.</b> The third
-    /// pairing -- a <i>disposal</i> arriving during a <i>mutation</i> -- has no
-    /// deterministic seam left, because the mutation no longer runs any caller's
-    /// code. What holds it is the same private <c>Lock</c> these two prove is
-    /// taken by both disposal paths and by every writing path, and nothing here
-    /// can watch that pairing interleave.
-    /// </para>
-    /// <para>
-    /// <b>Which way the join goes is the assertion, and load can only make it
-    /// safer.</b> Against the defect the second disposal contends with nothing
-    /// and returns in microseconds; against the fix it <i>cannot</i> return,
-    /// because it takes the same per-session lock the delete is holding. There
-    /// is no load under which the fixed code reaches this bound at all.
+    /// which watched the disposal stay blocked from inside a synchronous delete, with two
+    /// waits the ban kept at the maintainer's 76 b; this arm awaits, and they are gone).</i>
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ADisposalArrivingDuringAReleaseAndDeleteWaitsForItInsteadOfLeakingTheHandle()
+    public async Task ADisposalArrivingDuringAReleaseAndDeleteLeavesTheLockToItAndNothingLeaks()
     {
         using var scratch = await ScratchDirectory.CreateAsync("session-destroy-races-disposal");
         var (_, path) = NewSession(scratch, "destroy-races-disposal");
@@ -1499,164 +1473,105 @@ internal sealed class SessionLockTests
         await Assert.That(taken.Taken).IsTrue();
 
         var held = taken.Acquired!;
+        var disposedDuringTheDelete = false;
 
-        using var disposalReached = new ManualResetEventSlim(false);
-        var disposalEnded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var disposal = new Thread(() =>
+        await held.ReleaseAndDeleteAsync(async () =>
         {
-            // Set BEFORE the call, so "the thread never ran" is a different
-            // observation from "the disposal returned", and the join below
-            // cannot be satisfied by a scheduler that ignored this thread.
-            disposalReached.Set();
+            // Awaited with the in-process hang detector and nothing shorter: against a
+            // delete that held the in-process lock, this disposal waits for the delete it
+            // is waiting inside, and only the detector ends it.
+            await Task.Run(held.Dispose).WaitAsync(TestDefaults.InProcessHang);
+            disposedDuringTheDelete = true;
 
-            try
-            {
-                held.Dispose();
-            }
-            finally
-            {
-                _ = disposalEnded.TrySetResult();
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "b4-second-disposal",
-        };
-
-        var disposalReturnedMidDelete = false;
-
-        await held.ReleaseAndDeleteAsync(() =>
-        {
-            disposal.Start();
-#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the product's delete callback is synchronous and runs under its lock, and the race is watched from inside it.
-            _ = disposalReached.Wait(TestDefaults.InProcessHang);
-#pragma warning restore RS0030
-
-            // True is the defect: the second disposal ran to completion -- and
-            // therefore disposed the gate -- while this one was between its own
-            // check and its own release.
-#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the product's delete callback is synchronous and runs under its lock, and the race is watched from inside it.
-            disposalReturnedMidDelete = disposal.Join(StillBlocked);
-#pragma warning restore RS0030
-
-            TreeDelete.Remove(path.FullPath, []);
+            await TreeDelete.RemoveAsync(path.FullPath, []);
         });
 
-        // Unbounded would be a hang; this is the suite's in-process hang
-        // detector and nothing asserts on it beyond "it finished". Awaited since
-        // 2026-10-11 (previously a join of the thread).
-        await disposalEnded.Task.WaitAsync(TestDefaults.InProcessHang);
+        await Assert.That(disposedDuringTheDelete).IsTrue();
 
-        await Assert.That(disposalReturnedMidDelete).IsFalse()
-            .Because(
-                "a disposal that runs while browserai_destroy's release-and-delete is between its own check and its own "
-                + "release disposes the gate underneath it -- after which the release throws, the handle on browserai.lock "
-                + "is never closed, and every later TryAcquire on this directory answers Held naming a pid with no session "
-                + "(adversarial review B4)");
-
-        // THE LEAK ITSELF. Both threads are done and the session is released, so
-        // nothing may still be holding the guard -- and a stranger's exclusive
-        // open is the same question a competing BrowserAI's TryAcquire asks.
+        // THE LEAK ITSELF. Both are done and the session is released, so nothing may
+        // still hold the guard, and a stranger's exclusive open is the question a
+        // competing BrowserAI's TryAcquire asks.
         await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsTrue()
-            .Because($"'{path.LockFile}' is still held after the session that owned it was disposed, which is the end state finding B4 describes");
+            .Because($"'{path.LockFile}' is still held after the session that owned it was released, which is the end state finding B4 describes");
     }
 
     /// <summary>
-    /// A mutation arriving while <c>ReleaseAndDelete</c> is mid-delete waits for
-    /// it, instead of racing the disposal it is being torn down by.
+    /// Every writer is refused once <c>ReleaseAndDelete</c> has marked the session, and
+    /// nothing it was handed reaches the store, proved with the release held at the
+    /// gate between its mark and its close.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The other disposal path, and the fix is worth nothing if it only
-    /// covers one.</b> <c>browserai_destroy</c> reaches <c>Dispose</c> through
-    /// <c>LiveSession.DisposeAsync</c> for a session this process is driving and
-    /// <c>ReleaseAndDelete</c> for the record it then re-takes, so a per-session
-    /// lock that only <c>Dispose</c> takes closes half of B4 and leaves the half
-    /// that unlinks the directory.
+    /// <b>Added 2026-10-12 for the maintainer's 79 c</b>, in his words verbatim:
+    /// <i>"78-82 your recommendation"</i>, and his condition, <i>"Prove from tests, not
+    /// from reading, that writers already refuse once the session is marked"</i>. The
+    /// release marks the session before it awaits the per-directory gate, so this arm
+    /// holds that gate itself: the release has marked and is waiting, and the store is
+    /// still open, which is the widest the window can be.
     /// </para>
     /// <para>
-    /// <b>The seam is again the product's own delegate</b> -- <c>delete</c> runs
-    /// after the handles are closed and before the gate is released -- and the
-    /// direction of the join is again the whole assertion. Against the defect
-    /// the mutation is refused <i>at once</i>, because <c>_disposed</c> was set at
-    /// the top of <c>ReleaseAndDelete</c> and the mutation read it without
-    /// synchronisation; against the fix it cannot even reach that check until the
-    /// disposal has finished. <b>Both end in an
-    /// <see cref="ObjectDisposedException"/>, and that is the point:</b> the same
-    /// answer arrived at by reading a field another thread is writing is a race
-    /// whose <i>other</i> outcome is the leak above. The exclusion is the
-    /// property; the refusal is what it then reports.
+    /// <b>A settle is dropped, never thrown</b>: its answer is already on its way back
+    /// to the caller. Every other writer throws <see cref="ObjectDisposedException"/>.
+    /// The store is read through a second connection before and after, and it holds the
+    /// same rows.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AMutationArrivingDuringAReleaseAndDeleteWaitsForItRatherThanReadingAFieldItIsWriting()
+    public async Task EveryWriterIsRefusedOnceAReleaseAndDeleteHasMarkedTheSession()
     {
-        using var scratch = await ScratchDirectory.CreateAsync("session-rewrite-races-destroy");
-        var (_, path) = NewSession(scratch, "rewrite-races-destroy");
+        using var scratch = await ScratchDirectory.CreateAsync("session-release-refuses-writers");
+        var (_, path) = NewSession(scratch, "release-refuses-writers");
 
-        var taken = await SessionLock.TryAcquireAsync(path, Request("about to be released and deleted"), NullLogger.Instance);
+        var taken = await SessionLock.TryAcquireAsync(path, Request("about to be released with writers knocking"), NullLogger.Instance);
         await Assert.That(taken.Taken).IsTrue();
 
         var held = taken.Acquired!;
+        var row = held.Append("browser_navigate", "a call made before the release");
+        var before = await RowsInAsync(path);
 
-        using var rewriteReached = new ManualResetEventSlim(false);
-        var rewriteEnded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Exception? rewriteFailure = null;
+        using var gate = MachineMutex.Create(path.MutexName);
+        var hold = await gate.HoldAsync(LockScopes.PerDirectoryGate);
+        Task release;
 
-        var rewrite = new Thread(() =>
+        try
         {
-            rewriteReached.Set();
+            // Marked before its first await: the release now waits for the gate this arm holds.
+            release = held.ReleaseAndDeleteAsync(() => TreeDelete.RemoveAsync(path.FullPath, []));
 
-            try
-            {
-                held.AppendPurpose("a purpose set while the session was being destroyed");
-            }
-#pragma warning disable CA1031 // Whatever came out is evidence; the assertion below says which failure is the contract.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                rewriteFailure = failure;
-            }
-            finally
-            {
-                _ = rewriteEnded.TrySetResult();
-            }
-        })
+            await Assert.That(release.IsCompleted).IsFalse();
+
+            _ = Assert.Throws<ObjectDisposedException>(() => _ = held.Append("browser_click", "a call made after the mark"));
+            _ = Assert.Throws<ObjectDisposedException>(() => held.AppendPurpose("a purpose set after the mark"));
+            _ = Assert.Throws<ObjectDisposedException>(() => held.AppendLifecycle(RecordFields.Closed, "a close set after the mark"));
+            _ = Assert.Throws<ObjectDisposedException>(() => _ = held.AppendSettings("{\"after\":\"the mark\"}"));
+            held.Settle(row, SessionStore.Successful, failure: null);
+
+            await Assert.That(await RowsInAsync(path)).IsEqualTo(before)
+                .Because("a writer that arrived after the release marked the session wrote to its store");
+        }
+        finally
         {
-            IsBackground = true,
-            Name = "b4-set-purpose",
-        };
+            await hold.DisposeAsync();
+        }
 
-        var rewriteReturnedMidDelete = false;
+        await release.WaitAsync(TestDefaults.InProcessHang);
 
-        await held.ReleaseAndDeleteAsync(() =>
-        {
-            rewrite.Start();
-#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the product's delete callback is synchronous and runs under its lock, and the race is watched from inside it.
-            _ = rewriteReached.Wait(TestDefaults.InProcessHang);
-#pragma warning restore RS0030
+        await Assert.That(Directory.Exists(path.FullPath)).IsFalse();
+    }
 
-            // True is the defect: the mutation reached a decision about a
-            // half-torn-down lock, on a field the thread running this delete is
-            // in the middle of writing.
-#pragma warning disable RS0030 // Kept at the maintainer's 76 b: the product's delete callback is synchronous and runs under its lock, and the race is watched from inside it.
-            rewriteReturnedMidDelete = rewrite.Join(StillBlocked);
-#pragma warning restore RS0030
+    /// <summary>The rows a session's store holds, read through a connection of the arm's own.</summary>
+    /// <param name="path">The session.</param>
+    /// <returns>Its statements, then its log rows with each one's outcome.</returns>
+    private static Task<string> RowsInAsync(SessionPath path)
+    {
+        using var store = SessionStore.OpenForReading(path.DataFile);
 
-            TreeDelete.Remove(path.FullPath, []);
-        });
+        var text = string.Join('\n', store.Statements().Select(static statement => $"{statement.Field}={statement.Value}"))
+            + "\n--\n"
+            + string.Join('\n', store.Log().Select(static entry => $"{entry.Id}:{entry.Tool}:{entry.Outcome}"));
 
-        await rewriteEnded.Task.WaitAsync(TestDefaults.InProcessHang);
-
-        await Assert.That(rewriteReturnedMidDelete).IsFalse()
-            .Because(
-                "browserai_destroy's release-and-delete and browserai_change_purpose's rewrite are the two halves of "
-                + "adversarial review B4, and a rewrite that answers while the delete is still running answered by "
-                + "reading _disposed unsynchronised -- the same read whose other outcome leaks the handle");
-
-        // What it reports once it is allowed to look: the session is gone.
-        await Assert.That(rewriteFailure).IsTypeOf<ObjectDisposedException>();
+        return Task.FromResult(text);
     }
 
     /// <summary>
@@ -2140,7 +2055,7 @@ internal sealed class SessionLockTests
     {
         var directory = Path.Combine(scratch.Path, name);
         var path = SessionPath.For(directory);
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         return (directory, path);
     }

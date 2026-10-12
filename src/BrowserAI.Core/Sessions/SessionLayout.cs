@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Runtime;
+
 namespace BrowserAI.Sessions;
 
 /// <summary>
@@ -198,14 +200,18 @@ internal static class SessionLayout
     /// </para>
     /// </remarks>
     /// <param name="path">The canonicalised session directory.</param>
-    public static void Create(SessionPath path)
+    /// <returns>The four directories, made in one item on the file-system thread since the maintainer's 81 c.</returns>
+    public static Task CreateAsync(SessionPath path)
     {
         ArgumentNullException.ThrowIfNull(path);
 
-        _ = Directory.CreateDirectory(path.FullPath);
-        _ = Directory.CreateDirectory(Path.Combine(path.FullPath, ProfileFolderName));
-        _ = Directory.CreateDirectory(Path.Combine(path.FullPath, OutputFolderName));
-        _ = Directory.CreateDirectory(Path.Combine(path.FullPath, DownloadsFolderName));
+        return FileSystemThread.RunAsync(() =>
+        {
+            _ = FileSystemThread.Here.CreateDirectory(path.FullPath);
+            _ = FileSystemThread.Here.CreateDirectory(Path.Combine(path.FullPath, ProfileFolderName));
+            _ = FileSystemThread.Here.CreateDirectory(Path.Combine(path.FullPath, OutputFolderName));
+            _ = FileSystemThread.Here.CreateDirectory(Path.Combine(path.FullPath, DownloadsFolderName));
+        });
     }
 
     /// <summary>What a directory tree adds up to, in bytes.</summary>
@@ -215,8 +221,8 @@ internal static class SessionLayout
     /// answer the call it was asked.
     /// </remarks>
     /// <param name="directory">The tree to measure.</param>
-    /// <returns>The total size of every file beneath it.</returns>
-    public static long SizeOnDisk(string directory) => SizeAndFiles(directory).Bytes;
+    /// <returns>The total size of every file beneath it, measured on the file-system thread.</returns>
+    public static async Task<long> SizeOnDiskAsync(string directory) => (await SizeAndFilesAsync(directory).ConfigureAwait(false)).Bytes;
 
     /// <summary>What a directory tree adds up to, in bytes and in files.</summary>
     /// <remarks>
@@ -229,16 +235,22 @@ internal static class SessionLayout
     /// this answer already pays.
     /// </remarks>
     /// <param name="directory">The tree to measure.</param>
+    /// <returns>The total size and the file count, out of one walk on the file-system thread.</returns>
+    public static Task<(long Bytes, int Files)> SizeAndFilesAsync(string directory) =>
+        FileSystemThread.RunAsync(() => SizeAndFilesHere(directory));
+
+    /// <summary>The walk of <see cref="SizeAndFilesAsync"/>, on the file-system thread.</summary>
+    /// <param name="directory">The tree to measure.</param>
     /// <returns>The total size and the file count.</returns>
-    public static (long Bytes, int Files) SizeAndFiles(string directory)
+    internal static (long Bytes, int Files) SizeAndFilesHere(string directory)
     {
         var bytes = 0L;
         var files = 0;
 
         try
         {
-            foreach (var file in new DirectoryInfo(directory)
-                .EnumerateFiles("*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true }))
+            foreach (var file in FileSystemThread.Here.FilesWithSizes(
+                directory, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true }))
             {
                 bytes += file.Length;
                 files++;

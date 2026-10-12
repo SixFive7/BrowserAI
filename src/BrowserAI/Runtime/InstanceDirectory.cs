@@ -75,7 +75,7 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b>What removes it is a held marker, and the reason is that a sharing
 /// violation is a fact the kernel enforces and not an inference.</b>
-/// <see cref="CreateFresh"/> opens <see cref="MarkerFileName"/> inside the
+/// <see cref="CreateFreshAsync"/> opens <see cref="MarkerFileName"/> inside the
 /// directory it just created and holds it for the whole life of the process --
 /// the same mechanism <c>Updates.LiveInstances</c>, <c>Sessions.SessionLock</c>
 /// and <see cref="MaintenanceLock"/> all already use, and the kernel releases it
@@ -121,7 +121,7 @@ internal static class InstanceDirectory
 
     /// <summary>
     /// How recently a directory may have been touched and still be swept. It
-    /// covers the instants between <see cref="CreateFresh"/> creating a directory
+    /// covers the instants between <see cref="CreateFreshAsync"/> creating a directory
     /// and the same method opening its marker two statements later.
     /// </summary>
     private static readonly TimeSpan YoungEnoughToStillBeStarting = SessionTimes.InstanceDirectoryYoungAge;
@@ -145,25 +145,26 @@ internal static class InstanceDirectory
     /// </summary>
     /// <remarks>
     /// <b>The caller must dispose the answer, and must dispose it before
-    /// <see cref="Delete"/>.</b> The marker is a file inside the tree being
+    /// <see cref="DeleteAsync"/>.</b> The marker is a file inside the tree being
     /// walked, so a caller that deleted first would have its own handle named
     /// back to it as the one node that would not go.
     /// </remarks>
     /// <param name="paths">Where instance directories live.</param>
     /// <param name="logger">Where a directory that would not go is reported.</param>
     /// <returns>The new directory and the marker held inside it.</returns>
-    public static InstanceDirectoryHold CreateFresh(IAppPaths paths, ILogger logger)
+    public static async Task<InstanceDirectoryHold> CreateFreshAsync(IAppPaths paths, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(paths);
         ArgumentNullException.ThrowIfNull(logger);
 
-        Sweep(paths.InstanceRoot, logger);
+        // The sweep lists, renames and deletes, all of it on the file-system thread (80 b, 81 c).
+        await FileSystemThread.RunAsync(() => Sweep(paths.InstanceRoot, logger)).ConfigureAwait(false);
 
         var directory = Path.Combine(
             paths.InstanceRoot,
             $"{Environment.ProcessId}-{Guid.NewGuid():N}");
 
-        _ = Directory.CreateDirectory(directory);
+        _ = await FileSystemThread.CreateDirectoryAsync(directory).ConfigureAwait(false);
 
         var marker = Path.Combine(directory, MarkerFileName);
 
@@ -209,13 +210,32 @@ internal static class InstanceDirectory
     /// </remarks>
     /// <param name="directory">The directory to remove.</param>
     /// <param name="logger">Where what survived is reported.</param>
-    public static void Delete(string directory, ILogger logger)
+    public static async Task DeleteAsync(string directory, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(directory);
         ArgumentNullException.ThrowIfNull(logger);
 
         var failures = new List<string>();
-        TreeDelete.Remove(directory, failures);
+        await TreeDelete.RemoveAsync(directory, failures).ConfigureAwait(false);
+        Report(directory, failures, logger);
+    }
+
+    /// <summary>Removes a claimed directory inside the sweep, on the file-system thread.</summary>
+    /// <param name="directory">The claimed directory.</param>
+    /// <param name="logger">Where what would not go is said.</param>
+    private static void DeleteHere(string directory, ILogger logger)
+    {
+        var failures = new List<string>();
+        TreeDelete.RemoveHere(directory, failures);
+        Report(directory, failures, logger);
+    }
+
+    /// <summary>Says which nodes of a directory would not go, when any would not.</summary>
+    /// <param name="directory">The directory.</param>
+    /// <param name="failures">What would not go.</param>
+    /// <param name="logger">Where it is said.</param>
+    private static void Report(string directory, List<string> failures, ILogger logger)
+    {
 
         if (failures.Count is not 0)
         {
@@ -239,7 +259,7 @@ internal static class InstanceDirectory
 
         var cutoff = DateTime.UtcNow - YoungEnoughToStillBeStarting;
 
-        foreach (var directory in Directory.EnumerateDirectories(root))
+        foreach (var directory in FileSystemThread.Here.Directories(root))
         {
             // ⚠️ FIRST, because it is the only question in this loop the kernel
             // answers and not one this code infers. A held marker is a live
@@ -272,7 +292,7 @@ internal static class InstanceDirectory
                 continue;
             }
 
-            Delete(claimed, logger);
+            DeleteHere(claimed, logger);
         }
     }
 
@@ -353,7 +373,7 @@ internal static class InstanceDirectory
 
         try
         {
-            Directory.Move(directory, claimed);
+            FileSystemThread.Here.MoveDirectory(directory, claimed);
             return claimed;
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -370,7 +390,7 @@ internal static class InstanceDirectory
 /// <remarks>
 /// <para>
 /// <b>Disposing it releases the marker and nothing else.</b> The directory
-/// itself is removed by <see cref="InstanceDirectory.Delete"/> on the clean exit
+/// itself is removed by <see cref="InstanceDirectory.DeleteAsync"/> on the clean exit
 /// path, or by the next run's sweep on the path where this process was
 /// terminated from outside and ran no code at all -- which is the case the whole
 /// sweep exists for.

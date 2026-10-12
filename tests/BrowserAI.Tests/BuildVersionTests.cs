@@ -112,7 +112,7 @@ internal sealed partial class BuildVersionTests
         // and until step 18 it would have said 0.0.0.0 for the entire 0.x line.
         using var scratch = await ScratchDirectory.CreateAsync("version-stamp");
         var path = SessionPath.For(Path.Combine(scratch.Path, "stamped"));
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         var acquired = await SessionLock.TryAcquireAsync(
             path,

@@ -719,7 +719,7 @@ internal static class SessionProbe
     /// <returns>2 if this process was never killed, which is the host's failure.</returns>
     public static async Task<int> HoldBrowsersClaimAsync(string browsersRoot, string readyPath)
     {
-        using var claim = BrowserAI.Runtime.MaintenanceLock.TakeShared(browsersRoot, out _, out _);
+        using var claim = (await BrowserAI.Runtime.MaintenanceLock.TakeSharedAsync(browsersRoot)).Lock;
 
         await WriteAsync(readyPath, new JsonObject
         {

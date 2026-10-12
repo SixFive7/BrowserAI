@@ -194,8 +194,8 @@ internal sealed class FakeSessions : IPageSessions
         return Task.FromResult(Snapshot);
     }
 
-    public SessionsSnapshot Peek() =>
-        Snapshot with { Servers = [.. Snapshot.Servers.Select(static server => server with { Conversation = null })] };
+    public Task<SessionsSnapshot> PeekAsync() =>
+        Task.FromResult(Snapshot with { Servers = [.. Snapshot.Servers.Select(static server => server with { Conversation = null })] });
 }
 
 /// <summary>The session folders, scripted, and how many measurements were asked for.</summary>

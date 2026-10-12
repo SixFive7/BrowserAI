@@ -211,16 +211,16 @@ internal sealed class BackgroundRecordTests
 
         _ = await BackgroundRecord.StartedAsync(path, "9.9.9-record-tests", "image", StartedAt);
 
-        BackgroundRecord.Clear(path);
+        await BackgroundRecord.ClearAsync(path);
 
         await Assert.That(File.Exists(path)).IsFalse();
         await Assert.That(await BackgroundRecord.ReadAsync(path)).IsNull();
 
         // Again, with the folder still there and the file gone.
-        BackgroundRecord.Clear(path);
+        await BackgroundRecord.ClearAsync(path);
 
         // And with no folder at all.
-        BackgroundRecord.Clear(Path.Combine(data.Path, "no-such-folder", BackgroundRecord.DirectoryName, "never.json"));
+        await BackgroundRecord.ClearAsync(Path.Combine(data.Path, "no-such-folder", BackgroundRecord.DirectoryName, "never.json"));
 
         await Assert.That(Directory.EnumerateFileSystemEntries(Path.GetDirectoryName(path)!)).IsEmpty();
     }

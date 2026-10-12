@@ -494,7 +494,7 @@ internal sealed class SessionDestroyTests
         var directory = Path.Combine(sessions.Root, "an-old-format-session");
         var location = SessionPath.For(directory);
 
-        SessionLayout.Create(location);
+        SessionFolders.Create(location);
 
         var legacy = Path.Combine(directory, SessionLayout.LegacyRecordFileName);
 

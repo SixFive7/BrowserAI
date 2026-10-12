@@ -34,7 +34,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <list type="bullet">
 ///   <item><description>
-///     <b>Reader</b> -- <see cref="TakeShared"/> opens
+///     <b>Reader</b> -- <see cref="TakeSharedAsync"/> opens
 ///     <c>FileAccess.Read</c> / <c>FileShare.Read</c>. Two of them are
 ///     compatible in both directions, so any number succeed together and the
 ///     claims are cumulative with no count to keep anywhere.
@@ -168,30 +168,32 @@ internal sealed class MaintenanceLock : IDisposable
     /// access that would make two sessions exclude each other.
     /// </para>
     /// </remarks>
-    /// <param name="browsersDirectory">The browsers root. Created if absent.</param>
-    /// <param name="denial">What the kernel said, when the claim was not taken.</param>
-    /// <param name="detail">Windows own message, when the claim was not taken.</param>
-    /// <returns>The claim, or <see langword="null"/> when it could not be taken.</returns>
-    public static MaintenanceLock? TakeShared(string browsersDirectory, out MaintenanceDenial denial, out string detail)
+    /// <param name="browsersDirectory">The browsers root. Created if absent, on the file-system thread.</param>
+    /// <returns>
+    /// The claim, or why it could not be taken: what the kernel said and Windows' own
+    /// message. <i>Asynchronous since 2026-10-12, the maintainer's 81 c (previously
+    /// <c>TakeShared</c>, with the two answers as out parameters), so the root is made
+    /// on the file-system thread.</i>
+    /// </returns>
+    public static async Task<SharedMaintenanceClaim> TakeSharedAsync(string browsersDirectory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
 
-        denial = MaintenanceDenial.None;
-        detail = string.Empty;
-
         try
         {
-            _ = Directory.CreateDirectory(browsersDirectory);
+            _ = await FileSystemThread.CreateDirectoryAsync(browsersDirectory).ConfigureAwait(false);
 
             // Opened for asynchronous I/O, and nothing is ever read through it: the handle
-            // is the claim.
-            return new MaintenanceLock(new FileStream(
+            // is the claim, and the record hands it to the caller.
+#pragma warning disable CA2000 // The record owns the claim from here: the caller disposes it through its Lock.
+            return new SharedMaintenanceClaim(new MaintenanceLock(new FileStream(
                 PathIn(browsersDirectory),
                 FileMode.OpenOrCreate,
                 FileAccess.Read,
                 FileShare.Read,
                 bufferSize: 1,
-                FileOptions.Asynchronous));
+                FileOptions.Asynchronous)), MaintenanceDenial.None, string.Empty);
+#pragma warning restore CA2000
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -210,13 +212,11 @@ internal sealed class MaintenanceLock : IDisposable
             // holder and nothing else on this open, per the exclusion arithmetic
             // in this type's remarks -- and the answer was being discarded one
             // line above the sentence that needed it.
-            denial = failure is IOException io && RenameWindow.IsSharingViolation(io)
+            var denial = failure is IOException io && RenameWindow.IsSharingViolation(io)
                 ? MaintenanceDenial.Contended
                 : MaintenanceDenial.Unreachable;
 
-            detail = failure.Message;
-
-            return null;
+            return new SharedMaintenanceClaim(null, denial, failure.Message);
         }
     }
 
@@ -260,7 +260,7 @@ internal sealed class MaintenanceLock : IDisposable
 
         try
         {
-            _ = Directory.CreateDirectory(browsersDirectory);
+            _ = await FileSystemThread.CreateDirectoryAsync(browsersDirectory).ConfigureAwait(false);
 
             var held = new FileStream(
                 PathIn(browsersDirectory),
@@ -370,7 +370,15 @@ internal sealed class MaintenanceLock : IDisposable
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root.</param>
     /// <returns>The reading, or <see langword="null"/> when there is no claim file to time from.</returns>
-    public static MaintenanceProgress? ProgressOf(string browsersDirectory)
+    /// <remarks>On the file-system thread since 2026-10-12: the staging folder's weight is a walk (80 b).</remarks>
+    public static Task<MaintenanceProgress?> ProgressOfAsync(string browsersDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
+
+        return FileSystemThread.RunAsync(() => ProgressOfHere(browsersDirectory));
+    }
+
+    private static MaintenanceProgress? ProgressOfHere(string browsersDirectory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
 
@@ -424,7 +432,7 @@ internal sealed class MaintenanceLock : IDisposable
             var directory = new DirectoryInfo(staging);
 
             return directory.Exists
-                ? directory.EnumerateFiles("*", new EnumerationOptions
+                ? FileSystemThread.Here.FilesWithSizes(staging, "*", new EnumerationOptions
                 {
                     RecurseSubdirectories = true,
                     IgnoreInaccessible = true,
@@ -496,6 +504,12 @@ internal sealed class MaintenanceLock : IDisposable
 /// <param name="Elapsed">How long ago the claim was taken.</param>
 internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan Elapsed);
 
+/// <summary>What <see cref="MaintenanceLock.TakeSharedAsync"/> answers.</summary>
+/// <param name="Lock">The claim, or <see langword="null"/> when it could not be taken.</param>
+/// <param name="Denial">What the kernel said, when the claim was not taken.</param>
+/// <param name="Detail">Windows' own message, when the claim was not taken.</param>
+internal sealed record SharedMaintenanceClaim(MaintenanceLock? Lock, MaintenanceDenial Denial, string Detail);
+
 /// <summary>What <see cref="MaintenanceLock.TryTakeExclusiveAsync"/> came to.</summary>
 /// <param name="Lock">The claim, or <see langword="null"/> when it could not be taken.</param>
 /// <param name="Denial">What the kernel said, when the claim was not taken.</param>
@@ -519,7 +533,7 @@ internal readonly record struct MaintenanceClaim(MaintenanceLock? Lock, Maintena
 /// and <c>ERROR_LOCK_VIOLATION</c> are the only codes a holder produces on this
 /// open").*** As written it read as a biconditional and was relied on as one, and
 /// <b>the converse is false for 33</b>. <c>reinstall.lock</c> is claimed by share
-/// mode alone (<see cref="MaintenanceLock.TakeShared"/>,
+/// mode alone (<see cref="MaintenanceLock.TakeSharedAsync"/>,
 /// <see cref="MaintenanceLock.TryTakeExclusiveAsync"/>), and the only byte-range lock
 /// in this product is <c>NativeFile.TakeGate</c>, reachable solely through
 /// <c>OpenForLockedAppend</c> on <b>log</b> files -- so <b>no BrowserAI holder can

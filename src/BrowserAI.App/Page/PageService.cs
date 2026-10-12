@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using BrowserAI.App.Interop;
 using BrowserAI.Registration;
+using BrowserAI.Runtime;
 using BrowserAI.Updates;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -62,7 +63,7 @@ internal interface IPageSessions
     /// (1.3 c), and never once a second.
     /// </remarks>
     /// <returns>The snapshot, every relay's conversation left unread.</returns>
-    SessionsSnapshot Peek();
+    Task<SessionsSnapshot> PeekAsync();
 }
 
 /// <summary>What the page reads of the session folders BrowserAI knows of.</summary>
@@ -735,7 +736,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         var taken = action switch
         {
             "install-now" => StartInstallNow(String(request, "version")),
-            "open-folder" => OpenFolder(String(request, "folder")),
+            "open-folder" => await OpenFolderAsync(String(request, "folder")).ConfigureAwait(false),
             "open-session" => OpenSession(String(request, "session")),
             "open-trace" => OpenTrace(String(request, "trace")),
             "refresh-sessions" => Run(RefreshSessionsAsync(CancellationToken.None)),
@@ -793,11 +794,11 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
     /// <summary>The sessions with no conversation named, or <see langword="null"/> where the read failed.</summary>
     /// <returns>The snapshot.</returns>
-    private SessionsSnapshot? PeekSessions()
+    private async Task<SessionsSnapshot?> PeekSessionsAsync()
     {
         try
         {
-            return _sessions.Peek();
+            return await _sessions.PeekAsync().ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A read that failed changes nothing the watch sends; the next second reads again.
         catch (Exception failure)
@@ -849,7 +850,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
     {
         var read = await ReadHoldsAsync().ConfigureAwait(false);
         var holds = UpdatePageContent.Signature(read, _clock.GetUtcNow());
-        var peeked = PeekSessions();
+        var peeked = await PeekSessionsAsync().ConfigureAwait(false);
         var sessions = peeked is null ? null : ConversationsContent.Signature(peeked);
         var held = peeked is null ? null : ConversationsContent.HeldFolders(peeked);
         bool holdsChanged;
@@ -1057,7 +1058,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         Push();
     }
 
-    private bool OpenFolder(string? folder)
+    private async Task<bool> OpenFolderAsync(string? folder)
     {
         var directory = folder switch
         {
@@ -1072,7 +1073,8 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             return false;
         }
 
-        _ = Directory.CreateDirectory(directory);
+        // Made on the file-system thread, the maintainer's 81 c, and then opened.
+        _ = await FileSystemThread.CreateDirectoryAsync(directory).ConfigureAwait(false);
         _host.OpenFolder(directory);
         return true;
     }

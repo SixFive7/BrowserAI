@@ -456,7 +456,7 @@ internal static class ScratchRoot
     {
         var survivors = new List<string>();
 
-        TreeDelete.Remove(folder, survivors);
+        TreeDelete.Walk(folder, survivors, SuiteTreeCalls.Instance);
 
         // A folder that would not go keeps its record, so it stays this run's until
         // this run is gone, and the next pass after that takes it.
@@ -511,7 +511,7 @@ internal static class ScratchRoot
 
             try
             {
-                TreeDelete.Remove(folder, survivors);
+                TreeDelete.Walk(folder, survivors, SuiteTreeCalls.Instance);
             }
 #pragma warning disable CA1031 // See the type's remarks: reclaim is never fatal.
             catch (Exception)
@@ -693,7 +693,7 @@ internal static class ScratchRoot
                 // signal -- they are the previous run's leak, and a reclaim
                 // that says "one thing was locked" when eleven were is a
                 // reclaim nobody can act on. Measured 2026-08-16; kb row 86.
-                TreeDelete.Remove(directory, LastPassSurvivors);
+                TreeDelete.Walk(directory, LastPassSurvivors, SuiteTreeCalls.Instance);
             }
 #pragma warning disable CA1031 // See the type's remarks: reclaim is never fatal.
             catch (Exception)

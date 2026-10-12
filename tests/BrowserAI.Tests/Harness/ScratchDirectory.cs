@@ -104,7 +104,7 @@ internal sealed class ScratchDirectory : IDisposable
     {
         var survivors = new List<string>();
 
-        TreeDelete.Remove(path, survivors);
+        TreeDelete.Walk(path, survivors, SuiteTreeCalls.Instance);
 
         return survivors;
     }
@@ -145,7 +145,7 @@ internal sealed class ScratchDirectory : IDisposable
         while (true)
         {
             survivors.Clear();
-            TreeDelete.Remove(path, survivors);
+            TreeDelete.Walk(path, survivors, SuiteTreeCalls.Instance);
 
             if (survivors.Count is 0 || waited.Elapsed > patience)
             {

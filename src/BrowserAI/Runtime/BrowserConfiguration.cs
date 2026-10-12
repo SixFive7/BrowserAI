@@ -872,10 +872,14 @@ internal static class BrowserConfiguration
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(config);
 
-        foreach (var directory in config.Directories)
+        // Every directory the config names, made in one item on the file-system thread (81 c).
+        await FileSystemThread.RunAsync(() =>
         {
-            _ = Directory.CreateDirectory(directory);
-        }
+            foreach (var directory in config.Directories)
+            {
+                _ = FileSystemThread.Here.CreateDirectory(directory);
+            }
+        }).ConfigureAwait(false);
 
         await File.WriteAllBytesAsync(path, config.Json).ConfigureAwait(false);
     }

@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using BrowserAI.Hosting;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 
@@ -294,7 +295,7 @@ internal static class LiveInstances
                     // holds needs no exemption because it is HELD -- which is
                     // the property the pass reads and the only one it is
                     // allowed to act on.
-                    var pass = Walk(directory);
+                    var pass = await FileSystemThread.RunAsync(() => Walk(directory)).ConfigureAwait(false);
 
                     result = new LiveMarkerReclaim
                     {
@@ -475,7 +476,7 @@ internal static class LiveInstances
         var undetermined = 0;
         string? why = null;
 
-        foreach (var candidate in Directory.EnumerateFiles(directory, "*.live"))
+        foreach (var candidate in FileSystemThread.Here.Files(directory, "*.live"))
         {
             var (state, reason) = Probe(candidate);
 
@@ -566,7 +567,7 @@ internal static class LiveInstances
     {
         try
         {
-            File.Delete(path);
+            FileSystemThread.Here.DeleteFile(path);
             refusal = null;
             return true;
         }

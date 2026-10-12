@@ -3,6 +3,7 @@
 
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
+using BrowserAI.Runtime;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Updates;
@@ -87,7 +88,8 @@ internal interface IUpdateToastMemory
     Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version);
 
     /// <summary>Forgets the wait and what the ended relays needed: the update installed or failed.</summary>
-    void Forget();
+    /// <returns>The forgetting, which deletes on the file-system thread since the maintainer's 81 c.</returns>
+    Task ForgetAsync();
 }
 
 /// <summary>
@@ -131,7 +133,7 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        _ = await FileSystemThread.CreateDirectoryAsync(Path.GetDirectoryName(path)!).ConfigureAwait(false);
         await File.WriteAllTextAsync(path, version).ConfigureAwait(false);
     }
 
@@ -141,7 +143,7 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         ArgumentNullException.ThrowIfNull(needs);
 
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        _ = await FileSystemThread.CreateDirectoryAsync(Path.GetDirectoryName(path)!).ConfigureAwait(false);
         await File.WriteAllTextAsync(EndedPath, version + "\n" + string.Join(',', needs.Select(WordOf))).ConfigureAwait(false);
     }
 
@@ -172,11 +174,11 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
     }
 
     /// <inheritdoc />
-    public void Forget()
+    public Task ForgetAsync() => FileSystemThread.RunAsync(() =>
     {
-        File.Delete(path);
-        File.Delete(EndedPath);
-    }
+        FileSystemThread.Here.DeleteFile(path);
+        FileSystemThread.Here.DeleteFile(EndedPath);
+    });
 
     private static string WordOf(RelayReconnect need) => need switch
     {
@@ -446,7 +448,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         {
             StopCounting();
             var ended = await EndedForAsync(version).ConfigureAwait(false);
-            Forget();
+            await ForgetAsync().ConfigureAwait(false);
             _ = await RaiseAsync(UpdateToastContent.InstalledTag, new ToastRequest(UpdateToastContent.Installed(version, ended), null, SuppressPopup: false, ExpiresOnReboot: false), 0).ConfigureAwait(false);
         }
         finally
@@ -468,7 +470,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         try
         {
             StopCounting();
-            Forget();
+            await ForgetAsync().ConfigureAwait(false);
             _ = await RaiseAsync(
                 UpdateToastContent.FailedTag,
                 new ToastRequest(UpdateToastContent.Failed(version, _facts.RunningVersion, _facts.VelopackLog, _facts.BrowserAiLog), null, SuppressPopup: false, ExpiresOnReboot: false),
@@ -837,11 +839,11 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         }
     }
 
-    private void Forget()
+    private async Task ForgetAsync()
     {
         try
         {
-            _memory.Forget();
+            await _memory.ForgetAsync().ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A memory that cannot be cleared costs one silent ready toast later.
         catch (Exception failure)

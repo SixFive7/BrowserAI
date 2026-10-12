@@ -259,7 +259,7 @@ internal static partial class PersonStart
             logger,
             record.ProcessId,
             record.ExitCode is { } code ? code.ToString(CultureInfo.InvariantCulture) : "unknown");
-        BackgroundRecord.Clear(settings.RecordPath);
+        await BackgroundRecord.ClearAsync(settings.RecordPath).ConfigureAwait(false);
     }
 
     /// <summary>A reason to put before a full stop of the line's own: its own full stop taken off.</summary>
@@ -298,7 +298,7 @@ internal static partial class PersonStart
             return false;
         }
 
-        BackgroundRecord.Clear(settings.RecordPath);
+        await BackgroundRecord.ClearAsync(settings.RecordPath).ConfigureAwait(false);
         PersonStartLog.HungEnded(logger, pid);
         return true;
     }

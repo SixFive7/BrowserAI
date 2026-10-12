@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Registration;
 
@@ -161,7 +162,7 @@ internal static class RegistrationRecord
     {
         var path = PathFor(dataRoot);
 
-        _ = Directory.CreateDirectory(dataRoot);
+        _ = await FileSystemThread.CreateDirectoryAsync(dataRoot).ConfigureAwait(false);
         await File.WriteAllBytesAsync(path, ToUtf8(passes, intent, version, when)).ConfigureAwait(false);
 
         return path;

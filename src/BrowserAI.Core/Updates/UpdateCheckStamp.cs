@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Updates;
 
@@ -124,7 +125,7 @@ internal sealed class UpdateCheckStampFile(string path) : IUpdateCheckStamp
         var temporary = path + ".partial";
 
         await File.WriteAllTextAsync(temporary, at.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture) + "\n").ConfigureAwait(false);
-        File.Move(temporary, path, overwrite: true);
+        await FileSystemThread.MoveFileAsync(temporary, path, overwrite: true).ConfigureAwait(false);
     }
 
     /// <summary>Enough of an unreadable record to recognise it, and no more.</summary>

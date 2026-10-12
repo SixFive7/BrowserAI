@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Sessions;
 
@@ -84,11 +85,12 @@ internal static partial class SessionInventory
                 return SessionContents.Unreadable($"'{session.FullPath}' does not exist.");
             }
 
-            var files = root.EnumerateFiles("*", new EnumerationOptions
+            // The walk on the file-system thread (80 b).
+            var files = (await FileSystemThread.RunAsync(() => FileSystemThread.Here.FilesWithSizes(session.FullPath, "*", new EnumerationOptions
             {
                 RecurseSubdirectories = true,
                 IgnoreInaccessible = true,
-            }).ToList();
+            })).ConfigureAwait(false)).ToList();
 
             var kinds = new Dictionary<string, ArtifactKind>(StringComparer.OrdinalIgnoreCase);
             var sensitive = new Dictionary<SensitiveKind, List<SessionFile>>();
@@ -193,7 +195,7 @@ internal static partial class SessionInventory
                             [.. group.Value.OrderBy(file => file.RelativePath, StringComparer.OrdinalIgnoreCase)])),
                 ],
                 Profile = profileFiles is 0 ? null : new SessionFile(SessionLayout.ProfileFolderName, profileBytes),
-                CookieStore = CookieStoreIn(session),
+                CookieStore = await FileSystemThread.RunAsync(() => CookieStoreIn(session)).ConfigureAwait(false),
             };
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -460,11 +462,11 @@ internal static partial class SessionInventory
         {
             try
             {
-                var found = Directory.EnumerateFiles(profile, name, new EnumerationOptions
+                var found = FileSystemThread.Here.FirstFile(profile, name, new EnumerationOptions
                 {
                     RecurseSubdirectories = true,
                     IgnoreInaccessible = true,
-                }).FirstOrDefault();
+                });
 
                 if (found is not null)
                 {

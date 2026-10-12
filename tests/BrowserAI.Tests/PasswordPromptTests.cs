@@ -372,7 +372,7 @@ internal sealed class PasswordPromptTests
     private static async Task<SessionPath> NewSessionAsync(ScratchDirectory scratch, string label, string browser, SessionGuards guards)
     {
         var path = SessionPath.For(Path.Combine(scratch.Path, label));
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         return await guards.TakeAsync(path, browser, $"password prompt {label}");
     }

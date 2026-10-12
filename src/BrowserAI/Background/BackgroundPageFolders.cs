@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.App.Page;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 
 namespace BrowserAI.Background;
@@ -55,11 +56,13 @@ internal sealed class BackgroundPageFolders(SessionIndex index, Func<IEnumerable
             }
         }
 
+        var weighed = await FileSystemThread.RunAsync(() => folders.Values.Select(static directory => (directory, Weigh(directory))).ToList()).ConfigureAwait(false);
+
         return new FolderMeasure(
             clock.GetUtcNow(),
             [
-                .. folders.Values
-                    .Select(static directory => new SessionFolder(CensusPageSessions.IdOf(directory), directory, Weigh(directory)))
+                .. weighed
+                    .Select(static folder => new SessionFolder(CensusPageSessions.IdOf(folder.directory), folder.directory, folder.Item2))
                     .OrderByDescending(static folder => folder.Bytes ?? -1)
                     .ThenBy(static folder => folder.Directory, StringComparer.OrdinalIgnoreCase),
             ]);
@@ -83,7 +86,7 @@ internal sealed class BackgroundPageFolders(SessionIndex index, Func<IEnumerable
     {
         try
         {
-            return new DirectoryInfo(directory).EnumerateFiles("*", Every).Sum(static file => file.Length);
+            return FileSystemThread.Here.FilesWithSizes(directory, "*", Every).Sum(static file => file.Length);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {

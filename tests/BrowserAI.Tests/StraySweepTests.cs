@@ -1615,7 +1615,7 @@ internal sealed class StraySweepTests
         var directory = Path.Combine(scratch.Path, label);
         var path = SessionPath.For(directory);
 
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         var result = await SessionLock.TryAcquireAsync(
             path,

@@ -392,8 +392,8 @@ internal sealed class UpdateToastsTests
         await Assert.That(await memory.WaitedForAsync()).IsEqualTo("1.2.0");
         await Assert.That(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "data", UpdateToastMemoryFile.FileName))).IsEqualTo("1.2.0");
 
-        memory.Forget();
-        memory.Forget();
+        await memory.ForgetAsync();
+        await memory.ForgetAsync();
 
         await Assert.That(await memory.WaitedForAsync()).IsNull();
 
@@ -404,7 +404,7 @@ internal sealed class UpdateToastsTests
         await Assert.That(Joined(await memory.EndedForAsync("1.2.0") ?? [])).IsEqualTo(Joined([RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.None, RelayReconnect.Unknown]));
         await Assert.That(await memory.EndedForAsync("1.3.0")).IsNull();
 
-        memory.Forget();
+        await memory.ForgetAsync();
 
         await Assert.That(await memory.EndedForAsync("1.2.0")).IsNull();
         await Assert.That(File.Exists(Path.Combine(scratch.Path, "data", UpdateToastMemoryFile.EndedFileName))).IsFalse();
@@ -660,10 +660,11 @@ internal sealed class UpdateToastsTests
         public Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version) =>
             Task.FromResult(_ended is { } ended && string.Equals(ended.Version, version, StringComparison.OrdinalIgnoreCase) ? ended.Needs : null);
 
-        public void Forget()
+        public Task ForgetAsync()
         {
             _version = null;
             _ended = null;
+            return Task.CompletedTask;
         }
     }
 }

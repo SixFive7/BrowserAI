@@ -1098,14 +1098,14 @@ internal sealed partial class BrowserProvisioner : IDisposable
                 return (false, 0, []);
             }
 
-            var removedBytes = SizeOf(directory);
+            var removedBytes = await SizeOfAsync(directory).ConfigureAwait(false);
             var failures = new List<string>();
 
             ProvisioningLog.Reinstalling(_logger, browser, directory);
 
             // §E's routine, not a second one: a per-node try/catch, so one locked
             // file costs that file and not the whole tree.
-            TreeDelete.Remove(directory, failures);
+            await TreeDelete.RemoveAsync(directory, failures).ConfigureAwait(false);
 
             // A completed attempt would otherwise make Ensure believe the tree it
             // just deleted is still there.
@@ -1193,14 +1193,14 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// <returns>The outcome.</returns>
     private async Task<ReinstallOutcome> RebuildSharedAsync(IReadOnlyList<string> directories)
     {
-        var sizes = directories.Select(SizeOf).ToList();
+        var sizes = await FileSystemThread.RunAsync(() => directories.Select(SizeOfHere).ToList()).ConfigureAwait(false);
         var removedBytes = sizes.Contains(-1) ? -1 : sizes.Sum();
         var failures = new List<string>();
 
         foreach (var directory in directories)
         {
             ProvisioningLog.Reinstalling(_logger, ProvisionedBrowsers.Shared, directory);
-            TreeDelete.Remove(directory, failures);
+            await TreeDelete.RemoveAsync(directory, failures).ConfigureAwait(false);
         }
 
         if (failures.Count is not 0)
@@ -1318,12 +1318,14 @@ internal sealed partial class BrowserProvisioner : IDisposable
             ? outcome
             : new ProvisioningResult(false, "The provisioning task itself failed.");
 
-    private static long SizeOf(string directory)
+    private static Task<long> SizeOfAsync(string directory) => FileSystemThread.RunAsync(() => SizeOfHere(directory));
+
+    private static long SizeOfHere(string directory)
     {
         try
         {
             return Directory.Exists(directory)
-                ? Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories).Sum(file => new FileInfo(file).Length)
+                ? FileSystemThread.Here.Files(directory, "*", SearchOption.AllDirectories).Sum(file => new FileInfo(file).Length)
                 : 0;
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -1333,6 +1335,14 @@ internal sealed partial class BrowserProvisioner : IDisposable
             return -1;
         }
     }
+
+    /// <summary>
+    /// Weighs the browsers root through <see cref="WeighBrowsersRoot"/>, on the file-system
+    /// thread, where the default's walk has to run (80 b).
+    /// </summary>
+    /// <param name="previous">What the last successful sample said.</param>
+    /// <returns>The byte total.</returns>
+    private Task<long> WeighAsync(long previous) => FileSystemThread.RunAsync(() => WeighBrowsersRoot(BrowsersDirectory, previous));
 
     /// <summary>
     /// Every byte under the browsers root, which is the one number both the
@@ -1368,7 +1378,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
             };
 
             return new DirectoryInfo(root).Exists
-                ? new DirectoryInfo(root).EnumerateFiles("*", options).Sum(file => file.Length)
+                ? FileSystemThread.Here.FilesWithSizes(root, "*", options).Sum(file => file.Length)
                 : 0;
         }
 #pragma warning disable CA1031 // A sampler that can fail the install it is measuring is worse than one that reports no news; every failure shape means the same thing here.
@@ -1601,7 +1611,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
                     // again -- so the tree goes first, which is what makes this a
                     // recovery and not a retry.
                     ProvisioningLog.AbandonedInstallFound(_logger, browser, directory);
-                    TreeDelete.Remove(directory, []);
+                    await TreeDelete.RemoveAsync(directory, []).ConfigureAwait(false);
                 }
 
                 // Re-checked under the mutex: another process may have finished
@@ -1718,7 +1728,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
         AttemptClock deadline,
         AttemptPhase phase)
     {
-        var bytes = WeighBrowsersRoot(BrowsersDirectory, 0);
+        var bytes = await WeighAsync(0).ConfigureAwait(false);
         var lastChange = deadline.Elapsed;
 
         phase.Observed(bytes, deadline.Elapsed, extracting: false);
@@ -1745,7 +1755,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
                 return (null, held);
             }
 
-            var sample = WeighBrowsersRoot(BrowsersDirectory, bytes);
+            var sample = await WeighAsync(bytes).ConfigureAwait(false);
 
             if (sample != bytes)
             {
@@ -1783,11 +1793,13 @@ internal sealed partial class BrowserProvisioner : IDisposable
 
     private async Task<ProvisioningResult> RunInstallerAsync(string browser, BrowserRevision revision, string directory, AttemptClock deadline, AttemptPhase phase)
     {
-        _ = Directory.CreateDirectory(BrowsersDirectory);
+        _ = await FileSystemThread.CreateDirectoryAsync(BrowsersDirectory).ConfigureAwait(false);
 
         ProvisioningLog.Downloading(_logger, browser, revision.Revision, BrowsersDirectory);
 
-        using var run = StartInstaller(browser, BrowsersDirectory);
+        // Started on the file-system thread, the maintainer's 80 b and 81 c: the real
+        // installer empties and makes its download folder before it starts.
+        using var run = await FileSystemThread.RunAsync(() => StartInstaller(browser, BrowsersDirectory)).ConfigureAwait(false);
 
         var failure = await WatchAsync(run, browser, directory, deadline, phase).ConfigureAwait(false);
 
@@ -1800,7 +1812,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
             // A partial tree is unmarked and would be re-downloaded anyway, but
             // leaving it costs 400 MB and makes the next attempt's progress
             // unreadable.
-            TreeDelete.Remove(directory, []);
+            await TreeDelete.RemoveAsync(directory, []).ConfigureAwait(false);
 
             return new ProvisioningResult(false, failure);
         }
@@ -1815,7 +1827,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
             var said = Said(run.Output);
 
             ProvisioningLog.InstallerRefused(_logger, browser, exitCode, said);
-            TreeDelete.Remove(directory, []);
+            await TreeDelete.RemoveAsync(directory, []).ConfigureAwait(false);
 
             return new ProvisioningResult(
                 false,
@@ -1861,7 +1873,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     private async Task<string?> WatchAsync(IInstallerRun run, string browser, string directory, AttemptClock deadline, AttemptPhase phase)
     {
         var extraction = default(TimeSpan?);
-        var bytes = WeighBrowsersRoot(BrowsersDirectory, 0);
+        var bytes = await WeighAsync(0).ConfigureAwait(false);
         var lastChange = deadline.Elapsed;
 
         phase.Observed(bytes, deadline.Elapsed, extracting: false);
@@ -1884,7 +1896,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
                 ProvisioningLog.Extracting(_logger, browser, (int)deadline.Elapsed.TotalSeconds);
             }
 
-            var sample = WeighBrowsersRoot(BrowsersDirectory, bytes);
+            var sample = await WeighAsync(bytes).ConfigureAwait(false);
 
             if (sample != bytes)
             {
@@ -2416,8 +2428,9 @@ internal sealed class NodeInstallerRun : IInstallerRun
             BrowserProvisioner.DownloadDirectoryName,
             Path.GetFileName(browser));
 
-        TreeDelete.Remove(downloads, []);
-        _ = Directory.CreateDirectory(downloads);
+        // On the file-system thread, where the provisioner starts the installer (80 b, 81 c).
+        TreeDelete.RemoveHere(downloads, []);
+        _ = FileSystemThread.Here.CreateDirectory(downloads);
 
         return downloads;
     }

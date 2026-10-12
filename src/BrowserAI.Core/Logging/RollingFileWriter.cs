@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text;
 using BrowserAI.Interop;
+using BrowserAI.Runtime;
 using Microsoft.Win32.SafeHandles;
 
 namespace BrowserAI.Logging;
@@ -106,8 +107,13 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
             return;
         }
 
-        SweepExpired();
+        // On the file-system thread since 2026-10-12, the maintainer's 80 b and 81 c: the
+        // retention walk lists and deletes, and nothing waits for it.
+        Swept = FileSystemThread.RunAsync(SweepExpired);
     }
+
+    /// <summary>The retention walk the constructor handed to the file-system thread, for a caller that waits for it.</summary>
+    internal Task Swept { get; } = Task.CompletedTask;
 
     /// <summary>The file currently being appended to, or null if none is open.</summary>
     public string? CurrentFile { get; private set; }
@@ -290,7 +296,9 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
             _currentIndex = 0;
         }
 
+#pragma warning disable RS0030 // Kept at the maintainer's 76 b with the log's sink: ILogger.Log is synchronous, and the folder a record goes in is made in that write.
         _ = Directory.CreateDirectory(_directory);
+#pragma warning restore RS0030
 
         // Skip past any file another process has already filled. This is the
         // cheap starting point and not the decision: TryAppend re-reads the
@@ -321,10 +329,10 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     {
         try
         {
-            Directory.CreateDirectory(_directory);
+            _ = FileSystemThread.Here.CreateDirectory(_directory);
             var cutoff = DateTime.UtcNow.AddDays(-RetentionDays);
 
-            foreach (var file in Directory.EnumerateFiles(_directory, $"{FilePrefix}*{FileSuffix}"))
+            foreach (var file in FileSystemThread.Here.Files(_directory, $"{FilePrefix}*{FileSuffix}"))
             {
                 if (File.GetLastWriteTimeUtc(file) < cutoff)
                 {
@@ -335,7 +343,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
                     // finding 10 and not a fault: a file old enough to sweep
                     // and still open belongs to a process whose clock or
                     // backup put it there, and the next start sweeps it.
-                    File.Delete(file);
+                    FileSystemThread.Here.DeleteFile(file);
                 }
             }
         }

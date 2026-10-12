@@ -333,8 +333,6 @@ internal sealed class BrokenInstallTests
 
         public Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version) => Task.FromResult<IReadOnlyList<RelayReconnect>?>(null);
 
-        public void Forget()
-        {
-        }
+        public Task ForgetAsync() => Task.CompletedTask;
     }
 }

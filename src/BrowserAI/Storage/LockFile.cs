@@ -4,6 +4,7 @@
 using System.Buffers;
 using System.Text.Json;
 using BrowserAI.Interop;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 
 namespace BrowserAI.Storage;
@@ -175,11 +176,11 @@ internal static class LockFile
                 await stream.WriteAsync(Serialise(holder)).ConfigureAwait(false);
             }
 
-            File.Move(temporary, path, overwrite: true);
+            await FileSystemThread.MoveFileAsync(temporary, path, overwrite: true).ConfigureAwait(false);
         }
         finally
         {
-            TryDelete(temporary);
+            await TryDeleteAsync(temporary).ConfigureAwait(false);
         }
     }
 
@@ -439,11 +440,12 @@ internal static class LockFile
 
     /// <summary>Removes a temporary file, and does not care whether it was there.</summary>
     /// <param name="path">The file.</param>
-    private static void TryDelete(string path)
+    /// <returns>The removal, on the file-system thread (81 c).</returns>
+    private static async Task TryDeleteAsync(string path)
     {
         try
         {
-            File.Delete(path);
+            await FileSystemThread.DeleteFileAsync(path).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {

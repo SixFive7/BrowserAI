@@ -683,7 +683,7 @@ internal sealed class SettingsHoldBackTests
     {
         var path = SessionPath.For(Path.Combine(rig.Root, name));
 
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         using ((await SessionLock.TryAcquireAsync(path, new SessionLockRequest { Browser = SessionManager.DefaultBrowser, Purpose = "a session from before settings were kept" }, NullLogger.Instance)).Acquired!)
         {

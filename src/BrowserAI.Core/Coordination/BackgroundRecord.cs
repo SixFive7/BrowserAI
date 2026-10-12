@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Coordination;
 
@@ -267,11 +268,12 @@ internal static class BackgroundRecord
 
     /// <summary>Removes the record: a person's start does this before it starts a new background.</summary>
     /// <param name="path">The record's path.</param>
-    public static void Clear(string path)
+    /// <returns>The removal, on the file-system thread since the maintainer's 81 c.</returns>
+    public static async Task ClearAsync(string path)
     {
         try
         {
-            File.Delete(path);
+            await FileSystemThread.DeleteFileAsync(path).ConfigureAwait(false);
         }
         catch (DirectoryNotFoundException)
         {
@@ -383,7 +385,7 @@ internal static class BackgroundRecord
 
     private static async Task WriteAsync(string path, BackgroundRecordState state)
     {
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        _ = await FileSystemThread.CreateDirectoryAsync(Path.GetDirectoryName(path)!).ConfigureAwait(false);
 
         var buffer = new MemoryStream();
 
@@ -446,7 +448,7 @@ internal static class BackgroundRecord
         {
             try
             {
-                File.Move(temporary, path, overwrite: true);
+                await FileSystemThread.MoveFileAsync(temporary, path, overwrite: true).ConfigureAwait(false);
                 return;
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -455,7 +457,7 @@ internal static class BackgroundRecord
                 {
                     try
                     {
-                        File.Delete(temporary);
+                        await FileSystemThread.DeleteFileAsync(temporary).ConfigureAwait(false);
                     }
                     catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
                     {

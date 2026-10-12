@@ -275,7 +275,7 @@ internal sealed class ProvisioningRemediationTests
 
         _ = Directory.CreateDirectory(browsers);
 
-        SessionLayout.Create(session);
+        SessionFolders.Create(session);
 
         var config = BrowserConfiguration.ForSession(
             session,

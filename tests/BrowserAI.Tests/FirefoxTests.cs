@@ -768,7 +768,7 @@ internal sealed class FirefoxTests
     private static async Task<SessionPath> NewSessionAsync(ScratchDirectory scratch, string label)
     {
         var path = SessionPath.For(Path.Combine(scratch.Path, label));
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         var result = await SessionLock.TryAcquireAsync(
             path,

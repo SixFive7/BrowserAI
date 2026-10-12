@@ -292,7 +292,7 @@ internal sealed class SessionIndexTests
 
         var directory = Path.Combine(scratch.Path, "session");
         var path = SessionPath.For(directory);
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         var lease = await SessionLock.TryAcquireAsync(path, Request("raced for"), NullLogger.Instance);
         lease.Acquired!.Dispose();
@@ -585,7 +585,7 @@ internal sealed class SessionIndexTests
 
         var index = new SessionIndex(new LocalAppDataPaths(root), factory.CreateLogger("BrowserAI.Tests"));
         var path = SessionPath.For(Path.Combine(scratch.Path, "session"));
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         // Does not throw. An inventory line that could not be written must never
         // be what fails a session, because the next use re-asserts it.
@@ -711,7 +711,7 @@ internal sealed class SessionIndexTests
         foreach (var (root, name) in new[] { (left, "one"), (left, "two"), (right, "three"), (right, "four") })
         {
             var session = SessionPath.For(Path.Combine(root, name));
-            SessionLayout.Create(session);
+            SessionFolders.Create(session);
 
             var lease = await SessionLock.TryAcquireAsync(session, Request($"the session called {name}"), NullLogger.Instance);
             await index.RecordAsync(session);
@@ -774,8 +774,8 @@ internal sealed class SessionIndexTests
         var mine = SessionPath.For(Path.Combine(scratch.Path, "mine", "session"));
         var stranger = SessionPath.For(Path.Combine(scratch.Path, "stranger", "session"));
 
-        SessionLayout.Create(mine);
-        SessionLayout.Create(stranger);
+        SessionFolders.Create(mine);
+        SessionFolders.Create(stranger);
 
         var index = NewIndex(scratch);
 
@@ -903,7 +903,7 @@ internal sealed class SessionIndexTests
     private static (SessionIndex Index, SessionPath Path) NewIndex(ScratchDirectory scratch, string name)
     {
         var path = SessionPath.For(Path.Combine(scratch.Path, name));
-        SessionLayout.Create(path);
+        SessionFolders.Create(path);
 
         return (NewIndex(scratch), path);
     }

@@ -298,6 +298,10 @@ internal sealed class ToastActivationTests
 
         public Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version) => Task.FromResult<IReadOnlyList<RelayReconnect>?>(null);
 
-        public void Forget() => Version = null;
+        public Task ForgetAsync()
+        {
+            Version = null;
+            return Task.CompletedTask;
+        }
     }
 }

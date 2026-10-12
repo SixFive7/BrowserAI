@@ -596,7 +596,8 @@ internal sealed class SessionLock : IDisposable
     /// Removes what is left. It runs <b>after</b> the handles are closed and
     /// <b>before</b> the gate is released, so it may unlink
     /// <c>browserai.lock</c> and <c>browserai.data</c> and no peer can be
-    /// inside create-or-take while it does.
+    /// inside create-or-take while it does. It is awaited outside the in-process lock, the
+    /// maintainer's 79 c: the destroy's delete walks the tree on the file-system thread.
     /// </param>
     /// <exception cref="ObjectDisposedException">This lock has already been released.</exception>
     /// <returns>The release and the delete.</returns>
@@ -612,8 +613,18 @@ internal sealed class SessionLock : IDisposable
     /// one that arrives after the mark is refused, as it was. <see cref="Dispose"/> leaves
     /// a lock this has marked to this.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The delete runs outside the in-process lock since 2026-10-12</b>, decided by
+    /// the maintainer, 79 c, in his words verbatim: <i>"78-82 your recommendation"</i>. The
+    /// lock is held to mark the session, close the store and drop the hold, and nothing
+    /// else; <paramref name="delete"/> is then awaited inside the gate's hold. A writer that
+    /// arrives meanwhile is refused at once by the mark, and a second disposal leaves the
+    /// lock to this, which <c>SessionLockTests</c> holds. <i>Corrected that day (previously
+    /// an <see cref="Action"/> run inside the in-process lock, which held a writer of the
+    /// same session parked on the lock for as long as the walk took).</i>
+    /// </para>
     /// </remarks>
-    public async Task ReleaseAndDeleteAsync(Action delete)
+    public async Task ReleaseAndDeleteAsync(Func<Task> delete)
     {
         ArgumentNullException.ThrowIfNull(delete);
 
@@ -635,8 +646,9 @@ internal sealed class SessionLock : IDisposable
                 // one file and not three.
                 _store.Dispose();
                 _hold.Dispose();
-                delete();
             }
+
+            await delete().ConfigureAwait(false);
         }
         finally
         {

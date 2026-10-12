@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using BrowserAI.Coordination;
 using BrowserAI.Proxy;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 
 namespace BrowserAI.App.Page;
@@ -46,11 +47,13 @@ internal static class CensusPageSessions
     /// <param name="now">When the servers were asked.</param>
     /// <param name="answered">Every server that answered, with its live marker.</param>
     /// <param name="unanswered">One sentence per server that did not.</param>
+    /// <param name="traces">Each held session's traces, listed on the file-system thread; none where not given.</param>
     /// <returns>The snapshot.</returns>
     internal static SessionsSnapshot Compose(
         DateTimeOffset now,
         IReadOnlyList<(string Marker, ServerDescription Description)> answered,
-        IReadOnlyList<string> unanswered)
+        IReadOnlyList<string> unanswered,
+        IReadOnlyDictionary<string, IReadOnlyList<TraceEntry>>? traces = null)
     {
         ArgumentNullException.ThrowIfNull(answered);
 
@@ -61,8 +64,8 @@ internal static class CensusPageSessions
 
         var servers = answered
             .Select(server => string.Equals(server.Description.Role, ServerDescription.Roles.Relay, StringComparison.Ordinal)
-                ? RelayEntry(server.Marker, server.Description, hosted, now)
-                : Entry(server.Marker, server.Description, now))
+                ? RelayEntry(server.Marker, server.Description, hosted, now, traces)
+                : Entry(server.Marker, server.Description, now, traces))
             .OrderByDescending(server => server.IsHost)
             .ThenByDescending(server => server.Description.LastToolCall ?? DateTimeOffset.MinValue)
             .ToList();
@@ -74,8 +77,13 @@ internal static class CensusPageSessions
     /// <param name="marker">Its live marker.</param>
     /// <param name="description">What it said.</param>
     /// <param name="now">When it was asked.</param>
+    /// <param name="traces">Each held session's traces; none where not given.</param>
     /// <returns>The entry.</returns>
-    internal static ServerEntry Entry(string marker, ServerDescription description, DateTimeOffset now)
+    internal static ServerEntry Entry(
+        string marker,
+        ServerDescription description,
+        DateTimeOffset now,
+        IReadOnlyDictionary<string, IReadOnlyList<TraceEntry>>? traces = null)
     {
         ArgumentNullException.ThrowIfNull(description);
 
@@ -93,7 +101,7 @@ internal static class CensusPageSessions
             description,
             kind,
             recent,
-            [.. description.Sessions.Select(Session)]);
+            [.. description.Sessions.Select(session => Session(session, traces))]);
     }
 
     /// <summary>What the page shows about a server that relays its client to the session host.</summary>
@@ -101,8 +109,14 @@ internal static class CensusPageSessions
     /// <param name="description">What it said, which names no client and no session.</param>
     /// <param name="hosted">Every session the session host described.</param>
     /// <param name="now">When it was asked.</param>
+    /// <param name="traces">Each held session's traces; none where not given.</param>
     /// <returns>The entry, with the host's sessions its client drives.</returns>
-    internal static ServerEntry RelayEntry(string marker, ServerDescription description, IReadOnlyList<HeldSession> hosted, DateTimeOffset now)
+    internal static ServerEntry RelayEntry(
+        string marker,
+        ServerDescription description,
+        IReadOnlyList<HeldSession> hosted,
+        DateTimeOffset now,
+        IReadOnlyDictionary<string, IReadOnlyList<TraceEntry>>? traces = null)
     {
         ArgumentNullException.ThrowIfNull(description);
         ArgumentNullException.ThrowIfNull(hosted);
@@ -123,17 +137,17 @@ internal static class CensusPageSessions
             description,
             kind,
             recent,
-            [.. driven.Select(Session)],
+            [.. driven.Select(session => Session(session, traces))],
             client);
     }
 
-    private static SessionEntry Session(HeldSession session) =>
+    private static SessionEntry Session(HeldSession session, IReadOnlyDictionary<string, IReadOnlyList<TraceEntry>>? traces) =>
         new(
             IdOf(session.Directory),
             session.Directory,
             session.Purpose,
             session.BrowserOpen,
-            TracesIn(session.Directory),
+            traces is not null && traces.TryGetValue(session.Directory, out var listed) ? listed : [],
             session.Headed,
             session.Kept,
             session.DrivenBy,
@@ -146,7 +160,33 @@ internal static class CensusPageSessions
     internal static string IdOf(string path) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(path.ToUpperInvariant())))[..16];
 
-    /// <summary>The traces Playwright wrote under a session's output folder.</summary>
+    /// <summary>The traces each of some sessions holds, listed on the file-system thread.</summary>
+    /// <param name="sessions">The session directories.</param>
+    /// <returns>Each directory's traces, newest first.</returns>
+    /// <remarks>
+    /// <b>One item for every folder</b>, since 2026-10-12, the maintainer's 80 b: the
+    /// page's watch asks once a second, and a listing per held session on its pool
+    /// thread is the walk that decision moves. <i>Corrected that day (previously a
+    /// listing in the snapshot's composition, on the caller's thread).</i>
+    /// </remarks>
+    internal static Task<IReadOnlyDictionary<string, IReadOnlyList<TraceEntry>>> TracesOfAsync(IReadOnlyList<string> sessions)
+    {
+        ArgumentNullException.ThrowIfNull(sessions);
+
+        return FileSystemThread.RunAsync<IReadOnlyDictionary<string, IReadOnlyList<TraceEntry>>>(() =>
+        {
+            var traces = new Dictionary<string, IReadOnlyList<TraceEntry>>(StringComparer.Ordinal);
+
+            foreach (var session in sessions)
+            {
+                traces[session] = TracesIn(session);
+            }
+
+            return traces;
+        });
+    }
+
+    /// <summary>The traces Playwright wrote under a session's output folder, on the file-system thread.</summary>
     /// <param name="session">The session directory.</param>
     /// <returns>One entry per <c>.trace</c> file, newest first.</returns>
     /// <remarks>
@@ -162,7 +202,7 @@ internal static class CensusPageSessions
         try
         {
             return Directory.Exists(traces)
-                ? [.. new DirectoryInfo(traces).GetFiles("*.trace")
+                ? [.. FileSystemThread.Here.FilesWithSizes(traces, "*.trace")
                     .OrderByDescending(file => file.LastWriteTimeUtc)
                     .Select(file => new TraceEntry(IdOf(file.FullName), file.Name, file.FullName))]
                 : [];

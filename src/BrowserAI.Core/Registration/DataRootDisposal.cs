@@ -165,14 +165,14 @@ internal static class DataRootDisposal
     }
 
     /// <summary>
-    /// Asks and decides. <b>Removes nothing</b> -- see <see cref="Remove"/>.
+    /// Asks and decides. <b>Removes nothing</b> -- see <see cref="RemoveAsync"/>.
     /// </summary>
     /// <remarks>
     /// <b>Split from the removal because the log is inside the tree.</b> The
     /// hook's own process log lives in the data root and is open while this
     /// runs, so a delete performed here would leave exactly one node behind: the
     /// file recording the decision. The caller closes the log and then calls
-    /// <see cref="Remove"/>, which is why the decision is logged and the outcome
+    /// <see cref="RemoveAsync"/>, which is why the decision is logged and the outcome
     /// of the removal is returned to be written into the installer's own log
     /// instead -- the file that survives either answer.
     /// </remarks>
@@ -205,7 +205,7 @@ internal static class DataRootDisposal
             return new DataRootDisposalReport(DataRootChoice.Keep, dataRoot, 0, Asked: false, []);
         }
 
-        var bytes = BytesUnder(dataRoot);
+        var bytes = await BytesUnderAsync(dataRoot).ConfigureAwait(false);
         var size = Describe(bytes);
         var asked = false;
 
@@ -241,7 +241,7 @@ internal static class DataRootDisposal
     /// </remarks>
     /// <param name="decision">What <see cref="ChooseAsync"/> returned.</param>
     /// <returns>The same report, carrying whatever would not go.</returns>
-    public static DataRootDisposalReport Remove(DataRootDisposalReport decision)
+    public static async Task<DataRootDisposalReport> RemoveAsync(DataRootDisposalReport decision)
     {
         ArgumentNullException.ThrowIfNull(decision);
 
@@ -252,7 +252,7 @@ internal static class DataRootDisposal
 
         var failures = new List<string>();
 
-        TreeDelete.Remove(decision.DataRoot, failures);
+        await TreeDelete.RemoveAsync(decision.DataRoot, failures).ConfigureAwait(false);
 
         return decision with { Failures = failures };
     }
@@ -291,7 +291,9 @@ internal static class DataRootDisposal
     /// </remarks>
     /// <param name="directory">The directory.</param>
     /// <returns>The total, or <c>0</c> when it could not be measured.</returns>
-    public static long BytesUnder(string directory)
+    public static Task<long> BytesUnderAsync(string directory) => FileSystemThread.RunAsync(() => BytesUnderHere(directory));
+
+    private static long BytesUnderHere(string directory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
 
@@ -306,7 +308,7 @@ internal static class DataRootDisposal
         {
             long total = 0;
 
-            foreach (var file in new DirectoryInfo(directory).EnumerateFiles("*", options))
+            foreach (var file in FileSystemThread.Here.FilesWithSizes(directory, "*", options))
             {
                 total += file.Length;
             }

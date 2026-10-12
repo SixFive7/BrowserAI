@@ -368,7 +368,7 @@ internal static class HookRegistration
                 }
             }
 
-            return new HookOutcome(passes, disposal is null ? null : DataRootDisposal.Remove(disposal), pathEntry, signIn);
+            return new HookOutcome(passes, disposal is null ? null : await DataRootDisposal.RemoveAsync(disposal).ConfigureAwait(false), pathEntry, signIn);
         }
 #pragma warning disable CA1031 // The outermost boundary of a fast-exit callback. Nothing may escape into the installer, including a failure to open a log.
         catch (Exception failure)

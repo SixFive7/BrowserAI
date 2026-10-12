@@ -51,21 +51,26 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
     public async Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken) =>
         // Named, so the page shows each conversation as the person sees it, read from the
         // client's records now (1.2 a, 1.3 c, 2026-10-10).
-        Compose([.. (await roster.NamedAsync().ConfigureAwait(false)).Select(static relay => (relay.Greeting, relay.CallInFlight, (ConversationName?)relay.Reading.Name))]);
+        await ComposeAsync([.. (await roster.NamedAsync().ConfigureAwait(false)).Select(static relay => (relay.Greeting, relay.CallInFlight, (ConversationName?)relay.Reading.Name))]).ConfigureAwait(false);
 
     /// <inheritdoc />
     /// <remarks>
     /// <b>Reads no client's records</b>, 46 a, 2026-10-11: the watch asks this once a
     /// second while a tab is open, and a conversation's name is read when a state is drawn.
     /// </remarks>
-    public SessionsSnapshot Peek() =>
-        Compose([.. roster.Read().Select(static relay => (relay.Greeting, relay.CallInFlight, (ConversationName?)null))]);
+    public Task<SessionsSnapshot> PeekAsync() =>
+        ComposeAsync([.. roster.Read().Select(static relay => (relay.Greeting, relay.CallInFlight, (ConversationName?)null))]);
 
     /// <summary>The page's snapshot from the sessions held now and the relays given.</summary>
     /// <param name="relays">Each relay's greeting, whether a call of its client runs, and its conversation's name when it was read.</param>
     /// <returns>The snapshot.</returns>
-    private SessionsSnapshot Compose(IReadOnlyList<(RelayGreeting Greeting, bool CallInFlight, ConversationName? Name)> relays)
+    private async Task<SessionsSnapshot> ComposeAsync(IReadOnlyList<(RelayGreeting Greeting, bool CallInFlight, ConversationName? Name)> relays)
     {
+        var held = host.Sessions.Held();
+
+        // Each held session's traces, listed on the file-system thread (80 b).
+        var traces = await CensusPageSessions.TracesOfAsync([.. held.Select(static session => session.Directory)]).ConfigureAwait(false);
+
         var background = new ServerDescription(
             Environment.ProcessId,
             ProcessLiveness.CreationTimeOfThisProcess(),
@@ -73,7 +78,7 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
             Environment.CurrentDirectory,
             LastToolCall: null,
             CallsInFlight: 0,
-            host.Sessions.Held(),
+            held,
             ServerDescription.Roles.Host);
 
         var answered = new List<(string Marker, ServerDescription Description)> { (BackgroundMarker, background) };
@@ -92,7 +97,7 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
         }
 
         var byMarker = relays.ToDictionary(relay => RelayMarkerPrefix + relay.Greeting.Id, StringComparer.Ordinal);
-        var composed = CensusPageSessions.Compose(clock.GetUtcNow(), answered, []);
+        var composed = CensusPageSessions.Compose(clock.GetUtcNow(), answered, [], traces);
 
         return composed with
         {

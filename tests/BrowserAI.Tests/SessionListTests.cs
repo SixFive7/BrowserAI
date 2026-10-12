@@ -199,7 +199,7 @@ internal sealed class SessionListTests
         var directory = Path.Combine(scratch.Path, "probed");
         var location = SessionPath.For(directory);
 
-        SessionLayout.Create(location);
+        SessionFolders.Create(location);
 
         // ⚠️ No guard at all, which now means what it says.
         var absent = SessionLock.ProbeLiveness(location);
@@ -475,7 +475,7 @@ internal sealed class SessionListTests
     {
         var location = SessionPath.For(directory);
 
-        SessionLayout.Create(location);
+        SessionFolders.Create(location);
 
         var taken = await SessionLock.TryAcquireAsync(
             location,

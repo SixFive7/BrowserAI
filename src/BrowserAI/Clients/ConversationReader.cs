@@ -3,6 +3,7 @@
 
 using BrowserAI.Proxy;
 using BrowserAI.Relay;
+using BrowserAI.Runtime;
 using BrowserAI.Updates;
 
 namespace BrowserAI.Clients;
@@ -235,7 +236,9 @@ internal sealed class ConversationReader(ClientRecordAccess access)
     /// <summary>A thread's first message from its rollout, which is looked for once and read at every draw.</summary>
     private async Task<string?> FirstMessageOfAsync(string home, string thread, ConversationMemo memo)
     {
-        var rollout = memo.RecordOf(thread) ?? CodexThreads.RolloutOf(home, thread, access.FilesUnder);
+        // The search lists Codex's sessions folder, on the file-system thread (80 b).
+        var rollout = memo.RecordOf(thread)
+            ?? await FileSystemThread.RunAsync(() => CodexThreads.RolloutOf(home, thread, access.FilesUnder)).ConfigureAwait(false);
 
         if (rollout is null)
         {
@@ -296,7 +299,9 @@ internal sealed class ConversationReader(ClientRecordAccess access)
             return new(null, ClientFolder.Unnamed("Claude Code", folder), ConversationSource.None, NameSource.ClientAndFolder);
         }
 
-        var record = memo.RecordOf(sessionId) ?? ClaudeCodeRecords.RecordOf(config, sessionId, projectFolder, access.FoldersIn);
+        // The search lists Claude Code's projects folder, on the file-system thread (80 b).
+        var record = memo.RecordOf(sessionId)
+            ?? await FileSystemThread.RunAsync(() => ClaudeCodeRecords.RecordOf(config, sessionId, projectFolder, access.FoldersIn)).ConfigureAwait(false);
 
         if (record is not null)
         {

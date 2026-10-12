@@ -62,7 +62,7 @@ internal sealed class TreeDeleteTests
 
         var failures = new List<string>();
 
-        TreeDelete.Remove(tree, failures);
+        await TreeDelete.RemoveAsync(tree, failures);
 
         await Assert.That(string.Join(Environment.NewLine, failures)).IsEmpty();
         await Assert.That(Directory.Exists(tree)).IsFalse();
@@ -91,7 +91,7 @@ internal sealed class TreeDeleteTests
 
         var failures = new List<string>();
 
-        TreeDelete.Remove(link, failures);
+        await TreeDelete.RemoveAsync(link, failures);
 
         await Assert.That(string.Join(Environment.NewLine, failures)).IsEmpty();
         await Assert.That(Directory.Exists(link)).IsFalse();
@@ -118,7 +118,7 @@ internal sealed class TreeDeleteTests
 
         await using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
-            TreeDelete.Remove(tree, failures);
+            await TreeDelete.RemoveAsync(tree, failures);
         }
 
         // Every node it could not remove, not just the first: the held file, the
@@ -206,7 +206,7 @@ internal sealed class TreeDeleteTests
 
         await using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
-            TreeDelete.Remove(tree, failures);
+            await TreeDelete.RemoveAsync(tree, failures);
         }
 
         await Assert.That(File.Exists(loose)).IsFalse();
