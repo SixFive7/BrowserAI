@@ -182,7 +182,7 @@ internal sealed class StraySweepTests
 
         await Assert.That(held.Taken).IsTrue();
 
-        using (held.Acquired)
+        await using (held.Acquired)
         {
             var refused = await SweepAsync();
 
@@ -597,6 +597,11 @@ internal sealed class StraySweepTests
         // is what keeps VelopackApp.Build().Run(args) out of it.
         await Assert.That(arguments("        VelopackApp.Build().Run(args);", "Program.cs")).IsEmpty();
 
+        // And a sweep's walk handed to the file-system thread is not a pass (80 b, 81 c):
+        // the shapes of the four that were read as one on 2026-10-12.
+        await Assert.That(arguments("            LitterRemoved = await FileSystemThread.RunAsync(SweepLitter).ConfigureAwait(false),", "SessionIndex.cs")).IsEmpty();
+        await Assert.That(arguments("        await FileSystemThread.RunAsync(() => Sweep(paths.InstanceRoot, logger)).ConfigureAwait(false);", "InstanceDirectory.cs")).IsEmpty();
+
         // Not vacuous over the tree: the delegation plus the two entry points.
         await Assert.That(passes).IsGreaterThanOrEqualTo(3);
     }
@@ -629,7 +634,13 @@ internal sealed class StraySweepTests
             RegexOptions.None,
             TimeSpan.FromSeconds(5));
 
-        return [.. Regex.Matches(calls, @"\bRunAsync\((?<argument>[^)]*)\)", RegexOptions.None, TimeSpan.FromSeconds(5))
+        // ⚠️ AND THE FILE-SYSTEM THREAD'S RunAsync IS NOT A PASS, since 2026-10-12: the
+        // maintainer's 80 b and 81 c put each sweep's walk on that thread, as
+        // `FileSystemThread.RunAsync(SweepLitter)`, which hands work to a thread and
+        // waits for no gate. Corrected that day (previously every RunAsync on a line
+        // naming a sweep was read as a pass, and those four calls were reported as
+        // passes started with their walk).
+        return [.. Regex.Matches(calls, @"(?<!FileSystemThread\.)\bRunAsync\((?<argument>[^)]*)\)", RegexOptions.None, TimeSpan.FromSeconds(5))
             .Select(match => match.Groups["argument"].Value.Trim())];
     }
 
@@ -1624,7 +1635,7 @@ internal sealed class StraySweepTests
 
         // Taken and released: what a crashed BrowserAI leaves behind is a
         // browserai.lock with nothing holding it.
-        result.Acquired?.Dispose();
+        await result.Acquired.DisposeIfTakenAsync();
 
         return directory;
     }
