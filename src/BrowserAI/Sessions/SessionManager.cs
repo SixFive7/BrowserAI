@@ -2730,7 +2730,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <summary>A duration in the largest unit that does not round to zero.</summary>
     /// <param name="span">How long.</param>
     /// <returns>The figure, for a person or a model to act on.</returns>
-    private static string Age(TimeSpan span) =>
+    internal static string Age(TimeSpan span) =>
         span switch
         {
             { TotalDays: >= 1 } => $"{span.TotalDays.ToString("F1", CultureInfo.InvariantCulture)} days",
