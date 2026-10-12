@@ -1018,4 +1018,37 @@ internal sealed class HeldProcess : WaitHandle
     /// <returns>The code, or <see langword="null"/> when it cannot be read. Ask only once the handle is signalled.</returns>
     public int? ExitCodeOnceEnded() =>
         BrowserProcesses.GetExitCodeProcess(SafeWaitHandle, out var code) ? unchecked((int)code) : null;
+
+    /// <summary>
+    /// Whether it has ended, asked without waiting, and its exit code when it has: read
+    /// off the handle this object holds, as <see cref="ExitCodeOnceEnded"/> is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b><c>GetExitCodeProcess</c> returns at once</b> and answers <see cref="StillActive"/>
+    /// for a process that is running, so nothing here waits on the handle. A process that
+    /// ends with that very code reads as running, a limit Microsoft's documentation of the
+    /// call names (read 2026-10-12).
+    /// </para>
+    /// <para>
+    /// <b>Added 2026-10-12 for the maintainer's 94</b>, for the session's line that says its
+    /// browser ended during a call.
+    /// </para>
+    /// </remarks>
+    /// <param name="exitCode">The exit code once it has ended, or <see langword="null"/>.</param>
+    /// <returns>Whether it has ended; <see langword="false"/> when the code cannot be read.</returns>
+    public bool HasEnded(out int? exitCode)
+    {
+        if (BrowserProcesses.GetExitCodeProcess(SafeWaitHandle, out var code) && code is not StillActive)
+        {
+            exitCode = unchecked((int)code);
+            return true;
+        }
+
+        exitCode = null;
+        return false;
+    }
+
+    /// <summary><c>STILL_ACTIVE</c>, what <c>GetExitCodeProcess</c> answers while the process runs.</summary>
+    private const uint StillActive = 259;
 }

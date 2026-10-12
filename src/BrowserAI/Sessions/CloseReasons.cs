@@ -148,7 +148,7 @@ internal static class CloseReasons
                 $"This session's browser exited on its own at {when}, cleanly, and BrowserAI had not asked it to close.",
 
             SessionCloseCause.BrowserCrashed =>
-                $"This session's browser ended at {when} with exit code {Code(close.ExitCode)}, which a crash or a kill leaves; BrowserAI had not asked it to close.",
+                $"This session's browser ended at {when} with exit code {ExitCodeText(close.ExitCode)}, which a crash or a kill leaves; BrowserAI had not asked it to close.",
 
             SessionCloseCause.ServerEnded =>
                 $"This session's browser server was found ended at {when}, and its browser with it; BrowserAI had not ended it.",
@@ -196,7 +196,10 @@ internal static class CloseReasons
         };
     }
 
-    private static string Code(int? exitCode) =>
+    /// <summary>An exit code as every sentence about a browser's end says it: decimal, then hexadecimal.</summary>
+    /// <param name="exitCode">The code, or <see langword="null"/> when it is not known.</param>
+    /// <returns>For example <c>-1073741819 (0xC0000005)</c>, or <c>unknown</c>.</returns>
+    internal static string ExitCodeText(int? exitCode) =>
         exitCode is { } code
             ? $"{code.ToString(CultureInfo.InvariantCulture)} (0x{unchecked((uint)code).ToString("X8", CultureInfo.InvariantCulture)})"
             : "unknown";

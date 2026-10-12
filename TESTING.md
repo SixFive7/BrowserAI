@@ -496,6 +496,18 @@ until grep -q "Test run summary" "$log"; do sleep 5; done; tail -12 "$log"
   starts a process and [every launch in this tree suppresses its
   console](AGENTS.md). A run started this way puts nothing on the screen.
 
+⚠️ **A red arm can keep its scratch folder in `.work\kept\`** -- *added 2026-10-12, the
+maintainer's 94 a, in his words verbatim: "94 your recommendation"*. The reclaim at the
+head of every run deletes `.work\test-scratch` whole, and every gate driver clears it
+before its run, so a rig's session folder, whose record says how its browser ended, went
+before anybody read it. `Harness/KeptOnRed` moves an arm's scratch folder under
+`.work\kept\`, in a folder named for the moment, the test host's pid, the arm and the
+first eight characters of a GUID, and the arm's failure says where after its own message.
+The real Chromium arm of `ScreenshotLimitTests` is the one arm that does it. **The drivers
+do not copy it**, so whoever collects a red run's evidence copies the folder the failure
+names; and nothing deletes one. `KeptOnRedTests` holds the move and the message over a
+kept root of its own.
+
 **`BROWSERAI_RELEASE_RUN=1` goes on the same invocation** -- set it in the
 detached shell's own environment, not the caller's, or the variable is not where
 the test host will read it. [Release checklist item 8](RELEASING.md#8-run-everything)

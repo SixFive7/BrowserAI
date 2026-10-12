@@ -59,6 +59,33 @@ internal sealed class BrowserExitWatch : IDisposable, IWatchedBrowser
     /// <inheritdoc />
     int IWatchedBrowser.ProcessId => _browser.ProcessId;
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// <b>Read off the handle this watch holds</b>, through
+    /// <see cref="HeldProcess.HasEnded"/>, so the answer is about this browser and never
+    /// about a process that took its pid. <b>Added 2026-10-12 for the maintainer's 94</b>:
+    /// a call's end asks it, because the browser server's answer to the call can reach
+    /// BrowserAI before this watch's wait fires.
+    /// </remarks>
+    public bool HasEnded(out int? exitCode)
+    {
+        exitCode = null;
+
+        if (Volatile.Read(ref _disposed) is not 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            return _browser.HasEnded(out exitCode);
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Starts watching the browser a session child's job holds, or answers
     /// <see langword="null"/> when it holds none running <paramref name="executable"/>.
@@ -138,4 +165,12 @@ internal interface IWatchedBrowser
 {
     /// <summary>The browser's main process.</summary>
     int ProcessId { get; }
+
+    /// <summary>
+    /// Whether the browser has ended, asked without waiting, and its exit code when it
+    /// has and the code can be read.
+    /// </summary>
+    /// <param name="exitCode">The exit code, or <see langword="null"/> while it runs or when it cannot be read.</param>
+    /// <returns>Whether it has ended.</returns>
+    bool HasEnded(out int? exitCode);
 }

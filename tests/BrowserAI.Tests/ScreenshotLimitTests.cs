@@ -194,21 +194,80 @@ internal sealed class ScreenshotLimitTests
     /// into a file, and a page 16,384 px tall comes back whole.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Planted red against the tree before the check existed</b>: the 16,385 px
     /// page came back as a success, its image 1920x16385.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The maintainer's 94, 2026-10-12, in his words verbatim:</b> <i>"94 your
+    /// recommendation"</i>, which is a, b and c below, after this arm lost its browser
+    /// during a full-page capture in 7 of 77 full runs and never in a run alone, 5 of the
+    /// 7 with the machine's commit charge healthy. Why the browser ends is not known, and
+    /// the three are there to find out and to keep the arm out of what it met.
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>
+    /// <b>(a) A red keeps the rig's folder</b>, whose session folder holds the session's
+    /// record with the close's reason and the browser's exit code, in
+    /// <see cref="KeptOnRed.Root"/>, and the failure says where. The session also writes a
+    /// line of its own when its browser ends under a call,
+    /// <c>SessionLog.BrowserEndedDuringACall</c>, with the exit code.
+    /// </description></item>
+    /// <item><description>
+    /// <b>(b) The browser writes its own log to its standard error</b>, through
+    /// <c>RigSessionEnvironment.WithChromiumLoggingAsync</c>, the rig's change to the
+    /// launch and test-only, so the browser logs Playwright keeps, and puts into an error
+    /// about the browser closing, carry every line Chromium logs and not its errors alone.
+    /// The session is opened with <c>debug</c>, so the same lines reach this arm's own
+    /// output on a passing run too.
+    /// </description></item>
+    /// <item><description>
+    /// <b>(c) It runs beside nothing</b>: the keyless <c>[NotInParallel]</c>, which in
+    /// TUnit puts the arm after every arm that runs in parallel and beside none of them. In
+    /// a full run it ran from about 13 s in, beside up to 129 other tests, and took 26.7 to
+    /// 33.7 s where it takes 6.0 to 10.7 s alone, and 4.0 s in the first run that ran it
+    /// beside nothing. <b>The cost is its whole time alone, added to the critical path</b>,
+    /// about 4 to 11 s of every full run, which nothing overlaps any more. <b>The
+    /// reason</b> is that the arm's subject is the refusal and not a loaded machine, and a
+    /// browser lost to the load said nothing about the refusal; what a loaded user machine
+    /// may do to a large capture is the arm's open row in <c>HAZARDS.md</c>, which (a) and
+    /// (b) are there to answer.
+    /// </description></item>
+    /// </list>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
+    [NotInParallel]
     public async Task AgainstARealChromiumAPageOnePixelPastTheLineIsRefusedAndOneAtItIsNot()
     {
         await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
-        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true, chromiumLogging: true);
 
-        var directory = Path.Combine(sessions.Root, "real-tall");
+        try
+        {
+            // Disposed before the catch below runs, so the session has let its folder go
+            // and its record says how it closed by the time a red keeps it.
+            await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        _ = await InitAsync(rig, directory, ProvisionedBrowsers.Chromium);
+            await TakeBothSidesOfTheLineAsync(rig, Path.Combine(sessions.Root, "real-tall"));
+        }
+        catch (Exception failure)
+        {
+            throw await KeptOnRed.KeepAsync(sessions.Root, failure, "screenshot-limit");
+        }
+    }
+
+    /// <summary>
+    /// The real Chromium arm's two pages, each taken whole inline and into a file, and what
+    /// each answer must be.
+    /// </summary>
+    /// <param name="rig">The rig, its sessions' children real.</param>
+    /// <param name="directory">The session directory to open.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task TakeBothSidesOfTheLineAsync(McpTestHarness rig, string directory)
+    {
+        _ = await InitAsync(rig, directory, ProvisionedBrowsers.Chromium, debug: true);
 
         foreach (var height in new[] { ScreenshotLimit.LargestFaithfulSide + 1, ScreenshotLimit.LargestFaithfulSide })
         {
@@ -315,7 +374,13 @@ internal sealed class ScreenshotLimitTests
             ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = text }),
         }.ToJsonString();
 
-    private static async Task<JsonObject> InitAsync(McpTestHarness rig, string directory, string browser)
+    /// <summary>Opens a session, refusing the arm when it cannot.</summary>
+    /// <param name="rig">The rig.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="browser">The family.</param>
+    /// <param name="debug">Whether the session's own log runs at debug level, which carries its child's standard error.</param>
+    /// <returns>The answer.</returns>
+    private static async Task<JsonObject> InitAsync(McpTestHarness rig, string directory, string browser, bool debug = false)
     {
         var answer = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
@@ -326,6 +391,7 @@ internal sealed class ScreenshotLimitTests
             ["transcript"] = false,
             ["captureNetwork"] = false,
             ["idleMinutes"] = 10,
+            ["debug"] = debug,
         });
 
         if ((bool?)answer["isError"] is true)
