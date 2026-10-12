@@ -76,10 +76,11 @@ internal sealed class DedicatedThreadTests
     /// </para>
     /// <para>
     /// (a) <b>Two hundred hand-overs on the running thread</b>, each continuation checked for
-    /// the thread it landed on. With that plant one landed on the thread at the second or the
-    /// third hand-over in 5 runs of 5. Its red rests on the thread losing that race once in
-    /// the two hundred; its green does not depend on timing, because without the defect no
-    /// continuation of a caller can run there. (b) <b>The item's task carries
+    /// the thread it landed on. With that plant one landed on the thread at the first of them
+    /// in 5 runs of 5, the item awaited before the loop having started the thread; a loop on
+    /// a new thread caught it at the second or the third. Its red rests on the thread losing
+    /// that race once in the two hundred; its green does not depend on timing, because
+    /// without the defect no continuation of a caller can run there. (b) <b>The item's task carries
     /// <c>RunContinuationsAsynchronously</c></b>, red with the same plant on every run: the
     /// option is what keeps a continuation off the thread, so a version of the type that kept
     /// them off some other way would fail here and pass (a). Both halves are asserted
