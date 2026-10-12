@@ -1309,7 +1309,10 @@ the more converstations page? Or some other cleaner design."* and *"3 Show this 
 realtime updates. Show the separate process memory and the shared base separately. The page
 has to show it all clearly."*, with *"Incorporate these all before we cut a release."* The
 layouts he chose from are the ones made for his screen that day, Firefox maximised to the
-bottom half of a rotated side screen, a viewport of about 1440 by 1170.
+bottom half of a rotated side screen, a viewport of about 1440 by 1170. *Added 2026-10-12 by
+addition:* they are kept, with their screenshots, in
+[`docs/design/home-layouts-2026-10-11`](docs/design/home-layouts-2026-10-11/README.md), by the
+maintainer's 106 b.
 
 | Decision | Outcome |
 |---|---|

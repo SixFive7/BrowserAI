@@ -5,10 +5,11 @@
 
 **Chosen 2026-10-11 by the maintainer, 61, in his words verbatim: _"61 I like 1"_**: layout 1,
 the side column, built on 2026-10-12. The decision's rows are the section of
-[`DECISIONS.md`](../../../DECISIONS.md) headed *The home, its CPU and memory, and the
-after-update notice, decided 2026-10-11*; this directory is what he chose from. The layouts
-were made for his screen that day, Firefox maximised to the bottom half of a rotated side
-screen, a viewport of about 1440 by 1170.
+[`DECISIONS.md`](../../../DECISIONS.md#the-home-its-cpu-and-memory-and-the-after-update-notice-decided-2026-10-11)
+headed *The home, its CPU and memory, and the after-update notice, decided 2026-10-11*;
+this directory is what he chose from. The layouts were made for his screen that day,
+Firefox maximised to the bottom half of a rotated side screen, a viewport of about 1440 by
+1170.
 
 **Kept here since 2026-10-12, the maintainer's 106, in his words verbatim: _"106 your
 recommendation"_**, which was b: the three sets of mockups of 2026-10-11 are kept in
