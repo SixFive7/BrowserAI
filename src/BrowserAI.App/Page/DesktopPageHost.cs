@@ -48,10 +48,6 @@ internal sealed partial class DesktopPageHost(ILogger logger) : IPageHost
             TaskScheduler.Default);
 
     /// <inheritdoc />
-    public string? OpenTrace(string trace) =>
-        "This build of BrowserAI does not open Playwright's trace viewer yet. The trace is in the session's output folder.";
-
-    /// <inheritdoc />
     public Task<FolderPick> PickFolderAsync(string prompt)
     {
         var picked = new TaskCompletionSource<FolderPick>(TaskCreationOptions.RunContinuationsAsynchronously);

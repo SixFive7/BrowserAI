@@ -410,6 +410,8 @@ internal static partial class Program
             Folders = host.Sessions.Folders,
             Usage = usage,
             Changelog = ShippedChangelog.ForThisBuild(),
+            // 56 a, 2026-10-11: the changelog page's sidebar of every release.
+            Releases = ShippedChangelog.Releases(),
             Install = install,
 
             // 69 d with fallback b, 2026-10-11: the port and the tab numbers outlive the

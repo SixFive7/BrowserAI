@@ -24,7 +24,9 @@ internal enum PageKind
     /// <summary>
     /// Conversations and browsers: the map of every conversation, BrowserAI and every
     /// session, or the same as a list. <i>Until 2026-10-11 the sessions page</i>, whose
-    /// address it keeps.
+    /// address it keeps. <i>And since 2026-10-12 one session's page as well</i>, which it
+    /// replaces: an address that names a session opens this page with that session chosen,
+    /// the old <c>session?id=</c> among them.
     /// </summary>
     Sessions,
 
@@ -39,9 +41,6 @@ internal enum PageKind
     /// installed version. The installed toast's <i>Changelog</i> opens it.
     /// </summary>
     Changelog,
-
-    /// <summary>One session: its browser, the conversation that uses it, its folder and its size.</summary>
-    Session,
 
     /// <summary>Claude Code and Codex: how each is set up, and the buttons that change it.</summary>
     Setup,
@@ -64,7 +63,6 @@ internal static class PageNames
         PageKind.Sessions => "sessions",
         PageKind.Update => "update",
         PageKind.Changelog => "changelog",
-        PageKind.Session => "session",
         PageKind.Setup => "setup",
         PageKind.Storage => "storage",
         PageKind.Install => "install",
@@ -77,14 +75,18 @@ internal static class PageNames
     public static string RouteOf(PageKind kind) => kind is PageKind.Status ? string.Empty : Of(kind);
 
     /// <summary>The page a name names; anything else is the home.</summary>
+    /// <remarks>
+    /// <b>A session's page is the conversations page since 2026-10-12</b>, so a stream an
+    /// older tab of that page opens again is sent the conversations page with its session
+    /// chosen.
+    /// </remarks>
     /// <param name="name">The name.</param>
     /// <returns>The page.</returns>
     public static PageKind Parse(string? name) => name switch
     {
-        "sessions" => PageKind.Sessions,
+        "sessions" or "session" => PageKind.Sessions,
         "update" => PageKind.Update,
         "changelog" => PageKind.Changelog,
-        "session" => PageKind.Session,
         "setup" => PageKind.Setup,
         "storage" => PageKind.Storage,
         "install" => PageKind.Install,
@@ -92,15 +94,19 @@ internal static class PageNames
     };
 
     /// <summary>The page a route names, or <see langword="null"/> for a route that is no page.</summary>
+    /// <remarks>
+    /// <b>The dropped session page's route lands on the conversations page</b>, since
+    /// 2026-10-12: an address an older tab kept still opens the page that now holds what it
+    /// held (40 a).
+    /// </remarks>
     /// <param name="route">What follows the token, up to the query.</param>
     /// <returns>The page.</returns>
     public static PageKind? OfRoute(string route) => route switch
     {
         "" => PageKind.Status,
-        "sessions" => PageKind.Sessions,
+        "sessions" or "session" => PageKind.Sessions,
         "update" => PageKind.Update,
         "changelog" => PageKind.Changelog,
-        "session" => PageKind.Session,
         "setup" => PageKind.Setup,
         "storage" => PageKind.Storage,
         "install" => PageKind.Install,
@@ -116,10 +122,13 @@ internal sealed record PageEvent(string Name, string Data);
 /// <summary>One open event stream: one tab, as the listener sees it.</summary>
 /// <param name="tab">The tab's number, as its address carried it.</param>
 /// <param name="page">Which page it shows.</param>
-/// <param name="subject">The opaque name of the session a session page shows, or <see langword="null"/>.</param>
+/// <param name="subject">What the page is about, as its address names it, or <see langword="null"/>.</param>
 internal sealed class TabStream(int tab, PageKind page, string? subject = null)
 {
-    /// <summary>The opaque name of the session a session page shows, or <see langword="null"/>.</summary>
+    /// <summary>
+    /// What the page is about, as its address names it: the session the conversations page
+    /// has chosen, or the release the changelog page shows; or <see langword="null"/>.
+    /// </summary>
     public string? Subject { get; } = subject;
 
     private readonly Channel<PageEvent> _events = Channel.CreateUnbounded<PageEvent>(new UnboundedChannelOptions
@@ -333,7 +342,7 @@ internal sealed class PageTabs : IDisposable
     /// <summary>Registers one tab's stream as it opens.</summary>
     /// <param name="tab">The number its address carried, zero for none.</param>
     /// <param name="page">Which page it shows.</param>
-    /// <param name="subject">The session a session page shows, or <see langword="null"/>.</param>
+    /// <param name="subject">What the page is about, as its address names it, or <see langword="null"/>.</param>
     /// <returns>The stream, or <see langword="null"/> once the coordinator is stopping.</returns>
     public TabStream? Connect(int tab, PageKind page, string? subject = null)
     {

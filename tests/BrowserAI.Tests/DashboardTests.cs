@@ -133,9 +133,14 @@ internal sealed class DashboardTests
 
     /// <summary>
     /// The page behind each card has a route of its own and begins with the way back to the
-    /// home; a session's page is reached by the session's opaque name, a name nothing holds
-    /// says so, and a route that is no page is the gate's bare 404.
+    /// home, and a route that is no page is the gate's bare 404.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-12 (previously also "a session's page is reached by the session's
+    /// opaque name, a name nothing holds says so")</i>: the session page is dropped, and its
+    /// address opens the conversations page with the session chosen, which
+    /// <see cref="ConversationsMapTests.ALinkToASessionOpensTheMapWithThatSessionChosen"/> holds.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task EachPageBehindACardIsServedAtItsRouteAndBeginsWithAWayBack()
@@ -145,15 +150,11 @@ internal sealed class DashboardTests
         rig.Sessions.Snapshot = Busy();
         _ = await rig.HandOutAsync();
 
-        var checkout = CensusPageSessions.IdOf(CheckoutRounding);
-
         (string Route, string Heading)[] pages =
         [
             ("setup?tab=1", "Claude Code and Codex"),
             ("storage?tab=1", "Storage"),
             ("install?tab=1", "This install"),
-            ($"session?tab=1&id={checkout}", "checkout-rounding"),
-            ("session?tab=1&id=0000000000000000", "No such session"),
         ];
 
         foreach (var (route, heading) in pages)
@@ -164,12 +165,6 @@ internal sealed class DashboardTests
             await Assert.That(page.Body).Contains($"<h1 class=\"page-title\">{heading}</h1>").Because(route);
             await Assert.That(page.Body).Contains(Crumbs(1)).Because(route);
         }
-
-        // A session's page has the conversations page between it and the home.
-        var session = await PageRig.GetAsync(rig.Root + $"session?tab=1&id={checkout}");
-
-        await Assert.That(session.Body).Contains("<a id=\"l-crumb-sessions\" href=\"sessions?tab=1\">Conversations and browsers</a>");
-        await Assert.That(session.Body).Contains("data-subject=\"" + checkout + "\"");
 
         var nothing = await PageRig.GetAsync(rig.Root + "nonsense?tab=1");
 
@@ -579,7 +574,7 @@ internal sealed class DashboardTests
 
         foreach (var kind in Enum.GetValues<PageKind>())
         {
-            var route = kind is PageKind.Session ? $"session?tab=1&id={CensusPageSessions.IdOf(CheckoutRounding)}" : PageNames.RouteOf(kind) + "?tab=1";
+            var route = PageNames.RouteOf(kind) + "?tab=1";
             var page = await PageRig.GetAsync(rig.Root + route);
 
             foreach (Match action in Regex.Matches(page.Body, "data-action=\"(?<action>[^\"]*)\""))
@@ -675,13 +670,13 @@ internal sealed class DashboardTests
 
         foreach (var kind in Enum.GetValues<PageKind>())
         {
-            var route = kind is PageKind.Session ? $"session?tab=1&id={CensusPageSessions.IdOf(CheckoutRounding)}" : PageNames.RouteOf(kind) + "?tab=1";
+            var route = PageNames.RouteOf(kind) + "?tab=1";
 
             // As a browser does: the page first, which starts what it is drawn from, then
             // its stream.
             _ = await PageRig.GetAsync(rig.Root + route);
 
-            using var stream = await rig.StreamAsync(rig.Gate.Root, 1, PageNames.Of(kind), kind is PageKind.Session ? "id=" + CensusPageSessions.IdOf(CheckoutRounding) : null);
+            using var stream = await rig.StreamAsync(rig.Gate.Root, 1, PageNames.Of(kind));
 
             // The state the stream opens with, after the registration and the measurement are in.
             var html = await StateContainingAsync(stream, kind is PageKind.Setup ? "Read at" : string.Empty);
@@ -709,7 +704,7 @@ internal sealed class DashboardTests
 
         foreach (var kind in Enum.GetValues<PageKind>())
         {
-            var route = kind is PageKind.Session ? $"session?tab=1&id={CensusPageSessions.IdOf(CheckoutRounding)}" : PageNames.RouteOf(kind) + "?tab=1";
+            var route = PageNames.RouteOf(kind) + "?tab=1";
             var page = await PageRig.GetAsync(rig.Root + route);
 
             await Assert.That(page.Status).IsEqualTo(200).Because(route);

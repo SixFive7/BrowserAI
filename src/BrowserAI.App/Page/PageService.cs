@@ -28,11 +28,6 @@ internal interface IPageHost
     /// <param name="directory">The folder.</param>
     void OpenFolder(string directory);
 
-    /// <summary>Opens Playwright's trace viewer on one trace.</summary>
-    /// <param name="trace">The trace file.</param>
-    /// <returns>A sentence when it could not be opened, or <see langword="null"/>.</returns>
-    string? OpenTrace(string trace);
-
     /// <summary>Asks the person for a folder through Windows' own picker, Q311.</summary>
     /// <param name="prompt">What the picker says the folder is for.</param>
     /// <returns>What the person chose, or that they chose nothing.</returns>
@@ -229,6 +224,9 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
     /// <summary>The installed version's section of the changelog shipped in the build, or <see langword="null"/>.</summary>
     internal ChangelogSection? Changelog { get; init; }
+
+    /// <summary>Every release the changelog shipped in the build holds, in its order (56 a, 2026-10-11).</summary>
+    internal IReadOnlyList<ChangelogSection> Releases { get; init; } = [];
 
     /// <summary>
     /// Whether the install is broken, which every page says first while it stands, or
@@ -470,7 +468,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
     /// <summary>Everything the page would show now.</summary>
     /// <param name="kind">Which page.</param>
-    /// <param name="subject">The session a session's page is about, by its opaque name, or <see langword="null"/>.</param>
+    /// <param name="subject">What the page is about, as its address names it: the session the conversations page has chosen, by its opaque name, or the release the changelog page shows; or <see langword="null"/>.</param>
     /// <returns>The view.</returns>
     public PageView View(PageKind kind, string? subject = null)
     {
@@ -491,6 +489,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
                 Now = _clock.GetUtcNow(),
                 Usage = _usage,
                 UpdatedTo = _notice is { Seen: false } waiting && string.Equals(waiting.Version, _facts.Version, StringComparison.Ordinal) ? waiting.Version : null,
+                Releases = Releases,
 
                 // 55 a and 70 a, 2026-10-11: the folder links carry the token of the listener up now.
                 Links = _facts.LinkScheme is { } scheme && _current is { } served ? new PageLinkContext(scheme, served.Listener.Gate.Token) : null,
@@ -646,8 +645,19 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         return PageContent.Document(View(kind, SubjectOf(kind, query)), kind, tab, OccasionFor(tab), _clock.GetUtcNow());
     }
 
-    /// <summary>The session a session's page is about, as its address names it.</summary>
-    private static string? SubjectOf(PageKind kind, string query) => kind is PageKind.Session ? PageGate.QueryValue(query, "id") : null;
+    /// <summary>What a page is about, as its address names it.</summary>
+    /// <remarks>
+    /// <b>The session the conversations page has chosen</b>, in <c>id</c>, since 2026-10-12, when
+    /// the page took over from one session's page and kept its parameter; <b>and the release
+    /// the changelog page shows</b>, in <c>version</c> (56 a). A tab's stream names either in
+    /// <c>id</c>, which is what the page's script sends.
+    /// </remarks>
+    private static string? SubjectOf(PageKind kind, string query) => kind switch
+    {
+        PageKind.Sessions => PageGate.QueryValue(query, "id"),
+        PageKind.Changelog => PageGate.QueryValue(query, "version") ?? PageGate.QueryValue(query, "id"),
+        _ => null,
+    };
 
     /// <summary>
     /// What a page is drawn from, read before it is drawn: the sessions with their
@@ -687,7 +697,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             await ReadUsageAsync().ConfigureAwait(false);
         }
 
-        if (kind is PageKind.Status or PageKind.Sessions or PageKind.Session or PageKind.Storage)
+        if (kind is PageKind.Status or PageKind.Sessions or PageKind.Storage)
         {
             StartMeasure(asked: false);
         }
@@ -832,7 +842,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             "install-now" => StartInstallNow(String(request, "version")),
             "open-folder" => await OpenFolderAsync(String(request, "folder")).ConfigureAwait(false),
             "open-session" => OpenSession(String(request, "session")),
-            "open-trace" => OpenTrace(String(request, "trace")),
             "refresh-sessions" => Run(RefreshSessionsAsync(CancellationToken.None)),
             "measure-sessions" => MeasureAsked(),
             "dismiss-notice" => Run(MarkNoticeSeenAsync()),
@@ -1349,16 +1358,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         return true;
     }
 
-    private void Note(PageKind kind, PageNote? note)
-    {
-        lock (_gate)
-        {
-            _notes[kind] = note;
-        }
-
-        Push();
-    }
-
     private async Task<bool> OpenFolderAsync(string? folder)
     {
         var directory = folder switch
@@ -1552,29 +1551,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
             return note?.Sentence ?? "No folder was chosen, so nothing changed.";
         });
-    }
-
-    private bool OpenTrace(string? id)
-    {
-        TraceEntry? trace;
-
-        lock (_gate)
-        {
-            trace = id is null ? null : _snapshot.TraceById(id);
-        }
-
-        if (trace is null)
-        {
-            return false;
-        }
-
-        // A trace is opened from its session's page since 2026-10-11 (40 a), which says so.
-        if (_host.OpenTrace(trace.Path) is { } refused)
-        {
-            Note(PageKind.Session, new PageNote("The trace viewer did not open.", refused));
-        }
-
-        return true;
     }
 
     /// <summary>Reads every client's registration again, unless a read is already running.</summary>
@@ -1838,7 +1814,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             {
                 _notes[PageKind.Sessions] = note;
                 _notes[PageKind.Status] = note;
-                _notes[PageKind.Session] = note;
             }
 
             Push();

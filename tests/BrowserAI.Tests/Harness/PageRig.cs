@@ -37,6 +37,7 @@ internal sealed class PageRig : IAsyncDisposable
     /// Where the listener keeps its port and its last tab across a restart (69 b), or
     /// <see langword="null"/> for what the process remembers.
     /// </param>
+    /// <param name="releases">Every release the changelog holds, or <see langword="null"/> for none (56 a).</param>
     /// <returns>The rig.</returns>
     public static async Task<PageRig> CreateAsync(
         CapturingLoggerProvider? logs = null,
@@ -48,9 +49,10 @@ internal sealed class PageRig : IAsyncDisposable
         BrokenInstallNotice? install = null,
         bool installed = true,
         Func<PageFacts, PageFacts>? facts = null,
-        IPageListenerMemory? memory = null)
+        IPageListenerMemory? memory = null,
+        IReadOnlyList<ChangelogSection>? releases = null)
     {
-        var rig = new PageRig(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts, memory);
+        var rig = new PageRig(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts, memory, releases);
 
         // The background's own start reads the after-update notice's record before any tab
         // (57 a), so the rig's does too.
@@ -69,7 +71,8 @@ internal sealed class PageRig : IAsyncDisposable
         BrokenInstallNotice? install = null,
         bool installed = true,
         Func<PageFacts, PageFacts>? facts = null,
-        IPageListenerMemory? memory = null)
+        IPageListenerMemory? memory = null,
+        IReadOnlyList<ChangelogSection>? releases = null)
     {
         _scratch = scratch;
         Registration = registration ?? new FakeRegistration();
@@ -106,6 +109,7 @@ internal sealed class PageRig : IAsyncDisposable
             Folders = Folders,
             Usage = Usage,
             Changelog = changelog,
+            Releases = releases ?? [],
             Install = install,
             Memory = memory ?? new PageListenerMemoryInProcess(),
         };
@@ -296,8 +300,6 @@ internal sealed class RecordingHost : IPageHost
     public TaskCompletionSource<FolderPick>? Open { get; set; }
 
     public void OpenFolder(string directory) => Opened.Enqueue(directory);
-
-    public string? OpenTrace(string trace) => null;
 
     public Task<FolderPick> PickFolderAsync(string prompt)
     {

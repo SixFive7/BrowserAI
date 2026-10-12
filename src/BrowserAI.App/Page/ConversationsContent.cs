@@ -21,6 +21,18 @@ namespace BrowserAI.App.Page;
 /// alone.
 /// </para>
 /// <para>
+/// <b>60, the maintainer's choice of 2026-10-11, in his words verbatim: <i>"60 I like C"</i></b>,
+/// variant C, named lines, of the variants put to him after he wrote: <i>"the visual line
+/// differences between: Window on your screen / Hidden browser / No browser open / Kept, no
+/// conversation / Are very difficult to see. Use more different lines and colors here. But
+/// keep it in style and pretty. Also, it is not clear you can select the browser session.
+/// Communicate that better."</i> Each line on from BrowserAI says its state in a word as well
+/// as by its colour and pattern, the legend draws a sample of each, every card carries a tab
+/// that reads <i>Details</i>, and <i>Selected</i> on the card chosen, and the inspector with
+/// nothing chosen says how to choose. <b>A conversation's half of its line carries every state
+/// its sessions have</b>, one strand each, where it carried its first session's alone.
+/// </para>
+/// <para>
 /// <b>The map becomes a list below <see cref="PageAssets.MapMinimumWidth"/> pixels of
 /// window</b>, by the stylesheet, and <b>when it would be too crowded to read</b>: more than
 /// <see cref="MostMapRows"/> rows, a row being a conversation or a session no conversation
@@ -30,7 +42,9 @@ namespace BrowserAI.App.Page;
 /// <para>
 /// <b>It keeps the sessions page's address</b>, <c>sessions?tab=N</c>, which
 /// <c>BrowserAI.exe --sessions</c> opens, and it is live (46 a): the page's watch sends it a
-/// new state on every change.
+/// new state on every change. <b>Since 2026-10-12 it is also every session's page</b>: an
+/// address that names a session in <c>id</c> opens the page with that session chosen, and the
+/// session page that address used to open is dropped, its lines in the inspector here.
 /// </para>
 /// </remarks>
 internal static class ConversationsContent
@@ -41,6 +55,20 @@ internal static class ConversationsContent
     /// <summary>The most sessions the map draws.</summary>
     public const int MostMapSessions = 12;
 
+    /// <summary>What a trace is, said beside a session's traces.</summary>
+    /// <remarks>The session page's line, moved here with its page on 2026-10-12.</remarks>
+    private const string TracesNote = "Recordings Playwright can replay, in the session's output folder.";
+
+    /// <summary>Who deletes a session's folder, said beside its <i>Open folder</i> button (41 a).</summary>
+    /// <remarks>
+    /// The session page's notice, moved here with its page on 2026-10-12: its title, <i>This page
+    /// deletes nothing</i>, is the first sentence's second half.
+    /// </remarks>
+    private const string KeepNote = "BrowserAI never deletes a session folder on its own, and this page deletes nothing. The agent that made this one can delete it, and so can you: open its folder and delete it in Explorer.";
+
+    /// <summary>The order a conversation's strands are drawn in: a window, a hidden browser, no browser open.</summary>
+    private static readonly string[] StrandOrder = ["w", "h", "c"];
+
     /// <summary>The conversations page's main part.</summary>
     /// <param name="view">What is true now.</param>
     /// <returns>The HTML.</returns>
@@ -49,6 +77,7 @@ internal static class ConversationsContent
         ArgumentNullException.ThrowIfNull(view);
 
         var board = PageBoard.Of(view.Sessions);
+        var chosen = board.SessionById(view.Subject) is { } subject ? "s-" + subject.Id : null;
         var html = new StringBuilder()
             .Append(PageContent.Crumbs(view.Tab, "Conversations and browsers"))
             .Append(PageContent.Title(
@@ -61,6 +90,7 @@ internal static class ConversationsContent
             .Append("</div>\n");
 
         PageContent.AppendNote(html, view.Note);
+        AppendNotHeld(html, view, board);
 
         if (board.Conversations.Count is 0 && board.All.Count is 0)
         {
@@ -73,7 +103,7 @@ internal static class ConversationsContent
 
         if (!crowded)
         {
-            _ = html.Append(Legend()).Append("<div class=\"map-layout\">\n").Append(Map(view, board)).Append(Inspector(view, board)).Append("</div>\n");
+            _ = html.Append(Legend()).Append("<div class=\"map-layout\">\n").Append(Map(view, board, chosen)).Append(Inspector(view, board, chosen)).Append("</div>\n");
         }
 
         _ = html.Append(crowded ? "<div class=\"list-view crowded\">\n" : "<div class=\"list-view\">\n");
@@ -83,7 +113,7 @@ internal static class ConversationsContent
             _ = html.Append("<p class=\"small\">There are too many conversations and sessions to draw as a map, so they are listed.</p>\n");
         }
 
-        return html.Append(List(view, board)).Append("</div>\n").ToString();
+        return html.Append(List(view, board, chosen)).Append("</div>\n").ToString();
     }
 
     /// <summary>
@@ -132,20 +162,116 @@ internal static class ConversationsContent
         return string.Join('|', snapshot.Servers.Where(server => server.IsHost).SelectMany(server => server.Sessions).Select(session => session.Id).Order(StringComparer.Ordinal));
     }
 
+    /// <summary>
+    /// The states a conversation's half of its line is drawn in, one strand each: those its
+    /// sessions have, in the order window, hidden, no browser open; <c>n</c> for a conversation
+    /// with no session.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12, for the defect of 2026-10-11's map</b>: the half was drawn in its
+    /// first session's state, so a conversation whose first session had no browser open drew
+    /// nothing of the window it had on the screen.
+    /// </remarks>
+    /// <param name="conversation">The conversation.</param>
+    /// <returns>The states, separated by spaces.</returns>
+    internal static string StrandsOf(Conversation conversation)
+    {
+        ArgumentNullException.ThrowIfNull(conversation);
+
+        if (conversation.Sessions.Count is 0)
+        {
+            return "n";
+        }
+
+        var states = conversation.Sessions.Select(PageParts.ClassOf).ToHashSet(StringComparer.Ordinal);
+
+        return string.Join(' ', StrandOrder.Where(states.Contains));
+    }
+
+    /// <summary>What a session's folder weighs, as the last measurement found it.</summary>
+    /// <remarks><i>Moved here 2026-10-12 from the session page, which is dropped.</i></remarks>
+    /// <param name="view">What is true now.</param>
+    /// <param name="id">The session's opaque name.</param>
+    /// <returns>The words.</returns>
+    internal static string SizeWords(PageView view, string id)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+
+        return view.Folders?.ById(id) switch
+        {
+            { Bytes: { } bytes } => PageWords.Size(bytes),
+            { } => "Could not be measured",
+            null when view.Measuring => "Measuring",
+            _ => "Not measured yet",
+        };
+    }
+
+    /// <summary>
+    /// The sample of one line the script draws: the legend's, with its word, and a small one
+    /// beside a session in the inspector.
+    /// </summary>
+    /// <param name="state">The line's state.</param>
+    /// <param name="width">Its width.</param>
+    /// <param name="height">Its height.</param>
+    /// <param name="mini">Whether it is the small one, drawn with no word.</param>
+    /// <returns>The empty SVG the script draws into.</returns>
+    internal static string Sample(string state, int width, int height, bool mini) =>
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"<svg class=\"sample{(mini ? " mini" : string.Empty)}\" data-sample=\"{state}\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {width} {height}\" aria-hidden=\"true\" focusable=\"false\"></svg>");
+
+    /// <summary>
+    /// What an address that names a session the background does not hold says above the map:
+    /// that its folder is not open now, or that nothing knows the name.
+    /// </summary>
+    /// <remarks>
+    /// The session page's two last cases, moved here on 2026-10-12. A folder the measurement
+    /// knows is on the storage page, which says what it is; until a measurement has been
+    /// taken, nothing is said, since nothing could be.
+    /// </remarks>
+    private static void AppendNotHeld(StringBuilder html, PageView view, PageBoard board)
+    {
+        if (view.Subject is not { } id || board.SessionById(id) is not null || view.Folders is not { } measured)
+        {
+            return;
+        }
+
+        _ = html.Append("<div class=\"note said\" role=\"status\">").Append(PageIcons.Of("info")).Append("<div class=\"grow\"><p>");
+
+        _ = measured.ById(id) is { } folder
+            ? html.Append(PageContent.Text($"{PageWords.NameOf(folder.Directory)} is not open now, so this page does not show it. The Storage page lists its folder and its size.")).Append("</p></div>")
+                .Append(PageContent.LinkButton("l-not-open-storage", PageContent.Route(PageKind.Storage, view.Tab), "See the storage"))
+            : html.Append("BrowserAI holds no session by that name now, and its last measurement of the session folders found none.</p></div>");
+
+        _ = html.Append("</div>\n");
+    }
+
     private static string Explain(string icon, string title, string text) =>
         "<div>" + PageIcons.Of(icon) + "<div><b>" + PageContent.Text(title) + "</b><p>" + PageContent.Text(text) + "</p></div></div>";
 
+    /// <summary>The legend: a sample of each line with its words, and where a chosen card's details open.</summary>
     private static string Legend() =>
-        "<div class=\"legend-row\" aria-hidden=\"true\">"
-        + "<span><i class=\"w\"></i>Window on your screen</span>"
-        + "<span><i class=\"h\"></i>Hidden browser</span>"
-        + "<span><i class=\"c\"></i>No browser open</span>"
-        + "<span><i class=\"k\"></i>Kept, no conversation</span></div>\n";
+        "<div class=\"legend-row\"><div class=\"legend-items\">"
+        + LegendItem("w", "Window on your screen")
+        + LegendItem("h", "Hidden browser")
+        + LegendItem("c", "No browser open")
+        + LegendItem("k", "Kept, no conversation")
+        + "</div><p class=\"hint\">" + PageIcons.Of("pointer") + "Click any card on the map. Its details open here.</p></div>\n";
+
+    private static string LegendItem(string state, string words) =>
+        "<span>" + Sample(state, 112, 24, mini: false) + words + "</span>";
+
+    /// <summary>The tab every card carries: <i>Details</i>, and <i>Selected</i> on the card chosen.</summary>
+    private static string Cue() =>
+        "<span class=\"cue\" aria-hidden=\"true\"><span class=\"off\">Details</span><span class=\"on\">Selected</span>" + PageIcons.Of("chevron") + "</span>";
+
+    private static string Pressed(string key, string? chosen) =>
+        string.Equals(key, chosen, StringComparison.Ordinal) ? "true" : "false";
 
     // ---- The map ----------------------------------------------------------------
 
     /// <summary>The map: a column of conversations, BrowserAI, and a column of sessions, row by row.</summary>
-    private static string Map(PageView view, PageBoard board)
+    private static string Map(PageView view, PageBoard board, string? chosen)
     {
         var now = view.Now;
         var html = new StringBuilder("<div class=\"map\" id=\"map\">\n<svg class=\"wires\" id=\"wires\" aria-hidden=\"true\" focusable=\"false\"></svg>\n")
@@ -153,7 +279,7 @@ internal static class ConversationsContent
         var rows = board.Conversations.Count + board.Unlinked.Count;
         var row = 0;
 
-        _ = html.Append("<div class=\"hub-cell rows-").Append(Math.Max(1, rows).ToString(CultureInfo.InvariantCulture)).Append("\">").Append(Hub(view, board)).Append("</div>\n");
+        _ = html.Append("<div class=\"hub-cell rows-").Append(Math.Max(1, rows).ToString(CultureInfo.InvariantCulture)).Append("\">").Append(Hub(view, board, chosen)).Append("</div>\n");
 
         string? lastWindow = null;
 
@@ -167,11 +293,9 @@ internal static class ConversationsContent
 
             lastWindow = conversation.Relay.Window?.Key;
 
-            var first = conversation.Sessions.Count > 0 ? PageParts.ClassOf(conversation.Sessions[0]) : "n";
-
             _ = html.Append("<div class=\"left r").Append(row.ToString(CultureInfo.InvariantCulture)).Append("\" data-row=\"").Append(PageContent.Text(conversation.Key))
-                .Append("\" data-line=\"").Append(first).Append('"').Append(conversation.Working ? " data-live=\"1\"" : string.Empty).Append('>')
-                .Append(label).Append(ConversationNode(conversation)).Append("</div>\n")
+                .Append("\" data-line=\"").Append(StrandsOf(conversation)).Append('"').Append(conversation.Working ? " data-live=\"1\"" : string.Empty).Append('>')
+                .Append(label).Append(ConversationNode(conversation, chosen)).Append("</div>\n")
                 .Append("<div class=\"right r").Append(row.ToString(CultureInfo.InvariantCulture)).Append("\" data-row=\"").Append(PageContent.Text(conversation.Key)).Append("\">");
 
             if (conversation.Sessions.Count is 0)
@@ -182,7 +306,7 @@ internal static class ConversationsContent
             {
                 foreach (var session in conversation.Sessions)
                 {
-                    _ = html.Append(SessionNode(session, conversation.Working, now));
+                    _ = html.Append(SessionNode(session, conversation.Working, now, chosen));
                 }
             }
 
@@ -196,36 +320,36 @@ internal static class ConversationsContent
             _ = html.Append("<div class=\"left r").Append(row.ToString(CultureInfo.InvariantCulture)).Append("\" data-row=\"s-").Append(PageContent.Text(session.Id)).Append("\" data-line=\"k\">")
                 .Append("<p class=\"ghost\">").Append(session.Kept ? "Its conversation ended. BrowserAI keeps the session for the next one." : "No conversation is connected to it now.").Append("</p></div>\n")
                 .Append("<div class=\"right r").Append(row.ToString(CultureInfo.InvariantCulture)).Append("\" data-row=\"s-").Append(PageContent.Text(session.Id)).Append("\">")
-                .Append(SessionNode(session, working: false, now)).Append("</div>\n");
+                .Append(SessionNode(session, working: false, now, chosen)).Append("</div>\n");
         }
 
         return html.Append("</div>\n").ToString();
     }
 
-    private static string ConversationNode(Conversation conversation) =>
+    private static string ConversationNode(Conversation conversation, string? chosen) =>
         "<button type=\"button\" class=\"node\" id=\"n-" + PageContent.Text(conversation.Key) + "\" data-inspect=\"" + PageContent.Text(conversation.Key)
-        + "\" aria-pressed=\"false\" aria-controls=\"inspect-" + PageContent.Text(conversation.Key) + "\">"
+        + "\" aria-pressed=\"" + Pressed(conversation.Key, chosen) + "\" aria-controls=\"inspect-" + PageContent.Text(conversation.Key) + "\">"
         + PageContent.Badge(conversation.ClientName)
         + "<span class=\"txt\"><b>" + PageContent.Text(conversation.Name) + "</b><small>" + PageContent.Text(conversation.Place + ", " + PageWords.NameOf(conversation.Relay.Description.WorkingDirectory)) + "</small></span>"
-        + (conversation.Working ? "<span class=\"tag live\">Working</span>" : string.Empty) + "</button>";
+        + (conversation.Working ? "<span class=\"tag live\">Working</span>" : string.Empty) + Cue() + "</button>";
 
-    private static string SessionNode(SessionEntry session, bool working, DateTimeOffset now)
+    private static string SessionNode(SessionEntry session, bool working, DateTimeOffset now, string? chosen)
     {
         var key = "s-" + session.Id;
         var style = PageParts.ClassOf(session);
 
         return "<button type=\"button\" class=\"node " + style + "\" id=\"n-" + PageContent.Text(key) + "\" data-inspect=\"" + PageContent.Text(key)
-            + "\" data-line=\"" + (session.Kept ? "k" : style) + "\" aria-pressed=\"false\" aria-controls=\"inspect-" + PageContent.Text(key) + "\">"
+            + "\" data-line=\"" + (session.Kept ? "k" : style) + "\" aria-pressed=\"" + Pressed(key, chosen) + "\" aria-controls=\"inspect-" + PageContent.Text(key) + "\">"
             + "<span class=\"br-ic " + style + "\">" + PageIcons.Of(PageParts.IconOf(session)) + "</span>"
             + "<span class=\"txt\"><b>" + PageContent.Text(PageWords.NameOf(session.Directory)) + "</b>"
             + (session.Kept ? "<small>Kept, no conversation</small>" : string.Empty)
-            + "<span class=\"state\">" + PageParts.Short(session, working, now) + "</span></span></button>";
+            + "<span class=\"state\">" + PageParts.Short(session, working, now) + "</span></span>" + Cue() + "</button>";
     }
 
-    private static string Hub(PageView view, PageBoard board)
+    private static string Hub(PageView view, PageBoard board, string? chosen)
     {
         var facts = view.Facts;
-        var html = new StringBuilder("<button type=\"button\" class=\"hub node\" id=\"n-hub\" data-inspect=\"hub\" aria-pressed=\"false\" aria-controls=\"inspect-hub\">")
+        var html = new StringBuilder("<button type=\"button\" class=\"hub node\" id=\"n-hub\" data-inspect=\"hub\" aria-pressed=\"").Append(Pressed("hub", chosen)).Append("\" aria-controls=\"inspect-hub\">")
             .Append(PageIcons.Brand("hub")).Append("<span class=\"hub-name\">").Append(PageContent.Text($"BrowserAI {facts.Version}")).Append("</span>");
 
         if (facts.StartedAt is { } started)
@@ -251,7 +375,7 @@ internal static class ConversationsContent
                 .Append(view.Updates.LastCheck is { } checkedAt ? PageContent.Text("checked at " + PageWords.When(checkedAt, view.Now)) : string.Empty).Append("</span>"),
         };
 
-        return html.Append("</button>").ToString();
+        return html.Append(Cue()).Append("</button>").ToString();
     }
 
     private static string HubStat(string label, int count) =>
@@ -260,31 +384,43 @@ internal static class ConversationsContent
     // ---- The inspector ------------------------------------------------------------
 
     /// <summary>What is chosen on the map: a panel per card, all drawn, one shown by the script.</summary>
-    private static string Inspector(PageView view, PageBoard board)
+    /// <remarks>
+    /// <b>The panel of the card an address chose is drawn shown</b>, and the script takes that
+    /// choice over when the page opens; with nothing chosen, the inspector says how to choose.
+    /// </remarks>
+    private static string Inspector(PageView view, PageBoard board, string? chosen)
     {
-        var html = new StringBuilder("<aside class=\"inspector\" aria-label=\"What is chosen on the map\" aria-live=\"polite\">\n")
-            .Append("<p class=\"inspect-none\" id=\"inspect-none\">Choose a conversation, BrowserAI or a session on the map to see what it is.</p>\n")
-            .Append(HubPanel(view));
+        var html = new StringBuilder("<aside class=\"inspector\" id=\"inspector\" aria-label=\"What is chosen on the map\" aria-live=\"polite\">\n")
+            .Append("<div class=\"inspect-none\" id=\"inspect-none\"").Append(chosen is null ? string.Empty : " hidden").Append("><span class=\"point\">").Append(PageIcons.Of("arrowLeft")).Append("</span>")
+            .Append("<p class=\"none-title\">Click any card on the map</p>")
+            .Append("<p>Conversations on the left, BrowserAI in the middle and browser sessions on the right all open here.</p>")
+            .Append("<p class=\"keys\"><kbd>Tab</kbd> and the arrow keys move between cards. <kbd>Enter</kbd> shows one, and <kbd>Esc</kbd> clears it.</p></div>\n")
+            .Append(HubPanel(view, chosen));
 
         foreach (var conversation in board.Conversations)
         {
-            _ = html.Append(ConversationPanel(view, conversation));
+            _ = html.Append(ConversationPanel(conversation, chosen));
         }
 
         foreach (var session in board.All)
         {
-            _ = html.Append(SessionPanel(view, board, session));
+            _ = html.Append(SessionPanel(view, board, session, chosen));
         }
 
         return html.Append("</aside>\n").ToString();
     }
 
-    private static string Panel(string key, string icon, string kind, string title, string what) =>
-        "<section class=\"inspect\" id=\"inspect-" + PageContent.Text(key) + "\" hidden>"
+    private static string Panel(string key, string icon, string kind, string title, string what, string? chosen) =>
+        "<section class=\"inspect\" id=\"inspect-" + PageContent.Text(key) + "\"" + (string.Equals(key, chosen, StringComparison.Ordinal) ? string.Empty : " hidden") + ">"
         + "<p class=\"kind\">" + PageIcons.Of(icon) + PageContent.Text(kind) + "</p><h2>" + PageContent.Text(title) + "</h2>"
         + "<div class=\"what\">" + PageIcons.Of("question") + "<p>" + PageContent.Text(what) + "</p></div>";
 
-    private static string HubPanel(PageView view)
+    /// <summary>A card named in the inspector, which chooses that card on the map.</summary>
+    private static string Pick(string id, string key, string text, string? sample = null, bool inline = false) =>
+        "<button type=\"button\" class=\"pick" + (inline ? " inline" : string.Empty) + "\" id=\"" + PageContent.Text(id) + "\" data-inspect=\"" + PageContent.Text(key) + "\">"
+        + (sample ?? string.Empty) + (inline ? PageContent.Text(text) : "<span>" + PageContent.Text(text) + "</span>") + PageIcons.Of("chevron") + "</button>";
+
+    private static string HubPanel(PageView view, string? chosen)
     {
         var facts = view.Facts;
         var html = new StringBuilder(Panel(
@@ -292,7 +428,8 @@ internal static class ConversationsContent
                 "info",
                 "BrowserAI",
                 $"BrowserAI {facts.Version}",
-                "BrowserAI runs in the background on this PC and starts by itself when you sign in. Claude Code and Codex reach it for each conversation, and it gives the agent a real browser."))
+                "BrowserAI runs in the background on this PC and starts by itself when you sign in. Claude Code and Codex reach it for each conversation, and it gives the agent a real browser.",
+                chosen))
             .Append("<dl>");
 
         if (InstallContent.RunningSince(facts, view.Now) is { } running)
@@ -319,7 +456,7 @@ internal static class ConversationsContent
             .Append("</div></section>\n").ToString();
     }
 
-    private static string ConversationPanel(PageView view, Conversation conversation)
+    private static string ConversationPanel(Conversation conversation, string? chosen)
     {
         var app = PageWords.AppOf(conversation.ClientName);
         var description = conversation.Relay.Description;
@@ -328,7 +465,8 @@ internal static class ConversationsContent
                 "chat",
                 "Conversation",
                 conversation.Name,
-                $"A chat in {app}. It is connected to BrowserAI while it is open, and it ends when {app} closes it, never from here."))
+                $"A chat in {app}. It is connected to BrowserAI while it is open, and it ends when {app} closes it, never from here.",
+                chosen))
             .Append("<dl>")
             .Append("<dt>App</dt><dd>").Append(PageContent.Text(PageWords.AppWithVersion(conversation.ClientName, description.Client?.Version) + Where(conversation))).Append("</dd>")
             .Append("<dt>Folder</dt><dd><code>").Append(PageContent.Text(description.WorkingDirectory)).Append("</code></dd>")
@@ -341,12 +479,14 @@ internal static class ConversationsContent
         }
         else
         {
-            _ = html.Append("<p class=\"small\">Its browser sessions:</p><ul class=\"plain\">");
+            // Each one a card to choose, since 2026-10-12 (previously a link to its session's page).
+            _ = html.Append("<p class=\"small\">Its browser sessions:</p><ul class=\"plain picks\">");
 
             foreach (var session in conversation.Sessions)
             {
-                _ = html.Append("<li><a id=\"il-").Append(PageContent.Text(conversation.Key)).Append('-').Append(PageContent.Text(session.Id)).Append("\" href=\"")
-                    .Append(PageContent.SessionRoute(session.Id, view.Tab)).Append("\">").Append(PageContent.Text(PageWords.NameOf(session.Directory))).Append("</a></li>");
+                _ = html.Append("<li>")
+                    .Append(Pick("ip-" + conversation.Key + "-" + session.Id, "s-" + session.Id, PageWords.NameOf(session.Directory), Sample(PageParts.ClassOf(session), 30, 12, mini: true)))
+                    .Append("</li>");
             }
 
             _ = html.Append("</ul>");
@@ -360,7 +500,13 @@ internal static class ConversationsContent
         : conversation.Relay.Reconnect is RelayReconnect.McpReconnect && !PageWords.IsCodex(conversation.ClientName) ? ", in a terminal"
         : string.Empty;
 
-    private static string SessionPanel(PageView view, PageBoard board, SessionEntry session)
+    /// <summary>One session's panel.</summary>
+    /// <remarks>
+    /// <b>It says what the session page said</b>, since that page was dropped on 2026-10-12: what
+    /// a trace is, who deletes the folder, and the conversation that uses the session, which
+    /// is a card to choose here.
+    /// </remarks>
+    private static string SessionPanel(PageView view, PageBoard board, SessionEntry session, string? chosen)
     {
         var key = "s-" + session.Id;
         var user = board.UsedBy(session);
@@ -369,18 +515,24 @@ internal static class ConversationsContent
                 "globe",
                 "Browser session",
                 PageWords.NameOf(session.Directory),
-                "A folder an agent made for its browser work: the browser profile with its logins and cookies, screenshots, downloads and a log. BrowserAI never deletes it, and this page deletes nothing: the agent that made it can, and so can you, in Explorer."))
+                "A folder an agent made for its browser work: the browser profile with its logins and cookies, screenshots, downloads and a log.",
+                chosen))
+            .Append("<dl class=\"lead\"><dt>Browser</dt><dd><span class=\"dd-sample\">").Append(Sample(session.Kept ? "k" : PageParts.ClassOf(session), 34, 14, mini: true)).Append("</span>")
+            .Append(PageParts.Line(session, user?.Working ?? false, view.Now)).Append("</dd></dl>")
+            // 59 b, 62 a and 65 a: what its own processes use, and its shared memory as the one
+            // figure for all of BrowserAI, which the home's card says.
+            .Append("<section class=\"use\" aria-label=\"What it uses now\"><p class=\"kind\">What it uses now</p><dl>").Append(UsageContent.SessionLines(view, session)).Append("</dl></section>")
             .Append("<dl>")
             .Append("<dt>For</dt><dd>").Append(PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded")).Append("</dd>")
-            .Append("<dt>Browser</dt><dd>").Append(PageParts.Line(session, user?.Working ?? false, view.Now)).Append("</dd>")
-            .Append("<dt>Used by</dt><dd>").Append(PageContent.Text(user?.Name ?? (session.Kept ? "No conversation: it was kept after its conversation ended." : "No conversation is connected to it now."))).Append("</dd>")
+            .Append("<dt>Used by</dt><dd>")
+            .Append(user is { } conversation
+                ? Pick("iu-" + key, conversation.Key, conversation.Name, inline: true)
+                : PageContent.Text(session.Kept ? "No conversation: it was kept after its conversation ended." : "No conversation is connected to it now."))
+            .Append("</dd>")
             .Append("<dt>Folder</dt><dd><code>").Append(PageContent.Text(session.Directory)).Append("</code></dd>")
-            .Append("<dt>Size</dt><dd>").Append(PageContent.Text(SessionPageContent.SizeWords(view, session.Id))).Append("</dd>");
+            .Append("<dt>Size</dt><dd>").Append(PageContent.Text(SizeWords(view, session.Id))).Append("</dd>");
 
-        if (session.Traces.Count > 0)
-        {
-            _ = html.Append("<dt>Traces</dt><dd>").Append(PageContent.Text(string.Join(", ", session.Traces.Select(trace => trace.Name)))).Append("</dd>");
-        }
+        AppendTraces(html, session);
 
         _ = html.Append("</dl>");
 
@@ -390,16 +542,26 @@ internal static class ConversationsContent
                 .Append("<p>This window is on your screen. While it is open, it holds back any update. Closing it ends the browser and keeps the session.</p></div>");
         }
 
-        return html.Append("<div class=\"btn-row\">")
+        return html.Append("<p class=\"keep-note\">").Append(KeepNote).Append("</p>")
+            .Append("<div class=\"btn-row\">")
             .Append(PageContent.Button("ib-open-session-" + session.Id, "open-session", "Open folder", "btn", "folder", ("session", session.Id)))
-            .Append(PageContent.LinkButton("il-session-" + session.Id, PageContent.SessionRoute(session.Id, view.Tab), "Details"))
             .Append("</div></section>\n").ToString();
+    }
+
+    /// <summary>A session's traces as a row of a definition list, with what a trace is.</summary>
+    private static void AppendTraces(StringBuilder html, SessionEntry session)
+    {
+        if (session.Traces.Count > 0)
+        {
+            _ = html.Append("<dt>Traces</dt><dd>").Append(PageContent.Text(string.Join(", ", session.Traces.Select(trace => trace.Name))))
+                .Append("<span class=\"dd-note\">").Append(TracesNote).Append("</span></dd>");
+        }
     }
 
     // ---- The list -------------------------------------------------------------------
 
     /// <summary>The same as a list: a card per conversation with its sessions, and the sessions no conversation uses.</summary>
-    private static string List(PageView view, PageBoard board)
+    private static string List(PageView view, PageBoard board, string? chosen)
     {
         var html = new StringBuilder();
         var now = view.Now;
@@ -413,7 +575,7 @@ internal static class ConversationsContent
 
             foreach (var conversation in members)
             {
-                _ = html.Append(ConversationCard(view, conversation));
+                _ = html.Append(ConversationCard(view, conversation, chosen));
             }
 
             if (window is not null)
@@ -431,7 +593,7 @@ internal static class ConversationsContent
 
             foreach (var session in board.Unlinked)
             {
-                _ = html.Append(SessionRow(view, session, working: false, now));
+                _ = html.Append(SessionRow(view, session, working: false, now, chosen));
             }
 
             _ = html.Append("</article></section>\n");
@@ -440,7 +602,7 @@ internal static class ConversationsContent
         return html.ToString();
     }
 
-    private static string ConversationCard(PageView view, Conversation conversation)
+    private static string ConversationCard(PageView view, Conversation conversation, string? chosen)
     {
         var description = conversation.Relay.Description;
         var status = conversation.Working
@@ -460,17 +622,35 @@ internal static class ConversationsContent
 
         foreach (var session in conversation.Sessions)
         {
-            _ = html.Append(SessionRow(view, session, conversation.Working, view.Now));
+            _ = html.Append(SessionRow(view, session, conversation.Working, view.Now, chosen));
         }
 
         return html.Append("<p class=\"convo-foot\">").Append(PageIcons.Of("info")).Append(PageContent.Text(PageWords.Reconnect(conversation.Relay.Reconnect))).Append("</p></article>\n").ToString();
     }
 
-    private static string SessionRow(PageView view, SessionEntry session, bool working, DateTimeOffset now) =>
-        "<div class=\"sess\"><span class=\"sess-ic " + PageParts.ClassOf(session) + "\">" + PageIcons.Of(PageParts.IconOf(session)) + "</span>"
-        + "<div><p class=\"sess-name\">" + PageContent.Text(PageWords.NameOf(session.Directory)) + "</p>"
-        + "<p class=\"sess-purpose\">" + PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded") + "</p>"
-        + "<p class=\"sess-line\">" + PageParts.Line(session, working, now) + "</p></div>"
-        + "<div class=\"sess-actions\">" + PageContent.Button("lb-open-session-" + session.Id, "open-session", "Open folder", "btn quiet", "folder", ("session", session.Id))
-        + PageContent.LinkButton("ll-session-" + session.Id, PageContent.SessionRoute(session.Id, view.Tab), "Details") + "</div></div>\n";
+    /// <summary>One session's row in the list.</summary>
+    /// <remarks>
+    /// <b>Its folder, size and traces fold away under the row</b> since 2026-10-12, with who
+    /// deletes the folder: the row's <i>Details</i> button led to the session page for them,
+    /// which is dropped.
+    /// </remarks>
+    private static string SessionRow(PageView view, SessionEntry session, bool working, DateTimeOffset now, string? chosen)
+    {
+        var fold = "d-sess-" + session.Id;
+        var html = new StringBuilder("<div class=\"sess").Append(string.Equals("s-" + session.Id, chosen, StringComparison.Ordinal) ? " chosen" : string.Empty)
+            .Append("\" id=\"sess-").Append(PageContent.Text(session.Id)).Append("\"><span class=\"sess-ic ").Append(PageParts.ClassOf(session)).Append("\">").Append(PageIcons.Of(PageParts.IconOf(session))).Append("</span>")
+            .Append("<div><p class=\"sess-name\">").Append(PageContent.Text(PageWords.NameOf(session.Directory))).Append("</p>")
+            .Append("<p class=\"sess-purpose\">").Append(PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded")).Append("</p>")
+            .Append("<p class=\"sess-line\">").Append(PageParts.Line(session, working, now)).Append("</p>")
+            .Append("<details class=\"sess-more\" id=\"").Append(PageContent.Text(fold)).Append("\"><summary id=\"").Append(PageContent.Text(fold)).Append("-s\">")
+            .Append(session.Traces.Count > 0 ? "Folder, size and traces" : "Folder and size").Append("</summary><dl>")
+            .Append("<dt>Folder</dt><dd><code>").Append(PageContent.Text(session.Directory)).Append("</code></dd>")
+            .Append("<dt>Size</dt><dd>").Append(PageContent.Text(SizeWords(view, session.Id))).Append("</dd>");
+
+        AppendTraces(html, session);
+
+        return html.Append("</dl><p class=\"keep-note\">").Append(KeepNote).Append("</p></details></div>")
+            .Append("<div class=\"sess-actions\">").Append(PageContent.Button("lb-open-session-" + session.Id, "open-session", "Open folder", "btn quiet", "folder", ("session", session.Id))).Append("</div></div>\n")
+            .ToString();
+    }
 }

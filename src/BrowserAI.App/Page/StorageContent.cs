@@ -20,6 +20,11 @@ namespace BrowserAI.App.Page;
 /// <b>41 a: the page deletes nothing.</b> Each folder has an <i>Open folder</i> button, and
 /// the page says that only the agent that made a session deletes it.
 /// </para>
+/// <para>
+/// <b>A folder not open now says what it is on its row</b>, since 2026-10-12, when the session
+/// page that said it was dropped; a session open now leads to the conversations page with that
+/// session chosen.
+/// </para>
 /// </remarks>
 internal static class StorageContent
 {
@@ -76,10 +81,12 @@ internal static class StorageContent
         foreach (var folder in measured.Folders)
         {
             var isOpen = open.Contains(folder.Id);
+            var name = "<b>" + PageContent.Text(PageWords.NameOf(folder.Directory)) + "</b>";
 
-            _ = html.Append("<tr><td><a id=\"l-folder-").Append(PageContent.Text(folder.Id)).Append("\" href=\"").Append(PageContent.SessionRoute(folder.Id, view.Tab)).Append("\"><b>")
-                .Append(PageContent.Text(PageWords.NameOf(folder.Directory))).Append("</b></a><br><code class=\"small\">").Append(PageContent.Text(folder.Directory)).Append("</code></td>")
-                .Append("<td>").Append(isOpen ? "<span class=\"chip hidden\">Open now</span>" : "<span class=\"small\">Not open now</span>").Append("</td>")
+            _ = html.Append("<tr><td>")
+                .Append(isOpen ? "<a id=\"l-folder-" + PageContent.Text(folder.Id) + "\" href=\"" + PageContent.SessionRoute(folder.Id, view.Tab) + "\">" + name + "</a>" : name)
+                .Append("<br><code class=\"small\">").Append(PageContent.Text(folder.Directory)).Append("</code></td>")
+                .Append("<td>").Append(isOpen ? "<span class=\"chip hidden\">Open now</span>" : "<span class=\"small\">Not open now. A conversation that names this session opens it again.</span>").Append("</td>")
                 .Append("<td class=\"num\">").Append(PageContent.Text(folder.Bytes is { } bytes ? PageWords.Size(bytes) : "Could not be measured")).Append("</td>")
                 .Append("<td>").Append(PageContent.Button("b-open-session-" + folder.Id, "open-session", "Open folder", "btn quiet", "folder", ("session", folder.Id))).Append("</td></tr>\n");
         }

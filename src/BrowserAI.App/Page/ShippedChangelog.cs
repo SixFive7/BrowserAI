@@ -26,6 +26,11 @@ internal static class ShippedChangelog
             ? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetString(bytes)
             : null;
 
+    /// <summary>Every release the changelog this build was made from holds, in its order.</summary>
+    /// <returns>The sections, or none when the build carries no changelog.</returns>
+    public static IReadOnlyList<ChangelogSection> Releases() =>
+        Text() is { } text ? ChangelogPageContent.Releases(text) : [];
+
     /// <summary>The section for the version this binary is, or <see langword="null"/>.</summary>
     /// <returns>The section.</returns>
     public static ChangelogSection? ForThisBuild() =>

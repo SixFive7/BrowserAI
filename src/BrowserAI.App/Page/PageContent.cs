@@ -192,7 +192,6 @@ internal static class PageContent
             PageKind.Sessions => ConversationsContent.Render(drawn),
             PageKind.Update => UpdatePageContent.Render(drawn, now),
             PageKind.Changelog => ChangelogPageContent.Render(drawn),
-            PageKind.Session => SessionPageContent.Render(drawn),
             PageKind.Setup => SetupContent.Render(drawn),
             PageKind.Storage => StorageContent.Render(drawn),
             PageKind.Install => InstallContent.Render(drawn),
@@ -347,11 +346,17 @@ internal static class PageContent
     /// <returns>The relative address.</returns>
     internal static string Home(int tab) => Route(PageKind.Status, tab);
 
-    /// <summary>One session's page, by its opaque name.</summary>
+    /// <summary>The conversations page with one session chosen, by its opaque name.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-12 (previously one session's page, <c>session?id=</c>)</i>: the page
+    /// is dropped and every link to a session opens the map with that session chosen, the
+    /// maintainer's own second option, in his words verbatim: <i>"If so, drop the page or
+    /// integrate that last bit into the box and drop the page."</i>
+    /// </remarks>
     /// <param name="id">The session's opaque name.</param>
     /// <param name="tab">The tab's number.</param>
     /// <returns>The relative address.</returns>
-    internal static string SessionRoute(string id, int tab) => Route(PageKind.Session, tab, "id=" + Text(id));
+    internal static string SessionRoute(string id, int tab) => Route(PageKind.Sessions, tab, "id=" + Text(id));
 
     /// <summary>The way back at the top of every page but the home: the home, then the pages between.</summary>
     /// <param name="tab">The tab's number.</param>
@@ -473,7 +478,6 @@ internal static class PageContent
         PageKind.Sessions => "Conversations and browsers - BrowserAI",
         PageKind.Update => "Update - BrowserAI",
         PageKind.Changelog => "What is new - BrowserAI",
-        PageKind.Session => SessionPageContent.NameOf(view) + " - BrowserAI",
         PageKind.Setup => "Claude Code and Codex - BrowserAI",
         PageKind.Storage => "Storage - BrowserAI",
         PageKind.Install => "This install - BrowserAI",
