@@ -503,10 +503,17 @@ before its run, so a rig's session folder, whose record says how its browser end
 before anybody read it. `Harness/KeptOnRed` moves an arm's scratch folder under
 `.work\kept\`, in a folder named for the moment, the test host's pid, the arm and the
 first eight characters of a GUID, and the arm's failure says where after its own message.
-The real Chromium arm of `ScreenshotLimitTests` is the one arm that does it. **The drivers
-do not copy it**, so whoever collects a red run's evidence copies the folder the failure
-names; and nothing deletes one. `KeptOnRedTests` holds the move and the message over a
-kept root of its own.
+The real Chromium arm of `ScreenshotLimitTests` is the one arm that does it. ⚠️ **Every gate
+driver copies the kept folders into its run's records** -- *corrected 2026-10-12 (previously
+"**The drivers do not copy it**, so whoever collects a red run's evidence copies the folder
+the failure names"), the maintainer's 119, in his words verbatim: "119 your
+recommendation"*. After each run and before its clearance comparison, a driver copies every
+folder under `.work\kept\` into `.work\suite\<tag>-kept\`, beside the run's log, made fresh
+for the run, and names each one in its own output and in the run's log, with whether that
+run kept it; a folder it could not copy whole is named with the error, and a run with none
+says so. Nothing deletes a kept folder, so a later run copies it again and names it as kept
+before that run. `KeptOnRedTests` holds the move and the message over a kept root of its
+own, and `GateDriverTests` the four drivers' copy.
 
 **`BROWSERAI_RELEASE_RUN=1` goes on the same invocation** -- set it in the
 detached shell's own environment, not the caller's, or the variable is not where

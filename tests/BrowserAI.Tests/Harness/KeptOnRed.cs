@@ -31,8 +31,12 @@ namespace BrowserAI.Tests.Harness;
 /// own message, and replaces nothing.
 /// </para>
 /// <para>
-/// <b>Nothing deletes a kept folder.</b> The gate drivers do not copy it either, so
-/// whoever collects a red run's evidence copies the folder the failure names.
+/// <b>Nothing deletes a kept folder.</b> ⚠️ <b>Every gate driver copies it into its run's
+/// records</b> since 2026-10-12, the maintainer's 119, in his words verbatim: <i>"119 your
+/// recommendation"</i>: after each run, into <c>.work\suite\&lt;tag&gt;-kept</c> beside the
+/// run's log, named in the driver's output and in the run's log (previously the gate
+/// drivers did not copy it, so whoever collected a red run's evidence copied the folder the
+/// failure named).
 /// </para>
 /// </remarks>
 internal static class KeptOnRed
