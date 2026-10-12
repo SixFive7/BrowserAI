@@ -221,7 +221,7 @@ internal static partial class PageLinks
         _ = ask.Verb switch
         {
             LinkVerb.OpenFolder => text.Append(" '").Append(ask.Folder).Append('\''),
-            LinkVerb.OpenSession => text.Append(" of session ").Append(ask.Session),
+            LinkVerb.OpenSession => text.Append(" '").Append(ask.Session).Append('\''),
             _ => text.Append(" for ").Append(ask.Action).Append(" in ").Append(ask.Client),
         };
 

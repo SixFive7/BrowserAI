@@ -137,17 +137,22 @@ internal static class PageContent
     /// ⚠️ <b>71 a, the maintainer's words of 2026-10-11 verbatim: <i>"71 a - maybe
     /// communicate on the page that you need to restart from the start menu?"</i></b> A folder
     /// link clicked while no background answers opens nothing, so the banner says what starts
-    /// BrowserAI again, and that the start opens the page in a tab of its own. <i>Corrected
+    /// BrowserAI again, and that the start opens its page in a tab of its own. <i>Corrected
     /// 2026-10-12 (previously "BrowserAI is not answering this page. If it does not come back,
     /// open BrowserAI from the Start Menu again.")</i>. The start hands out a newer tab, which
     /// replaces this one if it is reloaded (Q337 a), so the sentence does not send the person
     /// back to reload this one.
     /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-12 by the reader's pass (previously "and it opens this page again
+    /// in a new tab")</i>: a Start Menu start names no page, so its tab is the home, whatever
+    /// page this one is.
+    /// </para>
     /// </remarks>
     /// <param name="installed">Whether this BrowserAI is installed.</param>
     /// <returns>The sentence.</returns>
     public static string Unanswered(bool installed) => installed
-        ? "BrowserAI is not answering this page. Start BrowserAI from the Start Menu, and it opens this page again in a new tab."
+        ? "BrowserAI is not answering this page. Start BrowserAI from the Start Menu, and it opens its page again in a new tab."
         : "BrowserAI is not answering this page.";
 
     /// <summary>
@@ -158,10 +163,13 @@ internal static class PageContent
     /// <b>73 b, the maintainer's words of 2026-10-11 verbatim: <i>"73 b"</i></b>, of a line
     /// whose wording he left to the build. Firefox asks per address, with a box that always
     /// allows it, and the address stays the same while the background runs and across its
-    /// restarts (69 d with b), so the question comes once.
+    /// restarts (69 d with b), so the question comes once. <i>Corrected 2026-10-12 by the
+    /// reader's pass (previously "Allow it always, and folders open at once from then on."):
+    /// on the setup page the first link opens the picker, not a folder, and one answer covers
+    /// every link of the scheme.</i>
     /// </remarks>
     public const string LinkHint =
-        "The first time, your browser asks whether this page may open BrowserAI. Allow it always, and folders open at once from then on.";
+        "The first time, your browser asks whether this page may open BrowserAI. Allow it always, and it does not ask again.";
 
     /// <summary>The part of the page a state event replaces.</summary>
     /// <param name="view">What is true now.</param>

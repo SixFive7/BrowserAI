@@ -1182,7 +1182,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         if (gate is null || !gate.IsToken(ask.Token))
         {
             return new LinkAnswer.Refused(
-                "This link does not carry the address of the page BrowserAI serves now, so it opens nothing: it comes from a tab of a BrowserAI that has stopped since, or from another page.");
+                "This link does not carry the key of the page BrowserAI serves now, so it opens nothing: it comes from a tab of a BrowserAI that has stopped since, or from another page.");
         }
 
         switch (ask.Verb)
@@ -1249,7 +1249,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
             if (_registering is not null)
             {
-                return new LinkAnswer.Refused("Another setup is running, so no folder picker opens until it has finished.");
+                return new LinkAnswer.Refused("Another setup is running, so no folder picker opens.");
             }
 
             state = read;

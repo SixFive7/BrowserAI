@@ -160,14 +160,22 @@ internal static class SetupContent
 
             if (client.MayRegisterInProject || client.MayUnregisterFromAProject || client.MayUnregisterFromProject)
             {
-                _ = html.Append("<div class=\"sub-block\"><h3>In one project</h3><p>")
-                    // 75 a, 2026-10-11: on a page drawn with links the folder link's own process
-                    // shows the picker, and it comes to the front; a button's picker is the
-                    // background's, which may stay behind.
-                    .Append(PageContent.Text(PageLinks.Current is not null
-                        ? $"Writes or removes {who.ProjectFileName} in a folder you choose in Windows' folder picker."
-                        : $"Writes or removes {who.ProjectFileName} in a folder you choose. Windows' folder picker opens, and it can appear behind this browser window."))
-                    .Append("</p><div class=\"actions\">");
+                _ = html.Append("<div class=\"sub-block\"><h3>In one project</h3>");
+
+                // 75 a, 2026-10-11: on a page drawn with links the folder link's own process
+                // shows the picker, and it comes to the front; a button's picker is the
+                // background's, which may stay behind, so only the buttons' page warns of it.
+                // Corrected 2026-10-12 by the reader's pass (previously "Writes or removes
+                // {file} in a folder you choose in Windows' folder picker." on a page drawn with
+                // links): each row says what it writes or removes, so no sentence leads them.
+                if (PageLinks.Current is null)
+                {
+                    _ = html.Append("<p>")
+                        .Append(PageContent.Text($"Writes or removes {who.ProjectFileName} in a folder you choose. Windows' folder picker opens, and it can appear behind this browser window."))
+                        .Append("</p>");
+                }
+
+                _ = html.Append("<div class=\"actions\">");
 
                 if (client.MayRegisterInProject)
                 {

@@ -120,15 +120,22 @@ internal static partial class LinkStart
 
             if (answer.ResultMember("open") is { Length: > 0 } directory)
             {
-                var opened = await desktop.OpenFolder(directory).ConfigureAwait(false);
+                // The reader's pass of 2026-10-12: a folder the shell did not open has a line of
+                // its own, where the line for an opened one was written whatever it answered.
+                if (await desktop.OpenFolder(directory).ConfigureAwait(false))
+                {
+                    LinkLog.Opened(logger, described, directory);
+                    return 0;
+                }
 
-                LinkLog.Opened(logger, described, directory, opened);
-                return opened ? 0 : 1;
+                LinkLog.NotOpened(logger, described, directory);
+                return 1;
             }
 
             if (answer.ResultMember("pick") is not { Length: > 0 } prompt)
             {
-                LinkLog.Refused(logger, described, "It named neither a folder nor a picker.");
+                // An answer, and not a refusal: the background answered, with nothing to act on.
+                LinkLog.AnsweredWithNothing(logger, described);
                 return 1;
             }
 
@@ -219,13 +226,21 @@ internal static partial class LinkStart
         [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "BrowserAI's background refused a folder link, so nothing was opened ({Link}). {Sentence}")]
         public static partial void Refused(ILogger logger, string link, string sentence);
 
-        [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "A folder link opened {Directory} in Explorer ({Link}), and the shell said {Opened}.")]
-        public static partial void Opened(ILogger logger, string link, string directory, bool opened);
+        // Corrected 2026-10-12 (previously "A folder link opened {Directory} in Explorer
+        // ({Link}), and the shell said {Opened}.", written whatever the shell answered).
+        [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "A folder link opened {Directory} in Explorer ({Link}).")]
+        public static partial void Opened(ILogger logger, string link, string directory);
 
         [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "A folder link showed Windows' folder picker ({Link}). {Said}")]
         public static partial void Picked(ILogger logger, string link, string said);
 
         [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "BrowserAI was started for a link of {Length} characters that is not one of its folder links, so nothing was asked or opened.")]
         public static partial void NotALink(ILogger logger, int length);
+
+        [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "Explorer did not open {Directory} for a folder link ({Link}): the shell refused it, so nothing was opened.")]
+        public static partial void NotOpened(ILogger logger, string link, string directory);
+
+        [LoggerMessage(EventId = 7, Level = LogLevel.Warning, Message = "BrowserAI's background answered a folder link with neither a folder to open nor a picker to show, so nothing was opened ({Link}).")]
+        public static partial void AnsweredWithNothing(ILogger logger, string link);
     }
 }
