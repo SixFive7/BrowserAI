@@ -2085,4 +2085,25 @@ internal static partial class SessionLog
         Level = LogLevel.Warning,
         Message = "The reason the browser of {Directory} was closed ({Cause}) could not be recorded; the close happened anyway, and the record will not say why.")]
     public static partial void CloseNotRecorded(ILogger logger, string directory, string cause, Exception failure);
+
+    /// <summary>
+    /// A session's browser ended while forwarded calls were running, and nothing had
+    /// asked it to end.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 for the maintainer's 94</b>, in his words verbatim: <i>"94 your
+    /// recommendation"</i>. Warning, not Information: nothing had asked for the end,
+    /// which is what a crash, a kill or a person closing the window leaves. Written once
+    /// per browser, as the first call running over it ends;
+    /// <c>LiveSession.SayIfTheBrowserEndedDuringACall</c> says when.
+    /// </remarks>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="exitCode">The browser's exit code, decimal then hexadecimal, or <c>unknown</c>.</param>
+    /// <param name="calls">The calls that were running, for example <c>'browser_take_screenshot' was running</c>.</param>
+    [LoggerMessage(
+        EventId = 14,
+        Level = LogLevel.Warning,
+        Message = "The browser of {Directory} ended with exit code {ExitCode} while {Calls}; BrowserAI had not asked it to close.")]
+    public static partial void BrowserEndedDuringACall(ILogger logger, string directory, string exitCode, string calls);
 }

@@ -8,7 +8,9 @@ using BrowserAI.Interop;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
+using BrowserAI.Storage;
 using BrowserAI.Tests.Harness;
+using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Tests;
 
@@ -153,6 +155,283 @@ internal sealed class CloseReasonTests
                 .IsEqualTo(code is 0 ? SessionCloseCause.BrowserEnded : SessionCloseCause.BrowserCrashed);
             await Assert.That(record.ClosedHistory[^1].Value.ExitCode).IsEqualTo(code);
         }
+    }
+
+    /// <summary>
+    /// A browser that ends during a forwarded call is one warning in the session's log,
+    /// with its exit code and the call, whichever BrowserAI hears first: the wait on the
+    /// browser, or the call's answer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 94, 2026-10-12, in his words verbatim:</b> <i>"94 your
+    /// recommendation"</i>. The real Chromium arm of <see cref="ScreenshotLimitTests"/>
+    /// lost its browser during a full-page capture in 7 of 77 full runs, and nothing in a
+    /// run's log said how the browser had ended: the close records the exit code in the
+    /// session's record, which went with the rig's scratch.
+    /// </para>
+    /// <para>
+    /// <b>Both orders are driven.</b> First the double ends its browser and tells the
+    /// session's wait at once, so the session closes and ends its browser server under the
+    /// call. Then the double ends its browser without telling the wait, answers the call,
+    /// and tells the wait only after that, which is the order a browser server that says
+    /// in its answer that the browser closed can produce.
+    /// </para>
+    /// <para>
+    /// <b>Planted red against the tree before the line existed</b>, the product's call to
+    /// <c>SessionLog.BrowserEndedDuringACall</c> left out: no record carried its event in
+    /// either order.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABrowserThatEndsDuringACallIsOneWarningWithItsExitCodeWhicheverBrowserAiHearsFirst()
+    {
+        foreach (var waitFirst in new[] { true, false })
+        {
+            var released = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+#pragma warning disable CA2000 // Disposed on every path by the await using; the rule does not follow an awaited factory inside a loop.
+            await using var sessions = await SessionsAsync(released.Task);
+#pragma warning restore CA2000
+            await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+            var directory = Path.Combine(sessions.Root, waitFirst ? "ended-wait-first" : "ended-answer-first");
+
+            await InitAsync(rig, directory, headed: false);
+            await NavigateAsync(rig, directory, "the call that brings the browser up");
+
+            var child = sessions.SessionChildren.Single();
+            var held = HeldCallAsync(rig, directory);
+
+            await WaitUntilAsync(() => child.ToolCallsReceived.Contains(HeldTool), "the held call never reached the browser server");
+
+            if (waitFirst)
+            {
+                child.CloseTheWindow(CrashCode);
+            }
+            else
+            {
+                child.CloseTheWindow(CrashCode, tellTheWatch: false);
+                released.SetResult();
+            }
+
+            // A JSON-RPC error when the session ended its browser server under the call,
+            // and the double's own answer otherwise: either is an answer.
+            var answered = await held;
+
+            await WaitUntilSettledAsync(directory);
+
+            if (!waitFirst)
+            {
+                child.TellTheWatch();
+                await WaitUntilAsync(() => child.HasStopped, "the session never ended its browser server after its browser ended");
+            }
+
+            released.TrySetResult();
+
+            var said = EndsDuringACall(rig);
+            var why = $"{(waitFirst ? "the wait first" : "the answer first")}; the call was answered: {answered.Envelope.ToJsonString()}";
+
+            await Assert.That(said.Count).IsEqualTo(1).Because(why);
+            await Assert.That(said[0].Level).IsEqualTo(LogLevel.Warning).Because(why);
+            await Assert.That(said[0].Message)
+                .IsEqualTo($"The browser of {SessionPath.For(directory).FullPath} ended with exit code -1073741819 (0xC0000005) while '{HeldTool}' was running; BrowserAI had not asked it to close.")
+                .Because(why);
+        }
+    }
+
+    /// <summary>
+    /// A browser that ends between calls is no such warning: it came under no call, and
+    /// the close's record is what says how it ended.
+    /// </summary>
+    /// <remarks>
+    /// <b>Planted red against a product that wrote the line where the wait on the browser
+    /// fires</b>, whatever was running then.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABrowserThatEndsBetweenCallsIsNoSuchWarning()
+    {
+        await using var sessions = await SessionsAsync();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "ended-between-calls");
+
+        await InitAsync(rig, directory, headed: false);
+        await NavigateAsync(rig, directory, "the call that brings the browser up");
+
+        var child = sessions.SessionChildren.Single();
+
+        child.CloseTheWindow(CrashCode);
+
+        await WaitUntilAsync(() => child.HasStopped, "the session never ended its browser server after its browser ended");
+
+        var refused = await NavigateAsync(rig, directory, "the call after the browser ended");
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That((await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Single().Value.ExitCode).IsEqualTo(CrashCode);
+        await Assert.That(EndsDuringACall(rig)).IsEmpty();
+    }
+
+    /// <summary>
+    /// A browser BrowserAI closes while a call runs is no such warning: the agent's own
+    /// <c>browserai_close</c> asked for that end.
+    /// </summary>
+    /// <remarks>
+    /// <b>Planted red against a product that wrote the line without asking whether a
+    /// close of BrowserAI's own was in flight or recorded.</b>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABrowserThatBrowserAiClosesUnderACallIsNoSuchWarning()
+    {
+        var released = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var sessions = await SessionsAsync(released.Task);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "closed-under-a-call");
+
+        await InitAsync(rig, directory, headed: false);
+        await NavigateAsync(rig, directory, "the call that brings the browser up");
+
+        var child = sessions.SessionChildren.Single();
+
+        // Two calls outstanding on one client, so both are begun and their answers read
+        // in one place: a client waiting for one answer drops the other's.
+        var heldId = await rig.Client.BeginAsync("tools/call", HeldCall(directory));
+
+        await WaitUntilAsync(() => child.ToolCallsReceived.Contains(HeldTool), "the held call never reached the browser server");
+
+        var closeId = await rig.Client.BeginAsync("tools/call", new JsonObject
+        {
+            ["name"] = SessionToolSurface.Close,
+            ["arguments"] = new JsonObject
+            {
+                ["session"] = directory,
+                ["why"] = "the suite closing the browser while a call runs",
+            },
+        });
+
+        await rig.Client.ReadUntilAsync(() => AnswerTo(rig, heldId) is not null && AnswerTo(rig, closeId) is not null);
+
+        var closed = AnswerTo(rig, closeId)!;
+
+        await Assert.That(closed["result"]?["isError"]?.GetValue<bool>()).IsNotEqualTo(true).Because(closed.ToJsonString());
+
+        await WaitUntilSettledAsync(directory);
+        released.TrySetResult();
+
+        await Assert.That((await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Single().Value.Cause).IsEqualTo(SessionCloseCause.Caller);
+        await Assert.That(EndsDuringACall(rig)).IsEmpty();
+    }
+
+    /// <summary>
+    /// A call that ran beside a <c>browser_tabs</c> close is no such warning when the
+    /// browser exits cleanly, which is what a last tab's close does to Firefox; a crash
+    /// beside the same close is still one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found on 2026-10-12 by a reading of the release texts</b>: only the closing
+    /// call's own scope was left out, so a call running beside it, whose answer reached
+    /// BrowserAI before the wait on the browser fired, wrote that BrowserAI had not asked
+    /// the browser to close, and the close that followed recorded the agent's last tab.
+    /// <b>Two calls of one session do run at once</b>: nothing above <c>SessionManager</c>
+    /// serialises tool calls, and both halves of this arm hold a <c>browser_tabs</c> close
+    /// in flight at the double beside a held call of the same session.
+    /// </para>
+    /// <para>
+    /// <b>Planted red against the tree before the fix</b>: the clean exit's half wrote
+    /// the line, naming <c>'browser_snapshot'</c> and exit code 0. The crash's half was
+    /// watched red against a fix that left out every call beside a tab close, whatever
+    /// the exit code: <i>"Expected to be 1, because a crash beside a tab close but found
+    /// 0"</i>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACallBesideATabCloseThatEndedTheBrowserIsNoSuchWarningAndACrashBesideItIsOne()
+    {
+        await BesideATabCloseAsync(0, SessionCloseCause.LastTabClosed);
+        await BesideATabCloseAsync(CrashCode, SessionCloseCause.BrowserCrashed);
+    }
+
+    /// <summary>
+    /// Holds a call open, starts a <c>browser_tabs</c> close beside it, ends the browser
+    /// with <paramref name="code"/> while both run, answers the held call before the wait on
+    /// the browser hears of it, and then reads what the session wrote and recorded.
+    /// </summary>
+    /// <param name="code">The code the browser ends with: 0 for a last tab's close, or a crash's.</param>
+    /// <param name="closedFor">The close the session must record.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task BesideATabCloseAsync(int code, SessionCloseCause closedFor)
+    {
+        var snapshotReleased = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var tabsReleased = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var sessions = await SessionsAsync(snapshotReleased.Task, tabsReleased.Task);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, $"beside-a-tab-close-{code.ToString(CultureInfo.InvariantCulture)}");
+
+        await InitAsync(rig, directory, headed: false);
+        await NavigateAsync(rig, directory, "the call that brings the browser up");
+
+        var child = sessions.SessionChildren.Single();
+
+        // Two calls outstanding on one client, so both are begun and their answers read
+        // in one place, as in the arm about BrowserAI's own close.
+        var heldId = await rig.Client.BeginAsync("tools/call", HeldCall(directory));
+
+        await WaitUntilAsync(() => child.ToolCallsReceived.Contains(HeldTool), "the held call never reached the browser server");
+
+        var tabCloseId = await rig.Client.BeginAsync("tools/call", new JsonObject
+        {
+            ["name"] = TabsTool,
+            ["arguments"] = new JsonObject
+            {
+                ["session"] = directory,
+                ["why"] = "the suite closing the last tab beside a running call",
+                ["action"] = "close",
+            },
+        });
+
+        await WaitUntilAsync(() => child.ToolCallsReceived.Contains(TabsTool), "the tab close never reached the browser server");
+
+        // The browser ends while both run, and the held call's answer reaches BrowserAI
+        // before the wait on the browser hears of it.
+        child.CloseTheWindow(code, tellTheWatch: false);
+        snapshotReleased.SetResult();
+
+        await rig.Client.ReadUntilAsync(() => AnswerTo(rig, heldId) is not null);
+        await WaitUntilSettledAsync(directory);
+
+        tabsReleased.SetResult();
+
+        await rig.Client.ReadUntilAsync(() => AnswerTo(rig, tabCloseId) is not null);
+        await WaitUntilSettledAsync(directory, TabsTool);
+
+        child.TellTheWatch();
+
+        await WaitUntilAsync(() => child.HasStopped, "the session never ended its browser server after its browser ended");
+
+        var said = EndsDuringACall(rig);
+        var why = code is 0 ? "a clean exit beside a tab close" : "a crash beside a tab close";
+
+        await Assert.That((await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Single().Value.Cause).IsEqualTo(closedFor).Because(why);
+
+        if (code is 0)
+        {
+            await Assert.That(said).IsEmpty().Because(why);
+            return;
+        }
+
+        await Assert.That(said.Count).IsEqualTo(1).Because(why);
+        await Assert.That(said[0].Message)
+            .IsEqualTo($"The browser of {SessionPath.For(directory).FullPath} ended with exit code -1073741819 (0xC0000005) while '{HeldTool}' was running; BrowserAI had not asked it to close.")
+            .Because(why);
     }
 
     /// <summary>
@@ -634,16 +913,95 @@ internal sealed class CloseReasonTests
         await Assert.That(TextOf(refused)).Contains("which a crash or a kill leaves");
     }
 
-    /// <summary>A rig whose doubles answer a navigation and a close.</summary>
+    /// <summary>
+    /// A rig whose doubles answer a navigation and a close, and hold a call of
+    /// <see cref="HeldTool"/> open until an arm lets it go.
+    /// </summary>
+    /// <param name="holdUntil">What lets a held call answer, or <see langword="null"/> for a rig that holds none.</param>
+    /// <param name="holdTheTabsUntil">What lets a held <see cref="TabsTool"/> call answer, or <see langword="null"/> for a rig that holds none.</param>
     /// <returns>The environment, which the arm disposes.</returns>
-    private static async Task<RigSessionEnvironment> SessionsAsync() =>
+    private static async Task<RigSessionEnvironment> SessionsAsync(Task? holdUntil = null, Task? holdTheTabsUntil = null) =>
         await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
                 child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
+
+                if (holdUntil is not null)
+                {
+                    child.Tools[HeldTool] = new FakeToolBehaviour { HoldUntil = holdUntil };
+                }
+
+                if (holdTheTabsUntil is not null)
+                {
+                    child.Tools[TabsTool] = new FakeToolBehaviour { HoldUntil = holdTheTabsUntil };
+                }
             },
             opensDefaultSession: false);
+
+    /// <summary>The tool whose call the double holds open while its browser ends.</summary>
+    private const string HeldTool = "browser_snapshot";
+
+    /// <summary>Upstream's tab tool, whose <c>close</c> ends Firefox when it closes the last tab.</summary>
+    private const string TabsTool = "browser_tabs";
+
+    /// <summary>The code the double's browser ends with under a call: an access violation's.</summary>
+    private const int CrashCode = unchecked((int)0xC0000005);
+
+    /// <summary>The event id of <c>SessionLog.BrowserEndedDuringACall</c>.</summary>
+    private const int EndedDuringACallEvent = 14;
+
+    /// <summary>
+    /// Starts the call the double holds open, and does not wait for its answer, which
+    /// may be a JSON-RPC error.
+    /// </summary>
+    /// <param name="rig">The rig.</param>
+    /// <param name="directory">The session.</param>
+    /// <returns>The call's answer, once it has one.</returns>
+    private static Task<RawResponse> HeldCallAsync(McpTestHarness rig, string directory) =>
+        rig.Client.SendAsync("tools/call", HeldCall(directory));
+
+    /// <summary>The parameters of a call of <see cref="HeldTool"/> on a session.</summary>
+    /// <param name="directory">The session.</param>
+    /// <returns>The <c>tools/call</c> parameters.</returns>
+    private static JsonObject HeldCall(string directory) => new()
+    {
+        ["name"] = HeldTool,
+        ["arguments"] = new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the call the browser ends under",
+        },
+    };
+
+    /// <summary>The answer the rig's client has read to one request, or <see langword="null"/> before it has one.</summary>
+    /// <param name="rig">The rig.</param>
+    /// <param name="id">The request's id.</param>
+    /// <returns>The answer's envelope.</returns>
+    private static JsonObject? AnswerTo(McpTestHarness rig, int id) =>
+        rig.Client.FramesReceived
+            .Where(static frame => frame.Length is not 0)
+            .Select(static frame => JsonNode.Parse(FrameChannel.TextOf(frame)) as JsonObject)
+            .FirstOrDefault(envelope => envelope?["id"] is JsonValue answered && answered.TryGetValue<int>(out var number) && number == id);
+
+    /// <summary>
+    /// Waits until a held call's row in the session's record is settled. The proxy
+    /// settles it after the call's scope has ended, so whatever the scope writes is
+    /// written by then.
+    /// </summary>
+    /// <param name="directory">The session.</param>
+    /// <param name="tool">The held call's tool.</param>
+    /// <returns>The wait.</returns>
+    private static Task WaitUntilSettledAsync(string directory, string tool = HeldTool) =>
+        WaitUntilAsync(
+            async () => (await RecordedSession.LogOfAsync(directory)).Any(row => row.Tool == tool && row.Outcome != SessionStore.InFlight),
+            $"the row of the held '{tool}' call in the session's record was never settled");
+
+    /// <summary>Every line a session of this rig wrote saying its browser ended during a call.</summary>
+    /// <param name="rig">The rig.</param>
+    /// <returns>The lines, in the order they were written.</returns>
+    private static List<LogRecord> EndsDuringACall(McpTestHarness rig) =>
+        [.. rig.Logs.Records.Where(record => record.EventId.Id is EndedDuringACallEvent && record.Category == typeof(LiveSession).FullName)];
 
     private static async Task InitAsync(McpTestHarness rig, string directory, bool headed)
     {

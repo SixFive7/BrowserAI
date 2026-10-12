@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Collections.Concurrent;
 using System.Text.Json.Nodes;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
@@ -514,6 +515,21 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// <summary>1 while the last forwarded call was a <c>browser_tabs</c> close.</summary>
     private int _lastCallClosedATab;
 
+    /// <summary>
+    /// Every forwarded call running now that started with this session's browser watched
+    /// and up, by its scope, with the tool it named.
+    /// </summary>
+    private readonly ConcurrentDictionary<DrivingScope, string> _callsOverTheBrowser = new();
+
+    /// <summary>1 once the line saying the browser ended during a call has been written, or decided against.</summary>
+    private int _endDuringACallSaid;
+
+    /// <summary>How many <c>browser_tabs</c> closes have begun on this session, which a call's scope reads at both its ends.</summary>
+    private long _tabClosesBegun;
+
+    /// <summary>How many <c>browser_tabs</c> closes are running on this session now.</summary>
+    private int _tabClosesRunning;
+
     /// <summary>1 once a browser server that ended on its own has been recorded.</summary>
     private int _serverEndRecorded;
 
@@ -814,12 +830,108 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// Marks one forwarded call as driving this session, so its countdown cannot run
     /// out under the call, and notes the activity at both ends of it.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>And the scope says when the browser ended under the call, since
+    /// 2026-10-12</b>: see <see cref="SayIfTheBrowserEndedDuringACall"/>.
+    /// </remarks>
+    /// <param name="tool">The tool, as the caller named it.</param>
+    /// <param name="arguments">The caller's arguments, which say whether the call closes a tab.</param>
     /// <returns>A scope to dispose when the call is answered.</returns>
-    public IDisposable Driving()
+    public IDisposable Driving(string tool, JsonObject? arguments)
     {
         Volatile.Write(ref _lastActivity, _clock.GetUtcNow().UtcTicks);
 
-        return new DrivingScope(this);
+        return new DrivingScope(this, tool, ClosesATab(tool, arguments));
+    }
+
+    /// <summary>
+    /// Whether the session's browser is watched and up now, asked without waiting.
+    /// </summary>
+    /// <returns>Whether a call that starts now starts over a watched browser.</returns>
+    private bool TheWatchedBrowserIsUp() =>
+        Volatile.Read(ref _browserWatch) is IWatchedBrowser watched && !watched.HasEnded(out _);
+
+    /// <summary>
+    /// Writes, once, that this session's browser ended while forwarded calls were
+    /// running, with its exit code, when nothing asked it to end.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 94, 2026-10-12, in his words verbatim:</b> <i>"94 your
+    /// recommendation"</i>, which takes a line for a browser that ends during a call.
+    /// The real Chromium arm of <c>ScreenshotLimitTests</c> lost its browser during a
+    /// full-page capture in 7 of 77 full runs, and the close that follows records the
+    /// exit code in the session's record and wrote no line, so a run's log never said
+    /// how the browser had ended.
+    /// </para>
+    /// <para>
+    /// <b>Asked as each call ends, and not where the wait on the browser fires</b>,
+    /// because either can reach this process first: the wait, after which the session
+    /// ends its browser server under the call, or the browser server's own answer
+    /// saying the browser closed, after which the wait fires with no call left running.
+    /// A call that started over a browser that was up and has ended by the time the call
+    /// ends saw it end. Every call still running over it is named, and the line is
+    /// written once.
+    /// </para>
+    /// <para>
+    /// <b>Not when BrowserAI or the agent asked for the end</b>: a close of BrowserAI's
+    /// own in flight, a session already closed for a reason that is BrowserAI's or the
+    /// agent's, or a teardown. <b>Not when the browser was never watched</b>: the wait is
+    /// armed once a call has left a browser up, so a browser that ends during the call
+    /// that started it is not said here, and the close's record is all there is of it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And not for a clean end beside a <c>browser_tabs</c> close</b>, which is what
+    /// closing the last tab does to Firefox: <c>firefox-1553</c> exits with 0, measured
+    /// 2026-10-04. A tab close never asks this itself, and since 2026-10-12 a call that
+    /// ran beside one, begun while it ran or running when it began, does not say that
+    /// nobody asked when the browser exited with 0, because the agent's own close did;
+    /// the session then records the last tab's close as the agent's. A crash beside the
+    /// same close is still said, as the close's own cause calls any other code a crash.
+    /// <b>Two calls of one session do run at once</b>: nothing above
+    /// <see cref="SessionManager"/> serialises tool calls (<see cref="SessionLock"/>'s
+    /// remarks), and <c>CloseReasonTests.ACallBesideATabCloseThatEndedTheBrowserIsNoSuchWarningAndACrashBesideItIsOne</c>
+    /// holds a tab close in flight at the browser server beside a held call of the same
+    /// session. Found on 2026-10-12 by a reading of the release texts, in the code and
+    /// not in a run.
+    /// </para>
+    /// </remarks>
+    /// <param name="besideATabClose">Whether a <c>browser_tabs</c> close ran beside the call that asks.</param>
+    private void SayIfTheBrowserEndedDuringACall(bool besideATabClose)
+    {
+        if (Volatile.Read(ref _disposed) is not 0
+            || CloseIsInFlight
+            || (Closed is { } closed && !EndedWithNobodyAsking(closed.Cause))
+            || Volatile.Read(ref _browserWatch) is not IWatchedBrowser watched
+            || !watched.HasEnded(out var exitCode)
+            || Interlocked.Exchange(ref _endDuringACallSaid, 1) is not 0
+            || (besideATabClose && exitCode is 0))
+        {
+            return;
+        }
+
+        SessionLog.BrowserEndedDuringACall(Logger, Location.FullPath, CloseReasons.ExitCodeText(exitCode), WhatWasRunning([.. _callsOverTheBrowser.Values]));
+    }
+
+    /// <summary>Whether a close's cause is a browser that ended with nobody asking.</summary>
+    /// <param name="cause">The cause the session recorded.</param>
+    /// <returns>Whether it is.</returns>
+    private static bool EndedWithNobodyAsking(SessionCloseCause cause) =>
+        cause is SessionCloseCause.BrowserCrashed or SessionCloseCause.BrowserEnded or SessionCloseCause.WindowClosed or SessionCloseCause.ServerEnded;
+
+    /// <summary>The calls running, quoted, as the line names them.</summary>
+    /// <param name="tools">The tools of the calls, the one asking among them.</param>
+    /// <returns>For example <c>'browser_take_screenshot' was running</c>.</returns>
+    private static string WhatWasRunning(IReadOnlyList<string> tools)
+    {
+        string[] quoted = [.. tools.Order(StringComparer.Ordinal).Select(static tool => $"'{tool}'")];
+
+        return quoted.Length switch
+        {
+            0 => "a call was running",
+            1 => $"{quoted[0]} was running",
+            _ => $"{string.Join(", ", quoted[..^1])} and {quoted[^1]} were running",
+        };
     }
 
     /// <inheritdoc />
@@ -874,14 +986,54 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
             BrowserIsOpen);
     }
 
-    /// <summary>The forwarded call's scope: the countdown held, and the activity noted when it ends.</summary>
-    /// <param name="session">The session.</param>
-    private sealed class DrivingScope(LiveSession session) : IDisposable
+    /// <summary>
+    /// The forwarded call's scope: the countdown held, the activity noted when it ends,
+    /// and the browser's end said when it came under the call.
+    /// </summary>
+    private sealed class DrivingScope : IDisposable
     {
+        private readonly LiveSession _session;
+
         /// <summary>The countdown's own scope, or <see langword="null"/> for a session set to never.</summary>
-        private readonly IDisposable? _call = session.Idle?.Call();
+        private readonly IDisposable? _call;
+
+        /// <summary>
+        /// Whether the call started with the session's browser watched and up, so a
+        /// browser found ended when the call ends ended under it. Never for a call that
+        /// closes a tab: a browser that ends then ended because the call asked.
+        /// </summary>
+        private readonly bool _overTheBrowser;
+
+        /// <summary>Whether this call is a <c>browser_tabs</c> close, counted as running until it ends.</summary>
+        private readonly bool _closesATab;
+
+        /// <summary>How many tab closes had begun on the session when this call began.</summary>
+        private readonly long _tabClosesBegunAtStart;
+
+        /// <summary>Whether a tab close was running when this call began.</summary>
+        private readonly bool _tabCloseRunningAtStart;
 
         private int _disposed;
+
+        /// <param name="session">The session.</param>
+        /// <param name="tool">The tool the call named.</param>
+        /// <param name="closesATab">Whether the call closes a tab.</param>
+        public DrivingScope(LiveSession session, string tool, bool closesATab)
+        {
+            _session = session;
+            _call = session.Idle?.Call();
+            _closesATab = closesATab;
+
+            if (closesATab)
+            {
+                _ = Interlocked.Increment(ref session._tabClosesBegun);
+                _ = Interlocked.Increment(ref session._tabClosesRunning);
+            }
+
+            _tabClosesBegunAtStart = Interlocked.Read(ref session._tabClosesBegun);
+            _tabCloseRunningAtStart = Volatile.Read(ref session._tabClosesRunning) is not 0;
+            _overTheBrowser = !closesATab && session.TheWatchedBrowserIsUp() && session._callsOverTheBrowser.TryAdd(this, tool);
+        }
 
         public void Dispose()
         {
@@ -890,7 +1042,24 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
                 return;
             }
 
-            Volatile.Write(ref session._lastActivity, session._clock.GetUtcNow().UtcTicks);
+            if (_overTheBrowser)
+            {
+                // Beside a tab close: one was running when this call began, is running
+                // now, or began while this call ran.
+                var besideATabClose = _tabCloseRunningAtStart
+                    || Volatile.Read(ref _session._tabClosesRunning) is not 0
+                    || Interlocked.Read(ref _session._tabClosesBegun) != _tabClosesBegunAtStart;
+
+                _session.SayIfTheBrowserEndedDuringACall(besideATabClose);
+                _ = _session._callsOverTheBrowser.TryRemove(this, out _);
+            }
+
+            if (_closesATab)
+            {
+                _ = Interlocked.Decrement(ref _session._tabClosesRunning);
+            }
+
+            Volatile.Write(ref _session._lastActivity, _session._clock.GetUtcNow().UtcTicks);
             _call?.Dispose();
         }
     }
@@ -1364,15 +1533,18 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// </remarks>
     /// <param name="tool">The tool, as the caller named it.</param>
     /// <param name="arguments">The caller's arguments.</param>
-    public void NoteTheCall(string tool, JsonObject? arguments)
-    {
-        var closesATab = string.Equals(tool, TabsTool, StringComparison.Ordinal)
+    public void NoteTheCall(string tool, JsonObject? arguments) =>
+        Volatile.Write(ref _lastCallClosedATab, ClosesATab(tool, arguments) ? 1 : 0);
+
+    /// <summary>Whether a call is a <c>browser_tabs</c> close.</summary>
+    /// <param name="tool">The tool, as the caller named it.</param>
+    /// <param name="arguments">The caller's arguments.</param>
+    /// <returns>Whether it closes a tab.</returns>
+    private static bool ClosesATab(string tool, JsonObject? arguments) =>
+        string.Equals(tool, TabsTool, StringComparison.Ordinal)
             && arguments?["action"] is JsonValue action
             && action.GetValueKind() is System.Text.Json.JsonValueKind.String
             && string.Equals(action.GetValue<string>(), "close", StringComparison.Ordinal);
-
-        Volatile.Write(ref _lastCallClosedATab, closesATab ? 1 : 0);
-    }
 
     /// <summary>
     /// Starts watching the browser's main process once a call has left a browser up,

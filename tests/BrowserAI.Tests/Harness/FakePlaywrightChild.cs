@@ -329,18 +329,44 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// code a real browser leaves: 0 for a window a person closed, which is the
     /// default, and the code an arm passes for a crash or a kill.
     /// </para>
+    /// <para>
+    /// <b>And it may leave the watch untold, since 2026-10-12 (the maintainer's 94)</b>:
+    /// a real browser's end can reach BrowserAI in the browser server's answer to a call
+    /// before the wait on the process fires, and <paramref name="tellTheWatch"/> set to
+    /// <see langword="false"/> is that order. <see cref="TellTheWatch"/> tells it later.
+    /// </para>
     /// </remarks>
     /// <param name="exitCode">The code the browser ends with, or <see langword="null"/> when the watch cannot read one.</param>
-    public void CloseTheWindow(int? exitCode = 0)
+    /// <param name="tellTheWatch">Whether the session's watch hears it now.</param>
+    public void CloseTheWindow(int? exitCode = 0, bool tellTheWatch = true)
     {
+        lock (_watches)
+        {
+            _endedWith = exitCode;
+        }
+
         Volatile.Write(ref _browserIsOpen, 0);
 
+        if (tellTheWatch)
+        {
+            TellTheWatch();
+        }
+    }
+
+    /// <summary>
+    /// Tells the session's watch that the browser ended, with the code
+    /// <see cref="CloseTheWindow"/> ended it with.
+    /// </summary>
+    public void TellTheWatch()
+    {
         Action<int?>[] watching;
+        int? exitCode;
 
         lock (_watches)
         {
             watching = [.. _watches];
             _watches.Clear();
+            exitCode = _endedWith;
         }
 
         foreach (var ended in watching)
@@ -348,6 +374,9 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             ended(exitCode);
         }
     }
+
+    /// <summary>The code the browser last ended with; guarded by <see cref="_watches"/>.</summary>
+    private int? _endedWith;
 
     /// <summary>
     /// The double's half of the session's watch on its browser: called with the exit
@@ -388,6 +417,17 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     {
         /// <inheritdoc />
         public int ProcessId => child.BrowserProcessId;
+
+        /// <inheritdoc />
+        public bool HasEnded(out int? exitCode)
+        {
+            lock (child._watches)
+            {
+                exitCode = child.BrowserIsOpen ? null : child._endedWith;
+            }
+
+            return !child.BrowserIsOpen;
+        }
 
         public void Dispose()
         {
@@ -677,9 +717,15 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             ? Error(id, code, behaviour.ErrorMessage, behaviour.RawErrorData)
             : Result(id, behaviour.RawResult ?? """{"content":[{"type":"text","text":"ok"}]}""");
 
-        // A close takes the browser down before it answers, as upstream's does.
+        // A close takes the browser down before it answers, as upstream's does, and
+        // the browser exits cleanly.
         if (string.Equals(ToolNameOf(request), ClosingTool, StringComparison.Ordinal))
         {
+            lock (_watches)
+            {
+                _endedWith = 0;
+            }
+
             Volatile.Write(ref _browserIsOpen, 0);
         }
 

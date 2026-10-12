@@ -1219,7 +1219,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // top of this method, and a visible window has a countdown too, so this is
             // no longer the only reset. What stays here is the half only a forwarded
             // call has: the scope that holds the countdown while the call runs.
-            using var driving = live.Driving();
+            //
+            // ⚠️ AND IT SAYS WHEN THE BROWSER ENDED UNDER THE CALL, since 2026-10-12, the
+            // maintainer's 94: see LiveSession.SayIfTheBrowserEndedDuringACall.
+            using var driving = live.Driving(tool, arguments);
 
             // 8 b: whether this call closes a tab decides how a browser that ends
             // right after it is described.

@@ -668,6 +668,33 @@ over `TUnit.Engine.dll` and `TUnit.Core.dll` from
 covers this too and row 117 covers both halves: it is the same fact family with
 the same trigger, an MTP or TUnit bump.
 
+### A keyless `[NotInParallel]` arm runs after every parallel arm, and beside none of them -- measured 2026-10-12
+
+**TUnit runs the arms that carry a keyless `[NotInParallel]` in a phase of their own,
+after the last arm that runs in parallel has ended, one at a time.** Read from the TUnit
+report of a full run of this suite, 1,360 arms, at `8cdb3ee4` on 2026-10-12 (TUnit
+1.73.19, .NET 10.0.12, SDK 10.0.401, Windows 10.0.26300): the 41 arms that no other arm
+overlapped were the keyless ones, `InheritedEnvironmentTests` 5, `RealInstallerTests` 10,
+`RegistrationTests` 24, `SaturationTests` 1 and `StraySweepTests` 1. The last arm that
+overlapped another ended at **+334.0 s** of the run, the first of the 41 started at
+**+334.0 s**, and no arm that overlapped another started after it; the 41 then took the
+run to +758.4 s. `[FLOATS]`
+
+**What the screenshot limit's real Chromium arm did in that same run**, before it carried
+the attribute: +13.6 s to +40.3 s, 26.7 s, overlapped by 535 other arms. The maintainer's
+94 c gave it the keyless attribute on 2026-10-12, which moves it into the second phase,
+where its whole time alone is added to the run's critical path. **The first run with the
+attribute**, a filtered one of 281 arms the same day, ran it from +66.5 s to +70.5 s, 4.0 s,
+overlapped by none, starting the moment the last arm that overlapped another ended and as
+the only arm of the run that no other overlapped.
+
+**To re-establish it**, run the suite and read the report TUnit writes beside it,
+`TestResults\BrowserAI.Tests-windows-net10.0.tunit-report.json`: every arm under
+`groups[].tests[]` carries a `startTime` and an `endTime`. An arm overlaps another when
+each starts before the other ends; the property holds while every arm no other arm
+overlaps is keyless, while those arms all start at or after the moment the last
+overlapping arm ends, and while a keyless arm added to the tree joins them.
+
 ## What a NativeAOT publish emits
 
 **NativeAOT embeds `ApplicationManifest` into the published binary.** Verified by

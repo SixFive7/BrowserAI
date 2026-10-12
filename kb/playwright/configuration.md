@@ -1065,6 +1065,47 @@ which is written to take **at most three searches per arm** from one address. âš
 maintainer's own address**, and it produced a captcha on every arm the first time;
 treat a repeat as an experiment on somebody else's service and keep it small.
 
+## What a browser writes to standard error, and where it surfaces -- measured 2026-10-12
+
+**Every line the browser writes to standard error is a line of Playwright's browser log**,
+`[pid=<n>][err] <line>`, and Playwright keeps the last 150 of them: an error about the
+browser closing quotes them under *Browser logs:*. **The same lines go to the `pw:browser`
+channel of Playwright's debug log**, which writes them to the child's own standard error
+when the child's `DEBUG` names the channel. Read in the payload's `playwright-core`
+1.64.0-alpha-1790635538000, under `@playwright/mcp` 0.0.83, on 2026-10-12: `launchProcess`
+hands each line to the launch's `progress.log`, whose call log reaches
+`debugLogger.log("browser", ...)` for the life of the browser and not only while it starts,
+and to a `RecentLogsCollector`, whose `kLogCount` is 150; the connection's `_onClose` copies
+`recentLogs()` into the error. `[FLOATS]`
+
+**What the browser logs carried without Chromium's own logging, read 2026-10-12.** Five reds
+of `ScreenshotLimitTests`' real Chromium arm quoted them, one of 2026-10-04, two of
+2026-10-10 and two of 2026-10-12, all at `chromium-1247` (Chrome for Testing 155.0.8059.12),
+launched without `--enable-logging`. Each held Playwright's `<launching>` and `<launched>`
+lines, two of them also held Chromium's own `ERROR` lines about its Google Cloud Messaging
+registration (`registration_request.cc:291`, `mcs_client.cc:702` and `:704`), and each then
+ended in the call log's *fonts loaded*: no line from the moment the browser ended. Nor did
+any carry Playwright's `<process did exit: exitCode=..., signal=...>`, which it logs when it
+sees the process close, after the error has taken its copy. **So without the switch the
+browser log carries Chromium's errors and nothing below them**, and in these five it said
+nothing about the end.
+
+**With `--enable-logging=stderr` among the session's Chromium arguments and
+`DEBUG=pw:browser` in its child's environment**, both handed in by the suite's rig
+(`RigSessionEnvironment.WithChromiumLoggingAsync`, the maintainer's 94 b), two runs of the
+same arm on 2026-10-12 at the same revision, one of them green, each carried two lines in the
+arm's own output, as the session's child stderr at debug level: Chromium's `WARNING` line
+*"Command line too long for RegisterApplicationRestart"* (`chrome_browser_main_win.cc:832`),
+written as the browser starts, which no red's browser log had held, and Playwright's own
+*"`<process did exit: exitCode=0, signal=null>`"*, which names the browser's exit code. That
+one `WARNING` was all Chromium wrote in either run, two pages and four full-page captures.
+
+**To re-establish it**, run `ScreenshotLimitTests` filtered and read the real Chromium arm's
+`output` in the TUnit report beside the run: lines carrying `pw:browser [pid=` and `][err] [`
+followed by Chromium's own `pid:tid:MMDD/HHMMSS.mmm:LEVEL:file(line)]` prefix, and a
+`<process did exit` line once the browser has ended. For the other half, decode the
+*Browser logs:* block of a red's answer out of its run log, where it is JSON-escaped.
+
 ## Shutdown
 
 **`setupExitWatchdog`** hooks `stdin` close, `SIGINT` and `SIGTERM`, calls

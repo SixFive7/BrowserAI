@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text.Json.Nodes;
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
 using BrowserAI.Protocol;
@@ -77,7 +78,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         string? holdBrowserCloseUntil = null,
         string? toolsList = null,
         BrowserAI.Updates.IInstallHealth? installHealth = null,
-        Func<string, ProvisioningStatus>? provisioningProbe = null)
+        Func<string, ProvisioningStatus>? provisioningProbe = null,
+        bool chromiumLogging = false)
     {
         Root = root;
         Clock = clock;
@@ -236,6 +238,13 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
                             StandardErrorLines = options.StandardErrorLines,
                         }
                         : options;
+
+                    // ⚠️ AND THE OTHER ONE, only when an arm asks for Chromium's own log:
+                    // the maintainer's 94 b, 2026-10-12. See WithChromiumLoggingAsync.
+                    if (chromiumLogging)
+                    {
+                        launched = await WithChromiumLoggingAsync(launched).ConfigureAwait(false);
+                    }
 
                     var child = await ChildConnection.ConnectAsync(
                         new DirectStdioClientTransport(launched, loggerFactory),
@@ -506,6 +515,11 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// What a live session's browser call is told about its family's install, or
     /// <see langword="null"/> for the rig's own provisioner.
     /// </param>
+    /// <param name="chromiumLogging">
+    /// For a rig with real session children only: whether each child's Chromium writes
+    /// its own log to standard error and the child writes Playwright's browser log to its
+    /// own, so the lines reach the session's log. See <see cref="WithChromiumLoggingAsync"/>.
+    /// </param>
     public static async Task<RigSessionEnvironment> CreateAsync(
         Action<FakePlaywrightChild>? configure = null,
         Func<string, string, IInstallerRun>? installer = null,
@@ -518,11 +532,106 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         string? holdBrowserCloseUntil = null,
         string? toolsList = null,
         BrowserAI.Updates.IInstallHealth? installHealth = null,
-        Func<string, ProvisioningStatus>? provisioningProbe = null) =>
-        await SeededAsync(new(Path.Combine(await ScratchRoot.PathAsync(), $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList, installHealth, provisioningProbe)
+        Func<string, ProvisioningStatus>? provisioningProbe = null,
+        bool chromiumLogging = false) =>
+        await SeededAsync(new(Path.Combine(await ScratchRoot.PathAsync(), $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList, installHealth, provisioningProbe, chromiumLogging)
         {
             OpensDefaultSession = opensDefaultSession,
         });
+
+    /// <summary>The Chromium switch that writes Chromium's own log to its standard error.</summary>
+    public const string ChromiumLoggingSwitch = "--enable-logging=stderr";
+
+    /// <summary>
+    /// The variable <c>playwright-core</c>'s debug log reads, and the channel of it that
+    /// carries every line the browser writes.
+    /// </summary>
+    public const string DebugVariable = "DEBUG";
+
+    /// <summary>The channel of Playwright's debug log that carries the browser's own lines.</summary>
+    public const string PlaywrightBrowserLog = "pw:browser";
+
+    /// <summary>
+    /// The launch with Chromium's own log on its standard error, and Playwright's browser
+    /// log on the child's: a copy of the generated config whose Chromium arguments end with
+    /// <see cref="ChromiumLoggingSwitch"/>, handed to the child in the config's place, and
+    /// <see cref="DebugVariable"/> set to <see cref="PlaywrightBrowserLog"/> in the child's
+    /// environment.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 94 b, 2026-10-12, in his words verbatim:</b> <i>"94 your
+    /// recommendation"</i>, which starts the real Chromium arm of
+    /// <c>ScreenshotLimitTests</c> with Chromium's own logging, test-only, so that the
+    /// browser log Playwright keeps carries Chromium's last lines at that arm's next red.
+    /// Without the switch it carried little: in the five reds of that arm whose answer
+    /// quoted it, read 2026-10-12, Playwright's launch lines and, in two of them, errors
+    /// Chromium logged about its own Google Cloud Messaging registration, and no line from
+    /// the moment the browser ended.
+    /// </para>
+    /// <para>
+    /// <b>Through the one launch seam a session has</b>, the rig's own
+    /// <see cref="SessionEnvironment.ConnectChild"/>, and never through the product: the
+    /// Chromium arguments are a key of the config BrowserAI generates, written before this
+    /// seam is called, and no product setting adds one. The product's own file is left as
+    /// it wrote it, so what the session holds as its config is still the product's. No
+    /// <c>BROWSERAI_</c> variable is involved: no running BrowserAI reads one.
+    /// </para>
+    /// <para>
+    /// <b>Why the variable as well as the switch.</b> Playwright reads a browser's standard
+    /// error into the browser log it keeps, the last 150 lines of which an error about the
+    /// browser closing carries, and writes each line to its debug log as well, which with
+    /// <see cref="PlaywrightBrowserLog"/> enabled goes to the child's standard error. BrowserAI
+    /// logs each line the child writes there into the session's log, at debug level, so an
+    /// arm whose session is opened with <c>debug</c> carries Chromium's lines in its own
+    /// output on a passing run too.
+    /// </para>
+    /// </remarks>
+    /// <param name="options">The launch the product built.</param>
+    /// <returns>The launch to start.</returns>
+    /// <exception cref="InvalidOperationException">The launch names no config, or its config carries no Chromium arguments.</exception>
+    private static async Task<ChildProcessOptions> WithChromiumLoggingAsync(ChildProcessOptions options)
+    {
+        List<string> arguments = [.. options.Arguments];
+
+        var at = arguments.IndexOf("--config");
+
+        if (at < 0 || at + 1 >= arguments.Count)
+        {
+            throw new InvalidOperationException($"The launch names no --config, so there is no Chromium argument to add to: {string.Join(' ', arguments)}");
+        }
+
+        var generated = arguments[at + 1];
+        var config = JsonNode.Parse(await File.ReadAllTextAsync(generated).ConfigureAwait(false))
+            ?? throw new InvalidOperationException($"The generated config '{generated}' is empty.");
+
+        if (config["browser"]?["launchOptions"]?["args"] is not JsonArray switches)
+        {
+            throw new InvalidOperationException($"The generated config '{generated}' carries no browser.launchOptions.args, which a Chromium session's always does.");
+        }
+
+        switches.Add(ChromiumLoggingSwitch);
+
+        var copy = Path.Combine(Path.GetDirectoryName(generated)!, $"{Path.GetFileNameWithoutExtension(generated)}.chromium-logging.json");
+
+        await File.WriteAllTextAsync(copy, config.ToJsonString()).ConfigureAwait(false);
+
+        arguments[at + 1] = copy;
+
+        return new ChildProcessOptions
+        {
+            Command = options.Command,
+            Arguments = arguments,
+            WorkingDirectory = options.WorkingDirectory,
+            Environment = new Dictionary<string, string>(options.Environment, StringComparer.OrdinalIgnoreCase)
+            {
+                [DebugVariable] = PlaywrightBrowserLog,
+            },
+            ShutdownTimeout = options.ShutdownTimeout,
+            StandardErrorLines = options.StandardErrorLines,
+            Name = options.Name,
+        };
+    }
 
     /// <summary>Writes the rig's seeded browser marker, disposing the rig if the write fails.</summary>
     /// <param name="rig">The rig, just made.</param>
