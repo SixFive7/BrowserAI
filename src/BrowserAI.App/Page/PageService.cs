@@ -1909,7 +1909,10 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         [LoggerMessage(EventId = 7020, Level = LogLevel.Warning, Message = "What BrowserAI's processes use could not be read for the page, so it shows the last reading.")]
         public static partial void UsageUnread(ILogger logger, Exception failure);
 
-        [LoggerMessage(EventId = 7021, Level = LogLevel.Warning, Message = "The after-update notice's record could not be written, so the next start may not know whether the notice was seen.")]
+        // 7022 since 2026-10-12 (previously 7021, which DesktopPageHost's DesktopLog.Failed already
+        // holds in the same category, BrowserAI.Background; ProcessLogTests'
+        // EveryLineOfTheBackgroundsAndTheRelaysCategoriesHasAnEventIdOfItsOwn named the two).
+        [LoggerMessage(EventId = 7022, Level = LogLevel.Warning, Message = "The after-update notice's record could not be written, so the next start may not know whether the notice was seen.")]
         public static partial void NoticeUnwritten(ILogger logger, Exception failure);
     }
 }
