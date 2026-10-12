@@ -69,7 +69,7 @@ internal static class KeptOnRed
         {
             _ = Directory.CreateDirectory(parent);
             await MoveOnceReleasedAsync(folder, destination);
-            said = $"The arm's scratch folder is kept at '{destination}', where no reclaim reaches it. Each session folder in it holds the session's record, which holds every close with its reason and the browser's exit code.";
+            said = $"The arm's scratch folder is kept at '{destination}', where no reclaim reaches it. Each session folder in it holds the session's record: every close, with its reason and the browser's exit code.";
         }
         catch (Exception unkept) when (unkept is IOException or UnauthorizedAccessException or TimeoutException)
         {

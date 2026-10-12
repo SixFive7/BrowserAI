@@ -521,8 +521,14 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// </summary>
     private readonly ConcurrentDictionary<DrivingScope, string> _callsOverTheBrowser = new();
 
-    /// <summary>1 once the line saying the browser ended during a call has been written.</summary>
+    /// <summary>1 once the line saying the browser ended during a call has been written, or decided against.</summary>
     private int _endDuringACallSaid;
+
+    /// <summary>How many <c>browser_tabs</c> closes have begun on this session, which a call's scope reads at both its ends.</summary>
+    private long _tabClosesBegun;
+
+    /// <summary>How many <c>browser_tabs</c> closes are running on this session now.</summary>
+    private int _tabClosesRunning;
 
     /// <summary>1 once a browser server that ended on its own has been recorded.</summary>
     private int _serverEndRecorded;
@@ -868,22 +874,38 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// written once.
     /// </para>
     /// <para>
-    /// <b>Not when BrowserAI or the call asked for the end</b>: a close of BrowserAI's
+    /// <b>Not when BrowserAI or the agent asked for the end</b>: a close of BrowserAI's
     /// own in flight, a session already closed for a reason that is BrowserAI's or the
-    /// agent's, a teardown, or a <c>browser_tabs</c> close, which ends Firefox when it
-    /// closes the last tab. <b>Not when the browser was never watched</b>: the wait is
+    /// agent's, or a teardown. <b>Not when the browser was never watched</b>: the wait is
     /// armed once a call has left a browser up, so a browser that ends during the call
     /// that started it is not said here, and the close's record is all there is of it.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>And not for a clean end beside a <c>browser_tabs</c> close</b>, which is what
+    /// closing the last tab does to Firefox: <c>firefox-1553</c> exits with 0, measured
+    /// 2026-10-04. A tab close never asks this itself, and since 2026-10-12 a call that
+    /// ran beside one, begun while it ran or running when it began, does not say that
+    /// nobody asked when the browser exited with 0, because the agent's own close did;
+    /// the session then records the last tab's close as the agent's. A crash beside the
+    /// same close is still said, as the close's own cause calls any other code a crash.
+    /// <b>Two calls of one session do run at once</b>: nothing above
+    /// <see cref="SessionManager"/> serialises tool calls (<see cref="SessionLock"/>'s
+    /// remarks), and <c>CloseReasonTests.ACallBesideATabCloseThatEndedTheBrowserIsNoSuchWarningAndACrashBesideItIsOne</c>
+    /// holds a tab close in flight at the browser server beside a held call of the same
+    /// session. Found on 2026-10-12 by a reading of the release texts, in the code and
+    /// not in a run.
+    /// </para>
     /// </remarks>
-    private void SayIfTheBrowserEndedDuringACall()
+    /// <param name="besideATabClose">Whether a <c>browser_tabs</c> close ran beside the call that asks.</param>
+    private void SayIfTheBrowserEndedDuringACall(bool besideATabClose)
     {
         if (Volatile.Read(ref _disposed) is not 0
             || CloseIsInFlight
             || (Closed is { } closed && !EndedWithNobodyAsking(closed.Cause))
             || Volatile.Read(ref _browserWatch) is not IWatchedBrowser watched
             || !watched.HasEnded(out var exitCode)
-            || Interlocked.Exchange(ref _endDuringACallSaid, 1) is not 0)
+            || Interlocked.Exchange(ref _endDuringACallSaid, 1) is not 0
+            || (besideATabClose && exitCode is 0))
         {
             return;
         }
@@ -982,6 +1004,15 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
         /// </summary>
         private readonly bool _overTheBrowser;
 
+        /// <summary>Whether this call is a <c>browser_tabs</c> close, counted as running until it ends.</summary>
+        private readonly bool _closesATab;
+
+        /// <summary>How many tab closes had begun on the session when this call began.</summary>
+        private readonly long _tabClosesBegunAtStart;
+
+        /// <summary>Whether a tab close was running when this call began.</summary>
+        private readonly bool _tabCloseRunningAtStart;
+
         private int _disposed;
 
         /// <param name="session">The session.</param>
@@ -991,6 +1022,16 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
         {
             _session = session;
             _call = session.Idle?.Call();
+            _closesATab = closesATab;
+
+            if (closesATab)
+            {
+                _ = Interlocked.Increment(ref session._tabClosesBegun);
+                _ = Interlocked.Increment(ref session._tabClosesRunning);
+            }
+
+            _tabClosesBegunAtStart = Interlocked.Read(ref session._tabClosesBegun);
+            _tabCloseRunningAtStart = Volatile.Read(ref session._tabClosesRunning) is not 0;
             _overTheBrowser = !closesATab && session.TheWatchedBrowserIsUp() && session._callsOverTheBrowser.TryAdd(this, tool);
         }
 
@@ -1003,8 +1044,19 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 
             if (_overTheBrowser)
             {
-                _session.SayIfTheBrowserEndedDuringACall();
+                // Beside a tab close: one was running when this call began, is running
+                // now, or began while this call ran.
+                var besideATabClose = _tabCloseRunningAtStart
+                    || Volatile.Read(ref _session._tabClosesRunning) is not 0
+                    || Interlocked.Read(ref _session._tabClosesBegun) != _tabClosesBegunAtStart;
+
+                _session.SayIfTheBrowserEndedDuringACall(besideATabClose);
                 _ = _session._callsOverTheBrowser.TryRemove(this, out _);
+            }
+
+            if (_closesATab)
+            {
+                _ = Interlocked.Decrement(ref _session._tabClosesRunning);
             }
 
             Volatile.Write(ref _session._lastActivity, _session._clock.GetUtcNow().UtcTicks);

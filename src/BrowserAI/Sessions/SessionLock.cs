@@ -2059,6 +2059,6 @@ internal static partial class SessionLog
     [LoggerMessage(
         EventId = 14,
         Level = LogLevel.Warning,
-        Message = "The browser of the session at {Directory} ended with exit code {ExitCode} while {Calls}; BrowserAI had not asked it to close.")]
+        Message = "The browser of {Directory} ended with exit code {ExitCode} while {Calls}; BrowserAI had not asked it to close.")]
     public static partial void BrowserEndedDuringACall(ILogger logger, string directory, string exitCode, string calls);
 }
