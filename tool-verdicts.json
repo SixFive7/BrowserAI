@@ -149,7 +149,7 @@
     },
     "browser_take_screenshot": {
       "verdict": "allow",
-      "note": "'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image."
+      "note": "'fullPage: true' returns the whole page and nothing downscales it, so its cost follows its pixels and grows with the page. BrowserAI refuses a Chromium screenshot past 16,384 px on a side. Pass 'filename' for a link to the file and no inline image."
     },
     "browser_snapshot": {
       "verdict": "allow"
