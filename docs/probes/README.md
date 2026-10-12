@@ -230,6 +230,11 @@ name `LinkProbe.exe`, and no file of the stored rig. **That second true positive
 of this directory**, with its digest in the rig's evidence batch, because a second is a new
 decision and the paragraph below says to ask; the question is the maintainer's. **The scan
 would still flag eleven files, and only `observe.ps1` selects a process by name.**
+⚠️ *Added 2026-10-12, later the same day, by addition.* **He answered it, 115, in his words
+verbatim: "115 your recommendation"**: the file's exact bytes are kept as
+`close-probe-windows.ps1.txt` in
+[the rig's evidence batch](../evidence/2026-10-11-link-start/README.md), which no scan of
+process selection reads, and this directory still holds one file that selects by name.
 
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does

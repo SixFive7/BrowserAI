@@ -29,7 +29,8 @@ namespace BrowserAI.App.Page;
 /// <c>data-ends-at</c>, in milliseconds since 1970; it shows what a card on the map is when
 /// the card is chosen; and it draws the map's lines from where the cards are (40 a).
 /// ⚠️ <i>And an eighth since 2026-10-12, by addition, 73 b</i>: on a page drawn with folder
-/// links it puts the body's <c>data-link-hint</c> as one line under the page's first one.
+/// links it puts the body's <c>data-link-hint</c> as one line under the page's first one,
+/// and on the setup page below the group of rows that holds it (117 b, 2026-10-12).
 /// A folder link is an ordinary link the browser follows, and the script does nothing for it.
 /// </para>
 /// </remarks>
@@ -441,7 +442,9 @@ internal static class PageAssets
             const line = document.createElement('p');
             line.className = 'link-hint';
             line.textContent = words;
-            const anchor = first.closest('.btn-row, p.action, td') || first;
+            // 117 b, 2026-10-12: on the setup page the first link is a project's picker, and
+            // the line goes below that project's group of rows, not between them.
+            const anchor = first.closest('.actions') || first.closest('.btn-row, p.action, td') || first;
             if (anchor.tagName === 'TD') { anchor.appendChild(line); } else { anchor.after(line); }
           };
 

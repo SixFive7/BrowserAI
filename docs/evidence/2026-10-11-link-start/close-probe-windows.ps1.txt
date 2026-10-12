@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+# Closes the windows the measurement opened, by handle: an Explorer folder window whose
+# title is one of the probe's Probe-<letter>-<page> folders, and a folder picker (#32770)
+# owned by a LinkProbe.exe the rig started. It sends WM_CLOSE to that one window only,
+# which cancels a picker and closes one Explorer window; it never ends a process, and it
+# touches no other window. Only probe-caused windows match.
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = 'Stop'
+
+Add-Type -Namespace L55C -Name Win -MemberDefinition @'
+[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+[DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+[DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetClassName(IntPtr h, System.Text.StringBuilder s, int n);
+[DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int InternalGetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+[DllImport("user32.dll")] public static extern IntPtr SendMessageTimeout(IntPtr h, uint msg, IntPtr w, IntPtr l, uint flags, uint ms, out IntPtr res);
+public delegate bool EnumProc(IntPtr h, IntPtr p);
+[DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr p);
+'@
+
+function Get-ClassName([IntPtr] $h) { $b = New-Object System.Text.StringBuilder 256; [void][L55C.Win]::GetClassName($h, $b, 256); $b.ToString() }
+function Get-Title([IntPtr] $h) { $b = New-Object System.Text.StringBuilder 512; [void][L55C.Win]::InternalGetWindowText($h, $b, 512); $b.ToString() }
+
+# The pids of LinkProbe.exe processes running now, so a picker is matched by its owner and
+# not by its title. Looked up by image name here only to scope WM_CLOSE to the rig's own
+# dialogs; nothing is terminated.
+$probePids = @(Get-CimInstance Win32_Process -Filter "Name='LinkProbe.exe'" | Select-Object -ExpandProperty ProcessId)
+
+$closed = New-Object System.Collections.Generic.List[object]
+$cb = [L55C.Win+EnumProc] {
+    param([IntPtr] $h, [IntPtr] $p)
+    if (-not [L55C.Win]::IsWindowVisible($h)) { return $true }
+    $cls = Get-ClassName $h
+    $title = Get-Title $h
+    $owner = 0; [void][L55C.Win]::GetWindowThreadProcessId($h, [ref] $owner)
+    $isFolder = ($cls -eq 'CabinetWClass' -and $title -match 'Probe-[ABCDE]-p1b?')
+    $isPicker = ($cls -eq '#32770' -and ($probePids -contains [int] $owner))
+    if ($isFolder -or $isPicker) {
+        $res = [IntPtr]::Zero
+        [void][L55C.Win]::SendMessageTimeout($h, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero, 0x0002, 2000, [ref] $res) # WM_CLOSE, SMTO_ABORTIFHUNG
+        $script:closed.Add([pscustomobject]@{ hwnd = '0x{0:X}' -f [int64] $h; class = $cls; title = $title; ownerPid = [int] $owner; kind = if ($isPicker) { 'picker-cancel' } else { 'folder-close' } })
+    }
+    return $true
+}
+[void][L55C.Win]::EnumWindows($cb, [IntPtr]::Zero)
+
+($closed | ConvertTo-Json -Compress -Depth 5)
+if ($closed.Count -eq 0) { '[]' }

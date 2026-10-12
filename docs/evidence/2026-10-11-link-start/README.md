@@ -20,6 +20,7 @@ run, its folder `run-20261011T161900Z`.
 | `register-41072.jsonl`, `unregister-90388.jsonl`, `prepare-81180.jsonl`, `processes.json`, `urls.txt` | The scheme as registered, the unregister that found it gone, the folders made, the pids `start.ps1` recorded and the three page addresses |
 | `snapshot-before.trimmed.txt`, `snapshot-after.trimmed.txt` | Firefox's `Launcher` value names and the probe's key, before and after the run |
 | `originals.sha256` | The digest and size of each trimmed file as written, and the digest of each rig file as it ran, `close-probe-windows.ps1` included |
+| `close-probe-windows.ps1.txt` | The script the driver ran after each click to close the window the click opened, with `WM_CLOSE` to that one window; it finds the rig's pickers by a WMI query filtered on the image name `LinkProbe.exe`, which is why it is kept here as text and not in the stored rig, by the maintainer's 115 d of 2026-10-12, verbatim *"115 your recommendation"*. Its exact bytes as they ran, 3,074 bytes, SHA-256 `994d96f977c37d28f9bec311af73244f80b2ca49f0b439424a6caf8fce13b2b0` |
 
 ## How these bytes depart from the ones taken
 
@@ -28,5 +29,7 @@ run, its folder `run-20261011T161900Z`.
   `%USERPROFILE%`: 16 times in the observer's record and 30 in each snapshot.
   `originals.sha256` carries each original's digest and size. Nothing else in them changed.
 - The other files are as written, line endings aside: they name no path under the profile.
+- `close-probe-windows.ps1.txt` is the script's bytes exactly, LF line endings as it was
+  written, with `.txt` appended to its name.
 - The folders the links opened, the scratch Firefox profile and the probe's build are not
   kept: they hold nothing the entry reads.
