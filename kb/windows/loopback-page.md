@@ -243,9 +243,9 @@ registered the scheme `browserai-probe` for the run and removed it after, served
 a page with one link per shape, and clicked each link inside the page through
 WebDriver BiDi, which moves neither the mouse nor the keyboard. An observer
 recorded every window that appeared, its owner, and the window that held the
-foreground. A stand-in for the background, a process of the rig's own started
-from a shell once the browser was in front, answered the started process over a
-named pipe.
+foreground. A stand-in for the background, a process of the rig's own that its
+observer started once the browser was in front, answered the started process over
+a named pipe.
 
 | Link | What the started process did | The window | Where it came |
 |---|---|---|---|
@@ -263,8 +263,8 @@ named pipe.
   and `widget/windows/ShellHeaderOnlyUtils.h`.
 - ⚠️ **The control did not show the fault 55 was asked about.** E is what the page
   did then, a folder opened by a process with no right to come forward, and its
-  folder came to the front: Explorer opened it, for a stand-in started from a
-  shell. The background is started by the Task Scheduler, and
+  folder came to the front: Explorer opened it, for a stand-in the rig's observer
+  had started, and the observer was started from a shell. The background is started by the Task Scheduler, and
   [a process a task starts may not take the foreground](processes.md#a-process-a-task-starts-may-not-take-the-foreground);
   a stand-in started that way was not measured. So this says what comes forward
   for the process a link starts, and why the background's folder stays behind is
