@@ -1,0 +1,676 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>BrowserAI</title>
+<!-- home-fit 4-hero-band, Hero band: the home for a 1440 by 1170 window, on the page's real stylesheet (PageAssets.Css, read from source) and the composers' markup. Mockup with invented data. ?state=notice shows the after-update notice, ?state=busy an update waiting and a window on the screen, ?still stops the made-up live feed, ?theme=light or dark overrides the system setting. -->
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f4f6f3; --card: #ffffff; --card-2: #f7f9f7; --line: #e2e7e3; --line-strong: #cbd5cf;
+  --text: #17201c; --muted: #56645d; --faint: #8a978f;
+  --accent: #087a54; --accent-ink: #ffffff; --accent-soft: #e3f5ec; --accent-text: #08734f;
+  --warn: #9a5400; --warn-soft: #fff3dc; --warn-line: #efc98a;
+  --bad: #b42318; --bad-ink: #ffffff; --bad-soft: #fde8e6; --bad-line: #f1b3ac;
+  --ok: #0f7f54; --seg-a: #10b981; --seg-b: #0e7490;
+  --wire: #8a978f; --wire-w: #c26a00; --wire-h: #0f9f6e; --wire-c: #8a978f; --wire-k: #a3b0a8;
+  --shadow: 0 1px 2px rgba(23, 32, 28, 0.05), 0 4px 16px rgba(23, 32, 28, 0.05);
+  --radius: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c1210; --card: #141c19; --card-2: #18221e; --line: #25312c; --line-strong: #34443d;
+    --text: #e5ece9; --muted: #9eafa7; --faint: #6f8078;
+    --accent: #34d399; --accent-ink: #062b1f; --accent-soft: #11392b; --accent-text: #6ee7b7;
+    --warn: #fbbf24; --warn-soft: #3a2a0c; --warn-line: #6b4c14;
+    --bad: #f87171; --bad-ink: #2b0b09; --bad-soft: #3b1513; --bad-line: #6e2620;
+    --ok: #34d399; --seg-a: #34d399; --seg-b: #22a6c3;
+    --wire: #6f8078; --wire-w: #fbbf24; --wire-h: #34d399; --wire-c: #6f8078; --wire-k: #52645c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; color: var(--text); background: var(--bg); font: 14.5px/1.5 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+a { color: var(--accent-text); }
+code, pre { font-family: "Cascadia Mono", Consolas, monospace; font-size: 0.86em; overflow-wrap: anywhere; }
+pre { white-space: pre-wrap; }
+h1, h2, h3, p { margin-top: 0; }
+.icon { width: 18px; height: 18px; flex: none; }
+.brand-mark { width: 30px; height: 30px; flex: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+main:focus { outline: none; }
+
+.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1180px; margin: 0 auto; padding: 12px 32px; display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 650; font-size: 17px; }
+.version { font-weight: 500; font-size: 12.5px; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 9px; }
+.top-gap { flex: 1; }
+.running { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent); }
+.help { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 8px; }
+.help:hover { background: var(--card); color: var(--text); }
+.help .icon { width: 15px; height: 15px; }
+.banner { max-width: 1180px; margin: 12px auto 0; padding: 10px 14px; border: 1px solid var(--warn-line); background: var(--warn-soft); border-radius: 12px; }
+
+main { max-width: 1180px; margin: 0 auto; padding: 28px 32px 56px; }
+body[data-page="sessions"] main, body[data-page="sessions"] .top-in, body[data-page="sessions"] .foot { max-width: 1440px; }
+.crumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin: 0 0 14px; flex-wrap: wrap; }
+.crumbs a { color: var(--muted); }
+.crumbs .icon { width: 13px; height: 13px; }
+.hello h1, .page-title { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 30px; line-height: 1.2; font-weight: 650; margin: 0 0 6px; }
+.lede { margin: 0 0 22px; color: var(--muted); font-size: 15.5px; max-width: 780px; }
+
+.notice, .note { display: flex; gap: 14px; align-items: flex-start; border-radius: 14px; padding: 14px 16px; margin: 0 0 14px; border: 1px solid var(--line-strong); background: var(--card); }
+.notice > .icon, .note > .icon { width: 22px; height: 22px; margin-top: 1px; }
+.notice h3 { margin: 0 0 2px; font-size: 15px; }
+.notice p, .note p { margin: 0 0 4px; }
+.grow { flex: 1; min-width: 0; }
+.notice.bad, .note.broken { background: var(--bad-soft); border-color: var(--bad-line); }
+.notice.bad > .icon, .notice.bad h3, .note.broken > .icon, .note.broken strong { color: var(--bad); }
+.notice.warn { background: var(--warn-soft); border-color: var(--warn-line); }
+.notice.warn > .icon, .notice.warn h3 { color: var(--warn); }
+.notice.good { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.notice.good > .icon, .notice.good h3 { color: var(--accent-text); }
+.note.said > .icon { color: var(--accent-text); }
+
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+.span-8 { grid-column: span 8; }
+.span-4 { grid-column: span 4; }
+.span-12 { grid-column: span 12; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 22px; min-width: 0; }
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.card-head h2 { font-size: 16px; margin: 0; font-weight: 650; }
+.card-head .icon { color: var(--accent-text); }
+.card-head .more { margin-left: auto; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 2px; font-weight: 600; }
+.card-head .more .icon { width: 15px; height: 15px; }
+.caption { margin: 0 0 14px; color: var(--muted); font-size: 13.5px; }
+.big { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 24px; font-weight: 650; margin: 6px 0; }
+.small { font-size: 13px; color: var(--muted); }
+.warning { color: var(--warn); }
+.spaced { margin-top: 18px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 0 14px; }
+.stat { background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
+.stat .icon { width: 20px; height: 20px; color: var(--muted); }
+.stat b { display: block; font-size: 20px; line-height: 1.1; }
+.stat span { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.stat.warn .icon, .stat.warn b { color: var(--warn); }
+
+.rows { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; text-decoration: none; color: inherit; border-top: 1px solid var(--line); background: var(--card); }
+.row:first-child { border-top: 0; }
+.row:hover { background: var(--card-2); }
+.row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.row-title { font-weight: 600; overflow-wrap: anywhere; }
+.row-sub { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 0; }
+.sep { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0.6; display: inline-block; }
+.row-side { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.row > .icon:last-child { color: var(--faint); width: 16px; height: 16px; }
+.more-line { margin: 10px 0 0; }
+
+.app { width: 30px; height: 30px; border-radius: 9px; display: inline-grid; place-items: center; font-weight: 700; font-size: 11.5px; flex: none; color: #ffffff; }
+.app.cc { background: linear-gradient(135deg, #7c5ce8, #5b3fc4); }
+.app.cx { background: linear-gradient(135deg, #3f86d0, #2a62a8); }
+.app.other, .app.kept { background: var(--card-2); color: var(--muted); border: 1px dashed var(--line-strong); }
+.app .icon { width: 16px; height: 16px; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 550; border-radius: 999px; padding: 3px 10px 3px 8px; white-space: nowrap; border: 1px solid var(--line); background: var(--card-2); color: var(--muted); }
+.chip .icon { width: 14px; height: 14px; }
+.chip.window { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
+.chip.hidden { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--accent-text); }
+.chip.live { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.countdown { font-variant-numeric: tabular-nums; font-weight: 650; }
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.6s ease-in-out infinite; display: inline-block; }
+@keyframes pulse { 50% { opacity: 0.25; } }
+.working { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-text); font-weight: 600; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-weight: 600; font-size: 13.5px; border-radius: 10px; padding: 8px 14px; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); text-decoration: none; cursor: pointer; }
+.btn:hover { border-color: var(--accent-text); }
+.btn .icon { width: 16px; height: 16px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: var(--bad-ink); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--accent-text); padding-left: 6px; padding-right: 6px; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.notice > .btn, .notice > a.btn { align-self: center; }
+
+.app-rows { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 4px; }
+.app-row { display: flex; gap: 12px; align-items: center; }
+.app-row b { display: block; font-size: 14.5px; }
+.state { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.state .icon { width: 16px; height: 16px; }
+.state.ok { color: var(--ok); }
+.state.warn { color: var(--warn); }
+.state.missing { color: var(--muted); }
+
+.minis { display: flex; flex-direction: column; gap: 2px; margin: 12px 0 2px; border-top: 1px solid var(--line); padding-top: 10px; }
+.mini { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; font-size: 13.5px; padding: 4px 0; }
+.mini-ic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--card-2); color: var(--muted); }
+.mini-ic .icon { width: 15px; height: 15px; }
+.mini-ic.window { background: var(--warn-soft); color: var(--warn); }
+.mini-ic.hidden { background: var(--accent-soft); color: var(--accent-text); }
+
+.bar { display: block; width: 100%; height: 10px; border-radius: 999px; overflow: hidden; background: var(--card-2); margin: 12px 0; }
+.seg-a { fill: var(--seg-a); }
+.seg-b { fill: var(--seg-b); }
+.legend { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.legend span:nth-child(2) { flex: 1; color: var(--muted); }
+.swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.swatch.a { background: var(--seg-a); }
+.swatch.b { background: var(--seg-b); }
+
+.facts, .kvs { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 6px 0 0; font-size: 13.5px; }
+.facts dt, .kvs dt { color: var(--muted); }
+.facts dd, .kvs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+.empty { text-align: center; padding: 26px 18px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--card-2); }
+.empty .icon { width: 30px; height: 30px; color: var(--faint); }
+.empty-title { font-weight: 650; margin: 8px 0 4px; }
+.empty p { margin: 0 auto; max-width: 480px; color: var(--muted); font-size: 13.5px; }
+
+.explain { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0 0 22px; }
+.explain > div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; box-shadow: var(--shadow); }
+.explain .icon { width: 22px; height: 22px; color: var(--accent-text); margin-top: 2px; }
+.explain b { display: block; margin-bottom: 2px; }
+.explain p { margin: 0; font-size: 13px; color: var(--muted); }
+
+.legend-row { display: none; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin: 0 0 12px; }
+.legend-row span { display: inline-flex; align-items: center; gap: 7px; }
+.legend-row i { width: 24px; height: 0; border-top: 2px solid var(--wire); display: inline-block; }
+.legend-row i.w { border-top: 3px solid var(--wire-w); }
+.legend-row i.h { border-top: 2px dashed var(--wire-h); }
+.legend-row i.c { border-top: 2px dashed var(--wire-c); }
+.legend-row i.k { border-top: 2px dotted var(--wire-k); }
+
+.map-layout { display: none; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; margin-bottom: 22px; }
+.map { position: relative; display: grid; grid-template-columns: minmax(220px, 330px) minmax(36px, 1fr) minmax(170px, 220px) minmax(36px, 1fr) minmax(210px, 320px); row-gap: 14px; padding: 20px 20px 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--card-2); }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.wire { fill: none; stroke-width: 2; stroke: var(--wire); }
+.wire.w { stroke: var(--wire-w); stroke-width: 3; }
+.wire.h { stroke: var(--wire-h); stroke-dasharray: 9 4; }
+.wire.c, .wire.n { stroke: var(--wire-c); stroke-dasharray: 4 5; }
+.wire.k { stroke: var(--wire-k); stroke-dasharray: 1.5 5; stroke-linecap: round; }
+.wire.live { animation: flow 1s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -26; } }
+.port { stroke: var(--card-2); stroke-width: 3; fill: var(--wire); }
+.port.w { fill: var(--wire-w); }
+.port.h { fill: var(--wire-h); }
+.col-head { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; grid-row: 1; }
+.col-head.c1 { grid-column: 1; }
+.col-head.c3 { grid-column: 3; text-align: center; }
+.col-head.c5 { grid-column: 5; }
+.map > .left { grid-column: 1; display: flex; flex-direction: column; gap: 6px; align-self: center; }
+.map > .right { grid-column: 5; display: flex; flex-direction: column; gap: 8px; align-self: center; }
+.hub-cell { grid-column: 3; display: flex; align-self: stretch; position: relative; z-index: 1; }
+.group-label { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin: 0 0 0 4px; }
+.group-label .icon { width: 13px; height: 13px; }
+.ghost { margin: 0; border: 1px dashed var(--line-strong); border-radius: 14px; padding: 12px 14px; color: var(--muted); font-size: 12.5px; }
+.none { margin: 0; color: var(--muted); font-size: 12.5px; padding-left: 4px; }
+.node { position: relative; z-index: 2; display: flex; gap: 12px; align-items: center; padding: 11px 13px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); box-shadow: var(--shadow); text-align: left; color: inherit; font: inherit; cursor: pointer; width: 100%; }
+.node:hover { border-color: var(--accent-text); }
+.node[aria-pressed="true"] { border-color: var(--accent-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent), var(--shadow); }
+.node .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.node b { font-size: 14px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.node small { font-size: 12px; color: var(--muted); }
+.node .state { font-size: 12px; font-weight: 600; color: var(--muted); }
+.node.w { border-color: color-mix(in srgb, var(--wire-w) 60%, var(--line-strong)); }
+.node.w .state { color: var(--warn); }
+.node.h .state { color: var(--accent-text); }
+.tag { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.tag.live { background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+.br-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--card-2); color: var(--muted); }
+.br-ic.w { background: var(--warn-soft); color: var(--warn); }
+.br-ic.h { background: var(--accent-soft); color: var(--accent-text); }
+.hub { flex-direction: column; justify-content: center; text-align: center; gap: 6px; border-radius: 22px; padding: 18px 14px; border-color: color-mix(in srgb, var(--accent) 50%, var(--line-strong)); background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--seg-a) 22%, var(--card)) 0%, var(--card) 70%); }
+.hub .brand-mark { width: 52px; height: 52px; }
+.hub-name { font-weight: 650; font-size: 16px; }
+.hub-stat { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 8px; }
+.hub-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 6px 10px; border-radius: 10px; background: var(--card-2); }
+.hub-row span { color: var(--muted); }
+.upd { display: block; width: 100%; margin-top: 10px; border-radius: 12px; padding: 9px; font-size: 12.5px; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn-line); }
+.upd b { display: block; font-size: 13.5px; }
+.upd.ok { background: var(--accent-soft); color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.r1 { grid-row: 2; } .r2 { grid-row: 3; } .r3 { grid-row: 4; } .r4 { grid-row: 5; }
+.r5 { grid-row: 6; } .r6 { grid-row: 7; } .r7 { grid-row: 8; } .r8 { grid-row: 9; }
+.rows-1 { grid-row: 2 / span 1; } .rows-2 { grid-row: 2 / span 2; } .rows-3 { grid-row: 2 / span 3; } .rows-4 { grid-row: 2 / span 4; }
+.rows-5 { grid-row: 2 / span 5; } .rows-6 { grid-row: 2 / span 6; } .rows-7 { grid-row: 2 / span 7; } .rows-8 { grid-row: 2 / span 8; }
+
+.inspector { position: sticky; top: 76px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; max-height: calc(100vh - 96px); overflow: auto; }
+.inspect-none { color: var(--muted); margin: 0; }
+.inspect .kind { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; display: flex; align-items: center; gap: 6px; margin: 0 0 4px; }
+.inspect h2 { font-size: 19px; margin: 0 0 10px; overflow-wrap: anywhere; }
+.inspect .what { display: flex; gap: 10px; padding: 11px 13px; border-radius: 12px; background: var(--card-2); color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.inspect .what p { margin: 0; }
+.inspect .what .icon { color: var(--accent-text); width: 18px; height: 18px; }
+.inspect dl { display: grid; grid-template-columns: 104px 1fr; gap: 7px 12px; margin: 0 0 12px; font-size: 13px; }
+.inspect dt { color: var(--muted); }
+.inspect dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.small-notice { padding: 10px 12px; font-size: 13px; }
+.plain { list-style: none; padding: 0; margin: 0 0 8px; }
+.plain li { margin: 3px 0; }
+
+.group { margin: 0 0 22px; }
+.group-head { display: flex; align-items: center; gap: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 650; margin: 0 0 10px; }
+.group-head .icon { width: 16px; height: 16px; }
+.convo { padding: 0; overflow: hidden; margin-bottom: 12px; }
+.convo-head { display: flex; gap: 12px; align-items: center; padding: 14px 18px; }
+.convo-head h3 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.convo-head .right { margin-left: auto; }
+.convo-foot { padding: 9px 18px; background: var(--card-2); border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; margin: 0; }
+.convo-foot .icon { width: 15px; height: 15px; }
+.sess { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line); }
+.sess p { margin: 0; }
+.sess-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--card-2); border: 1px solid var(--line); color: var(--muted); }
+.sess-ic.w { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
+.sess-ic.h { background: var(--accent-soft); color: var(--accent-text); border-color: transparent; }
+.sess-name { font-weight: 650; }
+.sess-purpose, .sess-line { font-size: 13px; }
+.sess-purpose { color: var(--muted); }
+.sess-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.none-yet { padding: 12px 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; margin: 0; }
+
+.two { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+.box h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px; }
+.box p { margin: 0 0 8px; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.kv span { color: var(--muted); }
+.path { display: flex; gap: 10px; align-items: center; justify-content: space-between; background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin: 6px 0 10px; }
+
+.hero { display: flex; align-items: center; gap: 22px; margin-bottom: 18px; flex-wrap: wrap; }
+.hero .clock { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 44px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--accent-text); line-height: 1; }
+.hero .clock .icon { width: 44px; height: 44px; }
+.hero-text { flex: 1; min-width: 240px; }
+.hero-text p { margin: 0; }
+.hero-act { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: 320px; text-align: right; }
+.hold-list { display: flex; flex-direction: column; }
+.hold-item { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.hold-item:first-child { border-top: 0; }
+.hold-item .sub { font-size: 12.5px; color: var(--muted); margin: 0; }
+.hold-item .sub.warning { color: var(--warn); }
+.effects { margin: 6px 0 14px; padding-left: 18px; }
+.effects li { margin: 5px 0; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 650; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.table tr:last-child td { border-bottom: 0; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table a { text-decoration: none; color: var(--text); }
+.table a:hover { text-decoration: underline; }
+.read-at { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.working-line { color: var(--accent-text); font-weight: 600; }
+
+.app-card { margin-bottom: 16px; }
+.app-card .head { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.app-card .head h2 { margin: 0; font-size: 18px; }
+.app-card .head .state { margin-left: auto; font-weight: 600; }
+.app-card .actions { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.action { margin: 0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sub-block { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.sub-block h3 { font-size: 14px; margin: 0 0 4px; }
+.sub-block > p { margin: 0 0 6px; color: var(--muted); font-size: 13.5px; }
+details.trouble, details.more-info { margin-top: 12px; }
+details.trouble summary, details.more-info summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+details.trouble pre, details.more-info pre { font-size: 12px; background: var(--card-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0 0; }
+
+.log-group h2 { font-size: 18px; margin: 22px 0 10px; }
+details.entry, p.entry { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin: 0 0 8px; }
+p.entry { padding: 12px 16px; }
+details.entry summary { cursor: pointer; padding: 12px 16px; }
+details.entry[open] summary { border-bottom: 1px solid var(--line); }
+details.entry p { margin: 0; padding: 12px 16px 14px 34px; color: var(--muted); }
+.entries h2 { font-size: 18px; margin: 22px 0 10px; }
+
+.foot { max-width: 1180px; margin: 0 auto; padding: 0 32px 40px; color: var(--muted); font-size: 12.5px; display: flex; gap: 16px; flex-wrap: wrap; }
+.foot a { color: var(--muted); }
+
+@media (min-width: 1200px) {
+  .map-layout { display: grid; }
+  .legend-row { display: flex; }
+  .list-view:not(.crowded) { display: none; }
+}
+@media (max-width: 980px) {
+  .span-8, .span-4 { grid-column: span 12; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .explain, .two { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .top-in { padding: 10px 16px; }
+  main { padding: 20px 16px 48px; }
+  .help span, .running { display: none; }
+  .hello h1, .page-title { font-size: 24px; }
+  .row-side { display: none; }
+  .sess { grid-template-columns: 34px 1fr; }
+  .sess-actions { grid-column: 2; }
+  .hold-item { grid-template-columns: 34px 1fr; }
+  .hold-item > :last-child { grid-column: 2; justify-self: start; }
+  .hero-act { align-items: flex-start; text-align: left; }
+  .foot { padding: 0 16px 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse, .wire.live { animation: none; }
+}
+/* ===== mockup only: ?theme=light or ?theme=dark overrides the system setting ===== */
+:root[data-theme="light"] { color-scheme: light;
+  color-scheme: light dark;
+  --bg: #f4f6f3; --card: #ffffff; --card-2: #f7f9f7; --line: #e2e7e3; --line-strong: #cbd5cf;
+  --text: #17201c; --muted: #56645d; --faint: #8a978f;
+  --accent: #087a54; --accent-ink: #ffffff; --accent-soft: #e3f5ec; --accent-text: #08734f;
+  --warn: #9a5400; --warn-soft: #fff3dc; --warn-line: #efc98a;
+  --bad: #b42318; --bad-ink: #ffffff; --bad-soft: #fde8e6; --bad-line: #f1b3ac;
+  --ok: #0f7f54; --seg-a: #10b981; --seg-b: #0e7490;
+  --wire: #8a978f; --wire-w: #c26a00; --wire-h: #0f9f6e; --wire-c: #8a978f; --wire-k: #a3b0a8;
+  --shadow: 0 1px 2px rgba(23, 32, 28, 0.05), 0 4px 16px rgba(23, 32, 28, 0.05);
+  --radius: 16px;
+}
+:root[data-theme="dark"] { color-scheme: dark;
+    --bg: #0c1210; --card: #141c19; --card-2: #18221e; --line: #25312c; --line-strong: #34443d;
+    --text: #e5ece9; --muted: #9eafa7; --faint: #6f8078;
+    --accent: #34d399; --accent-ink: #062b1f; --accent-soft: #11392b; --accent-text: #6ee7b7;
+    --warn: #fbbf24; --warn-soft: #3a2a0c; --warn-line: #6b4c14;
+    --bad: #f87171; --bad-ink: #2b0b09; --bad-soft: #3b1513; --bad-line: #6e2620;
+    --ok: #34d399; --seg-a: #34d399; --seg-b: #22a6c3;
+    --wire: #6f8078; --wire-w: #fbbf24; --wire-h: #34d399; --wire-c: #6f8078; --wire-k: #52645c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== home-fit: additions every layout shares ===== */
+body[data-page="status"] main, body[data-page="status"] .top-in, body[data-page="status"] .foot { max-width: 1440px; }
+body[data-page="status"] main { padding-bottom: 28px; }
+body[data-page="status"] .foot { padding-bottom: 24px; }
+.btn.go .icon { width: 16px; height: 16px; margin-left: -2px; }
+.card-head .btn .icon { color: inherit; }
+.btn.wide { width: 100%; justify-content: center; padding: 11px 16px; font-size: 14.5px; margin-top: 16px; }
+.dismiss { flex: none; align-self: center; width: 32px; height: 32px; margin: 0 -6px 0 0; display: grid; place-items: center; border-radius: 9px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.dismiss:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); }
+.dismiss .icon { width: 17px; height: 17px; }
+.fold { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 260ms ease, opacity 200ms ease, margin 260ms ease; }
+.fold > .fold-in { min-height: 0; overflow: hidden; }
+.fold.gone { grid-template-rows: 0fr; opacity: 0; }
+main .fold.gone { margin-top: 0; margin-bottom: 0; }
+.notice.slim { padding: 10px 14px; align-items: center; }
+.notice.slim h3 { display: inline; margin: 0 8px 0 0; font-size: 14.5px; }
+.notice.slim p { display: inline; margin: 0; }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650; color: var(--accent-text); background: var(--accent-soft); border-radius: 999px; padding: 1px 9px 1px 8px; }
+.card-head .live { margin-left: 4px; }
+.stats.five { grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; }
+.stats.five .stat { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "ic num" "label label" "sub sub"; column-gap: 10px; row-gap: 0; align-items: center; align-content: start; padding: 12px 14px; }
+.stats.five .stat > div { display: contents; }
+.stats.five .stat > .icon { grid-area: ic; width: 18px; height: 18px; }
+.stats.five .stat > div > span { grid-area: label; white-space: nowrap; font-size: 13px; line-height: 1.3; margin-top: 4px; }
+.stats.five .stat b { grid-area: num; font-size: 30px; line-height: 1.1; font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+.stats.five .stat small { grid-area: sub; display: block; white-space: nowrap; margin-top: 2px; }
+.stat small .working, .stat small .working span { color: var(--accent-text); }
+.stat small .working { font-weight: 600; gap: 5px; font-size: 12.5px; }
+.stat small .pulse { width: 6px; height: 6px; }
+.why { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+
+.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.metric { background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; display: flex; flex-direction: column; }
+.m-top { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.m-top .icon { width: 18px; height: 18px; }
+.m-label { font-weight: 600; }
+.m-value { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 28px; line-height: 1.15; font-weight: 650; margin: 4px 0 6px; font-variant-numeric: tabular-nums; }
+.m-why { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.m-parts { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 2px 0 0; font-size: 12.5px; }
+.m-parts dt { color: var(--muted); }
+.m-parts dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.chart { position: relative; display: flex; flex-direction: column; margin: 2px 0 0; padding-top: 15px; min-height: 0; }
+.chart svg { display: block; width: 100%; height: 46px; overflow: visible; }
+.chart.grow { flex: 1 1 auto; min-height: 44px; }
+.chart.grow svg { flex: 1 1 0; height: auto; min-height: 24px; }
+.c-top { position: absolute; right: 0; top: 0; font-size: 11px; line-height: 1; color: var(--faint); font-variant-numeric: tabular-nums; pointer-events: none; }
+.c-grid, .c-base { fill: none; stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.c-base { stroke: var(--line-strong); }
+.c-area { fill: var(--accent); opacity: 0.1; }
+.c-line, .c-now { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.c-line { stroke: color-mix(in srgb, var(--faint) 82%, var(--text)); }
+.c-now { stroke: var(--accent); }
+.c-ring, .c-dot { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.c-ring { stroke: var(--card-2); stroke-width: 13; }
+.c-dot { stroke: var(--accent); stroke-width: 9; }
+.c-hits rect { fill: transparent; }
+@media (max-width: 560px) {
+  .card-head { flex-wrap: wrap; row-gap: 4px; }
+  .card-head h2 { white-space: nowrap; }
+}
+.c-hits rect:hover { fill: color-mix(in srgb, var(--accent) 14%, transparent); }
+.c-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); margin-top: 3px; }
+
+.tier-four .btn { padding: 7px 10px; font-size: 13px; gap: 6px; }
+.tier-four .btn-row { gap: 6px; }
+@media (prefers-reduced-motion: reduce) { .fold { transition: none; } }
+
+/* ===== home-fit 4: a band that is the answer, with the numbers and the button in it ===== */
+.hero-band { border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); padding: 20px 26px 18px; margin: 0 0 18px; background: radial-gradient(90% 140% at 0% 0%, color-mix(in srgb, var(--seg-a) 14%, var(--card)) 0%, var(--card) 62%); }
+.hero-band > .fold { margin: 0 0 16px; }
+.hero-band .notice { margin: 0; }
+.hb-top { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.hb-top .hello { flex: 1; min-width: 280px; }
+.hb-top .lede { margin: 0; }
+.btn.big { padding: 12px 18px; font-size: 15px; border-radius: 12px; }
+.kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 16px 0 0; border-top: 1px solid var(--line); }
+.kpi { padding: 14px 18px 2px; border-left: 1px solid var(--line); min-width: 0; }
+.kpi:first-child { border-left: 0; padding-left: 0; }
+.k-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.k-label .icon { width: 18px; height: 18px; }
+.k-big { display: block; font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 44px; line-height: 1.05; font-weight: 650; margin: 6px 0 2px; }
+.kpi.warn .k-big, .kpi.warn .k-label { color: var(--warn); }
+.kpi .working { font-size: 13px; }
+.load-wide { margin: 0 0 18px; }
+.metrics.wide { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr); }
+.metrics.wide .metric { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); grid-template-areas: "top chart" "value chart" "parts chart" "why why"; column-gap: 16px; align-content: start; }
+.metrics.wide .m-top { grid-area: top; }
+.metrics.wide .m-value { grid-area: value; }
+.metrics.wide .chart { grid-area: chart; align-self: center; margin: 14px 0 0; }
+.metrics.wide .chart svg { height: 64px; }
+.metrics.wide .m-parts { grid-area: parts; }
+.metrics.wide .m-why { grid-area: why; }
+.metrics.wide #m-shared { grid-template-columns: 1fr; grid-template-areas: "top" "value" "why"; }
+.metrics.wide #m-cpu { grid-template-areas: "top chart" "value chart" "why why"; grid-template-rows: auto 1fr auto; }
+.metrics.wide .m-value { align-self: start; }
+.metrics.wide #m-cpu .chart svg { height: 96px; }
+.tier-four { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+.tier-four .card { padding: 18px 20px; }
+.tier-four .big { font-size: 21px; margin: 4px 0; }
+@media (max-width: 1180px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kpi:nth-child(4) { border-left: 0; padding-left: 0; }
+  .metrics.wide { grid-template-columns: 1fr; }
+  .tier-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hero-band { padding: 18px 16px 16px; }
+  .btn.big { width: 100%; justify-content: center; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi { border-left: 0; padding-left: 0; }
+  .kpi:first-child { grid-column: span 2; }
+  .k-big { font-size: 36px; }
+  .metrics.wide .metric { grid-template-columns: 1fr; grid-template-areas: "top" "value" "chart" "parts" "why"; }
+  .tier-four { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body data-page="status" data-tab="1" data-unanswered="BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.">
+<header class="top"><div class="top-in">
+<a class="brand" id="l-brand" href="./?tab=1"><svg class="brand-mark" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><defs><linearGradient id="top-g" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="0.55" stop-color="#10B981"/><stop offset="1" stop-color="#0E7490"/></linearGradient><clipPath id="top-c"><circle cx="128" cy="128" r="112"/></clipPath></defs><circle cx="128" cy="128" r="112" fill="url(#top-g)"/><g clip-path="url(#top-c)" fill="none" stroke="#ECFEFF" stroke-width="10" opacity="0.45" stroke-linecap="round"><path d="M6 100 Q128 82 250 100"/><path d="M6 158 Q128 176 250 158"/><path d="M128 14 Q70 128 128 242"/><path d="M128 14 Q186 128 128 242"/></g><path d="M44 128 Q128 58 212 128 Q128 198 44 128 Z" fill="#F0FDFA"/><circle cx="128" cy="128" r="31" fill="#083344"/><circle cx="140" cy="116" r="9" fill="#ECFEFF"/></svg><span>BrowserAI</span> <span class="version">1.2.0</span></a>
+<span class="top-gap"></span>
+<span class="running"><span class="dot" aria-hidden="true"></span>Running since 09:12</span>
+<a class="help" id="l-help" href="https://github.com/SixFive7/BrowserAI#readme" target="_blank" rel="noopener noreferrer"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><span>How BrowserAI works</span></a>
+</div></header>
+<p id="banner" class="banner" role="status" hidden></p>
+<main id="main" tabindex="-1">
+<section class="hero-band" id="card-now"><div class="hb-top"><section class="hello"><h1>7 conversations are using BrowserAI</h1><p class="lede">None of them has a browser window open on your screen.</p></section>
+<a class="btn primary go big" id="l-conversations" href="sessions?tab=1">See the conversations and browsers<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div><div class="kpis"><div class="kpi" id="s-conversations"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg>Conversations</span><b class="k-big">7</b><span class="working"><span class="pulse" aria-hidden="true"></span>2 working now</span><p class="why">Chats in Claude Code or Codex connected to BrowserAI now.</p></div><div class="kpi" id="s-onscreen"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.8" r=".6" fill="currentColor"/><circle cx="8.2" cy="6.8" r=".6" fill="currentColor"/></svg>Windows on your screen</span><b class="k-big">0</b><p class="why">Browsers with a window you can see.</p></div><div class="kpi" id="s-hidden"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1"/><path d="M9.6 14.4a3 3 0 0 1 4.8-4.8"/><path d="M4 20 20 4"/></svg>Hidden browsers</span><b class="k-big">3</b><p class="why">Browsers running with no window.</p></div><div class="kpi" id="s-notopen"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2" stroke-dasharray="3 2.4"/><path d="M9.5 12h5"/></svg>Browsers not open</span><b class="k-big">2</b><p class="why">Closed when unused. A call that names the session opens it again.</p></div><div class="kpi" id="s-kept"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Kept for later</span><b class="k-big">1</b><p class="why">Their conversation ended. Kept for the next one that names them.</p></div></div></section>
+<article class="card load-wide" id="card-load">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.6"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/></svg><h2>CPU and memory</h2><span class="live"><span class="pulse" aria-hidden="true"></span>Live</span><a class="more" id="l-per-session" href="sessions?tab=1">Per session<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="caption">What BrowserAI's own processes use on this PC now.</p>
+<div class="metrics wide"><div class="metric" id="m-cpu"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.6"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/></svg><span class="m-label">CPU</span></div><b class="m-value" data-metric="cpu">2.6%</b><div class="chart" id="chart-cpu"><span class="c-top">10%</span><svg viewBox="0 0 600 100" preserveAspectRatio="none" role="img" aria-label="CPU over the last 2 minutes, now 2.6%" data-series="2.5,2.3,2.4,2.4,2.7,2.1,2.0,2.0,2.1,1.8,2.0,2.6,2.4,2.4,2.4,2.6,1.9,1.9,1.9,2.1,1.8,2.3,2.6,2.5,2.3,2.3,2.4,1.7,1.9,2.0,2.2,1.9,2.5,2.6,2.5,2.2,2.3,2.6,3.0,4.3,6.0,7.9,5.9,5.1,3.9,2.9,2.0,2.3,2.0,1.7,1.9,2.2,2.4,2.1,2.7,2.5,2.3,1.9,2.2,2.6" data-low="0" data-high="10"><path class="c-grid" d="M0 0 H600.0"/><path class="c-base" d="M0 100.0 H600.0"/><path class="c-area" d="M0 100.0 L0.0 75.0 L10.2 77.0 L20.3 76.0 L30.5 76.0 L40.7 73.0 L50.8 79.0 L61.0 80.0 L71.2 80.0 L81.4 79.0 L91.5 82.0 L101.7 80.0 L111.9 74.0 L122.0 76.0 L132.2 76.0 L142.4 76.0 L152.5 74.0 L162.7 81.0 L172.9 81.0 L183.1 81.0 L193.2 79.0 L203.4 82.0 L213.6 77.0 L223.7 74.0 L233.9 75.0 L244.1 77.0 L254.2 77.0 L264.4 76.0 L274.6 83.0 L284.7 81.0 L294.9 80.0 L305.1 78.0 L315.3 81.0 L325.4 75.0 L335.6 74.0 L345.8 75.0 L355.9 78.0 L366.1 77.0 L376.3 74.0 L386.4 70.0 L396.6 57.0 L406.8 40.0 L416.9 21.0 L427.1 41.0 L437.3 49.0 L447.5 61.0 L457.6 71.0 L467.8 80.0 L478.0 77.0 L488.1 80.0 L498.3 83.0 L508.5 81.0 L518.6 78.0 L528.8 76.0 L539.0 79.0 L549.2 73.0 L559.3 75.0 L569.5 77.0 L579.7 81.0 L589.8 78.0 L600.0 74.0 L600.0 100.0 Z"/><path class="c-line" d="M0.0 75.0 L10.2 77.0 L20.3 76.0 L30.5 76.0 L40.7 73.0 L50.8 79.0 L61.0 80.0 L71.2 80.0 L81.4 79.0 L91.5 82.0 L101.7 80.0 L111.9 74.0 L122.0 76.0 L132.2 76.0 L142.4 76.0 L152.5 74.0 L162.7 81.0 L172.9 81.0 L183.1 81.0 L193.2 79.0 L203.4 82.0 L213.6 77.0 L223.7 74.0 L233.9 75.0 L244.1 77.0 L254.2 77.0 L264.4 76.0 L274.6 83.0 L284.7 81.0 L294.9 80.0 L305.1 78.0 L315.3 81.0 L325.4 75.0 L335.6 74.0 L345.8 75.0 L355.9 78.0 L366.1 77.0 L376.3 74.0 L386.4 70.0 L396.6 57.0 L406.8 40.0 L416.9 21.0 L427.1 41.0 L437.3 49.0 L447.5 61.0 L457.6 71.0 L467.8 80.0 L478.0 77.0 L488.1 80.0 L498.3 83.0 L508.5 81.0 L518.6 78.0 L528.8 76.0 L539.0 79.0"/><path class="c-now" d="M539.0 79.0 L549.2 73.0 L559.3 75.0 L569.5 77.0 L579.7 81.0 L589.8 78.0 L600.0 74.0"/><path class="c-ring" d="M600.0 74.0 h0"/><path class="c-dot" d="M600.0 74.0 h0"/><g class="c-hits"><rect x="0.0" y="0" width="10.2" height="100.0"><title>118 s ago: 2.5%</title></rect><rect x="5.1" y="0" width="10.2" height="100.0"><title>116 s ago: 2.3%</title></rect><rect x="15.2" y="0" width="10.2" height="100.0"><title>114 s ago: 2.4%</title></rect><rect x="25.4" y="0" width="10.2" height="100.0"><title>112 s ago: 2.4%</title></rect><rect x="35.6" y="0" width="10.2" height="100.0"><title>110 s ago: 2.7%</title></rect><rect x="45.7" y="0" width="10.2" height="100.0"><title>108 s ago: 2.1%</title></rect><rect x="55.9" y="0" width="10.2" height="100.0"><title>106 s ago: 2.0%</title></rect><rect x="66.1" y="0" width="10.2" height="100.0"><title>104 s ago: 2.0%</title></rect><rect x="76.3" y="0" width="10.2" height="100.0"><title>102 s ago: 2.1%</title></rect><rect x="86.4" y="0" width="10.2" height="100.0"><title>100 s ago: 1.8%</title></rect><rect x="96.6" y="0" width="10.2" height="100.0"><title>98 s ago: 2.0%</title></rect><rect x="106.8" y="0" width="10.2" height="100.0"><title>96 s ago: 2.6%</title></rect><rect x="116.9" y="0" width="10.2" height="100.0"><title>94 s ago: 2.4%</title></rect><rect x="127.1" y="0" width="10.2" height="100.0"><title>92 s ago: 2.4%</title></rect><rect x="137.3" y="0" width="10.2" height="100.0"><title>90 s ago: 2.4%</title></rect><rect x="147.4" y="0" width="10.2" height="100.0"><title>88 s ago: 2.6%</title></rect><rect x="157.6" y="0" width="10.2" height="100.0"><title>86 s ago: 1.9%</title></rect><rect x="167.8" y="0" width="10.2" height="100.0"><title>84 s ago: 1.9%</title></rect><rect x="178.0" y="0" width="10.2" height="100.0"><title>82 s ago: 1.9%</title></rect><rect x="188.1" y="0" width="10.2" height="100.0"><title>80 s ago: 2.1%</title></rect><rect x="198.3" y="0" width="10.2" height="100.0"><title>78 s ago: 1.8%</title></rect><rect x="208.5" y="0" width="10.2" height="100.0"><title>76 s ago: 2.3%</title></rect><rect x="218.6" y="0" width="10.2" height="100.0"><title>74 s ago: 2.6%</title></rect><rect x="228.8" y="0" width="10.2" height="100.0"><title>72 s ago: 2.5%</title></rect><rect x="239.0" y="0" width="10.2" height="100.0"><title>70 s ago: 2.3%</title></rect><rect x="249.1" y="0" width="10.2" height="100.0"><title>68 s ago: 2.3%</title></rect><rect x="259.3" y="0" width="10.2" height="100.0"><title>66 s ago: 2.4%</title></rect><rect x="269.5" y="0" width="10.2" height="100.0"><title>64 s ago: 1.7%</title></rect><rect x="279.6" y="0" width="10.2" height="100.0"><title>62 s ago: 1.9%</title></rect><rect x="289.8" y="0" width="10.2" height="100.0"><title>60 s ago: 2.0%</title></rect><rect x="300.0" y="0" width="10.2" height="100.0"><title>58 s ago: 2.2%</title></rect><rect x="310.2" y="0" width="10.2" height="100.0"><title>56 s ago: 1.9%</title></rect><rect x="320.3" y="0" width="10.2" height="100.0"><title>54 s ago: 2.5%</title></rect><rect x="330.5" y="0" width="10.2" height="100.0"><title>52 s ago: 2.6%</title></rect><rect x="340.7" y="0" width="10.2" height="100.0"><title>50 s ago: 2.5%</title></rect><rect x="350.8" y="0" width="10.2" height="100.0"><title>48 s ago: 2.2%</title></rect><rect x="361.0" y="0" width="10.2" height="100.0"><title>46 s ago: 2.3%</title></rect><rect x="371.2" y="0" width="10.2" height="100.0"><title>44 s ago: 2.6%</title></rect><rect x="381.3" y="0" width="10.2" height="100.0"><title>42 s ago: 3.0%</title></rect><rect x="391.5" y="0" width="10.2" height="100.0"><title>40 s ago: 4.3%</title></rect><rect x="401.7" y="0" width="10.2" height="100.0"><title>38 s ago: 6.0%</title></rect><rect x="411.8" y="0" width="10.2" height="100.0"><title>36 s ago: 7.9%</title></rect><rect x="422.0" y="0" width="10.2" height="100.0"><title>34 s ago: 5.9%</title></rect><rect x="432.2" y="0" width="10.2" height="100.0"><title>32 s ago: 5.1%</title></rect><rect x="442.4" y="0" width="10.2" height="100.0"><title>30 s ago: 3.9%</title></rect><rect x="452.5" y="0" width="10.2" height="100.0"><title>28 s ago: 2.9%</title></rect><rect x="462.7" y="0" width="10.2" height="100.0"><title>26 s ago: 2.0%</title></rect><rect x="472.9" y="0" width="10.2" height="100.0"><title>24 s ago: 2.3%</title></rect><rect x="483.0" y="0" width="10.2" height="100.0"><title>22 s ago: 2.0%</title></rect><rect x="493.2" y="0" width="10.2" height="100.0"><title>20 s ago: 1.7%</title></rect><rect x="503.4" y="0" width="10.2" height="100.0"><title>18 s ago: 1.9%</title></rect><rect x="513.5" y="0" width="10.2" height="100.0"><title>16 s ago: 2.2%</title></rect><rect x="523.7" y="0" width="10.2" height="100.0"><title>14 s ago: 2.4%</title></rect><rect x="533.9" y="0" width="10.2" height="100.0"><title>12 s ago: 2.1%</title></rect><rect x="544.1" y="0" width="10.2" height="100.0"><title>10 s ago: 2.7%</title></rect><rect x="554.2" y="0" width="10.2" height="100.0"><title>8 s ago: 2.5%</title></rect><rect x="564.4" y="0" width="10.2" height="100.0"><title>6 s ago: 2.3%</title></rect><rect x="574.6" y="0" width="10.2" height="100.0"><title>4 s ago: 1.9%</title></rect><rect x="584.7" y="0" width="10.2" height="100.0"><title>2 s ago: 2.2%</title></rect><rect x="594.9" y="0" width="10.2" height="100.0"><title>now: 2.6%</title></rect></g></svg><span class="c-x"><span>2 min ago</span><span>now</span></span></div><p class="m-why">Share of this PC&#x27;s processor that BrowserAI&#x27;s processes use now, all cores together.</p></div><div class="metric" id="m-own"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.5" width="18" height="9" rx="1.5"/><path d="M7.5 9.5v3M11 9.5v3M14.5 9.5v3M6 15.5v2.5M10 15.5v2.5M14 15.5v2.5M18 15.5v2.5"/></svg><span class="m-label">Own memory</span></div><b class="m-value" data-metric="own">1,276 MB</b><div class="chart" id="chart-own"><span class="c-top">2 GB</span><svg viewBox="0 0 600 100" preserveAspectRatio="none" role="img" aria-label="Own memory over the last 2 minutes, now 1,276 MB" data-series="1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1271,1270,1269,1268,1267,1273,1272,1271,1270,1269,1268,1267,1273,1272,1271,1270,1269,1268,1267,1273,1272,1276" data-low="0" data-high="2048"><path class="c-grid" d="M0 0 H600.0"/><path class="c-base" d="M0 100.0 H600.0"/><path class="c-area" d="M0 100.0 L0.0 43.6 L10.2 43.3 L20.3 43.4 L30.5 43.4 L40.7 43.5 L50.8 43.5 L61.0 43.6 L71.2 43.6 L81.4 43.3 L91.5 43.4 L101.7 43.4 L111.9 43.5 L122.0 43.5 L132.2 43.6 L142.4 43.6 L152.5 43.3 L162.7 43.4 L172.9 43.4 L183.1 43.5 L193.2 43.5 L203.4 43.6 L213.6 43.6 L223.7 43.3 L233.9 43.4 L244.1 43.4 L254.2 43.5 L264.4 43.5 L274.6 43.6 L284.7 43.6 L294.9 43.3 L305.1 43.4 L315.3 43.4 L325.4 43.5 L335.6 43.5 L345.8 43.6 L355.9 43.6 L366.1 43.3 L376.3 43.4 L386.4 37.9 L396.6 38.0 L406.8 38.0 L416.9 38.1 L427.1 38.1 L437.3 37.8 L447.5 37.9 L457.6 37.9 L467.8 38.0 L478.0 38.0 L488.1 38.1 L498.3 38.1 L508.5 37.8 L518.6 37.9 L528.8 37.9 L539.0 38.0 L549.2 38.0 L559.3 38.1 L569.5 38.1 L579.7 37.8 L589.8 37.9 L600.0 37.7 L600.0 100.0 Z"/><path class="c-line" d="M0.0 43.6 L10.2 43.3 L20.3 43.4 L30.5 43.4 L40.7 43.5 L50.8 43.5 L61.0 43.6 L71.2 43.6 L81.4 43.3 L91.5 43.4 L101.7 43.4 L111.9 43.5 L122.0 43.5 L132.2 43.6 L142.4 43.6 L152.5 43.3 L162.7 43.4 L172.9 43.4 L183.1 43.5 L193.2 43.5 L203.4 43.6 L213.6 43.6 L223.7 43.3 L233.9 43.4 L244.1 43.4 L254.2 43.5 L264.4 43.5 L274.6 43.6 L284.7 43.6 L294.9 43.3 L305.1 43.4 L315.3 43.4 L325.4 43.5 L335.6 43.5 L345.8 43.6 L355.9 43.6 L366.1 43.3 L376.3 43.4 L386.4 37.9 L396.6 38.0 L406.8 38.0 L416.9 38.1 L427.1 38.1 L437.3 37.8 L447.5 37.9 L457.6 37.9 L467.8 38.0 L478.0 38.0 L488.1 38.1 L498.3 38.1 L508.5 37.8 L518.6 37.9 L528.8 37.9 L539.0 38.0"/><path class="c-now" d="M539.0 38.0 L549.2 38.0 L559.3 38.1 L569.5 38.1 L579.7 37.8 L589.8 37.9 L600.0 37.7"/><path class="c-ring" d="M600.0 37.7 h0"/><path class="c-dot" d="M600.0 37.7 h0"/><g class="c-hits"><rect x="0.0" y="0" width="10.2" height="100.0"><title>118 s ago: 1,155 MB</title></rect><rect x="5.1" y="0" width="10.2" height="100.0"><title>116 s ago: 1,161 MB</title></rect><rect x="15.2" y="0" width="10.2" height="100.0"><title>114 s ago: 1,160 MB</title></rect><rect x="25.4" y="0" width="10.2" height="100.0"><title>112 s ago: 1,159 MB</title></rect><rect x="35.6" y="0" width="10.2" height="100.0"><title>110 s ago: 1,158 MB</title></rect><rect x="45.7" y="0" width="10.2" height="100.0"><title>108 s ago: 1,157 MB</title></rect><rect x="55.9" y="0" width="10.2" height="100.0"><title>106 s ago: 1,156 MB</title></rect><rect x="66.1" y="0" width="10.2" height="100.0"><title>104 s ago: 1,155 MB</title></rect><rect x="76.3" y="0" width="10.2" height="100.0"><title>102 s ago: 1,161 MB</title></rect><rect x="86.4" y="0" width="10.2" height="100.0"><title>100 s ago: 1,160 MB</title></rect><rect x="96.6" y="0" width="10.2" height="100.0"><title>98 s ago: 1,159 MB</title></rect><rect x="106.8" y="0" width="10.2" height="100.0"><title>96 s ago: 1,158 MB</title></rect><rect x="116.9" y="0" width="10.2" height="100.0"><title>94 s ago: 1,157 MB</title></rect><rect x="127.1" y="0" width="10.2" height="100.0"><title>92 s ago: 1,156 MB</title></rect><rect x="137.3" y="0" width="10.2" height="100.0"><title>90 s ago: 1,155 MB</title></rect><rect x="147.4" y="0" width="10.2" height="100.0"><title>88 s ago: 1,161 MB</title></rect><rect x="157.6" y="0" width="10.2" height="100.0"><title>86 s ago: 1,160 MB</title></rect><rect x="167.8" y="0" width="10.2" height="100.0"><title>84 s ago: 1,159 MB</title></rect><rect x="178.0" y="0" width="10.2" height="100.0"><title>82 s ago: 1,158 MB</title></rect><rect x="188.1" y="0" width="10.2" height="100.0"><title>80 s ago: 1,157 MB</title></rect><rect x="198.3" y="0" width="10.2" height="100.0"><title>78 s ago: 1,156 MB</title></rect><rect x="208.5" y="0" width="10.2" height="100.0"><title>76 s ago: 1,155 MB</title></rect><rect x="218.6" y="0" width="10.2" height="100.0"><title>74 s ago: 1,161 MB</title></rect><rect x="228.8" y="0" width="10.2" height="100.0"><title>72 s ago: 1,160 MB</title></rect><rect x="239.0" y="0" width="10.2" height="100.0"><title>70 s ago: 1,159 MB</title></rect><rect x="249.1" y="0" width="10.2" height="100.0"><title>68 s ago: 1,158 MB</title></rect><rect x="259.3" y="0" width="10.2" height="100.0"><title>66 s ago: 1,157 MB</title></rect><rect x="269.5" y="0" width="10.2" height="100.0"><title>64 s ago: 1,156 MB</title></rect><rect x="279.6" y="0" width="10.2" height="100.0"><title>62 s ago: 1,155 MB</title></rect><rect x="289.8" y="0" width="10.2" height="100.0"><title>60 s ago: 1,161 MB</title></rect><rect x="300.0" y="0" width="10.2" height="100.0"><title>58 s ago: 1,160 MB</title></rect><rect x="310.2" y="0" width="10.2" height="100.0"><title>56 s ago: 1,159 MB</title></rect><rect x="320.3" y="0" width="10.2" height="100.0"><title>54 s ago: 1,158 MB</title></rect><rect x="330.5" y="0" width="10.2" height="100.0"><title>52 s ago: 1,157 MB</title></rect><rect x="340.7" y="0" width="10.2" height="100.0"><title>50 s ago: 1,156 MB</title></rect><rect x="350.8" y="0" width="10.2" height="100.0"><title>48 s ago: 1,155 MB</title></rect><rect x="361.0" y="0" width="10.2" height="100.0"><title>46 s ago: 1,161 MB</title></rect><rect x="371.2" y="0" width="10.2" height="100.0"><title>44 s ago: 1,160 MB</title></rect><rect x="381.3" y="0" width="10.2" height="100.0"><title>42 s ago: 1,271 MB</title></rect><rect x="391.5" y="0" width="10.2" height="100.0"><title>40 s ago: 1,270 MB</title></rect><rect x="401.7" y="0" width="10.2" height="100.0"><title>38 s ago: 1,269 MB</title></rect><rect x="411.8" y="0" width="10.2" height="100.0"><title>36 s ago: 1,268 MB</title></rect><rect x="422.0" y="0" width="10.2" height="100.0"><title>34 s ago: 1,267 MB</title></rect><rect x="432.2" y="0" width="10.2" height="100.0"><title>32 s ago: 1,273 MB</title></rect><rect x="442.4" y="0" width="10.2" height="100.0"><title>30 s ago: 1,272 MB</title></rect><rect x="452.5" y="0" width="10.2" height="100.0"><title>28 s ago: 1,271 MB</title></rect><rect x="462.7" y="0" width="10.2" height="100.0"><title>26 s ago: 1,270 MB</title></rect><rect x="472.9" y="0" width="10.2" height="100.0"><title>24 s ago: 1,269 MB</title></rect><rect x="483.0" y="0" width="10.2" height="100.0"><title>22 s ago: 1,268 MB</title></rect><rect x="493.2" y="0" width="10.2" height="100.0"><title>20 s ago: 1,267 MB</title></rect><rect x="503.4" y="0" width="10.2" height="100.0"><title>18 s ago: 1,273 MB</title></rect><rect x="513.5" y="0" width="10.2" height="100.0"><title>16 s ago: 1,272 MB</title></rect><rect x="523.7" y="0" width="10.2" height="100.0"><title>14 s ago: 1,271 MB</title></rect><rect x="533.9" y="0" width="10.2" height="100.0"><title>12 s ago: 1,270 MB</title></rect><rect x="544.1" y="0" width="10.2" height="100.0"><title>10 s ago: 1,269 MB</title></rect><rect x="554.2" y="0" width="10.2" height="100.0"><title>8 s ago: 1,268 MB</title></rect><rect x="564.4" y="0" width="10.2" height="100.0"><title>6 s ago: 1,267 MB</title></rect><rect x="574.6" y="0" width="10.2" height="100.0"><title>4 s ago: 1,273 MB</title></rect><rect x="584.7" y="0" width="10.2" height="100.0"><title>2 s ago: 1,272 MB</title></rect><rect x="594.9" y="0" width="10.2" height="100.0"><title>now: 1,276 MB</title></rect></g></svg><span class="c-x"><span>2 min ago</span><span>now</span></span></div><dl class="m-parts"><dt>Browsers</dt><dd>912 MB</dd><dt>Browser servers</dt><dd>318 MB</dd><dt>Background</dt><dd>46 MB</dd></dl><p class="m-why">Memory only BrowserAI holds: its background, and each open browser with the server that drives it.</p></div><div class="metric" id="m-shared"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.4"/><circle cx="14.8" cy="12" r="5.4"/></svg><span class="m-label">Shared memory</span></div><b class="m-value" data-metric="shared">268 MB</b><p class="m-why">Memory its processes share with other programs, such as the browser&#x27;s program files, counted once.</p></div></div>
+</article>
+<div class="tier-four"><article class="card" id="card-update">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11m0 0-4.2-4.2M12 14.5l4.2-4.2"/><path d="M4 16.5V19a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-2.5"/></svg><h2>Update</h2></div>
+<p class="big">No update is waiting</p>
+<p>BrowserAI last checked GitHub releases at 16:20.</p>
+<p class="small">When a newer version is out, BrowserAI downloads it and installs it once nothing uses BrowserAI.</p>
+</article>
+<article class="card" id="card-apps">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5"/><path d="M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0z"/><path d="M12 17v4"/></svg><h2>Claude Code and Codex</h2><a class="more" id="l-manage" href="setup?tab=1">Manage<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="caption">Your agents reach BrowserAI through these apps.</p>
+<div class="app-rows"><div class="app-row"><span class="app cc" aria-hidden="true">CC</span><div><b>Claude Code</b><span class="state ok"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg>Set up for all your projects</span></div></div><div class="app-row"><span class="app cx" aria-hidden="true">CX</span><div><b>Codex</b><span class="state ok"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg>Set up for all your projects</span></div></div></div>
+</article>
+<article class="card" id="card-storage">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="2.8"/><path d="M4 6v12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8V6"/><path d="M4 12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8"/></svg><h2>Storage</h2><a class="more" id="l-storage" href="storage?tab=1">Details<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="big">1.4 GB</p>
+<p class="caption">in 9 session folders on this PC</p>
+<svg class="bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="img" aria-label="The folders open now and the folders not open now, as parts of the whole"><rect class="seg-a" x="0" y="0" width="51.85" height="10"/><rect class="seg-b" x="51.85" y="0" width="48.15" height="10"/></svg>
+<div class="legend"><div><span class="swatch a"></span><span>5 folders open now</span><b>742 MB</b></div><div><span class="swatch b"></span><span>4 folders not open now</span><b>689 MB</b></div></div>
+</article>
+<article class="card" id="card-install">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor"/></svg><h2>This install</h2><a class="more" id="l-install" href="install?tab=1">Paths<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<dl class="facts"><dt>Version</dt><dd>1.2.0, <a id="l-whats-new" href="changelog?tab=1">what is new</a></dd><dt>Running</dt><dd>since 09:12, started again after an update</dd><dt>Updates</dt><dd>from GitHub releases</dd></dl>
+<div class="btn-row"><button type="button" id="b-open-folder-install" class="btn" data-action="open-folder" data-folder="install"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Install folder</button><button type="button" id="b-open-folder-data" class="btn" data-action="open-folder" data-folder="data"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Data</button><button type="button" id="b-open-folder-logs" class="btn" data-action="open-folder" data-folder="logs"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h7.5l4.5 4.5V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4.5h4.5M9 12.5h6M9 16h6"/></svg>Logs</button></div>
+</article>
+</div>
+</main>
+<footer class="foot"><span>BrowserAI 1.2.0</span><a id="l-foot-changelog" href="changelog?tab=1">What is new</a><a id="l-foot-install" href="install?tab=1">This install</a></footer>
+<template id="state-notice">
+<section class="hero-band" id="card-now"><div class="fold" id="fold-updated"><div class="fold-in"><div class="notice good slim"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg><div class="grow"><h3>Updated to BrowserAI 1.2.0</h3><p>BrowserAI updated itself and started again.</p></div><a id="l-notice-changelog" class="btn" href="changelog?tab=1">What is new</a><button type="button" id="b-dismiss-updated" class="dismiss" data-action="dismiss-notice" data-notice="updated" aria-label="Dismiss this notice"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div></div></div>
+<div class="hb-top"><section class="hello"><h1>7 conversations are using BrowserAI</h1><p class="lede">None of them has a browser window open on your screen.</p></section>
+<a class="btn primary go big" id="l-conversations" href="sessions?tab=1">See the conversations and browsers<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div><div class="kpis"><div class="kpi" id="s-conversations"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg>Conversations</span><b class="k-big">7</b><span class="working"><span class="pulse" aria-hidden="true"></span>2 working now</span><p class="why">Chats in Claude Code or Codex connected to BrowserAI now.</p></div><div class="kpi" id="s-onscreen"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.8" r=".6" fill="currentColor"/><circle cx="8.2" cy="6.8" r=".6" fill="currentColor"/></svg>Windows on your screen</span><b class="k-big">0</b><p class="why">Browsers with a window you can see.</p></div><div class="kpi" id="s-hidden"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1"/><path d="M9.6 14.4a3 3 0 0 1 4.8-4.8"/><path d="M4 20 20 4"/></svg>Hidden browsers</span><b class="k-big">3</b><p class="why">Browsers running with no window.</p></div><div class="kpi" id="s-notopen"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2" stroke-dasharray="3 2.4"/><path d="M9.5 12h5"/></svg>Browsers not open</span><b class="k-big">2</b><p class="why">Closed when unused. A call that names the session opens it again.</p></div><div class="kpi" id="s-kept"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Kept for later</span><b class="k-big">1</b><p class="why">Their conversation ended. Kept for the next one that names them.</p></div></div></section>
+<article class="card load-wide" id="card-load">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.6"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/></svg><h2>CPU and memory</h2><span class="live"><span class="pulse" aria-hidden="true"></span>Live</span><a class="more" id="l-per-session" href="sessions?tab=1">Per session<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="caption">What BrowserAI's own processes use on this PC now.</p>
+<div class="metrics wide"><div class="metric" id="m-cpu"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.6"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/></svg><span class="m-label">CPU</span></div><b class="m-value" data-metric="cpu">2.6%</b><div class="chart" id="chart-cpu"><span class="c-top">10%</span><svg viewBox="0 0 600 100" preserveAspectRatio="none" role="img" aria-label="CPU over the last 2 minutes, now 2.6%" data-series="2.5,2.3,2.4,2.4,2.7,2.1,2.0,2.0,2.1,1.8,2.0,2.6,2.4,2.4,2.4,2.6,1.9,1.9,1.9,2.1,1.8,2.3,2.6,2.5,2.3,2.3,2.4,1.7,1.9,2.0,2.2,1.9,2.5,2.6,2.5,2.2,2.3,2.6,3.0,4.3,6.0,7.9,5.9,5.1,3.9,2.9,2.0,2.3,2.0,1.7,1.9,2.2,2.4,2.1,2.7,2.5,2.3,1.9,2.2,2.6" data-low="0" data-high="10"><path class="c-grid" d="M0 0 H600.0"/><path class="c-base" d="M0 100.0 H600.0"/><path class="c-area" d="M0 100.0 L0.0 75.0 L10.2 77.0 L20.3 76.0 L30.5 76.0 L40.7 73.0 L50.8 79.0 L61.0 80.0 L71.2 80.0 L81.4 79.0 L91.5 82.0 L101.7 80.0 L111.9 74.0 L122.0 76.0 L132.2 76.0 L142.4 76.0 L152.5 74.0 L162.7 81.0 L172.9 81.0 L183.1 81.0 L193.2 79.0 L203.4 82.0 L213.6 77.0 L223.7 74.0 L233.9 75.0 L244.1 77.0 L254.2 77.0 L264.4 76.0 L274.6 83.0 L284.7 81.0 L294.9 80.0 L305.1 78.0 L315.3 81.0 L325.4 75.0 L335.6 74.0 L345.8 75.0 L355.9 78.0 L366.1 77.0 L376.3 74.0 L386.4 70.0 L396.6 57.0 L406.8 40.0 L416.9 21.0 L427.1 41.0 L437.3 49.0 L447.5 61.0 L457.6 71.0 L467.8 80.0 L478.0 77.0 L488.1 80.0 L498.3 83.0 L508.5 81.0 L518.6 78.0 L528.8 76.0 L539.0 79.0 L549.2 73.0 L559.3 75.0 L569.5 77.0 L579.7 81.0 L589.8 78.0 L600.0 74.0 L600.0 100.0 Z"/><path class="c-line" d="M0.0 75.0 L10.2 77.0 L20.3 76.0 L30.5 76.0 L40.7 73.0 L50.8 79.0 L61.0 80.0 L71.2 80.0 L81.4 79.0 L91.5 82.0 L101.7 80.0 L111.9 74.0 L122.0 76.0 L132.2 76.0 L142.4 76.0 L152.5 74.0 L162.7 81.0 L172.9 81.0 L183.1 81.0 L193.2 79.0 L203.4 82.0 L213.6 77.0 L223.7 74.0 L233.9 75.0 L244.1 77.0 L254.2 77.0 L264.4 76.0 L274.6 83.0 L284.7 81.0 L294.9 80.0 L305.1 78.0 L315.3 81.0 L325.4 75.0 L335.6 74.0 L345.8 75.0 L355.9 78.0 L366.1 77.0 L376.3 74.0 L386.4 70.0 L396.6 57.0 L406.8 40.0 L416.9 21.0 L427.1 41.0 L437.3 49.0 L447.5 61.0 L457.6 71.0 L467.8 80.0 L478.0 77.0 L488.1 80.0 L498.3 83.0 L508.5 81.0 L518.6 78.0 L528.8 76.0 L539.0 79.0"/><path class="c-now" d="M539.0 79.0 L549.2 73.0 L559.3 75.0 L569.5 77.0 L579.7 81.0 L589.8 78.0 L600.0 74.0"/><path class="c-ring" d="M600.0 74.0 h0"/><path class="c-dot" d="M600.0 74.0 h0"/><g class="c-hits"><rect x="0.0" y="0" width="10.2" height="100.0"><title>118 s ago: 2.5%</title></rect><rect x="5.1" y="0" width="10.2" height="100.0"><title>116 s ago: 2.3%</title></rect><rect x="15.2" y="0" width="10.2" height="100.0"><title>114 s ago: 2.4%</title></rect><rect x="25.4" y="0" width="10.2" height="100.0"><title>112 s ago: 2.4%</title></rect><rect x="35.6" y="0" width="10.2" height="100.0"><title>110 s ago: 2.7%</title></rect><rect x="45.7" y="0" width="10.2" height="100.0"><title>108 s ago: 2.1%</title></rect><rect x="55.9" y="0" width="10.2" height="100.0"><title>106 s ago: 2.0%</title></rect><rect x="66.1" y="0" width="10.2" height="100.0"><title>104 s ago: 2.0%</title></rect><rect x="76.3" y="0" width="10.2" height="100.0"><title>102 s ago: 2.1%</title></rect><rect x="86.4" y="0" width="10.2" height="100.0"><title>100 s ago: 1.8%</title></rect><rect x="96.6" y="0" width="10.2" height="100.0"><title>98 s ago: 2.0%</title></rect><rect x="106.8" y="0" width="10.2" height="100.0"><title>96 s ago: 2.6%</title></rect><rect x="116.9" y="0" width="10.2" height="100.0"><title>94 s ago: 2.4%</title></rect><rect x="127.1" y="0" width="10.2" height="100.0"><title>92 s ago: 2.4%</title></rect><rect x="137.3" y="0" width="10.2" height="100.0"><title>90 s ago: 2.4%</title></rect><rect x="147.4" y="0" width="10.2" height="100.0"><title>88 s ago: 2.6%</title></rect><rect x="157.6" y="0" width="10.2" height="100.0"><title>86 s ago: 1.9%</title></rect><rect x="167.8" y="0" width="10.2" height="100.0"><title>84 s ago: 1.9%</title></rect><rect x="178.0" y="0" width="10.2" height="100.0"><title>82 s ago: 1.9%</title></rect><rect x="188.1" y="0" width="10.2" height="100.0"><title>80 s ago: 2.1%</title></rect><rect x="198.3" y="0" width="10.2" height="100.0"><title>78 s ago: 1.8%</title></rect><rect x="208.5" y="0" width="10.2" height="100.0"><title>76 s ago: 2.3%</title></rect><rect x="218.6" y="0" width="10.2" height="100.0"><title>74 s ago: 2.6%</title></rect><rect x="228.8" y="0" width="10.2" height="100.0"><title>72 s ago: 2.5%</title></rect><rect x="239.0" y="0" width="10.2" height="100.0"><title>70 s ago: 2.3%</title></rect><rect x="249.1" y="0" width="10.2" height="100.0"><title>68 s ago: 2.3%</title></rect><rect x="259.3" y="0" width="10.2" height="100.0"><title>66 s ago: 2.4%</title></rect><rect x="269.5" y="0" width="10.2" height="100.0"><title>64 s ago: 1.7%</title></rect><rect x="279.6" y="0" width="10.2" height="100.0"><title>62 s ago: 1.9%</title></rect><rect x="289.8" y="0" width="10.2" height="100.0"><title>60 s ago: 2.0%</title></rect><rect x="300.0" y="0" width="10.2" height="100.0"><title>58 s ago: 2.2%</title></rect><rect x="310.2" y="0" width="10.2" height="100.0"><title>56 s ago: 1.9%</title></rect><rect x="320.3" y="0" width="10.2" height="100.0"><title>54 s ago: 2.5%</title></rect><rect x="330.5" y="0" width="10.2" height="100.0"><title>52 s ago: 2.6%</title></rect><rect x="340.7" y="0" width="10.2" height="100.0"><title>50 s ago: 2.5%</title></rect><rect x="350.8" y="0" width="10.2" height="100.0"><title>48 s ago: 2.2%</title></rect><rect x="361.0" y="0" width="10.2" height="100.0"><title>46 s ago: 2.3%</title></rect><rect x="371.2" y="0" width="10.2" height="100.0"><title>44 s ago: 2.6%</title></rect><rect x="381.3" y="0" width="10.2" height="100.0"><title>42 s ago: 3.0%</title></rect><rect x="391.5" y="0" width="10.2" height="100.0"><title>40 s ago: 4.3%</title></rect><rect x="401.7" y="0" width="10.2" height="100.0"><title>38 s ago: 6.0%</title></rect><rect x="411.8" y="0" width="10.2" height="100.0"><title>36 s ago: 7.9%</title></rect><rect x="422.0" y="0" width="10.2" height="100.0"><title>34 s ago: 5.9%</title></rect><rect x="432.2" y="0" width="10.2" height="100.0"><title>32 s ago: 5.1%</title></rect><rect x="442.4" y="0" width="10.2" height="100.0"><title>30 s ago: 3.9%</title></rect><rect x="452.5" y="0" width="10.2" height="100.0"><title>28 s ago: 2.9%</title></rect><rect x="462.7" y="0" width="10.2" height="100.0"><title>26 s ago: 2.0%</title></rect><rect x="472.9" y="0" width="10.2" height="100.0"><title>24 s ago: 2.3%</title></rect><rect x="483.0" y="0" width="10.2" height="100.0"><title>22 s ago: 2.0%</title></rect><rect x="493.2" y="0" width="10.2" height="100.0"><title>20 s ago: 1.7%</title></rect><rect x="503.4" y="0" width="10.2" height="100.0"><title>18 s ago: 1.9%</title></rect><rect x="513.5" y="0" width="10.2" height="100.0"><title>16 s ago: 2.2%</title></rect><rect x="523.7" y="0" width="10.2" height="100.0"><title>14 s ago: 2.4%</title></rect><rect x="533.9" y="0" width="10.2" height="100.0"><title>12 s ago: 2.1%</title></rect><rect x="544.1" y="0" width="10.2" height="100.0"><title>10 s ago: 2.7%</title></rect><rect x="554.2" y="0" width="10.2" height="100.0"><title>8 s ago: 2.5%</title></rect><rect x="564.4" y="0" width="10.2" height="100.0"><title>6 s ago: 2.3%</title></rect><rect x="574.6" y="0" width="10.2" height="100.0"><title>4 s ago: 1.9%</title></rect><rect x="584.7" y="0" width="10.2" height="100.0"><title>2 s ago: 2.2%</title></rect><rect x="594.9" y="0" width="10.2" height="100.0"><title>now: 2.6%</title></rect></g></svg><span class="c-x"><span>2 min ago</span><span>now</span></span></div><p class="m-why">Share of this PC&#x27;s processor that BrowserAI&#x27;s processes use now, all cores together.</p></div><div class="metric" id="m-own"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.5" width="18" height="9" rx="1.5"/><path d="M7.5 9.5v3M11 9.5v3M14.5 9.5v3M6 15.5v2.5M10 15.5v2.5M14 15.5v2.5M18 15.5v2.5"/></svg><span class="m-label">Own memory</span></div><b class="m-value" data-metric="own">1,276 MB</b><div class="chart" id="chart-own"><span class="c-top">2 GB</span><svg viewBox="0 0 600 100" preserveAspectRatio="none" role="img" aria-label="Own memory over the last 2 minutes, now 1,276 MB" data-series="1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1159,1158,1157,1156,1155,1161,1160,1271,1270,1269,1268,1267,1273,1272,1271,1270,1269,1268,1267,1273,1272,1271,1270,1269,1268,1267,1273,1272,1276" data-low="0" data-high="2048"><path class="c-grid" d="M0 0 H600.0"/><path class="c-base" d="M0 100.0 H600.0"/><path class="c-area" d="M0 100.0 L0.0 43.6 L10.2 43.3 L20.3 43.4 L30.5 43.4 L40.7 43.5 L50.8 43.5 L61.0 43.6 L71.2 43.6 L81.4 43.3 L91.5 43.4 L101.7 43.4 L111.9 43.5 L122.0 43.5 L132.2 43.6 L142.4 43.6 L152.5 43.3 L162.7 43.4 L172.9 43.4 L183.1 43.5 L193.2 43.5 L203.4 43.6 L213.6 43.6 L223.7 43.3 L233.9 43.4 L244.1 43.4 L254.2 43.5 L264.4 43.5 L274.6 43.6 L284.7 43.6 L294.9 43.3 L305.1 43.4 L315.3 43.4 L325.4 43.5 L335.6 43.5 L345.8 43.6 L355.9 43.6 L366.1 43.3 L376.3 43.4 L386.4 37.9 L396.6 38.0 L406.8 38.0 L416.9 38.1 L427.1 38.1 L437.3 37.8 L447.5 37.9 L457.6 37.9 L467.8 38.0 L478.0 38.0 L488.1 38.1 L498.3 38.1 L508.5 37.8 L518.6 37.9 L528.8 37.9 L539.0 38.0 L549.2 38.0 L559.3 38.1 L569.5 38.1 L579.7 37.8 L589.8 37.9 L600.0 37.7 L600.0 100.0 Z"/><path class="c-line" d="M0.0 43.6 L10.2 43.3 L20.3 43.4 L30.5 43.4 L40.7 43.5 L50.8 43.5 L61.0 43.6 L71.2 43.6 L81.4 43.3 L91.5 43.4 L101.7 43.4 L111.9 43.5 L122.0 43.5 L132.2 43.6 L142.4 43.6 L152.5 43.3 L162.7 43.4 L172.9 43.4 L183.1 43.5 L193.2 43.5 L203.4 43.6 L213.6 43.6 L223.7 43.3 L233.9 43.4 L244.1 43.4 L254.2 43.5 L264.4 43.5 L274.6 43.6 L284.7 43.6 L294.9 43.3 L305.1 43.4 L315.3 43.4 L325.4 43.5 L335.6 43.5 L345.8 43.6 L355.9 43.6 L366.1 43.3 L376.3 43.4 L386.4 37.9 L396.6 38.0 L406.8 38.0 L416.9 38.1 L427.1 38.1 L437.3 37.8 L447.5 37.9 L457.6 37.9 L467.8 38.0 L478.0 38.0 L488.1 38.1 L498.3 38.1 L508.5 37.8 L518.6 37.9 L528.8 37.9 L539.0 38.0"/><path class="c-now" d="M539.0 38.0 L549.2 38.0 L559.3 38.1 L569.5 38.1 L579.7 37.8 L589.8 37.9 L600.0 37.7"/><path class="c-ring" d="M600.0 37.7 h0"/><path class="c-dot" d="M600.0 37.7 h0"/><g class="c-hits"><rect x="0.0" y="0" width="10.2" height="100.0"><title>118 s ago: 1,155 MB</title></rect><rect x="5.1" y="0" width="10.2" height="100.0"><title>116 s ago: 1,161 MB</title></rect><rect x="15.2" y="0" width="10.2" height="100.0"><title>114 s ago: 1,160 MB</title></rect><rect x="25.4" y="0" width="10.2" height="100.0"><title>112 s ago: 1,159 MB</title></rect><rect x="35.6" y="0" width="10.2" height="100.0"><title>110 s ago: 1,158 MB</title></rect><rect x="45.7" y="0" width="10.2" height="100.0"><title>108 s ago: 1,157 MB</title></rect><rect x="55.9" y="0" width="10.2" height="100.0"><title>106 s ago: 1,156 MB</title></rect><rect x="66.1" y="0" width="10.2" height="100.0"><title>104 s ago: 1,155 MB</title></rect><rect x="76.3" y="0" width="10.2" height="100.0"><title>102 s ago: 1,161 MB</title></rect><rect x="86.4" y="0" width="10.2" height="100.0"><title>100 s ago: 1,160 MB</title></rect><rect x="96.6" y="0" width="10.2" height="100.0"><title>98 s ago: 1,159 MB</title></rect><rect x="106.8" y="0" width="10.2" height="100.0"><title>96 s ago: 1,158 MB</title></rect><rect x="116.9" y="0" width="10.2" height="100.0"><title>94 s ago: 1,157 MB</title></rect><rect x="127.1" y="0" width="10.2" height="100.0"><title>92 s ago: 1,156 MB</title></rect><rect x="137.3" y="0" width="10.2" height="100.0"><title>90 s ago: 1,155 MB</title></rect><rect x="147.4" y="0" width="10.2" height="100.0"><title>88 s ago: 1,161 MB</title></rect><rect x="157.6" y="0" width="10.2" height="100.0"><title>86 s ago: 1,160 MB</title></rect><rect x="167.8" y="0" width="10.2" height="100.0"><title>84 s ago: 1,159 MB</title></rect><rect x="178.0" y="0" width="10.2" height="100.0"><title>82 s ago: 1,158 MB</title></rect><rect x="188.1" y="0" width="10.2" height="100.0"><title>80 s ago: 1,157 MB</title></rect><rect x="198.3" y="0" width="10.2" height="100.0"><title>78 s ago: 1,156 MB</title></rect><rect x="208.5" y="0" width="10.2" height="100.0"><title>76 s ago: 1,155 MB</title></rect><rect x="218.6" y="0" width="10.2" height="100.0"><title>74 s ago: 1,161 MB</title></rect><rect x="228.8" y="0" width="10.2" height="100.0"><title>72 s ago: 1,160 MB</title></rect><rect x="239.0" y="0" width="10.2" height="100.0"><title>70 s ago: 1,159 MB</title></rect><rect x="249.1" y="0" width="10.2" height="100.0"><title>68 s ago: 1,158 MB</title></rect><rect x="259.3" y="0" width="10.2" height="100.0"><title>66 s ago: 1,157 MB</title></rect><rect x="269.5" y="0" width="10.2" height="100.0"><title>64 s ago: 1,156 MB</title></rect><rect x="279.6" y="0" width="10.2" height="100.0"><title>62 s ago: 1,155 MB</title></rect><rect x="289.8" y="0" width="10.2" height="100.0"><title>60 s ago: 1,161 MB</title></rect><rect x="300.0" y="0" width="10.2" height="100.0"><title>58 s ago: 1,160 MB</title></rect><rect x="310.2" y="0" width="10.2" height="100.0"><title>56 s ago: 1,159 MB</title></rect><rect x="320.3" y="0" width="10.2" height="100.0"><title>54 s ago: 1,158 MB</title></rect><rect x="330.5" y="0" width="10.2" height="100.0"><title>52 s ago: 1,157 MB</title></rect><rect x="340.7" y="0" width="10.2" height="100.0"><title>50 s ago: 1,156 MB</title></rect><rect x="350.8" y="0" width="10.2" height="100.0"><title>48 s ago: 1,155 MB</title></rect><rect x="361.0" y="0" width="10.2" height="100.0"><title>46 s ago: 1,161 MB</title></rect><rect x="371.2" y="0" width="10.2" height="100.0"><title>44 s ago: 1,160 MB</title></rect><rect x="381.3" y="0" width="10.2" height="100.0"><title>42 s ago: 1,271 MB</title></rect><rect x="391.5" y="0" width="10.2" height="100.0"><title>40 s ago: 1,270 MB</title></rect><rect x="401.7" y="0" width="10.2" height="100.0"><title>38 s ago: 1,269 MB</title></rect><rect x="411.8" y="0" width="10.2" height="100.0"><title>36 s ago: 1,268 MB</title></rect><rect x="422.0" y="0" width="10.2" height="100.0"><title>34 s ago: 1,267 MB</title></rect><rect x="432.2" y="0" width="10.2" height="100.0"><title>32 s ago: 1,273 MB</title></rect><rect x="442.4" y="0" width="10.2" height="100.0"><title>30 s ago: 1,272 MB</title></rect><rect x="452.5" y="0" width="10.2" height="100.0"><title>28 s ago: 1,271 MB</title></rect><rect x="462.7" y="0" width="10.2" height="100.0"><title>26 s ago: 1,270 MB</title></rect><rect x="472.9" y="0" width="10.2" height="100.0"><title>24 s ago: 1,269 MB</title></rect><rect x="483.0" y="0" width="10.2" height="100.0"><title>22 s ago: 1,268 MB</title></rect><rect x="493.2" y="0" width="10.2" height="100.0"><title>20 s ago: 1,267 MB</title></rect><rect x="503.4" y="0" width="10.2" height="100.0"><title>18 s ago: 1,273 MB</title></rect><rect x="513.5" y="0" width="10.2" height="100.0"><title>16 s ago: 1,272 MB</title></rect><rect x="523.7" y="0" width="10.2" height="100.0"><title>14 s ago: 1,271 MB</title></rect><rect x="533.9" y="0" width="10.2" height="100.0"><title>12 s ago: 1,270 MB</title></rect><rect x="544.1" y="0" width="10.2" height="100.0"><title>10 s ago: 1,269 MB</title></rect><rect x="554.2" y="0" width="10.2" height="100.0"><title>8 s ago: 1,268 MB</title></rect><rect x="564.4" y="0" width="10.2" height="100.0"><title>6 s ago: 1,267 MB</title></rect><rect x="574.6" y="0" width="10.2" height="100.0"><title>4 s ago: 1,273 MB</title></rect><rect x="584.7" y="0" width="10.2" height="100.0"><title>2 s ago: 1,272 MB</title></rect><rect x="594.9" y="0" width="10.2" height="100.0"><title>now: 1,276 MB</title></rect></g></svg><span class="c-x"><span>2 min ago</span><span>now</span></span></div><dl class="m-parts"><dt>Browsers</dt><dd>912 MB</dd><dt>Browser servers</dt><dd>318 MB</dd><dt>Background</dt><dd>46 MB</dd></dl><p class="m-why">Memory only BrowserAI holds: its background, and each open browser with the server that drives it.</p></div><div class="metric" id="m-shared"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.4"/><circle cx="14.8" cy="12" r="5.4"/></svg><span class="m-label">Shared memory</span></div><b class="m-value" data-metric="shared">268 MB</b><p class="m-why">Memory its processes share with other programs, such as the browser&#x27;s program files, counted once.</p></div></div>
+</article>
+<div class="tier-four"><article class="card" id="card-update">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11m0 0-4.2-4.2M12 14.5l4.2-4.2"/><path d="M4 16.5V19a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-2.5"/></svg><h2>Update</h2></div>
+<p class="big">No update is waiting</p>
+<p>BrowserAI last checked GitHub releases at 16:20.</p>
+<p class="small">When a newer version is out, BrowserAI downloads it and installs it once nothing uses BrowserAI.</p>
+</article>
+<article class="card" id="card-apps">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5"/><path d="M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0z"/><path d="M12 17v4"/></svg><h2>Claude Code and Codex</h2><a class="more" id="l-manage" href="setup?tab=1">Manage<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="caption">Your agents reach BrowserAI through these apps.</p>
+<div class="app-rows"><div class="app-row"><span class="app cc" aria-hidden="true">CC</span><div><b>Claude Code</b><span class="state ok"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg>Set up for all your projects</span></div></div><div class="app-row"><span class="app cx" aria-hidden="true">CX</span><div><b>Codex</b><span class="state ok"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg>Set up for all your projects</span></div></div></div>
+</article>
+<article class="card" id="card-storage">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="2.8"/><path d="M4 6v12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8V6"/><path d="M4 12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8"/></svg><h2>Storage</h2><a class="more" id="l-storage" href="storage?tab=1">Details<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="big">1.4 GB</p>
+<p class="caption">in 9 session folders on this PC</p>
+<svg class="bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="img" aria-label="The folders open now and the folders not open now, as parts of the whole"><rect class="seg-a" x="0" y="0" width="51.85" height="10"/><rect class="seg-b" x="51.85" y="0" width="48.15" height="10"/></svg>
+<div class="legend"><div><span class="swatch a"></span><span>5 folders open now</span><b>742 MB</b></div><div><span class="swatch b"></span><span>4 folders not open now</span><b>689 MB</b></div></div>
+</article>
+<article class="card" id="card-install">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor"/></svg><h2>This install</h2><a class="more" id="l-install" href="install?tab=1">Paths<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<dl class="facts"><dt>Version</dt><dd>1.2.0, <a id="l-whats-new" href="changelog?tab=1">what is new</a></dd><dt>Running</dt><dd>since 09:12, started again after an update</dd><dt>Updates</dt><dd>from GitHub releases</dd></dl>
+<div class="btn-row"><button type="button" id="b-open-folder-install" class="btn" data-action="open-folder" data-folder="install"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Install folder</button><button type="button" id="b-open-folder-data" class="btn" data-action="open-folder" data-folder="data"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Data</button><button type="button" id="b-open-folder-logs" class="btn" data-action="open-folder" data-folder="logs"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h7.5l4.5 4.5V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4.5h4.5M9 12.5h6M9 16h6"/></svg>Logs</button></div>
+</article>
+</div>
+</template>
+<template id="state-busy">
+<section class="hero-band" id="card-now"><div class="hb-top"><section class="hello"><h1>7 conversations are using BrowserAI</h1><p class="lede">One of them has a browser window open on your screen. Update 1.3.0 installs by itself once nothing uses BrowserAI.</p></section>
+<a class="btn primary go big" id="l-conversations" href="sessions?tab=1">See the conversations and browsers<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div><div class="kpis"><div class="kpi" id="s-conversations"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg>Conversations</span><b class="k-big">7</b><span class="working"><span class="pulse" aria-hidden="true"></span>3 working now</span><p class="why">Chats in Claude Code or Codex connected to BrowserAI now.</p></div><div class="kpi warn" id="s-onscreen"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.8" r=".6" fill="currentColor"/><circle cx="8.2" cy="6.8" r=".6" fill="currentColor"/></svg>Window on your screen</span><b class="k-big">1</b><p class="why">Browsers with a window you can see.</p></div><div class="kpi" id="s-hidden"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1"/><path d="M9.6 14.4a3 3 0 0 1 4.8-4.8"/><path d="M4 20 20 4"/></svg>Hidden browsers</span><b class="k-big">3</b><p class="why">Browsers running with no window.</p></div><div class="kpi" id="s-notopen"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2" stroke-dasharray="3 2.4"/><path d="M9.5 12h5"/></svg>Browser not open</span><b class="k-big">1</b><p class="why">Closed when unused. A call that names the session opens it again.</p></div><div class="kpi" id="s-kept"><span class="k-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Kept for later</span><b class="k-big">1</b><p class="why">Their conversation ended. Kept for the next one that names them.</p></div></div></section>
+<article class="card load-wide" id="card-load">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.6"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/></svg><h2>CPU and memory</h2><span class="live"><span class="pulse" aria-hidden="true"></span>Live</span><a class="more" id="l-per-session" href="sessions?tab=1">Per session<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="caption">What BrowserAI's own processes use on this PC now.</p>
+<div class="metrics wide"><div class="metric" id="m-cpu"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.6"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/></svg><span class="m-label">CPU</span></div><b class="m-value" data-metric="cpu">7.9%</b><div class="chart" id="chart-cpu"><span class="c-top">25%</span><svg viewBox="0 0 600 100" preserveAspectRatio="none" role="img" aria-label="CPU over the last 2 minutes, now 7.9%" data-series="4.4,4.2,4.3,4.3,4.6,4.0,3.9,3.9,4.0,3.7,3.9,4.5,4.3,4.3,4.3,4.5,3.8,3.8,3.8,4.0,3.7,4.2,4.5,4.4,4.2,4.2,4.3,3.6,3.8,3.9,4.1,3.8,4.4,4.5,4.4,4.1,4.2,4.1,3.6,3.8,4.0,4.2,3.9,4.5,4.5,4.3,3.9,4.2,5.0,6.8,10.0,13.9,18.3,13.8,10.8,7.7,5.3,3.8,4.1,7.9" data-low="0" data-high="25"><path class="c-grid" d="M0 0 H600.0"/><path class="c-base" d="M0 100.0 H600.0"/><path class="c-area" d="M0 100.0 L0.0 82.4 L10.2 83.2 L20.3 82.8 L30.5 82.8 L40.7 81.6 L50.8 84.0 L61.0 84.4 L71.2 84.4 L81.4 84.0 L91.5 85.2 L101.7 84.4 L111.9 82.0 L122.0 82.8 L132.2 82.8 L142.4 82.8 L152.5 82.0 L162.7 84.8 L172.9 84.8 L183.1 84.8 L193.2 84.0 L203.4 85.2 L213.6 83.2 L223.7 82.0 L233.9 82.4 L244.1 83.2 L254.2 83.2 L264.4 82.8 L274.6 85.6 L284.7 84.8 L294.9 84.4 L305.1 83.6 L315.3 84.8 L325.4 82.4 L335.6 82.0 L345.8 82.4 L355.9 83.6 L366.1 83.2 L376.3 83.6 L386.4 85.6 L396.6 84.8 L406.8 84.0 L416.9 83.2 L427.1 84.4 L437.3 82.0 L447.5 82.0 L457.6 82.8 L467.8 84.4 L478.0 83.2 L488.1 80.0 L498.3 72.8 L508.5 60.0 L518.6 44.4 L528.8 26.8 L539.0 44.8 L549.2 56.8 L559.3 69.2 L569.5 78.8 L579.7 84.8 L589.8 83.6 L600.0 68.4 L600.0 100.0 Z"/><path class="c-line" d="M0.0 82.4 L10.2 83.2 L20.3 82.8 L30.5 82.8 L40.7 81.6 L50.8 84.0 L61.0 84.4 L71.2 84.4 L81.4 84.0 L91.5 85.2 L101.7 84.4 L111.9 82.0 L122.0 82.8 L132.2 82.8 L142.4 82.8 L152.5 82.0 L162.7 84.8 L172.9 84.8 L183.1 84.8 L193.2 84.0 L203.4 85.2 L213.6 83.2 L223.7 82.0 L233.9 82.4 L244.1 83.2 L254.2 83.2 L264.4 82.8 L274.6 85.6 L284.7 84.8 L294.9 84.4 L305.1 83.6 L315.3 84.8 L325.4 82.4 L335.6 82.0 L345.8 82.4 L355.9 83.6 L366.1 83.2 L376.3 83.6 L386.4 85.6 L396.6 84.8 L406.8 84.0 L416.9 83.2 L427.1 84.4 L437.3 82.0 L447.5 82.0 L457.6 82.8 L467.8 84.4 L478.0 83.2 L488.1 80.0 L498.3 72.8 L508.5 60.0 L518.6 44.4 L528.8 26.8 L539.0 44.8"/><path class="c-now" d="M539.0 44.8 L549.2 56.8 L559.3 69.2 L569.5 78.8 L579.7 84.8 L589.8 83.6 L600.0 68.4"/><path class="c-ring" d="M600.0 68.4 h0"/><path class="c-dot" d="M600.0 68.4 h0"/><g class="c-hits"><rect x="0.0" y="0" width="10.2" height="100.0"><title>118 s ago: 4.4%</title></rect><rect x="5.1" y="0" width="10.2" height="100.0"><title>116 s ago: 4.2%</title></rect><rect x="15.2" y="0" width="10.2" height="100.0"><title>114 s ago: 4.3%</title></rect><rect x="25.4" y="0" width="10.2" height="100.0"><title>112 s ago: 4.3%</title></rect><rect x="35.6" y="0" width="10.2" height="100.0"><title>110 s ago: 4.6%</title></rect><rect x="45.7" y="0" width="10.2" height="100.0"><title>108 s ago: 4.0%</title></rect><rect x="55.9" y="0" width="10.2" height="100.0"><title>106 s ago: 3.9%</title></rect><rect x="66.1" y="0" width="10.2" height="100.0"><title>104 s ago: 3.9%</title></rect><rect x="76.3" y="0" width="10.2" height="100.0"><title>102 s ago: 4.0%</title></rect><rect x="86.4" y="0" width="10.2" height="100.0"><title>100 s ago: 3.7%</title></rect><rect x="96.6" y="0" width="10.2" height="100.0"><title>98 s ago: 3.9%</title></rect><rect x="106.8" y="0" width="10.2" height="100.0"><title>96 s ago: 4.5%</title></rect><rect x="116.9" y="0" width="10.2" height="100.0"><title>94 s ago: 4.3%</title></rect><rect x="127.1" y="0" width="10.2" height="100.0"><title>92 s ago: 4.3%</title></rect><rect x="137.3" y="0" width="10.2" height="100.0"><title>90 s ago: 4.3%</title></rect><rect x="147.4" y="0" width="10.2" height="100.0"><title>88 s ago: 4.5%</title></rect><rect x="157.6" y="0" width="10.2" height="100.0"><title>86 s ago: 3.8%</title></rect><rect x="167.8" y="0" width="10.2" height="100.0"><title>84 s ago: 3.8%</title></rect><rect x="178.0" y="0" width="10.2" height="100.0"><title>82 s ago: 3.8%</title></rect><rect x="188.1" y="0" width="10.2" height="100.0"><title>80 s ago: 4.0%</title></rect><rect x="198.3" y="0" width="10.2" height="100.0"><title>78 s ago: 3.7%</title></rect><rect x="208.5" y="0" width="10.2" height="100.0"><title>76 s ago: 4.2%</title></rect><rect x="218.6" y="0" width="10.2" height="100.0"><title>74 s ago: 4.5%</title></rect><rect x="228.8" y="0" width="10.2" height="100.0"><title>72 s ago: 4.4%</title></rect><rect x="239.0" y="0" width="10.2" height="100.0"><title>70 s ago: 4.2%</title></rect><rect x="249.1" y="0" width="10.2" height="100.0"><title>68 s ago: 4.2%</title></rect><rect x="259.3" y="0" width="10.2" height="100.0"><title>66 s ago: 4.3%</title></rect><rect x="269.5" y="0" width="10.2" height="100.0"><title>64 s ago: 3.6%</title></rect><rect x="279.6" y="0" width="10.2" height="100.0"><title>62 s ago: 3.8%</title></rect><rect x="289.8" y="0" width="10.2" height="100.0"><title>60 s ago: 3.9%</title></rect><rect x="300.0" y="0" width="10.2" height="100.0"><title>58 s ago: 4.1%</title></rect><rect x="310.2" y="0" width="10.2" height="100.0"><title>56 s ago: 3.8%</title></rect><rect x="320.3" y="0" width="10.2" height="100.0"><title>54 s ago: 4.4%</title></rect><rect x="330.5" y="0" width="10.2" height="100.0"><title>52 s ago: 4.5%</title></rect><rect x="340.7" y="0" width="10.2" height="100.0"><title>50 s ago: 4.4%</title></rect><rect x="350.8" y="0" width="10.2" height="100.0"><title>48 s ago: 4.1%</title></rect><rect x="361.0" y="0" width="10.2" height="100.0"><title>46 s ago: 4.2%</title></rect><rect x="371.2" y="0" width="10.2" height="100.0"><title>44 s ago: 4.1%</title></rect><rect x="381.3" y="0" width="10.2" height="100.0"><title>42 s ago: 3.6%</title></rect><rect x="391.5" y="0" width="10.2" height="100.0"><title>40 s ago: 3.8%</title></rect><rect x="401.7" y="0" width="10.2" height="100.0"><title>38 s ago: 4.0%</title></rect><rect x="411.8" y="0" width="10.2" height="100.0"><title>36 s ago: 4.2%</title></rect><rect x="422.0" y="0" width="10.2" height="100.0"><title>34 s ago: 3.9%</title></rect><rect x="432.2" y="0" width="10.2" height="100.0"><title>32 s ago: 4.5%</title></rect><rect x="442.4" y="0" width="10.2" height="100.0"><title>30 s ago: 4.5%</title></rect><rect x="452.5" y="0" width="10.2" height="100.0"><title>28 s ago: 4.3%</title></rect><rect x="462.7" y="0" width="10.2" height="100.0"><title>26 s ago: 3.9%</title></rect><rect x="472.9" y="0" width="10.2" height="100.0"><title>24 s ago: 4.2%</title></rect><rect x="483.0" y="0" width="10.2" height="100.0"><title>22 s ago: 5.0%</title></rect><rect x="493.2" y="0" width="10.2" height="100.0"><title>20 s ago: 6.8%</title></rect><rect x="503.4" y="0" width="10.2" height="100.0"><title>18 s ago: 10.0%</title></rect><rect x="513.5" y="0" width="10.2" height="100.0"><title>16 s ago: 13.9%</title></rect><rect x="523.7" y="0" width="10.2" height="100.0"><title>14 s ago: 18.3%</title></rect><rect x="533.9" y="0" width="10.2" height="100.0"><title>12 s ago: 13.8%</title></rect><rect x="544.1" y="0" width="10.2" height="100.0"><title>10 s ago: 10.8%</title></rect><rect x="554.2" y="0" width="10.2" height="100.0"><title>8 s ago: 7.7%</title></rect><rect x="564.4" y="0" width="10.2" height="100.0"><title>6 s ago: 5.3%</title></rect><rect x="574.6" y="0" width="10.2" height="100.0"><title>4 s ago: 3.8%</title></rect><rect x="584.7" y="0" width="10.2" height="100.0"><title>2 s ago: 4.1%</title></rect><rect x="594.9" y="0" width="10.2" height="100.0"><title>now: 7.9%</title></rect></g></svg><span class="c-x"><span>2 min ago</span><span>now</span></span></div><p class="m-why">Share of this PC&#x27;s processor that BrowserAI&#x27;s processes use now, all cores together.</p></div><div class="metric" id="m-own"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.5" width="18" height="9" rx="1.5"/><path d="M7.5 9.5v3M11 9.5v3M14.5 9.5v3M6 15.5v2.5M10 15.5v2.5M14 15.5v2.5M18 15.5v2.5"/></svg><span class="m-label">Own memory</span></div><b class="m-value" data-metric="own">1,688 MB</b><div class="chart" id="chart-own"><span class="c-top">2 GB</span><svg viewBox="0 0 600 100" preserveAspectRatio="none" role="img" aria-label="Own memory over the last 2 minutes, now 1,688 MB" data-series="1298,1304,1303,1302,1301,1300,1299,1298,1304,1303,1302,1301,1300,1299,1298,1304,1303,1302,1301,1300,1299,1298,1304,1303,1302,1301,1300,1299,1298,1304,1681,1680,1679,1678,1677,1676,1682,1681,1680,1679,1678,1677,1676,1682,1681,1680,1679,1678,1677,1676,1682,1681,1680,1679,1678,1677,1676,1682,1681,1688" data-low="0" data-high="2048"><path class="c-grid" d="M0 0 H600.0"/><path class="c-base" d="M0 100.0 H600.0"/><path class="c-area" d="M0 100.0 L0.0 36.6 L10.2 36.3 L20.3 36.4 L30.5 36.4 L40.7 36.5 L50.8 36.5 L61.0 36.6 L71.2 36.6 L81.4 36.3 L91.5 36.4 L101.7 36.4 L111.9 36.5 L122.0 36.5 L132.2 36.6 L142.4 36.6 L152.5 36.3 L162.7 36.4 L172.9 36.4 L183.1 36.5 L193.2 36.5 L203.4 36.6 L213.6 36.6 L223.7 36.3 L233.9 36.4 L244.1 36.4 L254.2 36.5 L264.4 36.5 L274.6 36.6 L284.7 36.6 L294.9 36.3 L305.1 17.9 L315.3 18.0 L325.4 18.0 L335.6 18.1 L345.8 18.1 L355.9 18.2 L366.1 17.9 L376.3 17.9 L386.4 18.0 L396.6 18.0 L406.8 18.1 L416.9 18.1 L427.1 18.2 L437.3 17.9 L447.5 17.9 L457.6 18.0 L467.8 18.0 L478.0 18.1 L488.1 18.1 L498.3 18.2 L508.5 17.9 L518.6 17.9 L528.8 18.0 L539.0 18.0 L549.2 18.1 L559.3 18.1 L569.5 18.2 L579.7 17.9 L589.8 17.9 L600.0 17.6 L600.0 100.0 Z"/><path class="c-line" d="M0.0 36.6 L10.2 36.3 L20.3 36.4 L30.5 36.4 L40.7 36.5 L50.8 36.5 L61.0 36.6 L71.2 36.6 L81.4 36.3 L91.5 36.4 L101.7 36.4 L111.9 36.5 L122.0 36.5 L132.2 36.6 L142.4 36.6 L152.5 36.3 L162.7 36.4 L172.9 36.4 L183.1 36.5 L193.2 36.5 L203.4 36.6 L213.6 36.6 L223.7 36.3 L233.9 36.4 L244.1 36.4 L254.2 36.5 L264.4 36.5 L274.6 36.6 L284.7 36.6 L294.9 36.3 L305.1 17.9 L315.3 18.0 L325.4 18.0 L335.6 18.1 L345.8 18.1 L355.9 18.2 L366.1 17.9 L376.3 17.9 L386.4 18.0 L396.6 18.0 L406.8 18.1 L416.9 18.1 L427.1 18.2 L437.3 17.9 L447.5 17.9 L457.6 18.0 L467.8 18.0 L478.0 18.1 L488.1 18.1 L498.3 18.2 L508.5 17.9 L518.6 17.9 L528.8 18.0 L539.0 18.0"/><path class="c-now" d="M539.0 18.0 L549.2 18.1 L559.3 18.1 L569.5 18.2 L579.7 17.9 L589.8 17.9 L600.0 17.6"/><path class="c-ring" d="M600.0 17.6 h0"/><path class="c-dot" d="M600.0 17.6 h0"/><g class="c-hits"><rect x="0.0" y="0" width="10.2" height="100.0"><title>118 s ago: 1,298 MB</title></rect><rect x="5.1" y="0" width="10.2" height="100.0"><title>116 s ago: 1,304 MB</title></rect><rect x="15.2" y="0" width="10.2" height="100.0"><title>114 s ago: 1,303 MB</title></rect><rect x="25.4" y="0" width="10.2" height="100.0"><title>112 s ago: 1,302 MB</title></rect><rect x="35.6" y="0" width="10.2" height="100.0"><title>110 s ago: 1,301 MB</title></rect><rect x="45.7" y="0" width="10.2" height="100.0"><title>108 s ago: 1,300 MB</title></rect><rect x="55.9" y="0" width="10.2" height="100.0"><title>106 s ago: 1,299 MB</title></rect><rect x="66.1" y="0" width="10.2" height="100.0"><title>104 s ago: 1,298 MB</title></rect><rect x="76.3" y="0" width="10.2" height="100.0"><title>102 s ago: 1,304 MB</title></rect><rect x="86.4" y="0" width="10.2" height="100.0"><title>100 s ago: 1,303 MB</title></rect><rect x="96.6" y="0" width="10.2" height="100.0"><title>98 s ago: 1,302 MB</title></rect><rect x="106.8" y="0" width="10.2" height="100.0"><title>96 s ago: 1,301 MB</title></rect><rect x="116.9" y="0" width="10.2" height="100.0"><title>94 s ago: 1,300 MB</title></rect><rect x="127.1" y="0" width="10.2" height="100.0"><title>92 s ago: 1,299 MB</title></rect><rect x="137.3" y="0" width="10.2" height="100.0"><title>90 s ago: 1,298 MB</title></rect><rect x="147.4" y="0" width="10.2" height="100.0"><title>88 s ago: 1,304 MB</title></rect><rect x="157.6" y="0" width="10.2" height="100.0"><title>86 s ago: 1,303 MB</title></rect><rect x="167.8" y="0" width="10.2" height="100.0"><title>84 s ago: 1,302 MB</title></rect><rect x="178.0" y="0" width="10.2" height="100.0"><title>82 s ago: 1,301 MB</title></rect><rect x="188.1" y="0" width="10.2" height="100.0"><title>80 s ago: 1,300 MB</title></rect><rect x="198.3" y="0" width="10.2" height="100.0"><title>78 s ago: 1,299 MB</title></rect><rect x="208.5" y="0" width="10.2" height="100.0"><title>76 s ago: 1,298 MB</title></rect><rect x="218.6" y="0" width="10.2" height="100.0"><title>74 s ago: 1,304 MB</title></rect><rect x="228.8" y="0" width="10.2" height="100.0"><title>72 s ago: 1,303 MB</title></rect><rect x="239.0" y="0" width="10.2" height="100.0"><title>70 s ago: 1,302 MB</title></rect><rect x="249.1" y="0" width="10.2" height="100.0"><title>68 s ago: 1,301 MB</title></rect><rect x="259.3" y="0" width="10.2" height="100.0"><title>66 s ago: 1,300 MB</title></rect><rect x="269.5" y="0" width="10.2" height="100.0"><title>64 s ago: 1,299 MB</title></rect><rect x="279.6" y="0" width="10.2" height="100.0"><title>62 s ago: 1,298 MB</title></rect><rect x="289.8" y="0" width="10.2" height="100.0"><title>60 s ago: 1,304 MB</title></rect><rect x="300.0" y="0" width="10.2" height="100.0"><title>58 s ago: 1,681 MB</title></rect><rect x="310.2" y="0" width="10.2" height="100.0"><title>56 s ago: 1,680 MB</title></rect><rect x="320.3" y="0" width="10.2" height="100.0"><title>54 s ago: 1,679 MB</title></rect><rect x="330.5" y="0" width="10.2" height="100.0"><title>52 s ago: 1,678 MB</title></rect><rect x="340.7" y="0" width="10.2" height="100.0"><title>50 s ago: 1,677 MB</title></rect><rect x="350.8" y="0" width="10.2" height="100.0"><title>48 s ago: 1,676 MB</title></rect><rect x="361.0" y="0" width="10.2" height="100.0"><title>46 s ago: 1,682 MB</title></rect><rect x="371.2" y="0" width="10.2" height="100.0"><title>44 s ago: 1,681 MB</title></rect><rect x="381.3" y="0" width="10.2" height="100.0"><title>42 s ago: 1,680 MB</title></rect><rect x="391.5" y="0" width="10.2" height="100.0"><title>40 s ago: 1,679 MB</title></rect><rect x="401.7" y="0" width="10.2" height="100.0"><title>38 s ago: 1,678 MB</title></rect><rect x="411.8" y="0" width="10.2" height="100.0"><title>36 s ago: 1,677 MB</title></rect><rect x="422.0" y="0" width="10.2" height="100.0"><title>34 s ago: 1,676 MB</title></rect><rect x="432.2" y="0" width="10.2" height="100.0"><title>32 s ago: 1,682 MB</title></rect><rect x="442.4" y="0" width="10.2" height="100.0"><title>30 s ago: 1,681 MB</title></rect><rect x="452.5" y="0" width="10.2" height="100.0"><title>28 s ago: 1,680 MB</title></rect><rect x="462.7" y="0" width="10.2" height="100.0"><title>26 s ago: 1,679 MB</title></rect><rect x="472.9" y="0" width="10.2" height="100.0"><title>24 s ago: 1,678 MB</title></rect><rect x="483.0" y="0" width="10.2" height="100.0"><title>22 s ago: 1,677 MB</title></rect><rect x="493.2" y="0" width="10.2" height="100.0"><title>20 s ago: 1,676 MB</title></rect><rect x="503.4" y="0" width="10.2" height="100.0"><title>18 s ago: 1,682 MB</title></rect><rect x="513.5" y="0" width="10.2" height="100.0"><title>16 s ago: 1,681 MB</title></rect><rect x="523.7" y="0" width="10.2" height="100.0"><title>14 s ago: 1,680 MB</title></rect><rect x="533.9" y="0" width="10.2" height="100.0"><title>12 s ago: 1,679 MB</title></rect><rect x="544.1" y="0" width="10.2" height="100.0"><title>10 s ago: 1,678 MB</title></rect><rect x="554.2" y="0" width="10.2" height="100.0"><title>8 s ago: 1,677 MB</title></rect><rect x="564.4" y="0" width="10.2" height="100.0"><title>6 s ago: 1,676 MB</title></rect><rect x="574.6" y="0" width="10.2" height="100.0"><title>4 s ago: 1,682 MB</title></rect><rect x="584.7" y="0" width="10.2" height="100.0"><title>2 s ago: 1,681 MB</title></rect><rect x="594.9" y="0" width="10.2" height="100.0"><title>now: 1,688 MB</title></rect></g></svg><span class="c-x"><span>2 min ago</span><span>now</span></span></div><dl class="m-parts"><dt>Browsers</dt><dd>1,214 MB</dd><dt>Browser servers</dt><dd>427 MB</dd><dt>Background</dt><dd>47 MB</dd></dl><p class="m-why">Memory only BrowserAI holds: its background, and each open browser with the server that drives it.</p></div><div class="metric" id="m-shared"><div class="m-top"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.4"/><circle cx="14.8" cy="12" r="5.4"/></svg><span class="m-label">Shared memory</span></div><b class="m-value" data-metric="shared">301 MB</b><p class="m-why">Memory its processes share with other programs, such as the browser&#x27;s program files, counted once.</p></div></div>
+</article>
+<div class="tier-four"><article class="card" id="card-update">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11m0 0-4.2-4.2M12 14.5l4.2-4.2"/><path d="M4 16.5V19a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-2.5"/></svg><h2>Update</h2></div>
+<p class="big">1.3.0 is ready</p>
+<p>It installs by itself in <span class="countdown" data-left="2834">47:14</span>, at about 17:28, if nothing uses BrowserAI before then.</p>
+<p class="small">Held by 1 window, 3 hidden browsers and 3 active conversations.</p>
+<div class="btn-row"><a id="l-update" class="btn primary" href="update?tab=1">See what holds it</a></div>
+</article>
+<article class="card" id="card-apps">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5"/><path d="M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0z"/><path d="M12 17v4"/></svg><h2>Claude Code and Codex</h2><a class="more" id="l-manage" href="setup?tab=1">Manage<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="caption">Your agents reach BrowserAI through these apps.</p>
+<div class="app-rows"><div class="app-row"><span class="app cc" aria-hidden="true">CC</span><div><b>Claude Code</b><span class="state ok"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg>Set up for all your projects</span></div></div><div class="app-row"><span class="app cx" aria-hidden="true">CX</span><div><b>Codex</b><span class="state ok"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg>Set up for all your projects</span></div></div></div>
+</article>
+<article class="card" id="card-storage">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="2.8"/><path d="M4 6v12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8V6"/><path d="M4 12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8"/></svg><h2>Storage</h2><a class="more" id="l-storage" href="storage?tab=1">Details<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<p class="big">1.4 GB</p>
+<p class="caption">in 9 session folders on this PC</p>
+<svg class="bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="img" aria-label="The folders open now and the folders not open now, as parts of the whole"><rect class="seg-a" x="0" y="0" width="51.85" height="10"/><rect class="seg-b" x="51.85" y="0" width="48.15" height="10"/></svg>
+<div class="legend"><div><span class="swatch a"></span><span>5 folders open now</span><b>742 MB</b></div><div><span class="swatch b"></span><span>4 folders not open now</span><b>689 MB</b></div></div>
+</article>
+<article class="card" id="card-install">
+<div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor"/></svg><h2>This install</h2><a class="more" id="l-install" href="install?tab=1">Paths<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+<dl class="facts"><dt>Version</dt><dd>1.2.0, <a id="l-whats-new" href="changelog?tab=1">what is new</a></dd><dt>Running</dt><dd>since 09:12, started again after an update</dd><dt>Updates</dt><dd>from GitHub releases</dd></dl>
+<div class="btn-row"><button type="button" id="b-open-folder-install" class="btn" data-action="open-folder" data-folder="install"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Install folder</button><button type="button" id="b-open-folder-data" class="btn" data-action="open-folder" data-folder="data"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Data</button><button type="button" id="b-open-folder-logs" class="btn" data-action="open-folder" data-folder="logs"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h7.5l4.5 4.5V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4.5h4.5M9 12.5h6M9 16h6"/></svg>Logs</button></div>
+</article>
+</div>
+</template>
+<script>
+'use strict';
+(() => {
+  const query = new URLSearchParams(location.search);
+  const theme = query.get('theme');
+  if (theme === 'dark' || theme === 'light') { document.documentElement.dataset.theme = theme; }
+  const main = document.getElementById('main');
+  const state = query.get('state');
+  if (state) {
+    const template = document.getElementById('state-' + state);
+    if (template) { main.replaceChildren(template.content.cloneNode(true)); }
+  }
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-action="dismiss-notice"]');
+    if (!button) { return; }
+    const fold = button.closest('.fold');
+    if (fold) { fold.classList.add('gone'); }
+  });
+  if (query.has('still')) { return; }
+  const started = Date.now();
+  const pad = (value) => String(value).padStart(2, '0');
+  const tick = () => {
+    for (const element of main.querySelectorAll('[data-left]')) {
+      const seconds = Math.max(0, Number(element.dataset.left) - Math.floor((Date.now() - started) / 1000));
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      element.textContent = hours > 0 ? hours + ':' + pad(minutes) + ':' + pad(seconds % 60) : minutes + ':' + pad(seconds % 60);
+    }
+  };
+  const draw = (svg, values) => {
+    const box = svg.viewBox.baseVal;
+    const low = Number(svg.dataset.low);
+    const high = Number(svg.dataset.high);
+    const pts = values.map((v, i) => [(i * box.width / (values.length - 1)).toFixed(1), ((1 - (v - low) / (high - low)) * box.height).toFixed(1)]);
+    const path = (list) => 'M' + list.map((q) => q[0] + ' ' + q[1]).join(' L');
+    svg.querySelector('.c-line').setAttribute('d', path(pts.slice(0, -6)));
+    svg.querySelector('.c-now').setAttribute('d', path(pts.slice(-7)));
+    svg.querySelector('.c-area').setAttribute('d', 'M0 ' + box.height + ' L' + pts.map((q) => q[0] + ' ' + q[1]).join(' L') + ' L' + box.width + ' ' + box.height + ' Z');
+    const end = pts[pts.length - 1];
+    for (const dot of svg.querySelectorAll('.c-ring, .c-dot')) { dot.setAttribute('d', 'M' + end[0] + ' ' + end[1] + ' h0'); }
+  };
+  const feed = () => {
+    for (const svg of main.querySelectorAll('.chart svg')) {
+      const cpu = svg.parentElement.id === 'chart-cpu';
+      const values = svg.dataset.series.split(',').map(Number);
+      const last = values[values.length - 1];
+      const high = Number(svg.dataset.high);
+      const next = cpu
+        ? Math.max(0.4, Math.min(high * 0.9, last + (Math.random() - 0.5) * 1.4 + (Math.random() < 0.08 ? 4 : 0) - (last > 4 ? 1.1 : 0)))
+        : Math.max(900, last + Math.round((Math.random() - 0.5) * 8));
+      values.push(Number(next.toFixed(1)));
+      values.shift();
+      svg.dataset.series = values.join(',');
+      draw(svg, values);
+      const figure = main.querySelector('[data-metric="' + (cpu ? 'cpu' : 'own') + '"]');
+      if (figure) { figure.textContent = cpu ? next.toFixed(1) + '%' : Math.round(next).toLocaleString('en-US') + ' MB'; }
+    }
+  };
+  setInterval(tick, 1000);
+  setInterval(feed, 2000);
+})();
+</script>
+</body>
+</html>

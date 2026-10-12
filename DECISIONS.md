@@ -1134,8 +1134,11 @@ colors here. But keep it in style and pretty. Also, it is not clear you can sele
 session. Communicate that better. Also, the details button on the browser session box to the
 right navigates to a page that, for as far as I can see, does not have more details than the
 side box we navigated from. Is this correct? If so, drop the page or integrate that last bit
-into the box and drop the page."* The four variants of the map he chose from are in that day's
-scratch folder and not in this repository.
+into the box and drop the page."* The four variants of the map he chose from are in
+[`docs/design/map-variants-2026-10-11`](docs/design/map-variants-2026-10-11/README.md) with
+their screenshots, since 2026-10-12, the maintainer's 106 in his words verbatim, *"106 your
+recommendation"*, which was b. *Corrected 2026-10-12 (previously "are in that day's scratch
+folder and not in this repository").*
 
 | Decision | Outcome |
 |---|---|

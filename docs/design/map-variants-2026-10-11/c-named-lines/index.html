@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Conversations and browsers - BrowserAI</title>
+<!-- Variant C, named lines: each line carries its state in a word, each card a Details tab. A mockup of the conversations page with invented data. The stylesheet is PageAssets.Css as it stands at 801e21af, copied verbatim, then the changes every variant shares, then this variant's own. The markup is the shape ConversationsContent composes, less the narrow list. Add ?select=none to see nothing chosen, or ?select=s-pricing, s-history, s-login, c-301, c-302, c-303 or hub to choose a card. The page follows the Windows light or dark setting. -->
+<style>
+/* ---- PageAssets.Css at 801e21af, verbatim ---- */
+:root {
+  color-scheme: light dark;
+  --bg: #f4f6f3; --card: #ffffff; --card-2: #f7f9f7; --line: #e2e7e3; --line-strong: #cbd5cf;
+  --text: #17201c; --muted: #56645d; --faint: #8a978f;
+  --accent: #087a54; --accent-ink: #ffffff; --accent-soft: #e3f5ec; --accent-text: #08734f;
+  --warn: #9a5400; --warn-soft: #fff3dc; --warn-line: #efc98a;
+  --bad: #b42318; --bad-ink: #ffffff; --bad-soft: #fde8e6; --bad-line: #f1b3ac;
+  --ok: #0f7f54; --seg-a: #10b981; --seg-b: #0e7490;
+  --wire: #8a978f; --wire-w: #c26a00; --wire-h: #0f9f6e; --wire-c: #8a978f; --wire-k: #a3b0a8;
+  --shadow: 0 1px 2px rgba(23, 32, 28, 0.05), 0 4px 16px rgba(23, 32, 28, 0.05);
+  --radius: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c1210; --card: #141c19; --card-2: #18221e; --line: #25312c; --line-strong: #34443d;
+    --text: #e5ece9; --muted: #9eafa7; --faint: #6f8078;
+    --accent: #34d399; --accent-ink: #062b1f; --accent-soft: #11392b; --accent-text: #6ee7b7;
+    --warn: #fbbf24; --warn-soft: #3a2a0c; --warn-line: #6b4c14;
+    --bad: #f87171; --bad-ink: #2b0b09; --bad-soft: #3b1513; --bad-line: #6e2620;
+    --ok: #34d399; --seg-a: #34d399; --seg-b: #22a6c3;
+    --wire: #6f8078; --wire-w: #fbbf24; --wire-h: #34d399; --wire-c: #6f8078; --wire-k: #52645c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; color: var(--text); background: var(--bg); font: 14.5px/1.5 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+a { color: var(--accent-text); }
+code, pre { font-family: "Cascadia Mono", Consolas, monospace; font-size: 0.86em; overflow-wrap: anywhere; }
+pre { white-space: pre-wrap; }
+h1, h2, h3, p { margin-top: 0; }
+.icon { width: 18px; height: 18px; flex: none; }
+.brand-mark { width: 30px; height: 30px; flex: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+main:focus { outline: none; }
+
+.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1180px; margin: 0 auto; padding: 12px 32px; display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 650; font-size: 17px; }
+.version { font-weight: 500; font-size: 12.5px; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 9px; }
+.top-gap { flex: 1; }
+.running { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent); }
+.help { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 8px; }
+.help:hover { background: var(--card); color: var(--text); }
+.help .icon { width: 15px; height: 15px; }
+.banner { max-width: 1180px; margin: 12px auto 0; padding: 10px 14px; border: 1px solid var(--warn-line); background: var(--warn-soft); border-radius: 12px; }
+
+main { max-width: 1180px; margin: 0 auto; padding: 28px 32px 56px; }
+body[data-page="sessions"] main, body[data-page="sessions"] .top-in, body[data-page="sessions"] .foot { max-width: 1440px; }
+.crumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin: 0 0 14px; flex-wrap: wrap; }
+.crumbs a { color: var(--muted); }
+.crumbs .icon { width: 13px; height: 13px; }
+.hello h1, .page-title { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 30px; line-height: 1.2; font-weight: 650; margin: 0 0 6px; }
+.lede { margin: 0 0 22px; color: var(--muted); font-size: 15.5px; max-width: 780px; }
+
+.notice, .note { display: flex; gap: 14px; align-items: flex-start; border-radius: 14px; padding: 14px 16px; margin: 0 0 14px; border: 1px solid var(--line-strong); background: var(--card); }
+.notice > .icon, .note > .icon { width: 22px; height: 22px; margin-top: 1px; }
+.notice h3 { margin: 0 0 2px; font-size: 15px; }
+.notice p, .note p { margin: 0 0 4px; }
+.grow { flex: 1; min-width: 0; }
+.notice.bad, .note.broken { background: var(--bad-soft); border-color: var(--bad-line); }
+.notice.bad > .icon, .notice.bad h3, .note.broken > .icon, .note.broken strong { color: var(--bad); }
+.notice.warn { background: var(--warn-soft); border-color: var(--warn-line); }
+.notice.warn > .icon, .notice.warn h3 { color: var(--warn); }
+.notice.good { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.notice.good > .icon, .notice.good h3 { color: var(--accent-text); }
+.note.said > .icon { color: var(--accent-text); }
+
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+.span-8 { grid-column: span 8; }
+.span-4 { grid-column: span 4; }
+.span-12 { grid-column: span 12; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 22px; min-width: 0; }
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.card-head h2 { font-size: 16px; margin: 0; font-weight: 650; }
+.card-head .icon { color: var(--accent-text); }
+.card-head .more { margin-left: auto; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 2px; font-weight: 600; }
+.card-head .more .icon { width: 15px; height: 15px; }
+.caption { margin: 0 0 14px; color: var(--muted); font-size: 13.5px; }
+.big { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 24px; font-weight: 650; margin: 6px 0; }
+.small { font-size: 13px; color: var(--muted); }
+.warning { color: var(--warn); }
+.spaced { margin-top: 18px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 0 14px; }
+.stat { background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
+.stat .icon { width: 20px; height: 20px; color: var(--muted); }
+.stat b { display: block; font-size: 20px; line-height: 1.1; }
+.stat span { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.stat.warn .icon, .stat.warn b { color: var(--warn); }
+
+.rows { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; text-decoration: none; color: inherit; border-top: 1px solid var(--line); background: var(--card); }
+.row:first-child { border-top: 0; }
+.row:hover { background: var(--card-2); }
+.row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.row-title { font-weight: 600; overflow-wrap: anywhere; }
+.row-sub { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 0; }
+.sep { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0.6; display: inline-block; }
+.row-side { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.row > .icon:last-child { color: var(--faint); width: 16px; height: 16px; }
+.more-line { margin: 10px 0 0; }
+
+.app { width: 30px; height: 30px; border-radius: 9px; display: inline-grid; place-items: center; font-weight: 700; font-size: 11.5px; flex: none; color: #ffffff; }
+.app.cc { background: linear-gradient(135deg, #7c5ce8, #5b3fc4); }
+.app.cx { background: linear-gradient(135deg, #3f86d0, #2a62a8); }
+.app.other, .app.kept { background: var(--card-2); color: var(--muted); border: 1px dashed var(--line-strong); }
+.app .icon { width: 16px; height: 16px; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 550; border-radius: 999px; padding: 3px 10px 3px 8px; white-space: nowrap; border: 1px solid var(--line); background: var(--card-2); color: var(--muted); }
+.chip .icon { width: 14px; height: 14px; }
+.chip.window { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
+.chip.hidden { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--accent-text); }
+.chip.live { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.countdown { font-variant-numeric: tabular-nums; font-weight: 650; }
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.6s ease-in-out infinite; display: inline-block; }
+@keyframes pulse { 50% { opacity: 0.25; } }
+.working { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-text); font-weight: 600; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-weight: 600; font-size: 13.5px; border-radius: 10px; padding: 8px 14px; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); text-decoration: none; cursor: pointer; }
+.btn:hover { border-color: var(--accent-text); }
+.btn .icon { width: 16px; height: 16px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: var(--bad-ink); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--accent-text); padding-left: 6px; padding-right: 6px; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.notice > .btn, .notice > a.btn { align-self: center; }
+
+.app-rows { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 4px; }
+.app-row { display: flex; gap: 12px; align-items: center; }
+.app-row b { display: block; font-size: 14.5px; }
+.state { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.state .icon { width: 16px; height: 16px; }
+.state.ok { color: var(--ok); }
+.state.warn { color: var(--warn); }
+.state.missing { color: var(--muted); }
+
+.minis { display: flex; flex-direction: column; gap: 2px; margin: 12px 0 2px; border-top: 1px solid var(--line); padding-top: 10px; }
+.mini { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; font-size: 13.5px; padding: 4px 0; }
+.mini-ic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--card-2); color: var(--muted); }
+.mini-ic .icon { width: 15px; height: 15px; }
+.mini-ic.window { background: var(--warn-soft); color: var(--warn); }
+.mini-ic.hidden { background: var(--accent-soft); color: var(--accent-text); }
+
+.bar { display: block; width: 100%; height: 10px; border-radius: 999px; overflow: hidden; background: var(--card-2); margin: 12px 0; }
+.seg-a { fill: var(--seg-a); }
+.seg-b { fill: var(--seg-b); }
+.legend { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.legend span:nth-child(2) { flex: 1; color: var(--muted); }
+.swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.swatch.a { background: var(--seg-a); }
+.swatch.b { background: var(--seg-b); }
+
+.facts, .kvs { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 6px 0 0; font-size: 13.5px; }
+.facts dt, .kvs dt { color: var(--muted); }
+.facts dd, .kvs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+.empty { text-align: center; padding: 26px 18px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--card-2); }
+.empty .icon { width: 30px; height: 30px; color: var(--faint); }
+.empty-title { font-weight: 650; margin: 8px 0 4px; }
+.empty p { margin: 0 auto; max-width: 480px; color: var(--muted); font-size: 13.5px; }
+
+.explain { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0 0 22px; }
+.explain > div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; box-shadow: var(--shadow); }
+.explain .icon { width: 22px; height: 22px; color: var(--accent-text); margin-top: 2px; }
+.explain b { display: block; margin-bottom: 2px; }
+.explain p { margin: 0; font-size: 13px; color: var(--muted); }
+
+.legend-row { display: none; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin: 0 0 12px; }
+.legend-row span { display: inline-flex; align-items: center; gap: 7px; }
+.legend-row i { width: 24px; height: 0; border-top: 2px solid var(--wire); display: inline-block; }
+.legend-row i.w { border-top: 3px solid var(--wire-w); }
+.legend-row i.h { border-top: 2px dashed var(--wire-h); }
+.legend-row i.c { border-top: 2px dashed var(--wire-c); }
+.legend-row i.k { border-top: 2px dotted var(--wire-k); }
+
+.map-layout { display: none; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; margin-bottom: 22px; }
+.map { position: relative; display: grid; grid-template-columns: minmax(220px, 330px) minmax(36px, 1fr) minmax(170px, 220px) minmax(36px, 1fr) minmax(210px, 320px); row-gap: 14px; padding: 20px 20px 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--card-2); }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.wire { fill: none; stroke-width: 2; stroke: var(--wire); }
+.wire.w { stroke: var(--wire-w); stroke-width: 3; }
+.wire.h { stroke: var(--wire-h); stroke-dasharray: 9 4; }
+.wire.c, .wire.n { stroke: var(--wire-c); stroke-dasharray: 4 5; }
+.wire.k { stroke: var(--wire-k); stroke-dasharray: 1.5 5; stroke-linecap: round; }
+.wire.live { animation: flow 1s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -26; } }
+.port { stroke: var(--card-2); stroke-width: 3; fill: var(--wire); }
+.port.w { fill: var(--wire-w); }
+.port.h { fill: var(--wire-h); }
+.col-head { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; grid-row: 1; }
+.col-head.c1 { grid-column: 1; }
+.col-head.c3 { grid-column: 3; text-align: center; }
+.col-head.c5 { grid-column: 5; }
+.map > .left { grid-column: 1; display: flex; flex-direction: column; gap: 6px; align-self: center; }
+.map > .right { grid-column: 5; display: flex; flex-direction: column; gap: 8px; align-self: center; }
+.hub-cell { grid-column: 3; display: flex; align-self: stretch; position: relative; z-index: 1; }
+.group-label { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin: 0 0 0 4px; }
+.group-label .icon { width: 13px; height: 13px; }
+.ghost { margin: 0; border: 1px dashed var(--line-strong); border-radius: 14px; padding: 12px 14px; color: var(--muted); font-size: 12.5px; }
+.none { margin: 0; color: var(--muted); font-size: 12.5px; padding-left: 4px; }
+.node { position: relative; z-index: 2; display: flex; gap: 12px; align-items: center; padding: 11px 13px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); box-shadow: var(--shadow); text-align: left; color: inherit; font: inherit; cursor: pointer; width: 100%; }
+.node:hover { border-color: var(--accent-text); }
+.node[aria-pressed="true"] { border-color: var(--accent-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent), var(--shadow); }
+.node .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.node b { font-size: 14px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.node small { font-size: 12px; color: var(--muted); }
+.node .state { font-size: 12px; font-weight: 600; color: var(--muted); }
+.node.w { border-color: color-mix(in srgb, var(--wire-w) 60%, var(--line-strong)); }
+.node.w .state { color: var(--warn); }
+.node.h .state { color: var(--accent-text); }
+.tag { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.tag.live { background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+.br-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--card-2); color: var(--muted); }
+.br-ic.w { background: var(--warn-soft); color: var(--warn); }
+.br-ic.h { background: var(--accent-soft); color: var(--accent-text); }
+.hub { flex-direction: column; justify-content: center; text-align: center; gap: 6px; border-radius: 22px; padding: 18px 14px; border-color: color-mix(in srgb, var(--accent) 50%, var(--line-strong)); background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--seg-a) 22%, var(--card)) 0%, var(--card) 70%); }
+.hub .brand-mark { width: 52px; height: 52px; }
+.hub-name { font-weight: 650; font-size: 16px; }
+.hub-stat { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 8px; }
+.hub-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 6px 10px; border-radius: 10px; background: var(--card-2); }
+.hub-row span { color: var(--muted); }
+.upd { display: block; width: 100%; margin-top: 10px; border-radius: 12px; padding: 9px; font-size: 12.5px; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn-line); }
+.upd b { display: block; font-size: 13.5px; }
+.upd.ok { background: var(--accent-soft); color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.r1 { grid-row: 2; } .r2 { grid-row: 3; } .r3 { grid-row: 4; } .r4 { grid-row: 5; }
+.r5 { grid-row: 6; } .r6 { grid-row: 7; } .r7 { grid-row: 8; } .r8 { grid-row: 9; }
+.rows-1 { grid-row: 2 / span 1; } .rows-2 { grid-row: 2 / span 2; } .rows-3 { grid-row: 2 / span 3; } .rows-4 { grid-row: 2 / span 4; }
+.rows-5 { grid-row: 2 / span 5; } .rows-6 { grid-row: 2 / span 6; } .rows-7 { grid-row: 2 / span 7; } .rows-8 { grid-row: 2 / span 8; }
+
+.inspector { position: sticky; top: 76px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; max-height: calc(100vh - 96px); overflow: auto; }
+.inspect-none { color: var(--muted); margin: 0; }
+.inspect .kind { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; display: flex; align-items: center; gap: 6px; margin: 0 0 4px; }
+.inspect h2 { font-size: 19px; margin: 0 0 10px; overflow-wrap: anywhere; }
+.inspect .what { display: flex; gap: 10px; padding: 11px 13px; border-radius: 12px; background: var(--card-2); color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.inspect .what p { margin: 0; }
+.inspect .what .icon { color: var(--accent-text); width: 18px; height: 18px; }
+.inspect dl { display: grid; grid-template-columns: 104px 1fr; gap: 7px 12px; margin: 0 0 12px; font-size: 13px; }
+.inspect dt { color: var(--muted); }
+.inspect dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.small-notice { padding: 10px 12px; font-size: 13px; }
+.plain { list-style: none; padding: 0; margin: 0 0 8px; }
+.plain li { margin: 3px 0; }
+
+.group { margin: 0 0 22px; }
+.group-head { display: flex; align-items: center; gap: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 650; margin: 0 0 10px; }
+.group-head .icon { width: 16px; height: 16px; }
+.convo { padding: 0; overflow: hidden; margin-bottom: 12px; }
+.convo-head { display: flex; gap: 12px; align-items: center; padding: 14px 18px; }
+.convo-head h3 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.convo-head .right { margin-left: auto; }
+.convo-foot { padding: 9px 18px; background: var(--card-2); border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; margin: 0; }
+.convo-foot .icon { width: 15px; height: 15px; }
+.sess { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line); }
+.sess p { margin: 0; }
+.sess-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--card-2); border: 1px solid var(--line); color: var(--muted); }
+.sess-ic.w { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
+.sess-ic.h { background: var(--accent-soft); color: var(--accent-text); border-color: transparent; }
+.sess-name { font-weight: 650; }
+.sess-purpose, .sess-line { font-size: 13px; }
+.sess-purpose { color: var(--muted); }
+.sess-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.none-yet { padding: 12px 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; margin: 0; }
+
+.two { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+.box h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px; }
+.box p { margin: 0 0 8px; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.kv span { color: var(--muted); }
+.path { display: flex; gap: 10px; align-items: center; justify-content: space-between; background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin: 6px 0 10px; }
+
+.hero { display: flex; align-items: center; gap: 22px; margin-bottom: 18px; flex-wrap: wrap; }
+.hero .clock { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 44px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--accent-text); line-height: 1; }
+.hero .clock .icon { width: 44px; height: 44px; }
+.hero-text { flex: 1; min-width: 240px; }
+.hero-text p { margin: 0; }
+.hero-act { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: 320px; text-align: right; }
+.hold-list { display: flex; flex-direction: column; }
+.hold-item { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.hold-item:first-child { border-top: 0; }
+.hold-item .sub { font-size: 12.5px; color: var(--muted); margin: 0; }
+.hold-item .sub.warning { color: var(--warn); }
+.effects { margin: 6px 0 14px; padding-left: 18px; }
+.effects li { margin: 5px 0; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 650; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.table tr:last-child td { border-bottom: 0; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table a { text-decoration: none; color: var(--text); }
+.table a:hover { text-decoration: underline; }
+.read-at { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.working-line { color: var(--accent-text); font-weight: 600; }
+
+.app-card { margin-bottom: 16px; }
+.app-card .head { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.app-card .head h2 { margin: 0; font-size: 18px; }
+.app-card .head .state { margin-left: auto; font-weight: 600; }
+.app-card .actions { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.action { margin: 0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sub-block { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.sub-block h3 { font-size: 14px; margin: 0 0 4px; }
+.sub-block > p { margin: 0 0 6px; color: var(--muted); font-size: 13.5px; }
+details.trouble, details.more-info { margin-top: 12px; }
+details.trouble summary, details.more-info summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+details.trouble pre, details.more-info pre { font-size: 12px; background: var(--card-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0 0; }
+
+.log-group h2 { font-size: 18px; margin: 22px 0 10px; }
+details.entry, p.entry { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin: 0 0 8px; }
+p.entry { padding: 12px 16px; }
+details.entry summary { cursor: pointer; padding: 12px 16px; }
+details.entry[open] summary { border-bottom: 1px solid var(--line); }
+details.entry p { margin: 0; padding: 12px 16px 14px 34px; color: var(--muted); }
+.entries h2 { font-size: 18px; margin: 22px 0 10px; }
+
+.foot { max-width: 1180px; margin: 0 auto; padding: 0 32px 40px; color: var(--muted); font-size: 12.5px; display: flex; gap: 16px; flex-wrap: wrap; }
+.foot a { color: var(--muted); }
+
+@media (min-width: 1200px) {
+  .map-layout { display: grid; }
+  .legend-row { display: flex; }
+  .list-view:not(.crowded) { display: none; }
+}
+@media (max-width: 980px) {
+  .span-8, .span-4 { grid-column: span 12; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .explain, .two { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .top-in { padding: 10px 16px; }
+  main { padding: 20px 16px 48px; }
+  .help span, .running { display: none; }
+  .hello h1, .page-title { font-size: 24px; }
+  .row-side { display: none; }
+  .sess { grid-template-columns: 34px 1fr; }
+  .sess-actions { grid-column: 2; }
+  .hold-item { grid-template-columns: 34px 1fr; }
+  .hold-item > :last-child { grid-column: 2; justify-self: start; }
+  .hero-act { align-items: flex-start; text-align: left; }
+  .foot { padding: 0 16px 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse, .wire.live { animation: none; }
+}
+
+/* ---- Shared by every variant: the colours, room for the lines, the live use, the inspector ---- */
+:root {
+  --wire-w: #c26a00; --wire-h: #0e9f6c; --wire-c: #4f5b55; --wire-k: #1581c8;
+  --kept: #12639a; --kept-soft: #e3f0f8; --kept-line: #a9cdea;
+  --lift: 0 2px 4px rgba(23, 32, 28, 0.06), 0 12px 28px rgba(23, 32, 28, 0.12);
+  --mem-a: #087a54; --mem-b: #6cc9a4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wire-w: #c58620; --wire-h: #28ac7a; --wire-c: #616e67; --wire-k: #4f90e4;
+    --kept: #8fbef2; --kept-soft: #1f313e; --kept-line: #2f5378;
+    --lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.45);
+    --mem-a: #34d399; --mem-b: #1b7a58;
+  }
+}
+.map { grid-template-columns: minmax(230px, 300px) minmax(56px, 1fr) minmax(150px, 176px) minmax(56px, 1fr) minmax(220px, 280px); padding: 16px 20px 18px; }
+.explain { margin-bottom: 18px; }
+.legend-row { margin-bottom: 10px; }
+.node .tag.live { position: absolute; top: -9px; right: 14px; box-shadow: 0 0 0 2px var(--card-2); }
+.inspect-none[hidden] { display: none; }
+.wire { stroke-linecap: round; stroke-linejoin: round; }
+.port.c, .port.n { fill: var(--wire-c); }
+.port.k { fill: var(--wire-k); }
+.node { transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background-color 140ms ease; }
+.node:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.hub .upd .countdown { font-weight: 650; }
+.legend-row { align-items: center; }
+.legend-row svg.sample { flex: none; overflow: visible; }
+
+.inspect .lead { margin-bottom: 10px; }
+.dd-sample { display: inline-flex; vertical-align: -2px; margin-right: 8px; }
+.dd-note { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+svg.sample.mini { overflow: visible; }
+.keep-note { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+.picks li { margin: 4px 0; }
+.pick { display: inline-flex; align-items: center; gap: 8px; font: inherit; color: var(--accent-text); background: none; border: 0; padding: 3px 6px 3px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.pick .icon { width: 14px; height: 14px; }
+.pick:hover { color: var(--text); }
+.pick.inline { padding: 0; text-align: left; }
+
+.use { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 4px; margin: 0 0 12px; background: var(--card); }
+.use-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 4px; }
+.use-head .kind { margin: 0; }
+.live-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--accent-text); }
+.use-row { padding: 8px 0; border-top: 1px solid var(--line); }
+.use-row:first-of-type { border-top: 0; }
+.use-top { display: flex; align-items: center; gap: 10px; }
+.use-label { font-size: 13px; color: var(--muted); min-width: 104px; }
+.use-value { font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; min-width: 66px; }
+.spark { margin-left: auto; overflow: visible; }
+.spark .spark-line { fill: none; stroke: var(--faint); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.spark .spark-dot { fill: var(--accent); stroke: var(--card); stroke-width: 2; }
+.membar { display: block; width: 100%; height: 8px; margin: 7px 0 5px; }
+.membar .seg-browser { fill: var(--mem-a); }
+.membar .seg-server { fill: var(--mem-b); }
+.use-split { display: flex; gap: 14px; margin: 0; font-size: 12.5px; color: var(--muted); }
+.use-split b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sw { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: 0; }
+.sw.browser { background: var(--mem-a); }
+.sw.server { background: var(--mem-b); }
+.use-why { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); }
+.use-none { margin: 2px 0 8px; font-size: 13px; color: var(--muted); }
+
+.inspect-none { color: var(--muted); }
+.inspect-none .none-title { color: var(--text); font-weight: 650; font-size: 16px; margin: 10px 0 4px; }
+.inspect-none p { margin: 0 0 8px; font-size: 13.5px; }
+.keys { font-size: 12.5px; }
+kbd { font: 600 11.5px/1 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 2px 5px; background: var(--card-2); color: var(--text); }
+@media (prefers-reduced-motion: reduce) {
+  .node { transition: none; }
+  .node:hover { transform: none; }
+}
+
+/* ---- Variant C, named lines: each line carries its state in a word, each card a Details tab ---- */
+
+.map { grid-template-columns: minmax(220px, 296px) minmax(40px, 0.75fr) minmax(150px, 172px) minmax(96px, 1.45fr) minmax(200px, 256px); }
+.wire.w { stroke: var(--wire-w); stroke-width: 3.5; stroke-dasharray: none; }
+.wire.h { stroke: var(--wire-h); stroke-width: 2.5; stroke-dasharray: 8 5; stroke-linecap: butt; }
+.wire.c, .wire.n { stroke: var(--wire-c); stroke-width: 2; stroke-dasharray: 2 6; }
+.wire.k { stroke: var(--wire-k); stroke-width: 4; stroke-dasharray: 0.1 7; }
+.wire.h.live { animation: flow-c 1s linear infinite; }
+@keyframes flow-c { to { stroke-dashoffset: -26; } }
+.lab rect { stroke-width: 1.5; }
+.lab text { font: 600 11.5px "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+.lab.w rect { fill: var(--warn-soft); stroke: var(--wire-w); } .lab.w text { fill: var(--warn); }
+.lab.h rect { fill: var(--accent-soft); stroke: var(--wire-h); } .lab.h text { fill: var(--accent-text); }
+.lab.c rect, .lab.n rect { fill: var(--card); stroke: var(--wire-c); } .lab.c text, .lab.n text { fill: var(--muted); }
+.lab.k rect { fill: var(--kept-soft); stroke: var(--wire-k); } .lab.k text { fill: var(--kept); }
+.glyph.w { stroke: var(--warn); } .glyph.h { stroke: var(--accent-text); } .glyph.c, .glyph.n { stroke: var(--muted); } .glyph.k { stroke: var(--kept); }
+.legend-row { display: none; }
+@media (min-width: 1200px) { .legend-row { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; } }
+.legend-items { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 13px; color: var(--text); }
+.legend-items > span { display: inline-flex; align-items: center; gap: 8px; }
+.hint { display: flex; align-items: center; gap: 8px; align-self: end; font-size: 13px; font-weight: 600; color: var(--text); padding: 0 4px; }
+.hint .icon { width: 17px; height: 17px; color: var(--accent-text); }
+
+.map > .right { gap: 14px; }
+.node .tag.live { right: 92px; }
+.group-label { margin-bottom: 7px; }
+.node { overflow: visible; }
+.cue { position: absolute; top: -10px; right: 12px; display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 650; letter-spacing: 0.02em; line-height: 1; padding: 3px 6px 3px 8px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--muted); transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease; }
+.cue .icon { width: 12px; height: 12px; }
+.cue .on { display: none; }
+.node:hover { transform: translateY(-2px); box-shadow: var(--lift); }
+.node:hover .cue, .node:focus-visible .cue { border-color: var(--accent-text); color: var(--accent-text); }
+.node[aria-pressed="true"] .cue { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.node[aria-pressed="true"] .cue .off { display: none; }
+.node[aria-pressed="true"] .cue .on { display: inline; }
+.hub .cue { top: -10px; right: 50%; transform: translateX(50%); }
+.node:not(.hub)[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+.node[aria-pressed="true"] { border-color: var(--accent-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent), var(--shadow); }
+
+.inspector.pointing { border-color: color-mix(in srgb, var(--accent-text) 55%, var(--line)); }
+.inspector.pointing::before { content: ""; position: absolute; left: 0; top: var(--notch, 40px); width: 0; height: 0; margin-top: -9px; border-style: solid; border-width: 9px 9px 9px 0; border-color: transparent var(--accent-text) transparent transparent; transform: translateX(-1px); }
+.inspector { position: sticky; }
+.inspect-none { display: grid; grid-template-columns: 36px 1fr; gap: 4px 12px; align-items: start; }
+.inspect-none .point { grid-row: span 3; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); }
+.inspect-none .point .icon { width: 20px; height: 20px; }
+.inspect-none .none-title { margin-top: 6px; }
+
+</style>
+</head>
+<body data-page="sessions" data-tab="3">
+<header class="top"><div class="top-in">
+<a class="brand" id="l-brand" href="./?tab=3"><svg class="brand-mark" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><defs><linearGradient id="top-g" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="0.55" stop-color="#10B981"/><stop offset="1" stop-color="#0E7490"/></linearGradient><clipPath id="top-c"><circle cx="128" cy="128" r="112"/></clipPath></defs><circle cx="128" cy="128" r="112" fill="url(#top-g)"/><g clip-path="url(#top-c)" fill="none" stroke="#ECFEFF" stroke-width="10" opacity="0.45" stroke-linecap="round"><path d="M6 100 Q128 82 250 100"/><path d="M6 158 Q128 176 250 158"/><path d="M128 14 Q70 128 128 242"/><path d="M128 14 Q186 128 128 242"/></g><path d="M44 128 Q128 58 212 128 Q128 198 44 128 Z" fill="#F0FDFA"/><circle cx="128" cy="128" r="31" fill="#083344"/><circle cx="140" cy="116" r="9" fill="#ECFEFF"/></svg><span>BrowserAI</span> <span class="version">1.1.0</span></a>
+<span class="top-gap"></span>
+<span class="running"><span class="dot" aria-hidden="true"></span>Running since 09:12</span>
+<a class="help" id="l-help" href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><span>How BrowserAI works</span></a>
+</div></header>
+<p id="banner" class="banner" role="status" hidden></p>
+<main id="main" tabindex="-1">
+<nav class="crumbs" aria-label="Where you are"><a id="l-crumb-home" href="./?tab=3">Overview</a><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg><span aria-current="page">Conversations and browsers</span></nav>
+<h1 class="page-title">Conversations and browsers</h1>
+<p class="lede">Every chat in Claude Code or Codex that uses BrowserAI, and the browser sessions it opened. Nothing here can be closed from this page: an agent closes its own browser, and a conversation ends when its app closes it.</p>
+<div class="explain"><div><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg><div><b>Conversation</b><p>A chat in Claude Code or Codex. It is connected to BrowserAI while it is open.</p></div></div><div><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg><div><b>Session</b><p>A folder an agent made for its browser work: the browser profile with its logins, screenshots, downloads and a log.</p></div></div><div><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.4 5.2 3.4 8.5s-1 6.1-3.4 8.5c-2.4-2.4-3.4-5.2-3.4-8.5s1-6.1 3.4-8.5z"/></svg><div><b>Browser</b><p>A session&#x27;s browser while it runs: hidden, or a window on your screen. It closes by itself when nobody uses it.</p></div></div></div>
+<div class="legend-row"><div class="legend-items"><span><svg class="sample" data-sample="w" width="112" height="24" viewBox="0 0 112 24" aria-hidden="true" focusable="false"></svg>Window on your screen</span><span><svg class="sample" data-sample="h" width="112" height="24" viewBox="0 0 112 24" aria-hidden="true" focusable="false"></svg>Hidden browser</span><span><svg class="sample" data-sample="c" width="112" height="24" viewBox="0 0 112 24" aria-hidden="true" focusable="false"></svg>No browser open</span><span><svg class="sample" data-sample="k" width="112" height="24" viewBox="0 0 112 24" aria-hidden="true" focusable="false"></svg>Kept, no conversation</span></div><p class="hint"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 18.5 10l-5.4 1.8L10.9 17z"/><path d="M13.1 11.8 18 16.7"/></svg>Click any card on the map. Its details open here.</p></div>
+<div class="map-layout">
+<div class="map" id="map">
+<svg class="wires" id="wires" aria-hidden="true" focusable="false"></svg>
+<div class="col-head c1">Conversations</div><div class="col-head c3">BrowserAI</div><div class="col-head c5">Browser sessions</div>
+<div class="hub-cell rows-4"><button type="button" class="hub node" id="n-hub" data-inspect="hub" aria-pressed="false" aria-controls="inspect-hub"><svg class="brand-mark" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><defs><linearGradient id="hub-g" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="0.55" stop-color="#10B981"/><stop offset="1" stop-color="#0E7490"/></linearGradient><clipPath id="hub-c"><circle cx="128" cy="128" r="112"/></clipPath></defs><circle cx="128" cy="128" r="112" fill="url(#hub-g)"/><g clip-path="url(#hub-c)" fill="none" stroke="#ECFEFF" stroke-width="10" opacity="0.45" stroke-linecap="round"><path d="M6 100 Q128 82 250 100"/><path d="M6 158 Q128 176 250 158"/><path d="M128 14 Q70 128 128 242"/><path d="M128 14 Q186 128 128 242"/></g><path d="M44 128 Q128 58 212 128 Q128 198 44 128 Z" fill="#F0FDFA"/><circle cx="128" cy="128" r="31" fill="#083344"/><circle cx="140" cy="116" r="9" fill="#ECFEFF"/></svg><span class="hub-name">BrowserAI 1.1.0</span><span class="small">Running since 09:12</span><span class="hub-stat"><span class="hub-row"><span>Conversations</span><b>3</b></span><span class="hub-row"><span>Open browsers</span><b>3</b></span><span class="hub-row"><span>On your screen</span><b>1</b></span></span><span class="upd"><b>Update 1.2.0 ready</b>installs in <span class="countdown" data-in="2885">48:05</span> if nothing uses BrowserAI</span><span class="cue" aria-hidden="true"><span class="off">Details</span><span class="on">Selected</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button></div>
+<div class="left r1" data-row="c-301" data-line="h" data-live="1"><div class="group-label"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M9.5 9.5 7 12l2.5 2.5M14.5 9.5 17 12l-2.5 2.5"/></svg>VS Code window on acme-shop</div><button type="button" class="node" id="n-c-301" data-inspect="c-301" aria-pressed="false" aria-controls="inspect-c-301"><span class="app cc" aria-hidden="true">CC</span><span class="txt"><b>&quot;Fix the checkout total rounding&quot;</b><small>Claude Code in VS Code, acme-shop</small></span><span class="tag live">Working</span><span class="cue" aria-hidden="true"><span class="off">Details</span><span class="on">Selected</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button></div>
+<div class="right r1" data-row="c-301"><button type="button" class="node h" id="n-s-checkout" data-inspect="s-checkout" data-line="h" aria-pressed="false" aria-controls="inspect-s-checkout"><span class="br-ic h"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1"/><path d="M9.6 14.4a3 3 0 0 1 4.8-4.8"/><path d="M4 20 20 4"/></svg></span><span class="txt"><b>checkout-rounding</b><span class="state">Hidden, closes in <span class="countdown" data-in="462">7:42</span></span></span><span class="cue" aria-hidden="true"><span class="off">Details</span><span class="on">Selected</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button></div>
+<div class="left r2" data-row="c-302" data-line="w"><button type="button" class="node" id="n-c-302" data-inspect="c-302" aria-pressed="false" aria-controls="inspect-c-302"><span class="app cc" aria-hidden="true">CC</span><span class="txt"><b>&quot;Compare pricing pages&quot;</b><small>Claude Code in a terminal, market-notes</small></span><span class="cue" aria-hidden="true"><span class="off">Details</span><span class="on">Selected</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button></div>
+<div class="right r2" data-row="c-302"><button type="button" class="node w" id="n-s-pricing" data-inspect="s-pricing" data-line="w" aria-pressed="false" aria-controls="inspect-s-pricing"><span class="br-ic w"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.8" r=".6" fill="currentColor"/><circle cx="8.2" cy="6.8" r=".6" fill="currentColor"/></svg></span><span class="txt"><b>pricing-compare</b><span class="state">Window on your screen, <span class="countdown" data-in="2885">48:05</span></span></span><span class="cue" aria-hidden="true"><span class="off">Details</span><span class="on">Selected</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button><button type="button" class="node c" id="n-s-history" data-inspect="s-history" data-line="c" aria-pressed="false" aria-controls="inspect-s-history"><span class="br-ic c"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2" stroke-dasharray="3 2.4"/><path d="M9.5 12h5"/></svg></span><span class="txt"><b>pricing-history</b><span class="state">No browser open</span></span><span class="cue" aria-hidden="true"><span class="off">Details</span><span class="on">Selected</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button></div>
+<div class="left r3" data-row="c-303" data-line="n"><button type="button" class="node" id="n-c-303" data-inspect="c-303" aria-pressed="false" aria-controls="inspect-c-303"><span class="app cx" aria-hidden="true">CX</span><span class="txt"><b>&quot;Update the install guide screenshots&quot;</b><small>Codex, docs-site</small></span><span class="cue" aria-hidden="true"><span class="off">Details</span><span class="on">Selected</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button></div>
+<div class="right r3" data-row="c-303"><p class="none">No browser yet</p></div>
+<div class="left r4" data-row="s-login" data-line="k"><p class="ghost">Its conversation ended. BrowserAI keeps the session for the next one.</p></div>
+<div class="right r4" data-row="s-login"><button type="button" class="node h" id="n-s-login" data-inspect="s-login" data-line="k" aria-pressed="false" aria-controls="inspect-s-login"><span class="br-ic h"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1"/><path d="M9.6 14.4a3 3 0 0 1 4.8-4.8"/><path d="M4 20 20 4"/></svg></span><span class="txt"><b>login-flow-check</b><small>Kept, no conversation</small><span class="state">Hidden, closes in <span class="countdown" data-in="1040">17:20</span></span></span><span class="cue" aria-hidden="true"><span class="off">Details</span><span class="on">Selected</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button></div>
+</div>
+<aside class="inspector" id="inspector" aria-label="What is chosen on the map" aria-live="polite">
+<div class="inspect-none" id="inspect-none"><span class="point"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></span><p class="none-title">Click any card on the map</p><p>Conversations on the left, BrowserAI in the middle and browser sessions on the right can all be clicked. Each one opens here.</p><p class="keys"><kbd>Tab</kbd> and the arrow keys move between cards. <kbd>Enter</kbd> shows one, and <kbd>Esc</kbd> clears it.</p></div>
+<section class="inspect" id="inspect-hub" hidden><p class="kind"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor"/></svg>BrowserAI</p><h2>BrowserAI 1.1.0</h2><div class="what"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><p>BrowserAI runs in the background on this PC from sign-in to sign-out. Claude Code and Codex reach it for each conversation, and it gives the agent a real browser.</p></div><dl><dt>Running</dt><dd>since 09:12, started at sign-in</dd><dt>Installed in</dt><dd><code>C:\Users\sam\AppData\Local\BrowserAI.app</code></dd><dt>Data</dt><dd><code>C:\Users\sam\AppData\Local\BrowserAI</code></dd><dt>Updates</dt><dd>from GitHub releases</dd></dl><div class="btn-row"><button type="button" id="ib-open-folder-install" class="btn" data-action="open-folder" data-folder="install"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Install folder</button><button type="button" id="ib-open-folder-data" class="btn" data-action="open-folder" data-folder="data"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Data</button><button type="button" id="ib-open-folder-logs" class="btn" data-action="open-folder" data-folder="logs"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h7.5l4.5 4.5V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4.5h4.5M9 12.5h6M9 16h6"/></svg>Logs</button></div></section>
+<section class="inspect" id="inspect-c-301" hidden><p class="kind"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg>Conversation</p><h2>&quot;Fix the checkout total rounding&quot;</h2><div class="what"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><p>A chat in Claude Code. It is connected to BrowserAI while it is open, and it ends when Claude Code closes it, never from here.</p></div><dl><dt>App</dt><dd>Claude Code 2.1.300, in VS Code</dd><dt>Folder</dt><dd><code>C:\Code\acme-shop</code></dd><dt>Now</dt><dd>A call is running.</dd><dt>After an update</dt><dd>Reconnects by itself after an update.</dd></dl><p class="small">Its browser sessions:</p><ul class="plain picks"><li><button type="button" class="pick" id="ip-c-301-checkout" data-inspect="s-checkout"><svg class="sample mini" data-sample="h" width="30" height="12" viewBox="0 0 30 12" aria-hidden="true" focusable="false"></svg><span>checkout-rounding</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button></li></ul></section>
+<section class="inspect" id="inspect-c-302" hidden><p class="kind"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg>Conversation</p><h2>&quot;Compare pricing pages&quot;</h2><div class="what"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><p>A chat in Claude Code. It is connected to BrowserAI while it is open, and it ends when Claude Code closes it, never from here.</p></div><dl><dt>App</dt><dd>Claude Code 2.1.300, in a terminal</dd><dt>Folder</dt><dd><code>C:\Code\market-notes</code></dd><dt>Now</dt><dd>Idle.</dd><dt>After an update</dt><dd>After an update, run /mcp in that terminal, choose BrowserAI, then Reconnect.</dd></dl><p class="small">Its browser sessions:</p><ul class="plain picks"><li><button type="button" class="pick" id="ip-c-302-pricing" data-inspect="s-pricing"><svg class="sample mini" data-sample="w" width="30" height="12" viewBox="0 0 30 12" aria-hidden="true" focusable="false"></svg><span>pricing-compare</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button></li><li><button type="button" class="pick" id="ip-c-302-history" data-inspect="s-history"><svg class="sample mini" data-sample="c" width="30" height="12" viewBox="0 0 30 12" aria-hidden="true" focusable="false"></svg><span>pricing-history</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button></li></ul></section>
+<section class="inspect" id="inspect-c-303" hidden><p class="kind"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg>Conversation</p><h2>&quot;Update the install guide screenshots&quot;</h2><div class="what"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><p>A chat in Codex. It is connected to BrowserAI while it is open, and it ends when Codex closes it, never from here.</p></div><dl><dt>App</dt><dd>Codex 0.165.0</dd><dt>Folder</dt><dd><code>C:\Code\docs-site</code></dd><dt>Now</dt><dd>Idle.</dd><dt>After an update</dt><dd>After an update, BrowserAI is back only in a new conversation.</dd></dl><p class="small">No browser yet.</p></section>
+<section class="inspect" id="inspect-s-checkout" hidden><p class="kind"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.4 5.2 3.4 8.5s-1 6.1-3.4 8.5c-2.4-2.4-3.4-5.2-3.4-8.5s1-6.1 3.4-8.5z"/></svg>Browser session</p><h2>checkout-rounding</h2><div class="what"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><p>A folder an agent made for its browser work: the browser profile with its logins and cookies, screenshots, downloads and a log.</p></div><dl class="lead"><dt>Browser</dt><dd><span class="dd-sample"><svg class="sample mini" data-sample="h" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"></svg></span>A hidden browser. It closes in <span class="countdown" data-in="462">7:42</span> if no call uses it.</dd></dl><section class="use" aria-label="What it uses now"><div class="use-head"><p class="kind">Uses now</p><span class="live-tag"><span class="pulse" aria-hidden="true"></span>Live</span></div><div class="use-row"><div class="use-top"><span class="use-label">CPU now</span><b class="use-value" data-use-of="s-checkout" data-use="cpu"></b><svg class="spark" data-spark-of="s-checkout" width="96" height="26" viewBox="0 0 96 26" role="img"><title>CPU over the last minute</title></svg></div><p class="use-why">How much of this PC's processor its browser and server use now.</p></div><div class="use-row"><div class="use-top"><span class="use-label">Own memory</span><b class="use-value" data-use-of="s-checkout" data-use="own"></b></div><svg class="membar" data-bar-of="s-checkout" width="280" height="8" viewBox="0 0 280 8" aria-hidden="true" focusable="false"></svg><p class="use-split"><span><i class="sw browser"></i>Browser <b data-use-of="s-checkout" data-use="browser"></b></span><span><i class="sw server"></i>Server <b data-use-of="s-checkout" data-use="server"></b></span></p><p class="use-why">Only this session uses it: its browser and the server that drives it. Closing the browser frees it.</p></div><div class="use-row"><div class="use-top"><span class="use-label">Shared memory</span><b class="use-value" data-use-of="s-checkout" data-use="shared"></b></div><p class="use-why">Program code its browser and server share with other programs on this PC, such as the other browsers. Windows keeps one copy for all of them.</p></div></section><dl><dt>For</dt><dd>reproducing the rounding error in the checkout total</dd><dt>Used by</dt><dd><button type="button" class="pick inline" id="iu-s-checkout" data-inspect="c-301">&quot;Fix the checkout total rounding&quot;<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button></dd><dt>Folder</dt><dd><code>C:\Code\acme-shop\.work\checkout-rounding</code></dd><dt>Size on disk</dt><dd>96 MB</dd><dt>Traces</dt><dd>checkout-total.zip<span class="dd-note">Recordings Playwright can replay, in the session's output folder.</span></dd></dl><p class="keep-note">Only its agent deletes it. To remove this one yourself, open its folder.</p><div class="btn-row"><button type="button" id="ib-open-session-checkout" class="btn" data-action="open-session" data-session="checkout"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Open folder</button></div></section>
+<section class="inspect" id="inspect-s-pricing" hidden><p class="kind"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.4 5.2 3.4 8.5s-1 6.1-3.4 8.5c-2.4-2.4-3.4-5.2-3.4-8.5s1-6.1 3.4-8.5z"/></svg>Browser session</p><h2>pricing-compare</h2><div class="what"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><p>A folder an agent made for its browser work: the browser profile with its logins and cookies, screenshots, downloads and a log.</p></div><dl class="lead"><dt>Browser</dt><dd><span class="dd-sample"><svg class="sample mini" data-sample="w" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"></svg></span>A window on your screen. It closes by itself in <span class="countdown" data-in="2885">48:05</span> if nobody uses it.</dd></dl><section class="use" aria-label="What it uses now"><div class="use-head"><p class="kind">Uses now</p><span class="live-tag"><span class="pulse" aria-hidden="true"></span>Live</span></div><div class="use-row"><div class="use-top"><span class="use-label">CPU now</span><b class="use-value" data-use-of="s-pricing" data-use="cpu"></b><svg class="spark" data-spark-of="s-pricing" width="96" height="26" viewBox="0 0 96 26" role="img"><title>CPU over the last minute</title></svg></div><p class="use-why">How much of this PC's processor its browser and server use now.</p></div><div class="use-row"><div class="use-top"><span class="use-label">Own memory</span><b class="use-value" data-use-of="s-pricing" data-use="own"></b></div><svg class="membar" data-bar-of="s-pricing" width="280" height="8" viewBox="0 0 280 8" aria-hidden="true" focusable="false"></svg><p class="use-split"><span><i class="sw browser"></i>Browser <b data-use-of="s-pricing" data-use="browser"></b></span><span><i class="sw server"></i>Server <b data-use-of="s-pricing" data-use="server"></b></span></p><p class="use-why">Only this session uses it: its browser and the server that drives it. Closing the browser frees it.</p></div><div class="use-row"><div class="use-top"><span class="use-label">Shared memory</span><b class="use-value" data-use-of="s-pricing" data-use="shared"></b></div><p class="use-why">Program code its browser and server share with other programs on this PC, such as the other browsers. Windows keeps one copy for all of them.</p></div></section><dl><dt>For</dt><dd>comparing the three pricing pages side by side</dd><dt>Used by</dt><dd><button type="button" class="pick inline" id="iu-s-pricing" data-inspect="c-302">&quot;Compare pricing pages&quot;<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button></dd><dt>Folder</dt><dd><code>C:\Code\market-notes\.work\pricing-compare</code></dd><dt>Size on disk</dt><dd>188 MB</dd></dl><div class="notice warn small-notice"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.8" r=".6" fill="currentColor"/><circle cx="8.2" cy="6.8" r=".6" fill="currentColor"/></svg><p>This window is on your screen. While it is open, it holds updates. Closing it ends the browser and keeps the session.</p></div><p class="keep-note">Only its agent deletes it. To remove this one yourself, open its folder.</p><div class="btn-row"><button type="button" id="ib-open-session-pricing" class="btn" data-action="open-session" data-session="pricing"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Open folder</button></div></section>
+<section class="inspect" id="inspect-s-history" hidden><p class="kind"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.4 5.2 3.4 8.5s-1 6.1-3.4 8.5c-2.4-2.4-3.4-5.2-3.4-8.5s1-6.1 3.4-8.5z"/></svg>Browser session</p><h2>pricing-history</h2><div class="what"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><p>A folder an agent made for its browser work: the browser profile with its logins and cookies, screenshots, downloads and a log.</p></div><dl class="lead"><dt>Browser</dt><dd><span class="dd-sample"><svg class="sample mini" data-sample="c" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"></svg></span>Not open. A conversation that names this session opens it again.</dd></dl><section class="use" aria-label="What it uses now"><div class="use-head"><p class="kind">Uses now</p></div><p class="use-none">Nothing runs for this session while its browser is closed, so it uses no processor or memory.</p></section><dl><dt>For</dt><dd>reading last year&#x27;s prices from the web archive</dd><dt>Used by</dt><dd><button type="button" class="pick inline" id="iu-s-history" data-inspect="c-302">&quot;Compare pricing pages&quot;<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button></dd><dt>Folder</dt><dd><code>C:\Code\market-notes\.work\pricing-history</code></dd><dt>Size on disk</dt><dd>42 MB</dd></dl><p class="keep-note">Only its agent deletes it. To remove this one yourself, open its folder.</p><div class="btn-row"><button type="button" id="ib-open-session-history" class="btn" data-action="open-session" data-session="history"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Open folder</button></div></section>
+<section class="inspect" id="inspect-s-login" hidden><p class="kind"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.4 5.2 3.4 8.5s-1 6.1-3.4 8.5c-2.4-2.4-3.4-5.2-3.4-8.5s1-6.1 3.4-8.5z"/></svg>Browser session</p><h2>login-flow-check</h2><div class="what"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><p>A folder an agent made for its browser work: the browser profile with its logins and cookies, screenshots, downloads and a log.</p></div><dl class="lead"><dt>Browser</dt><dd><span class="dd-sample"><svg class="sample mini" data-sample="k" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"></svg></span>A hidden browser. It closes in <span class="countdown" data-in="1040">17:20</span> if no call uses it.</dd></dl><section class="use" aria-label="What it uses now"><div class="use-head"><p class="kind">Uses now</p><span class="live-tag"><span class="pulse" aria-hidden="true"></span>Live</span></div><div class="use-row"><div class="use-top"><span class="use-label">CPU now</span><b class="use-value" data-use-of="s-login" data-use="cpu"></b><svg class="spark" data-spark-of="s-login" width="96" height="26" viewBox="0 0 96 26" role="img"><title>CPU over the last minute</title></svg></div><p class="use-why">How much of this PC's processor its browser and server use now.</p></div><div class="use-row"><div class="use-top"><span class="use-label">Own memory</span><b class="use-value" data-use-of="s-login" data-use="own"></b></div><svg class="membar" data-bar-of="s-login" width="280" height="8" viewBox="0 0 280 8" aria-hidden="true" focusable="false"></svg><p class="use-split"><span><i class="sw browser"></i>Browser <b data-use-of="s-login" data-use="browser"></b></span><span><i class="sw server"></i>Server <b data-use-of="s-login" data-use="server"></b></span></p><p class="use-why">Only this session uses it: its browser and the server that drives it. Closing the browser frees it.</p></div><div class="use-row"><div class="use-top"><span class="use-label">Shared memory</span><b class="use-value" data-use-of="s-login" data-use="shared"></b></div><p class="use-why">Program code its browser and server share with other programs on this PC, such as the other browsers. Windows keeps one copy for all of them.</p></div></section><dl><dt>For</dt><dd>checking that the sign-in survives a reload</dd><dt>Used by</dt><dd>No conversation: it was kept after its conversation ended.</dd><dt>Folder</dt><dd><code>C:\Code\acme-shop\.work\login-flow-check</code></dd><dt>Size on disk</dt><dd>61 MB</dd></dl><p class="keep-note">Only its agent deletes it. To remove this one yourself, open its folder.</p><div class="btn-row"><button type="button" id="ib-open-session-login" class="btn" data-action="open-session" data-session="login"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Open folder</button></div></section>
+</aside>
+</div>
+</main>
+<footer class="foot"><span>BrowserAI 1.1.0</span><a id="l-foot-changelog" href="#">What is new</a><a id="l-foot-install" href="#">This install</a></footer>
+<script>
+
+'use strict';
+(() => {
+  const main = document.getElementById('main');
+  const NS = 'http://www.w3.org/2000/svg';
+  const query = new URLSearchParams(location.search);
+  const PREVIEW = false;
+  let chosen = null;
+  let pointed = null;
+
+  // The mockup's own start: each countdown is a number of seconds from when the file opened.
+  for (const element of document.querySelectorAll('[data-in]')) {
+    element.dataset.endsAt = String(Date.now() + Number(element.dataset.in) * 1000);
+  }
+
+  const pad = (value) => String(value).padStart(2, '0');
+  const left = (milliseconds) => {
+    const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return hours > 0 ? hours + ':' + pad(minutes) + ':' + pad(seconds % 60) : minutes + ':' + pad(seconds % 60);
+  };
+  const tick = () => {
+    for (const element of main.querySelectorAll('[data-ends-at]')) {
+      element.textContent = left(Number(element.dataset.endsAt) - Date.now());
+    }
+  };
+
+  const make = (name, attributes, into) => {
+    const node = document.createElementNS(NS, name);
+    for (const [key, value] of Object.entries(attributes)) { node.setAttribute(key, String(value)); }
+    if (into) { into.appendChild(node); }
+    return node;
+  };
+  const GLYPHS = {"window": "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"2\"/><path d=\"M3 9h18\"/><circle cx=\"6\" cy=\"6.8\" r=\".6\" fill=\"currentColor\"/><circle cx=\"8.2\" cy=\"6.8\" r=\".6\" fill=\"currentColor\"/>", "hidden": "<path d=\"M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1\"/><path d=\"M9.6 14.4a3 3 0 0 1 4.8-4.8\"/><path d=\"M4 20 20 4\"/>", "closed": "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"2\" stroke-dasharray=\"3 2.4\"/><path d=\"M9.5 12h5\"/>", "chevron": "<path d=\"M9.5 6l6 6-6 6\"/>", "bookmark": "<path d=\"M7 3.5h10a1 1 0 0 1 1 1V20l-6-4.2L6 20V4.5a1 1 0 0 1 1-1z\"/>"};
+  const glyph = (into, name, x, y, size, kind) => {
+    const box = make('svg', { x: x - size / 2, y: y - size / 2, width: size, height: size, viewBox: '0 0 24 24', class: 'glyph ' + kind, fill: 'none', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, into);
+    box.innerHTML = GLYPHS[name];
+    return box;
+  };
+  const curve = (x1, y1, x2, y2) => {
+    const middle = (x1 + x2) / 2;
+    return 'M' + x1 + ' ' + y1 + ' C' + middle + ' ' + y1 + ' ' + middle + ' ' + y2 + ' ' + x2 + ' ' + y2;
+  };
+  const group = (into, meta) => make('g', { class: 'route', 'data-row': meta.row || '', 'data-part': meta.part || '', 'data-sess': meta.sess || '' }, into);
+
+
+  const WORD = { w: 'On screen', h: 'Hidden', c: 'No browser', n: 'No browser', k: 'Kept' };
+  const ICON = { w: 'window', h: 'hidden', c: 'closed', n: 'closed', k: 'bookmark' };
+  const draw = {
+    wire(into, x1, y1, x2, y2, kind, live, meta) {
+      const g = group(into, meta);
+      make('path', { d: curve(x1, y1, x2, y2), class: 'wire ' + kind + (live ? ' live' : '') }, g);
+      if (meta.part === 'right') { this.label(g, (x1 + x2) / 2, (y1 + y2) / 2, kind); }
+      return g;
+    },
+    label(into, x, y, kind) {
+      const g = make('g', { class: 'lab ' + kind }, into);
+      const rect = make('rect', { x: 0, y: y - 10.5, height: 21, rx: 10.5 }, g);
+      const text = make('text', { x: 0, y: y + 4 }, g);
+      text.textContent = WORD[kind];
+      const width = Math.ceil(text.getComputedTextLength()) + 31;
+      const start = x - width / 2;
+      rect.setAttribute('x', start);
+      rect.setAttribute('width', width);
+      glyph(g, ICON[kind], start + 12.5, y, 13, kind);
+      text.setAttribute('x', start + 22);
+    },
+    sample(box, kind, width, height, mini) { this.wire(box, 2, height / 2, width - 2, height / 2, kind, false, { part: mini ? 'mini' : 'right' }); },
+  };
+
+
+  const relatedTo = (element, key) => {
+    if (key === 'hub') { return true; }
+    if (key.startsWith('c-')) { return element.dataset.row === key; }
+    const node = document.getElementById('n-' + key);
+    const cell = node ? node.closest('.right') : null;
+    const row = cell ? cell.dataset.row : null;
+    return element.dataset.sess === key || (element.dataset.part !== 'right' && element.dataset.row === row);
+  };
+  const light = () => {
+    const into = document.getElementById('wires');
+    if (!into) { return; }
+    const key = (PREVIEW && pointed) || chosen;
+    const dim = PREVIEW && pointed !== null && pointed !== 'hub' ? pointed : null;
+    for (const element of into.querySelectorAll('.route')) {
+      element.classList.toggle('on', key !== null && relatedTo(element, key));
+      element.classList.toggle('off', dim !== null && !relatedTo(element, dim));
+    }
+    for (const node of main.querySelectorAll('.node[data-inspect]')) {
+      node.classList.toggle('pointed', PREVIEW && pointed === node.dataset.inspect);
+    }
+  };
+
+  const wires = () => {
+    const map = document.getElementById('map');
+    const into = document.getElementById('wires');
+    if (!map || !into) { return; }
+    while (into.firstChild) { into.removeChild(into.firstChild); }
+    const box = map.getBoundingClientRect();
+    const hub = map.querySelector('.hub');
+    if (!hub || box.width === 0) { return; }
+    const centre = hub.getBoundingClientRect();
+    const hubLeft = centre.left - box.left;
+    const hubRight = centre.right - box.left;
+    into.setAttribute('viewBox', '0 0 ' + box.width + ' ' + box.height);
+    const ports = [];
+    for (const row of map.querySelectorAll('.left[data-row]')) {
+      const from = (row.querySelector('.node, .ghost') || row).getBoundingClientRect();
+      const y = from.top + from.height / 2 - box.top;
+      const live = row.dataset.live === '1';
+      const key = row.dataset.row;
+      if (row.querySelector('.node')) {
+        draw.wire(into, from.right - box.left, y, hubLeft, y, row.dataset.line, live, { row: key, part: 'left' });
+        ports.push([hubLeft, y, row.dataset.line, key]);
+      }
+      const right = map.querySelector('.right[data-row="' + key + '"]');
+      if (!right) { continue; }
+      const sessions = right.querySelectorAll('.node');
+      for (const session of sessions) {
+        const to = session.getBoundingClientRect();
+        draw.wire(into, hubRight, y, to.left - box.left, to.top + to.height / 2 - box.top, session.dataset.line, live, { row: key, part: 'right', sess: session.dataset.inspect, to: 'card' });
+      }
+      const none = right.querySelector('.none');
+      if (sessions.length === 0 && none) {
+        const to = none.getBoundingClientRect();
+        draw.wire(into, hubRight, y, to.left - box.left - 6, to.top + to.height / 2 - box.top, 'n', false, { row: key, part: 'right', sess: '', to: 'text' });
+      }
+      if (sessions.length > 0 || none) { ports.push([hubRight, y, sessions.length > 0 ? sessions[0].dataset.line : 'n', key]); }
+    }
+    for (const [x, y, kind, key] of ports) {
+      make('circle', { cx: x, cy: y, r: 4.5, class: 'port ' + kind }, group(into, { row: key, part: 'port' }));
+    }
+    light();
+  };
+
+  const samples = () => {
+    for (const box of document.querySelectorAll('svg[data-sample]')) {
+      while (box.firstChild) { box.removeChild(box.firstChild); }
+      draw.sample(box, box.dataset.sample, Number(box.getAttribute('width')), Number(box.getAttribute('height')), box.classList.contains('mini'));
+    }
+  };
+
+
+  const after = () => {
+    const box = document.getElementById('inspector');
+    if (!box) { return; }
+    const node = chosen ? document.getElementById('n-' + chosen) : null;
+    if (!node) { box.classList.remove('pointing'); return; }
+    const a = box.getBoundingClientRect();
+    const b = node.getBoundingClientRect();
+    const y = Math.max(24, Math.min(a.height - 24, b.top + b.height / 2 - a.top));
+    box.style.setProperty('--notch', y + 'px');
+    box.classList.add('pointing');
+  };
+
+
+  const inspect = (key) => {
+    chosen = key && main.querySelector('.node[data-inspect="' + key + '"]') ? key : null;
+    for (const panel of main.querySelectorAll('.inspect')) { panel.hidden = panel.id !== 'inspect-' + chosen; }
+    const none = document.getElementById('inspect-none');
+    if (none) { none.hidden = chosen !== null; }
+    for (const node of main.querySelectorAll('.node[data-inspect]')) { node.setAttribute('aria-pressed', String(node.dataset.inspect === chosen)); }
+    light();
+    after();
+  };
+
+  // ---- What each open browser uses, invented and moving once a second -------------------
+  const USE = {"s-checkout": {"cpu": [8.5, 7.0], "browser": 288, "server": 124, "shared": 138, "drift": 3.0}, "s-pricing": {"cpu": [2.4, 2.2], "browser": 402, "server": 131, "shared": 141, "drift": 2.0}, "s-login": {"cpu": [0.3, 0.4], "browser": 236, "server": 118, "shared": 136, "drift": 0.6}};
+  const SECONDS = 60;
+  const state = {};
+  let seed = 20261011;
+  const random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const advance = (use, now) => {
+    now.cpu = Math.max(0.1, Math.min(100, now.cpu + (use.cpu[0] - now.cpu) * 0.35 + (random() - 0.5) * use.cpu[1]));
+    now.browser = Math.max(40, now.browser + (random() - 0.47) * use.drift);
+    now.server = Math.max(30, now.server + (random() - 0.5) * use.drift * 0.3);
+    now.cpus.push(now.cpu);
+    if (now.cpus.length > SECONDS) { now.cpus.shift(); }
+  };
+  for (const [key, use] of Object.entries(USE)) {
+    const now = { cpu: use.cpu[0], browser: use.browser, server: use.server, cpus: [] };
+    for (let index = 0; index < SECONDS; index++) { advance(use, now); }
+    state[key] = now;
+  }
+  const percent = (value) => (value < 10 ? value.toFixed(1) : String(Math.round(value))) + '%';
+  const megabytes = (value) => Math.round(value) + ' MB';
+  const spark = (box, values) => {
+    while (box.lastChild && box.lastChild.nodeName !== 'title') { box.removeChild(box.lastChild); }
+    const width = Number(box.getAttribute('width'));
+    const height = Number(box.getAttribute('height'));
+    const top = Math.max(5, ...values) * 1.1;
+    const points = values.map((value, index) => [2 + index * (width - 6) / (SECONDS - 1), height - 2 - value / top * (height - 5)]);
+    make('path', { d: 'M' + points.map((point) => point[0].toFixed(1) + ' ' + point[1].toFixed(1)).join(' L'), class: 'spark-line' }, box);
+    const last = points[points.length - 1];
+    make('circle', { cx: last[0].toFixed(1), cy: last[1].toFixed(1), r: 3.2, class: 'spark-dot' }, box);
+    box.firstElementChild.textContent = 'CPU over the last minute: lowest ' + percent(Math.min(...values)) + ', highest ' + percent(Math.max(...values));
+  };
+  const bar = (box, browser, server) => {
+    while (box.firstChild) { box.removeChild(box.firstChild); }
+    const width = Number(box.getAttribute('width'));
+    const split = Math.round((width - 2) * browser / (browser + server));
+    make('rect', { x: 0, y: 0, width: split, height: 8, rx: 4, class: 'seg-browser' }, box);
+    make('rect', { x: split + 2, y: 0, width: width - split - 2, height: 8, rx: 4, class: 'seg-server' }, box);
+  };
+  const render = () => {
+    for (const [key, now] of Object.entries(state)) {
+      for (const element of document.querySelectorAll('[data-use-of="' + key + '"]')) {
+        const what = element.dataset.use;
+        element.textContent = what === 'cpu' ? percent(now.cpu)
+          : what === 'own' ? megabytes(now.browser + now.server)
+          : what === 'browser' ? megabytes(now.browser)
+          : what === 'server' ? megabytes(now.server)
+          : megabytes(USE[key].shared);
+      }
+      for (const box of document.querySelectorAll('svg[data-spark-of="' + key + '"]')) { spark(box, now.cpus); }
+      for (const box of document.querySelectorAll('svg[data-bar-of="' + key + '"]')) { bar(box, now.browser, now.server); }
+    }
+  };
+
+  // ---- The keyboard: arrows move between cards, Escape clears ----------------------------
+  const columnOf = (node) => (node.classList.contains('hub') ? 1 : node.closest('.left') ? 0 : 2);
+  const toward = (from, key) => {
+    const a = from.getBoundingClientRect();
+    const ay = a.top + a.height / 2;
+    const column = columnOf(from);
+    let best = null;
+    let distance = Infinity;
+    for (const node of main.querySelectorAll('#map .node')) {
+      if (node === from) { continue; }
+      const b = node.getBoundingClientRect();
+      const by = b.top + b.height / 2;
+      const other = columnOf(node);
+      let d = Infinity;
+      if (key === 'ArrowUp' && other === column && by < ay) { d = ay - by; }
+      if (key === 'ArrowDown' && other === column && by > ay) { d = by - ay; }
+      if (key === 'ArrowLeft' && other === column - 1) { d = Math.abs(by - ay); }
+      if (key === 'ArrowRight' && other === column + 1) { d = Math.abs(by - ay); }
+      if (d < distance) { distance = d; best = node; }
+    }
+    return best;
+  };
+
+  document.addEventListener('click', (event) => {
+    const node = event.target.closest('[data-inspect]');
+    if (node) {
+      const key = node.dataset.inspect;
+      inspect(chosen === key && node.classList.contains('node') ? null : key);
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && chosen !== null) { inspect(null); return; }
+    const node = event.target.closest ? event.target.closest('#map .node') : null;
+    if (!node || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) { return; }
+    const next = toward(node, event.key);
+    if (next) { event.preventDefault(); next.focus(); }
+  });
+  const point = (event) => {
+    const node = event.target.closest ? event.target.closest('#map .node') : null;
+    const key = node ? node.dataset.inspect : null;
+    if (key !== pointed) { pointed = key; light(); }
+  };
+  document.addEventListener('mouseover', point);
+  document.addEventListener('focusin', point);
+  document.addEventListener('mouseleave', () => { pointed = null; light(); });
+
+  window.addEventListener('resize', () => { wires(); after(); });
+  window.addEventListener('scroll', () => after(), { passive: true });
+  samples();
+  wires();
+  const asked = query.get('select');
+  inspect(asked === 'none' ? null : asked || 's-checkout');
+  render();
+  tick();
+  setInterval(() => {
+    for (const [key, now] of Object.entries(state)) { advance(USE[key], now); }
+    render();
+    tick();
+  }, 1000);
+})();
+
+</script>
+</body>
+</html>
