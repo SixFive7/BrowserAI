@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Clients;
+using BrowserAI.Interop;
 using BrowserAI.Relay;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
@@ -162,17 +163,40 @@ internal sealed class RelayRoster : IUpdateRelays
     /// <param name="greeting">What the relay said about itself.</param>
     /// <param name="link">Its connection.</param>
     /// <param name="idleAt">When its countdown runs out, from its greeting.</param>
-    public void Add(RelayGreeting greeting, IRelayLink link, DateTimeOffset idleAt)
+    /// <param name="process">
+    /// The relay's process, held open from its connection, which the page's CPU and memory
+    /// reading reads (65 a); the roster closes it when the relay is removed. <see langword="null"/>
+    /// where it could not be held.
+    /// </param>
+    public void Add(RelayGreeting greeting, IRelayLink link, DateTimeOffset idleAt, HeldProcess? process = null)
     {
         ArgumentNullException.ThrowIfNull(greeting);
         ArgumentNullException.ThrowIfNull(link);
 
+        Entry? replaced;
+
         lock (_gate)
         {
-            _entries[greeting.Id] = new Entry(greeting, link) { IdleAt = idleAt };
+            _ = _entries.TryGetValue(greeting.Id, out replaced);
+            _entries[greeting.Id] = new Entry(greeting, link) { IdleAt = idleAt, Process = process };
         }
 
+        replaced?.Process?.Dispose();
         _changed();
+    }
+
+    /// <summary>Every relay's process the roster holds, for the page's CPU and memory reading (65 a).</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12.</b> A relay removed while a reading uses its process has its handle
+    /// closed under the reading, which then meets a disposed handle and leaves that relay out.
+    /// </remarks>
+    /// <returns>The processes, in no particular order.</returns>
+    public IReadOnlyList<HeldProcess> Processes()
+    {
+        lock (_gate)
+        {
+            return [.. _entries.Values.Select(static entry => entry.Process).OfType<HeldProcess>()];
+        }
     }
 
     /// <summary>Whether the update told this relay to end, so that its connection's end is the update's.</summary>
@@ -194,11 +218,14 @@ internal sealed class RelayRoster : IUpdateRelays
     /// <param name="id">Its id.</param>
     public void Remove(string id)
     {
+        Entry? removed;
+
         lock (_gate)
         {
-            _ = _entries.Remove(id);
+            _ = _entries.Remove(id, out removed);
         }
 
+        removed?.Process?.Dispose();
         _changed();
     }
 
@@ -531,6 +558,9 @@ internal sealed class RelayRoster : IUpdateRelays
 
         /// <summary>What the reader keeps of this relay between two draws.</summary>
         public ConversationMemo Memo { get; } = new();
+
+        /// <summary>The relay's process, held from its connection, or <see langword="null"/>.</summary>
+        public HeldProcess? Process { get; init; }
     }
 }
 

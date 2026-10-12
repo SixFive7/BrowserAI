@@ -700,6 +700,19 @@ internal sealed class SessionManager : IAsyncDisposable
         })];
 
     /// <summary>
+    /// Every session this process holds, with its child's job, for the page's CPU and memory
+    /// reading: what one session uses is what its job holds (59 b, 62 a).
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12.</b> Read from memory, as <see cref="Held"/> is, and taking no
+    /// lock; a session that closes while the reading uses its job has its job closed under
+    /// the reading, which then leaves that session out.
+    /// </remarks>
+    /// <returns>One directory and its job per held session, the job <see langword="null"/> where the child is not a process.</returns>
+    public IReadOnlyList<(string Directory, Interop.JobObject? Job)> Jobs() =>
+        [.. _live.Values.Select(static live => (live.Location.FullPath, live.Child.Job))];
+
+    /// <summary>
     /// Every open session's idle countdown, read from memory: the seam the background's
     /// update holds and the dashboard read.
     /// </summary>

@@ -70,6 +70,7 @@ internal sealed partial class JobObject : IDisposable
     /// <summary>Lets a member leave the job silently. Never set here.</summary>
     public const uint SilentBreakawayOk = 0x00001000;
 
+    private const int JobObjectBasicAccountingInformationClass = 1;
     private const int JobObjectBasicProcessIdListClass = 3;
     private const int JobObjectBasicUiRestrictionsClass = 4;
     private const int JobObjectExtendedLimitInformationClass = 9;
@@ -185,6 +186,36 @@ internal sealed partial class JobObject : IDisposable
             }
 
             return (flags & HandleFlagInherit) is not 0;
+        }
+    }
+
+    /// <summary>
+    /// The CPU time of every process this job has held, the ended ones included, kernel and
+    /// user together, in 100-nanosecond ticks.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 for the page's CPU and memory (59 b)</b>. Windows keeps the total
+    /// for the job: <c>JOBOBJECT_BASIC_ACCOUNTING_INFORMATION</c>'s <c>TotalUserTime</c> and
+    /// <c>TotalKernelTime</c> count <i>"all active processes associated with the job, as well
+    /// as all terminated processes no longer associated with the job"</i>, so a browser helper
+    /// that ended between two readings is still counted, which a sum over the members could
+    /// not do.
+    /// </remarks>
+    /// <exception cref="Win32Exception">The query failed.</exception>
+    public long CpuTicks
+    {
+        get
+        {
+            var accounting = default(JobObjectBasicAccountingInformation);
+
+            return QueryInformationJobObject(
+                Handle,
+                JobObjectBasicAccountingInformationClass,
+                ref accounting,
+                (uint)Unsafe.SizeOf<JobObjectBasicAccountingInformation>(),
+                out _)
+                ? accounting.TotalUserTime + accounting.TotalKernelTime
+                : throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not read the job object's CPU time.");
         }
     }
 
@@ -343,6 +374,20 @@ internal sealed partial class JobObject : IDisposable
     {
         public uint UiRestrictionsClass;
     }
+
+    // Added 2026-10-12 for the page's CPU and memory: the job's own totals.
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JobObjectBasicAccountingInformation
+    {
+        public long TotalUserTime;
+        public long TotalKernelTime;
+        public long ThisPeriodTotalUserTime;
+        public long ThisPeriodTotalKernelTime;
+        public uint TotalPageFaultCount;
+        public uint TotalProcesses;
+        public uint ActiveProcesses;
+        public uint TotalTerminatedProcesses;
+    }
 #pragma warning restore CS0649
 
     // LibraryImport and not DllImport on every declaration, because it is
@@ -397,6 +442,16 @@ internal sealed partial class JobObject : IDisposable
         SafeJobHandle hJob,
         int jobObjectInformationClass,
         ref byte lpJobObjectInformation,
+        uint cbJobObjectInformationLength,
+        out uint lpReturnLength);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true, EntryPoint = "QueryInformationJobObject")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool QueryInformationJobObject(
+        SafeJobHandle hJob,
+        int jobObjectInformationClass,
+        ref JobObjectBasicAccountingInformation lpJobObjectInformation,
         uint cbJobObjectInformationLength,
         out uint lpReturnLength);
 

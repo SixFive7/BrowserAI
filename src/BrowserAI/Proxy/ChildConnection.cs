@@ -208,6 +208,16 @@ internal sealed class ChildConnection : IAsyncDisposable
         (_link.Session as ChildProcessSession)?.Job.ProcessIds() ?? [];
 
     /// <summary>
+    /// The child's job, which holds the node child, its console host and the browser it
+    /// launched, or <see langword="null"/> when the child is not a process.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 for the page's CPU and memory (59 b)</b>: the job's own CPU total
+    /// and its members are what one session uses, and nothing outside the session is in it.
+    /// </remarks>
+    internal Interop.JobObject? Job => (_link.Session as ChildProcessSession)?.Job;
+
+    /// <summary>
     /// Whether the job holds more processes than the child had of its own when it
     /// connected: a browser, or what is left of one.
     /// </summary>

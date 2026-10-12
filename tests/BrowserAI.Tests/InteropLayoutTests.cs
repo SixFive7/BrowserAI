@@ -119,6 +119,11 @@ internal sealed class InteropLayoutTests
         // WM_ENDSESSION at a sign-out and WM_CLOSE from the Task Scheduler's End.
         (nameof(SessionEndWindow), "WndClassEx", 80),
         (nameof(SessionEndWindow), "Msg", 48),
+
+        // Added 2026-10-12 with the page's CPU and memory (59 b): what one process uses, and
+        // what a session's job has used, its ended processes included.
+        (nameof(ProcessUsage), "ProcessMemoryCountersEx2", 96),
+        (nameof(JobObject), "JobObjectBasicAccountingInformation", 48),
     ];
 
     /// <summary>
@@ -181,7 +186,9 @@ internal sealed class InteropLayoutTests
         // window brought WNDCLASSEXW and MSG.
         // Corrected 2026-10-11 to 14 (previously 15): JobLauncher's
         // SECURITY_ATTRIBUTES went with CreatePipe, the maintainer's decision 54.
-        await Assert.That(Structs.Length).IsEqualTo(14);
+        // Corrected 2026-10-12 to 16 (previously 14): the page's CPU and memory brought
+        // PROCESS_MEMORY_COUNTERS_EX2 and JOBOBJECT_BASIC_ACCOUNTING_INFORMATION.
+        await Assert.That(Structs.Length).IsEqualTo(16);
 
         foreach (var (owner, nested, _) in Structs)
         {
@@ -291,6 +298,25 @@ internal sealed class InteropLayoutTests
         await Assert.That(SizeOfMetadata("LastInputInfo")).IsEqualTo(8);
         await Assert.That(SizeOfMetadata("WndClassEx")).IsEqualTo(80);
         await Assert.That(SizeOfMetadata("Msg")).IsEqualTo(48);
+        await Assert.That(SizeOfMetadata("ProcessMemoryCountersEx2")).IsEqualTo(96);
+        await Assert.That(SizeOfMetadata("JobObjectBasicAccountingInformation")).IsEqualTo(48);
+
+        // The two fields the page reads from PROCESS_MEMORY_COUNTERS_EX2 are its last two, after
+        // ten SIZE_Ts, so a field that slid would read the commit charge as the private working
+        // set; and the job's two totals are its first two.
+        var counters = Nested(nameof(ProcessUsage), "ProcessMemoryCountersEx2");
+
+        await Assert.That((int)Marshal.OffsetOf(counters, "WorkingSetSize")).IsEqualTo(16);
+        await Assert.That((int)Marshal.OffsetOf(counters, "PrivateWorkingSetSize")).IsEqualTo(80);
+        await Assert.That((int)Marshal.OffsetOf(counters, "SharedCommitUsage")).IsEqualTo(88);
+        await Assert.That((int)Marshal.OffsetOf<W.System.ProcessStatus.PROCESS_MEMORY_COUNTERS_EX2>("WorkingSetSize")).IsEqualTo(16);
+        await Assert.That((int)Marshal.OffsetOf<W.System.ProcessStatus.PROCESS_MEMORY_COUNTERS_EX2>("PrivateWorkingSetSize")).IsEqualTo(80);
+        await Assert.That((int)Marshal.OffsetOf<W.System.ProcessStatus.PROCESS_MEMORY_COUNTERS_EX2>("SharedCommitUsage")).IsEqualTo(88);
+
+        var accounting = Nested(nameof(JobObject), "JobObjectBasicAccountingInformation");
+
+        await Assert.That((int)Marshal.OffsetOf(accounting, "TotalKernelTime")).IsEqualTo(8);
+        await Assert.That((int)Marshal.OffsetOf<W.System.JobObjects.JOBOBJECT_BASIC_ACCOUNTING_INFORMATION>("TotalKernelTime")).IsEqualTo(8);
 
         // The window procedure's address is the third field of WNDCLASSEXW on both
         // sides, after the size and the style.
@@ -471,6 +497,8 @@ internal sealed class InteropLayoutTests
         "LastInputInfo" => sizeof(W.UI.Input.KeyboardAndMouse.LASTINPUTINFO),
         "WndClassEx" => Marshal.SizeOf<W.UI.WindowsAndMessaging.WNDCLASSEXW>(),
         "Msg" => sizeof(W.UI.WindowsAndMessaging.MSG),
+        "ProcessMemoryCountersEx2" => sizeof(W.System.ProcessStatus.PROCESS_MEMORY_COUNTERS_EX2),
+        "JobObjectBasicAccountingInformation" => sizeof(W.System.JobObjects.JOBOBJECT_BASIC_ACCOUNTING_INFORMATION),
         _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the hand-written structs."),
     };
 }
