@@ -111,7 +111,7 @@ internal sealed record FolderMeasure(DateTimeOffset MeasuredAt, IReadOnlyList<Se
 }
 
 /// <summary>One trace a session holds.</summary>
-/// <param name="Id">An opaque name for it, which is all the page ever sends back.</param>
+/// <param name="Id">An opaque name for it, stable for one file. No page sends it back since 2026-10-12, when the request that opened a trace by it, for which no page drew a button, was removed (previously "which is all the page ever sends back").</param>
 /// <param name="Name">The trace's file name.</param>
 /// <param name="Path">Its full path. Never sent to the page as anything but text.</param>
 internal sealed record TraceEntry(string Id, string Name, string Path);
@@ -214,14 +214,6 @@ internal sealed record SessionsSnapshot(DateTimeOffset ReadAt, IReadOnlyList<Ser
     /// <returns>The session.</returns>
     public SessionEntry? SessionById(string id) =>
         Servers.SelectMany(server => server.Sessions).FirstOrDefault(session => string.Equals(session.Id, id, StringComparison.Ordinal));
-
-    /// <summary>The trace an opaque id names, or <see langword="null"/>.</summary>
-    /// <param name="id">The id the page sent.</param>
-    /// <returns>The trace.</returns>
-    public TraceEntry? TraceById(string id) =>
-        Servers.SelectMany(server => server.Sessions)
-            .SelectMany(session => session.Traces)
-            .FirstOrDefault(trace => string.Equals(trace.Id, id, StringComparison.Ordinal));
 
     /// <summary>The server an opaque id names, or <see langword="null"/>.</summary>
     /// <param name="id">The id the page sent.</param>

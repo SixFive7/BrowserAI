@@ -393,7 +393,7 @@ internal static class ConversationsContent
         var html = new StringBuilder("<aside class=\"inspector\" id=\"inspector\" aria-label=\"What is chosen on the map\" aria-live=\"polite\">\n")
             .Append("<div class=\"inspect-none\" id=\"inspect-none\"").Append(chosen is null ? string.Empty : " hidden").Append("><span class=\"point\">").Append(PageIcons.Of("arrowLeft")).Append("</span>")
             .Append("<p class=\"none-title\">Click any card on the map</p>")
-            .Append("<p>Conversations on the left, BrowserAI in the middle and browser sessions on the right can all be clicked. Each one opens here.</p>")
+            .Append("<p>Conversations on the left, BrowserAI in the middle and browser sessions on the right all open here.</p>")
             .Append("<p class=\"keys\"><kbd>Tab</kbd> and the arrow keys move between cards. <kbd>Enter</kbd> shows one, and <kbd>Esc</kbd> clears it.</p></div>\n")
             .Append(HubPanel(view, chosen));
 
@@ -521,7 +521,7 @@ internal static class ConversationsContent
             .Append(PageParts.Line(session, user?.Working ?? false, view.Now)).Append("</dd></dl>")
             // 59 b, 62 a and 65 a: what its own processes use, and its shared memory as the one
             // figure for all of BrowserAI, which the home's card says.
-            .Append("<section class=\"use\" aria-label=\"What it uses now\"><p class=\"kind\">Uses now</p><dl>").Append(UsageContent.SessionLines(view, session)).Append("</dl></section>")
+            .Append("<section class=\"use\" aria-label=\"What it uses now\"><p class=\"kind\">What it uses now</p><dl>").Append(UsageContent.SessionLines(view, session)).Append("</dl></section>")
             .Append("<dl>")
             .Append("<dt>For</dt><dd>").Append(PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded")).Append("</dd>")
             .Append("<dt>Used by</dt><dd>")
@@ -530,7 +530,7 @@ internal static class ConversationsContent
                 : PageContent.Text(session.Kept ? "No conversation: it was kept after its conversation ended." : "No conversation is connected to it now."))
             .Append("</dd>")
             .Append("<dt>Folder</dt><dd><code>").Append(PageContent.Text(session.Directory)).Append("</code></dd>")
-            .Append("<dt>Size on disk</dt><dd>").Append(PageContent.Text(SizeWords(view, session.Id))).Append("</dd>");
+            .Append("<dt>Size</dt><dd>").Append(PageContent.Text(SizeWords(view, session.Id))).Append("</dd>");
 
         AppendTraces(html, session);
 
@@ -645,7 +645,7 @@ internal static class ConversationsContent
             .Append("<details class=\"sess-more\" id=\"").Append(PageContent.Text(fold)).Append("\"><summary id=\"").Append(PageContent.Text(fold)).Append("-s\">")
             .Append(session.Traces.Count > 0 ? "Folder, size and traces" : "Folder and size").Append("</summary><dl>")
             .Append("<dt>Folder</dt><dd><code>").Append(PageContent.Text(session.Directory)).Append("</code></dd>")
-            .Append("<dt>Size on disk</dt><dd>").Append(PageContent.Text(SizeWords(view, session.Id))).Append("</dd>");
+            .Append("<dt>Size</dt><dd>").Append(PageContent.Text(SizeWords(view, session.Id))).Append("</dd>");
 
         AppendTraces(html, session);
 

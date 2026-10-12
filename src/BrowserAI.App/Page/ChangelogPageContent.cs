@@ -271,9 +271,14 @@ internal static partial class ChangelogPageContent
                 break;
         }
 
+        // What is not yet released is said in words, since 2026-10-12: Releases lists it only
+        // when it holds an entry, and a tab opened before an update can still ask for it
+        // (previously "This build's changelog holds no release unreleased" for that address).
         if (view.Subject is { Length: > 0 } unknown && asked is null)
         {
-            _ = html.Append("<p class=\"small\">This build's changelog holds no release ").Append(PageContent.Text(unknown)).Append(", so the page shows the installed one.</p>\n");
+            _ = string.Equals(unknown, UnreleasedKey, StringComparison.Ordinal)
+                ? html.Append("<p class=\"small\">This build's changelog lists nothing as not yet released, so the page shows the installed one.</p>\n")
+                : html.Append("<p class=\"small\">This build's changelog holds no release ").Append(PageContent.Text(unknown)).Append(", so the page shows the installed one.</p>\n");
         }
 
         // 92 b, 2026-10-12: a release's own tag for its section, the build's ref for what is

@@ -254,8 +254,6 @@ internal sealed class RecordingHost : IPageHost
 
     public void OpenFolder(string directory) => Opened.Enqueue(directory);
 
-    public string? OpenTrace(string trace) => null;
-
     public Task<FolderPick> PickFolderAsync(string prompt)
     {
         Prompts.Enqueue(prompt);

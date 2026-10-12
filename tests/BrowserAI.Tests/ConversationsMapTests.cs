@@ -132,7 +132,7 @@ internal sealed class ConversationsMapTests
 
         await Assert.That(page).Contains("Click any card on the map. Its details open here.</p>");
         await Assert.That(page).Contains("<p class=\"none-title\">Click any card on the map</p>");
-        await Assert.That(page).Contains("Conversations on the left, BrowserAI in the middle and browser sessions on the right can all be clicked. Each one opens here.");
+        await Assert.That(page).Contains("Conversations on the left, BrowserAI in the middle and browser sessions on the right all open here.");
         await Assert.That(page).Contains("<kbd>Tab</kbd> and the arrow keys move between cards. <kbd>Enter</kbd> shows one, and <kbd>Esc</kbd> clears it.");
     }
 
@@ -243,7 +243,7 @@ internal sealed class ConversationsMapTests
         var history = PanelOf(html!, "s-" + CensusPageSessions.IdOf(History));
 
         await Assert.That(pricing).Contains("<dt>Traces</dt><dd>checkout-total.zip<span class=\"dd-note\">Recordings Playwright can replay, in the session's output folder.</span></dd>");
-        await Assert.That(pricing).Contains("<dt>Size on disk</dt><dd>188 MB</dd>");
+        await Assert.That(pricing).Contains("<dt>Size</dt><dd>188 MB</dd>");
         await Assert.That(pricing).Contains("<p class=\"keep-note\">BrowserAI never deletes a session folder on its own, and this page deletes nothing. The agent that made this one can delete it, and so can you: open its folder and delete it in Explorer.</p>");
         await Assert.That(pricing).Contains("<button type=\"button\" class=\"pick inline\" id=\"iu-s-" + CensusPageSessions.IdOf(Pricing) + "\" data-inspect=\"c-401-0\">");
         await Assert.That(pricing).Contains("This window is on your screen. While it is open, it holds back any update. Closing it ends the browser and keeps the session.");
@@ -326,7 +326,7 @@ internal sealed class ConversationsMapTests
 
         await Assert.That(list).Contains($"<div class=\"sess\" id=\"sess-{pricing}\">");
         await Assert.That(list).Contains($"<details class=\"sess-more\" id=\"d-sess-{pricing}\"><summary id=\"d-sess-{pricing}-s\">Folder, size and traces</summary>");
-        await Assert.That(list).Contains("<dt>Size on disk</dt><dd>188 MB</dd>");
+        await Assert.That(list).Contains("<dt>Size</dt><dd>188 MB</dd>");
         await Assert.That(list).Contains("Recordings Playwright can replay, in the session's output folder.");
         await Assert.That(list).DoesNotContain("ll-session-");
         await Assert.That(list).DoesNotContain(">Details</a>");
@@ -361,7 +361,7 @@ internal sealed class ConversationsMapTests
         await Assert.That(panel).Contains($"<dt>CPU</dt><dd data-usage=\"s:{pricing}:cpu\">2.6%</dd>");
         await Assert.That(panel).Contains($"<dt>Own memory</dt><dd data-usage=\"s:{pricing}:own\">538 MB</dd>");
         await Assert.That(panel).Contains($"<dt>Shared memory</dt><dd><a id=\"l-shared-{pricing}\" href=\"./?tab=1#card-usage\" data-usage=\"shared-all\">About 141 MB for all of BrowserAI</a></dd>");
-        await Assert.That(panel).Contains("<p class=\"kind\">Uses now</p>");
+        await Assert.That(panel).Contains("<p class=\"kind\">What it uses now</p>");
 
         var browser = panel.IndexOf("<dt>Browser</dt>", StringComparison.Ordinal);
         var cpu = panel.IndexOf("<dt>CPU</dt>", StringComparison.Ordinal);

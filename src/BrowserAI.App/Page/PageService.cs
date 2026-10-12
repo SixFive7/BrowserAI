@@ -28,11 +28,6 @@ internal interface IPageHost
     /// <param name="directory">The folder.</param>
     void OpenFolder(string directory);
 
-    /// <summary>Opens Playwright's trace viewer on one trace.</summary>
-    /// <param name="trace">The trace file.</param>
-    /// <returns>A sentence when it could not be opened, or <see langword="null"/>.</returns>
-    string? OpenTrace(string trace);
-
     /// <summary>Asks the person for a folder through Windows' own picker, Q311.</summary>
     /// <param name="prompt">What the picker says the folder is for.</param>
     /// <returns>What the person chose, or that they chose nothing.</returns>
@@ -753,7 +748,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             "install-now" => StartInstallNow(String(request, "version")),
             "open-folder" => await OpenFolderAsync(String(request, "folder")).ConfigureAwait(false),
             "open-session" => OpenSession(String(request, "session")),
-            "open-trace" => OpenTrace(String(request, "trace")),
             "refresh-sessions" => Run(RefreshSessionsAsync(CancellationToken.None)),
             "measure-sessions" => MeasureAsked(),
             "read-registration" => StartRegistrationRead(),
@@ -1063,16 +1057,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         return true;
     }
 
-    private void Note(PageKind kind, PageNote? note)
-    {
-        lock (_gate)
-        {
-            _notes[kind] = note;
-        }
-
-        Push();
-    }
-
     private async Task<bool> OpenFolderAsync(string? folder)
     {
         var directory = folder switch
@@ -1117,30 +1101,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         }
 
         _host.OpenFolder(directory);
-        return true;
-    }
-
-    private bool OpenTrace(string? id)
-    {
-        TraceEntry? trace;
-
-        lock (_gate)
-        {
-            trace = id is null ? null : _snapshot.TraceById(id);
-        }
-
-        if (trace is null)
-        {
-            return false;
-        }
-
-        // Said on the conversations page since 2026-10-12, when it took over from one
-        // session's page (previously that page, since 2026-10-11, 40 a).
-        if (_host.OpenTrace(trace.Path) is { } refused)
-        {
-            Note(PageKind.Sessions, new PageNote("The trace viewer did not open.", refused));
-        }
-
         return true;
     }
 
