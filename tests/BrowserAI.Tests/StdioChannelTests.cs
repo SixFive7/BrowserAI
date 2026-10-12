@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using System.IO.Pipes;
 using System.Text;
 using BrowserAI.Interop;
 using BrowserAI.Protocol;
@@ -146,9 +147,11 @@ internal sealed class StdioChannelTests
     {
         var (parent, child) = NamedPipes.CreateChildPipe(childReads: false);
 
-        using var childEnd = new SafeFileHandle(child, ownsHandle: true);
+        // The written end as a pipe stream and not a FileStream: it is synchronous, as the
+        // clients' are, and the suite opens every FileStream for asynchronous I/O.
+        using var childEnd = new SafePipeHandle(child, ownsHandle: true);
         await using var client = new FileStream(parent, FileAccess.Read, bufferSize: 0, isAsync: true);
-        await using var writing = new FileStream(childEnd, FileAccess.Write, bufferSize: 0, isAsync: false);
+        await using var writing = new AnonymousPipeClientStream(PipeDirection.Out, childEnd);
         await using var output = StdioChannel.PumpWrites(writing);
 
         // Far more than a pipe buffers, so the write waits until the client reads.

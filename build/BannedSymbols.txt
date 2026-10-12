@@ -124,13 +124,24 @@ M:System.Diagnostics.Process.WaitForExit(System.Int32);Never WaitForExit, any ov
 ; else happens, so each is banned here, repository-wide, product and suite
 ; alike, and the build is red wherever one stands.
 ;
-; FIVE PLACES KEEP A WAIT, and four of them are approved: the maintainer's
-; 76 b, 2026-10-11, in his words verbatim: "76 b - but also, why is the session-delete path not async? Is it just the test that is sync or is there another path still not async?"
-; The four places' eight calls carry a suppression with the reason beside it:
-; the mutex's owner thread, the log's sink, JobContainmentTests' read of an
-; anonymous pipe and SessionLockTests' four waits. The fifth, the relay's
-; standard input and output, is measured before he decides, and the build
-; stays red at its three calls until he does. Corrected 2026-10-11 (previously
+; FIVE PLACES KEEP A WAIT, ALL APPROVED, AND ONE KIND OF THREAD WAITS FOR ITS
+; WORK. Corrected 2026-10-12 (previously "FIVE PLACES KEEP A WAIT, and four of
+; them are approved", with SessionLockTests' four waits the fourth place and the
+; relay's standard input and output measured before he decided). The maintainer's
+; answers of that day, in his words verbatim: "78-82 your recommendation". 78 a
+; approved the fifth: StdioChannel's read and its write and flush carry their
+; suppression, with the measured reason that both clients hand a synchronous pipe
+; end Windows refuses to reopen overlapped (231), switch in place or bind to a
+; completion port (87). 79 c freed SessionLockTests' four: the destroy's delete
+; is awaited outside the session's lock, and the two arms await. So the places
+; are the mutex's owner thread, the log's sink, JobContainmentTests' read of an
+; anonymous pipe and the relay's standard input and output; and
+; Runtime/DedicatedThread's wait for its next item, the thread 78 b, 80 b, 81 c
+; and 82 b run their synchronous calls on (the relay's output, the file system,
+; each session store), carries one suppression of its own.
+;
+; The approval of 2026-10-11, 76 b, in his words verbatim: "76 b - but also, why is the session-delete path not async? Is it just the test that is sync or is there another path still not async?"
+; Corrected 2026-10-11 (previously
 ; "SIX PLACES KEEP A WAIT, ten calls in all, and each is listed for his review
 ; and carries no suppression until he has read the reasoning, so the build
 ; stays red at every one until then"). The owner thread of a named kernel mutex
@@ -166,8 +177,14 @@ M:System.Diagnostics.Process.WaitForExit(System.Int32);Never WaitForExit, any ov
 ; call through a TextReader or TextWriter reference (Console's streams among
 ; them), a P/Invoke that waits (WaitForSingleObject, LockFileEx, ReadFile on a
 ; synchronous handle), SQLite's own file I/O, which is native and has no
-; asynchronous form, and the file system's metadata calls (File.Exists, a
-; directory listing, File.Move), which Windows offers synchronously only. And an
+; asynchronous form, and the file system's metadata calls (File.Exists,
+; File.GetLastWriteTime), which Windows offers synchronously only. Corrected
+; 2026-10-12 (previously "SQLite's own file I/O ... and the file system's metadata
+; calls (File.Exists, a directory listing, File.Move)"): since 80 b and 81 c the
+; product's listings, creations, deletions and renames are banned by
+; src/BrowserAI/BannedSymbols.txt and made on Runtime/FileSystemThread, and since
+; 82 b a session store's statements run on the store's own thread, which
+; Storage/SessionStoreConnection checks at run time, as no list can. And an
 ; asynchronous read or write of a stream that was not opened for overlapped
 ; I/O, which the framework serves as a synchronous call on a pool thread: a
 ; System.Diagnostics.Process's redirected streams are such streams (kb,

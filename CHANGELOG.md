@@ -296,6 +296,14 @@ argument a tool does not have is refused.
   The resolved set each release was built from is committed to the repository as well, under
   [`docs/evidence/`](docs/evidence/README.md).
 
+- 🔧 **`browserai_list` and the Storage page show sizes from one measurement, and say how old it is.**
+  The listing no longer weighs every session it names on every call: it answers from the
+  measurement the Storage page shows, and once that is more than a minute old it says *"Sizes
+  were measured 3 minutes ago, and are being measured again."* and starts a new one. The page
+  says *"Measured at 14:02:09, 5 min ago."* once its measurement is that old. A folder that
+  cannot be read is *"could not be measured"* in the listing, as on the page, and what a junction
+  inside a session points at is no longer counted in its size.
+
 ### Removed
 
 - 🗑️ **The configuration window is gone, and with it a link a project file could use to run something.**
