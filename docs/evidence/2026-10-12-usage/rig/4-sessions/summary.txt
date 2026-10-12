@@ -1,0 +1,63 @@
+usage rig at 2026-10-12T15:59:20.6990974+00:00: 4 session(s), 1000 readings, paced 120 s
+chrome: C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+processors: 32
+session 0: chrome pid 70332
+session 1: chrome pid 77676
+session 2: chrome pid 70012
+session 3: chrome pid 76040
+session 0: 10 processes in its job, CPU so far 5.359 s
+   70332 chrome.exe   ws   140.3 MB  private ws    39.9 MB  shared ws   100.4 MB  shared commit    83.3 MB
+   73132 chrome.exe   ws    10.8 MB  private ws     1.9 MB  shared ws     8.9 MB  shared commit    11.9 MB
+   85328 chrome.exe   ws    89.5 MB  private ws    33.7 MB  shared ws    55.8 MB  shared commit    21.6 MB
+   85944 chrome.exe   ws    18.5 MB  private ws     3.2 MB  shared ws    15.3 MB  shared commit     0.9 MB
+   40252 chrome.exe   ws   113.8 MB  private ws    58.1 MB  shared ws    55.7 MB  shared commit     4.1 MB
+   97180 chrome.exe   ws    32.1 MB  private ws     8.3 MB  shared ws    23.8 MB  shared commit     1.3 MB
+   33808 chrome.exe   ws    47.8 MB  private ws    13.1 MB  shared ws    34.7 MB  shared commit     2.0 MB
+   81980 chrome.exe   ws    41.5 MB  private ws     8.6 MB  shared ws    32.9 MB  shared commit    11.7 MB
+   87920 chrome.exe   ws    40.1 MB  private ws    11.0 MB  shared ws    29.0 MB  shared commit     1.4 MB
+   67364 chrome.exe   ws    31.7 MB  private ws     8.2 MB  shared ws    23.6 MB  shared commit     1.3 MB
+session 1: 11 processes in its job, CPU so far 5.813 s
+   77676 chrome.exe   ws   141.4 MB  private ws    41.0 MB  shared ws   100.4 MB  shared commit    18.0 MB
+   73820 chrome.exe   ws    10.7 MB  private ws     1.8 MB  shared ws     8.9 MB  shared commit    11.9 MB
+   80580 chrome.exe   ws    96.0 MB  private ws    35.1 MB  shared ws    60.9 MB  shared commit    21.8 MB
+   83084 chrome.exe   ws    18.5 MB  private ws     3.2 MB  shared ws    15.3 MB  shared commit     0.9 MB
+   67372 chrome.exe   ws   111.3 MB  private ws    56.4 MB  shared ws    54.9 MB  shared commit     4.1 MB
+   67976 chrome.exe   ws    32.1 MB  private ws     8.3 MB  shared ws    23.8 MB  shared commit     1.3 MB
+   74628 chrome.exe   ws    45.3 MB  private ws    10.6 MB  shared ws    34.7 MB  shared commit     2.0 MB
+   87500 chrome.exe   ws    41.7 MB  private ws     8.8 MB  shared ws    32.9 MB  shared commit    11.8 MB
+   79632 chrome.exe   ws    42.8 MB  private ws    13.9 MB  shared ws    29.0 MB  shared commit     1.4 MB
+   90080 chrome.exe   ws    40.1 MB  private ws    11.1 MB  shared ws    29.0 MB  shared commit     1.4 MB
+   61300 chrome.exe   ws    31.8 MB  private ws     8.2 MB  shared ws    23.6 MB  shared commit     1.3 MB
+session 2: 11 processes in its job, CPU so far 5.906 s
+   70012 chrome.exe   ws   141.5 MB  private ws    40.9 MB  shared ws   100.6 MB  shared commit    18.0 MB
+   85444 chrome.exe   ws    10.8 MB  private ws     1.9 MB  shared ws     8.9 MB  shared commit    11.9 MB
+   77484 chrome.exe   ws    94.7 MB  private ws    33.9 MB  shared ws    60.8 MB  shared commit    21.8 MB
+   38036 chrome.exe   ws    18.5 MB  private ws     3.2 MB  shared ws    15.3 MB  shared commit     0.9 MB
+   72120 chrome.exe   ws   111.9 MB  private ws    57.1 MB  shared ws    54.8 MB  shared commit     4.1 MB
+   73204 chrome.exe   ws    32.0 MB  private ws     8.2 MB  shared ws    23.8 MB  shared commit     1.3 MB
+   97728 chrome.exe   ws    45.6 MB  private ws    10.9 MB  shared ws    34.8 MB  shared commit     2.0 MB
+   95416 chrome.exe   ws    40.9 MB  private ws     8.5 MB  shared ws    32.4 MB  shared commit    11.8 MB
+   52208 chrome.exe   ws    40.3 MB  private ws    11.3 MB  shared ws    29.0 MB  shared commit     1.4 MB
+   80000 chrome.exe   ws    42.7 MB  private ws    13.8 MB  shared ws    28.9 MB  shared commit     1.4 MB
+   10264 chrome.exe   ws    31.7 MB  private ws     8.2 MB  shared ws    23.6 MB  shared commit     1.3 MB
+session 3: 11 processes in its job, CPU so far 5.766 s
+   76040 chrome.exe   ws   141.3 MB  private ws    40.8 MB  shared ws   100.5 MB  shared commit    18.0 MB
+   29352 chrome.exe   ws    10.7 MB  private ws     1.8 MB  shared ws     8.9 MB  shared commit    11.9 MB
+   70128 chrome.exe   ws    94.5 MB  private ws    33.9 MB  shared ws    60.6 MB  shared commit    21.8 MB
+   77352 chrome.exe   ws    18.4 MB  private ws     3.2 MB  shared ws    15.3 MB  shared commit     0.9 MB
+   78472 chrome.exe   ws   110.7 MB  private ws    55.9 MB  shared ws    54.8 MB  shared commit     4.1 MB
+   89432 chrome.exe   ws    32.0 MB  private ws     8.2 MB  shared ws    23.8 MB  shared commit     1.3 MB
+   86784 chrome.exe   ws    44.0 MB  private ws     9.9 MB  shared ws    34.1 MB  shared commit     2.0 MB
+   80120 chrome.exe   ws    41.3 MB  private ws     8.6 MB  shared ws    32.8 MB  shared commit    11.8 MB
+   85964 chrome.exe   ws    42.9 MB  private ws    13.9 MB  shared ws    29.0 MB  shared commit     1.4 MB
+   33200 chrome.exe   ws    40.2 MB  private ws    11.2 MB  shared ws    29.0 MB  shared commit     1.4 MB
+   63832 chrome.exe   ws    31.7 MB  private ws     8.2 MB  shared ws    23.6 MB  shared commit     1.3 MB
+the rig itself readable: True
+first reading, images read: 3026.7 us, 43 members, browser 777.7 MB, server 0.0 MB, largest shared ws 100.6 MB
+hot readings, 43 members each: median 427.3 us, p99 1000.7 us, max 1528.5 us, over 1000
+per member, at the median: 9.9 us
+paced, no reading: 8418740 cycles, 0.0 ms CPU over 120 s
+paced, a reading every 2 s: 163477780 cycles, 15.6 ms CPU over 120 s, 60 readings
+paced readings, cold: median 782.5 us, p99 1459.1 us, max 1459.1 us, over 60
+cycles per reading over the idle wait: 2584317
+jobs closed at 2026-10-12T16:03:31.2066866+00:00

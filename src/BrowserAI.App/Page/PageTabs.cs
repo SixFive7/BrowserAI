@@ -109,7 +109,7 @@ internal static class PageNames
 }
 
 /// <summary>One event for one tab's stream.</summary>
-/// <param name="Name">The event's name: <c>state</c>, <c>superseded</c> or <c>closing</c>.</param>
+/// <param name="Name">The event's name: <c>state</c>, <c>usage</c>, <c>superseded</c> or <c>closing</c>.</param>
 /// <param name="Data">The event's data, one line of JSON.</param>
 internal sealed record PageEvent(string Name, string Data);
 
@@ -165,11 +165,17 @@ internal sealed class TabStream(int tab, PageKind page, string? subject = null)
     }
 }
 
-/// <summary>The three event names a tab's stream carries.</summary>
+/// <summary>The event names a tab's stream carries.</summary>
 internal static class PageEvents
 {
     /// <summary>What the page shows now, as HTML.</summary>
     public const string State = "state";
+
+    /// <summary>
+    /// A new reading of the CPU and memory BrowserAI's processes use: each figure's words and
+    /// each chart, which the page writes where they stand (59 b, added 2026-10-12).
+    /// </summary>
+    public const string Usage = "usage";
 
     /// <summary>A newer tab has replaced this one.</summary>
     public const string Superseded = "superseded";

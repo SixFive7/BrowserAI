@@ -257,7 +257,7 @@ internal static class UpdatePageContent
 
         AppendSessions(html, "windows", "window", "Windows on your screen", "Each one closes by itself after its idle time, if nobody uses it, unless it is set never to close.", "No window is open.", holds.VisibleWindows, now, visible: true);
         AppendSessions(html, "hidden", "hidden", "Hidden browsers", "Each one closes by itself after its idle time, if no call uses it, unless it is set never to close.", "No hidden browser is open.", holds.HiddenSessions, now, visible: false);
-        AppendConversations(html, holds.Relays, now);
+        AppendConversations(html, holds.Relays, now, view.Facts.RelayHold);
 
         _ = html.Append("<section id=\"install-now\" class=\"card span-12\">").Append(PageContent.CardHead("bolt", "If you install it now"))
             .Append("<p>").Append(PageContent.Text("Installing now does not wait for any of the above:")).Append("</p>\n<ul class=\"effects\">\n");
@@ -304,10 +304,19 @@ internal static class UpdatePageContent
         _ = html.Append("</div>\n</section>\n");
     }
 
-    private static void AppendConversations(StringBuilder html, IReadOnlyList<HoldingRelay> relays, DateTimeOffset now)
+    /// <summary>The conversations that hold the update, each with how long it holds it.</summary>
+    /// <remarks>
+    /// <b>The caption says the relay's countdown from <paramref name="relayHold"/></b> since
+    /// 2026-10-12 (previously <i>for ten minutes</i>, written in the string): the overview's
+    /// holder list, which said it from the countdown for fact 6 of the reader pass of
+    /// 2026-10-11, became one line that counts what holds the update, so this page is where a
+    /// person reads the length, and a number written in a string is one the numbers index
+    /// cannot see.
+    /// </remarks>
+    private static void AppendConversations(StringBuilder html, IReadOnlyList<HoldingRelay> relays, DateTimeOffset now, TimeSpan relayHold)
     {
         _ = html.Append("<section id=\"conversations\" class=\"card span-4\">").Append(PageContent.CardHead("chat", "Conversations"))
-            .Append("<p class=\"caption\">").Append(PageContent.Text("Each holds the update for ten minutes after its app last sent BrowserAI anything but a ping. Every conversation loses BrowserAI when the update installs, whether it holds the update or not.")).Append("</p>\n");
+            .Append("<p class=\"caption\">").Append(PageContent.Text($"Each holds the update for {PageWords.Minutes(relayHold)} after its app last sent BrowserAI anything but a ping. Every conversation loses BrowserAI when the update installs, whether it holds the update or not.")).Append("</p>\n");
 
         if (relays.Count is 0)
         {

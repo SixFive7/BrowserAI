@@ -1,0 +1,104 @@
+The third planted build, for the second half of the browser arm, with the page script's plant chosen by DASH_HOME_PLANT=no-post:
+  no-post: the dismiss folds the notice and posts nothing; no-hold: a state that arrives while the notice folds is drawn at once.
+Everything else is the code. TestDefaults' InProcessHang is 1 min and BrowserHang 2 min in this build only, so a planted wait ends sooner.
+9e3d6b0efc3b2df7b65a9cc55cbefb5d39dd609b
+ AGENTS.md                                     |   2 +-
+ ARCHITECTURE.md                               |  19 ++++
+ CHANGELOG.md                                  |  20 +++-
+ DECISIONS.md                                  |  56 ++++++++++
+ docs/evidence/README.md                       |   1 +
+ docs/probes/README.md                         |   8 ++
+ kb/numbers.md                                 |   2 +
+ kb/re-verification.md                         |  16 ++-
+ kb/windows/processes.md                       | 109 ++++++++++++++++++++
+ src/BrowserAI.App/Page/PageAssets.cs          | 141 ++++++++++++++++++++++++--
+ src/BrowserAI.App/Page/PageService.cs         |   5 +-
+ src/BrowserAI.App/Page/UpdatePageContent.cs   |  15 ++-
+ src/BrowserAI/Interop/AGENTS.md               |   6 +-
+ src/BrowserAI/Program.Background.cs           |   9 ++
+ tests/BrowserAI.Tests/DashboardTests.cs       |  22 +++-
+ tests/BrowserAI.Tests/Harness/PageRig.cs      |  40 +++++++-
+ tests/BrowserAI.Tests/Harness/TestDefaults.cs |   4 +-
+ tests/BrowserAI.Tests/InteropLayoutTests.cs   |  30 +++++-
+ tests/BrowserAI.Tests/NativeMethods.txt       |   6 ++
+ tests/BrowserAI.Tests/UsageTests.cs           |  96 ++++++++++++++++++
+ 20 files changed, 574 insertions(+), 33 deletions(-)
+running... 0 completed, 0 failed | active: 2 tests running
+running... 0 completed, 0 failed | active: 2 tests running
+[slow] still running after 1m 00s: InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(chromium) (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 1m 00s: InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(firefox) (BrowserAI.Tests.dll|net10.0|x64)
+running... 0 completed, 0 failed | active: 2 tests running
+running... 0 completed, 0 failed | active: 2 tests running
+[slow] still running after 2m 00s: InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(chromium) (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 2m 00s: InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(firefox) (BrowserAI.Tests.dll|net10.0|x64)
+failed InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(chromium) (2m 07s 991ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(await WaitForAsync(async () => File.Exists(record) && (await File.ReadAllTextAsync(record)).Trim() is "9.0.0 seen")).IsTrue()
+    at BrowserAI.Tests.HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(String browser) in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\HomeBrowserTests.cs:134
+    at BrowserAI.Tests.HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(String browser) in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\HomeBrowserTests.cs:157
+    at BrowserAI.Tests.HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(String browser) in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\HomeBrowserTests.cs:157
+    at BrowserAI.Tests.HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(String browser) in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\HomeBrowserTests.cs:157
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(firefox) (2m 09s 964ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(await WaitForAsync(async () => File.Exists(record) && (await File.ReadAllTextAsync(record)).Trim() is "9.0.0 seen")).IsTrue()
+    at BrowserAI.Tests.HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(String browser) in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\HomeBrowserTests.cs:134
+    at BrowserAI.Tests.HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(String browser) in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\HomeBrowserTests.cs:157
+    at BrowserAI.Tests.HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(String browser) in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\HomeBrowserTests.cs:157
+    at BrowserAI.Tests.HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway(String browser) in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\HomeBrowserTests.cs:157
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\BrowserAI.app-<version>-full.nupkg
+  shipping release    ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\BrowserAI.app-<version>-full.nupkg, at the top of the directory and not under test-pack
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\dash-home rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-12T16:56:52.079Z is 2m03s newer than the newest of 235 inputs (src\BrowserAI.App\Page\UsageContent.cs, 2026-10-12T16:54:48.111Z) · exe and tree both 1.1.1-alpha.0.402 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/HomeBrowserTests/*' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 2 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 88,005 MiB (62.3%) · end 87,993 MiB (62.3%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 382 events, 0 about visible root windows and none of them this run's, 131 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 64 scans, 51 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=76868 created=134362986257112274), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  3 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed! - C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 2
+  failed: 2
+  succeeded: 0
+  skipped: 0
+  duration: 2m 11s 835ms
+red4 no-post run exit 2

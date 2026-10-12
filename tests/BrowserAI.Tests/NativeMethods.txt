@@ -55,6 +55,10 @@
 // Windows Runtime interfaces the toasts call are NOT here: they are not in the
 // metadata CsWin32 reads, and their oracle is the metadata Windows ships in
 // System32\WinMetadata.
+//
+// AND PROCESS_MEMORY_COUNTERS_EX2 AND JOBOBJECT_BASIC_ACCOUNTING_INFORMATION SINCE 2026-10-12,
+// added by addition: what one process uses and what a session's job has used, which the
+// page's CPU and memory read (59 b).
 
 STARTUPINFOW
 STARTUPINFOEXW
@@ -63,6 +67,8 @@ SECURITY_ATTRIBUTES
 IO_COUNTERS
 JOBOBJECT_BASIC_LIMIT_INFORMATION
 JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+JOBOBJECT_BASIC_ACCOUNTING_INFORMATION
+PROCESS_MEMORY_COUNTERS_EX2
 TOKEN_USER
 LASTINPUTINFO
 WNDCLASSEXW

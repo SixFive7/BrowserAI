@@ -231,6 +231,13 @@ of this directory**, with its digest in the rig's evidence batch, because a seco
 decision and the paragraph below says to ask; the question is the maintainer's. **The scan
 would still flag eleven files, and only `observe.ps1` selects a process by name.**
 
+⚠️ *Added 2026-10-12, later.* **Forty-one**, counted as its subdirectories, when
+[`2026-10-12-usage`](2026-10-12-usage/README.md) arrived with the maintainer's 59 b. Its
+four code files carry none of the eight spellings `ProcessSelection` keys on, by a search
+that found one line of them in `observe.ps1`, the positive control, so the scan has nothing
+to read in it and it was not put to the scan: it reads its own jobs' members and nothing
+else. **It adds nothing to what the scan would flag.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -314,3 +321,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-08-built-in-tool-list`](2026-10-08-built-in-tool-list/README.md) | The payload's own child asked for its tools under five session configurations, its answer compared byte for byte with the snapshot BrowserAI compiles in, and an older snapshot as the control | |
 | [`2026-10-11-reopen`](2026-10-11-reopen/README.md) | Whether a relay's standard handles can be reopened overlapped: each handle kind a stdio server can be handed, made the way its source makes it, and what Claude Code and Codex hand, read out of running relays | |
 | [`2026-10-11-link-start`](2026-10-11-link-start/README.md) | What comes to the front when a folder link is clicked: a link's start that opens the folder or Windows' folder picker itself, against a stand-in for the background with and without the right to come forward, in Firefox 157.0.1 with a scratch profile | the held-out `close-probe-windows.ps1` would, a true positive |
+| [`2026-10-12-usage`](2026-10-12-usage/README.md) | What a reading of BrowserAI's CPU and memory costs: headless Chromiums in jobs of their own, read the way the background reads a session's job, hot and at the shipped pace of one reading every two seconds against the same wait with no reading, and what each member's working set, private working set, shared working set and shared commit are | |

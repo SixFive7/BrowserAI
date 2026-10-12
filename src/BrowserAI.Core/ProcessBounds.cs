@@ -150,6 +150,18 @@ internal static class ProcessBounds
     public static TimeSpan PageTabsLinger { get; } = TimeSpan.FromMinutes(1);
 
     /// <summary>
+    /// How often the page reads what BrowserAI's processes use while a tab shows the figures:
+    /// 2 s, the maintainer's 59 b. The value of <c>PageService.UsageInterval</c>.
+    /// </summary>
+    public static TimeSpan PageUsageInterval { get; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// How far back the page's CPU and memory charts reach: 2 minutes, the build's choice. The
+    /// value of <c>PageService.UsageWindow</c>.
+    /// </summary>
+    public static TimeSpan PageUsageWindow { get; } = TimeSpan.FromMinutes(2);
+
+    /// <summary>
     /// The shortest period a coalescable timer may be given: 1 ms, because Windows takes
     /// the period as a whole number of milliseconds and reads zero as a timer that fires
     /// once. Read by <c>CoalescableTimer.Start</c>.

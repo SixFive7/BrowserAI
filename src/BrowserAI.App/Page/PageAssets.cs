@@ -19,7 +19,7 @@ namespace BrowserAI.App.Page;
 /// dark setting through the browser, <c>prefers-color-scheme</c>, and stores nothing.
 /// </para>
 /// <para>
-/// <b>The script does seven things and no more</b>: it keeps one event stream open and
+/// <b>The script does ten things and no more</b>: it keeps one event stream open and
 /// replaces the page's main part with each state it is sent, and gives the keyboard focus
 /// back to the control that had it, keeps open the folds that were open and the card chosen
 /// on the map (46 a); it closes the tab when a newer one has replaced it (Q337 a), falling
@@ -27,8 +27,13 @@ namespace BrowserAI.App.Page;
 /// background says before it goes; it posts the action a button names, as JSON, to this
 /// origin; once a second it rewrites every countdown from the deadline the element carries,
 /// <c>data-ends-at</c>, in milliseconds since 1970; it shows what a card on the map is when
-/// the card is chosen; and it draws the map's lines from where the cards are (40 a).
-/// ⚠️ <i>And an eighth since 2026-10-12, by addition, 73 b</i>: on a page drawn with folder
+/// the card is chosen; it draws the map's lines from where the cards are (40 a); it writes
+/// each new reading of the CPU and memory into the figures and charts that carry its names,
+/// <c>data-usage</c> and <c>data-usage-chart</c>, where they stand (59 b); and it folds the
+/// after-update notice away when its dismiss is pressed, holding back a new state until the
+/// fold has finished (57 a). <i>Corrected 2026-10-12 (previously "seven things"), when the
+/// last two arrived.</i>
+/// ⚠️ <i>And a tenth since 2026-10-12, by addition, 73 b</i>: on a page drawn with folder
 /// links it puts the body's <c>data-link-hint</c> as one line under the page's first one.
 /// A folder link is an ordinary link the browser follows, and the script does nothing for it.
 /// </para>
@@ -370,6 +375,92 @@ internal static class PageAssets
         .foot { max-width: 1180px; margin: 0 auto; padding: 0 32px 40px; color: var(--muted); font-size: 12.5px; display: flex; gap: 16px; flex-wrap: wrap; }
         .foot a { color: var(--muted); }
 
+        body[data-page="status"] main, body[data-page="status"] .top-in, body[data-page="status"] .foot { max-width: 1440px; }
+        body[data-page="status"] main { padding-bottom: 28px; }
+        body[data-page="status"] .foot { padding-bottom: 24px; }
+        .btn.go .icon { width: 16px; height: 16px; margin-left: -2px; }
+        .btn.wide { width: 100%; justify-content: center; padding: 11px 16px; font-size: 14.5px; margin-top: 16px; }
+        .dismiss { flex: none; align-self: center; width: 32px; height: 32px; margin: 0 -6px 0 0; display: grid; place-items: center; border-radius: 9px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+        .dismiss:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); }
+        .dismiss .icon { width: 17px; height: 17px; }
+        .fold { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 260ms ease, opacity 200ms ease, margin 260ms ease; }
+        .fold > .fold-in { min-height: 0; overflow: hidden; }
+        .fold.gone { grid-template-rows: 0fr; opacity: 0; }
+        main .fold.gone { margin-top: 0; margin-bottom: 0; }
+        .live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650; color: var(--accent-text); background: var(--accent-soft); border-radius: 999px; padding: 1px 9px 1px 8px; }
+        .card-head .live { margin-left: 4px; }
+        .stats.five { grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; }
+        .stats.five .stat { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "ic num" "label label" "sub sub"; column-gap: 10px; row-gap: 0; align-items: center; align-content: start; padding: 12px 14px; }
+        .stats.five .stat > div { display: contents; }
+        .stats.five .stat > .icon { grid-area: ic; width: 18px; height: 18px; }
+        .stats.five .stat > div > span { grid-area: label; white-space: nowrap; font-size: 13px; line-height: 1.3; margin-top: 4px; }
+        .stats.five .stat b { grid-area: num; font-size: 30px; line-height: 1.1; font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+        .stats.five .stat small { grid-area: sub; display: block; white-space: nowrap; margin-top: 2px; }
+        .stat small .working, .stat small .working span { color: var(--accent-text); }
+        .stat small .working { font-weight: 600; gap: 5px; font-size: 12.5px; }
+        .stat small .pulse { width: 6px; height: 6px; }
+        .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .metric { background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; display: flex; flex-direction: column; }
+        .m-top { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+        .m-top .icon { width: 18px; height: 18px; }
+        .m-label { font-weight: 600; }
+        .m-value { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; font-size: 28px; line-height: 1.15; font-weight: 650; margin: 4px 0 6px; font-variant-numeric: tabular-nums; }
+        .m-why { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+        .m-parts { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 2px 0 0; font-size: 12.5px; }
+        .m-parts dt { color: var(--muted); }
+        .m-parts dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+        .chart { position: relative; display: flex; flex-direction: column; margin: 2px 0 0; padding-top: 15px; min-height: 0; }
+        .chart svg { display: block; width: 100%; height: 46px; overflow: visible; }
+        .chart.grow { flex: 1 1 auto; min-height: 44px; }
+        .chart.grow svg { flex: 1 1 0; height: auto; min-height: 24px; }
+        .c-top { position: absolute; right: 0; top: 0; font-size: 11px; line-height: 1; color: var(--faint); font-variant-numeric: tabular-nums; pointer-events: none; }
+        .c-grid, .c-base { fill: none; stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+        .c-base { stroke: var(--line-strong); }
+        .c-area { fill: var(--accent); opacity: 0.1; }
+        .c-line, .c-now { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+        .c-line { stroke: color-mix(in srgb, var(--faint) 82%, var(--text)); }
+        .c-now { stroke: var(--accent); }
+        .c-ring, .c-dot { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+        .c-ring { stroke: var(--card-2); stroke-width: 13; }
+        .c-dot { stroke: var(--accent); stroke-width: 9; }
+        .c-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); margin-top: 3px; }
+        .band { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 32px; align-items: center; margin: 0 0 22px; }
+        .band.two { grid-template-columns: minmax(0, 1fr) minmax(0, 560px); }
+        .band .lede { max-width: 900px; margin: 0; }
+        .band .notice { margin: 0; }
+        .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); gap: 18px; align-items: stretch; }
+        .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+        .col-main #card-usage { flex: 1 1 auto; display: flex; flex-direction: column; }
+        .metrics.tall { flex: 1 1 auto; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); grid-template-rows: 1fr auto; gap: 10px; }
+        .metrics.tall #m-own .m-parts { order: -1; margin: 0 0 4px; }
+        .metrics.tall #m-own .m-top { order: -3; }
+        .metrics.tall #m-own .m-value { order: -2; }
+        .metrics.tall #m-cpu { grid-row: span 2; }
+        .col-side { gap: 16px; }
+        .col-side .card { padding: 16px 20px; }
+        .col-side .big { font-size: 21px; margin: 4px 0; }
+        .col-side .card > p:last-child { margin-bottom: 0; }
+        @media (max-width: 1180px) {
+          .band, .band.two, .split { grid-template-columns: 1fr; }
+          .col-side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 980px) {
+          .stats.five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+          .metrics.tall { grid-template-columns: 1fr; grid-template-rows: none; }
+          .metrics.tall #m-cpu { grid-row: auto; }
+          .metrics.tall .chart.grow { flex: none; }
+          .metrics.tall .chart.grow svg { flex: none; height: 80px; }
+        }
+        @media (max-width: 560px) {
+          .stats.five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .col-side { display: flex; }
+          .card-head { flex-wrap: wrap; row-gap: 4px; }
+          .card-head h2 { white-space: nowrap; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .fold { transition: none; }
+        }
+
         @media (min-width: {{WIDTH}}px) {
           .map-layout { display: grid; }
           .legend-row { display: flex; }
@@ -412,6 +503,8 @@ internal static class PageAssets
           const svg = 'http://www.w3.org/2000/svg';
           let finished = false;
           let chosen = null;
+          let folding = null;
+          let heldBack = null;
 
           const pad = (value) => String(value).padStart(2, '0');
           const left = (milliseconds) => {
@@ -494,11 +587,11 @@ internal static class PageAssets
             }
           };
 
-          events.addEventListener('state', (event) => {
+          const draw = (data) => {
             const active = document.activeElement;
             const focused = active && active !== main && main.contains(active) ? active.id : '';
             const open = [...main.querySelectorAll('details[open]')].map((element) => element.id).filter((id) => id);
-            main.innerHTML = JSON.parse(event.data).html;
+            main.innerHTML = JSON.parse(data).html;
             for (const id of open) {
               const element = document.getElementById(id);
               if (element && element.tagName === 'DETAILS') { element.open = true; }
@@ -512,7 +605,35 @@ internal static class PageAssets
               if (again) { again.focus({ preventScroll: true }); }
             }
             if (!finished) { banner.hidden = true; }
+          };
+
+          events.addEventListener('state', (event) => {
+            if (folding) { heldBack = event.data; return; }
+            draw(event.data);
           });
+
+          events.addEventListener('usage', (event) => {
+            const usage = JSON.parse(event.data);
+            for (const element of main.querySelectorAll('[data-usage]')) {
+              const words = usage.text[element.dataset.usage];
+              if (words !== undefined) { element.textContent = words; }
+            }
+            for (const element of main.querySelectorAll('[data-usage-chart]')) {
+              const chart = usage.charts[element.dataset.usageChart];
+              if (chart !== undefined) { element.innerHTML = chart; }
+            }
+          });
+
+          const fold = (button) => {
+            const notice = button.closest('.fold');
+            if (!notice) { return; }
+            notice.classList.add('gone');
+            void getComputedStyle(notice).opacity;
+            folding = Promise.allSettled(notice.getAnimations().map((animation) => animation.finished)).then(() => {
+              folding = null;
+              if (heldBack !== null) { const data = heldBack; heldBack = null; draw(data); }
+            });
+          };
 
           events.addEventListener('superseded', () => {
             finished = true;
@@ -538,6 +659,7 @@ internal static class PageAssets
             if (node) { inspect(chosen === node.dataset.inspect ? null : node.dataset.inspect); return; }
             const button = event.target.closest('button[data-action]');
             if (!button || finished) { return; }
+            if (button.dataset.action === 'dismiss-notice') { fold(button); }
             const request = { ...button.dataset };
             button.disabled = true;
             try {

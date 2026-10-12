@@ -1,0 +1,116 @@
+failed TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt (235ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to contain "Each holds the update for 7 min after its app last sent BrowserAI anything but a ping."
+  but received "<!doctype html>
+  <html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Update - BrowserAI</title>
+  <link rel="stylesheet" href="page.css">
+  <script src="page.js" defer></script>
+  </head>
+  <body data-page="update" data-tab="2" data-unanswered="BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.">
+  <header class="top"><div class="top-in">
+  <a class="brand" id="l-brand" href="./?tab=2"><svg class="brand-mark" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><defs><linearGradient id="top-g" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="0.55" stop-color="#10B981"/><stop offset="1" stop-color="#0E7490"/></linearGradient><clipPath id="top-c"><circle cx="128" cy="128" r="112"/></clipPath></defs><circle cx="128" cy="128" r="112" fill="url(#top-g)"/><g clip-path="url(#top-c)" fill="none" stroke="#ECFEFF" stroke-width="10" opacity="0.45" stroke-linecap="round"><path d="M6 100 Q128 82 250 100"/><path d="M6 158 Q128 176 250 158"/><path d="M128 14 Q70 128 128 242"/><path d="M128 14 Q186 128 128 242"/></g><path d="M44 128 Q128 58 212 128 Q128 198 44 128 Z" fill="#F0FDFA"/><circle cx="128" cy="128" r="31" fill="#083344"/><circle cx="140" cy="116" r="9" fill="#ECFEFF"/></svg><span>BrowserAI</span> <span class="version">9.0.0</span></a>
+  <span class="top-gap"></span>
+  <span class="running"><span class="dot" aria-hidden="true"></span>Running since 01:00</span>
+  <a class="help" id="l-help" href="https://github.com/SixFive7/BrowserAI#readme" target="_blank" rel="noopener noreferrer"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><span>How BrowserAI works</span></a>
+  </div></header>
+  <p id="banner" class="banner" role="status" hidden></p>
+  <main id="main" tabindex="-1">
+  <nav class="crumbs" aria-label="Where you are"><a id="l-crumb-home" href="./?tab=2">Overview</a><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg><span aria-current="page">Update</span></nav>
+  <h1 class="page-title">Update 9.1.0 is ready to install</h1>
+  <p class="lede">It installs by itself once nothing uses BrowserAI, so no agent is cut off in the middle of its work.</p>
+  <div class="card hero" id="hero"><div class="clock"><span class="countdown" data-ends-at="2880000">48:00</span></div><div class="hero-text"><p><b>Installs by itself at about 01:48</b></p><p class="small">if nothing below is used before then. Using anything below starts its countdown again.</p></div><div class="hero-act"><button type="button" id="b-install-now-top" class="btn danger" data-action="install-now" data-version="9.1.0">Install BrowserAI 9.1.0 now</button><span class="small">Closes every browser and disconnects every conversation.</span></div></div>
+  <div class="grid">
+  <section id="windows" class="card span-4"><div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.8" r=".6" fill="currentColor"/><circle cx="8.2" cy="6.8" r=".6" fill="currentColor"/></svg><h2>Windows on your screen</h2></div>
+  <p class="caption">Each one closes by itself after its idle time, if nobody uses it, unless it is set never to close.</p>
+  <div class="hold-list">
+  <div class="hold-item"><span class="sess-ic w"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.8" r=".6" fill="currentColor"/><circle cx="8.2" cy="6.8" r=".6" fill="currentColor"/></svg></span><div><b>pricing-compare</b><p class="sub">comparing the three pricing pages side by side</p><p class="sub">Close this window to let the update go ahead, or it closes by itself if nobody types or clicks in it and no call names it.</p></div><span class="chip window"><span class="countdown" data-ends-at="2880000">48:00</span></span></div>
+  </div>
+  </section>
+  <section id="hidden" class="card span-4"><div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1"/><path d="M9.6 14.4a3 3 0 0 1 4.8-4.8"/><path d="M4 20 20 4"/></svg><h2>Hidden browsers</h2></div>
+  <p class="caption">Each one closes by itself after its idle time, if no call uses it, unless it is set never to close.</p>
+  <div class="hold-list">
+  <div class="hold-item"><span class="sess-ic h"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1"/><path d="M9.6 14.4a3 3 0 0 1 4.8-4.8"/><path d="M4 20 20 4"/></svg></span><div><b>checkout-rounding</b><p class="sub">reproducing the rounding error in the checkout total</p><p class="sub">Closes by itself if no call names it.</p></div><span class="chip hidden"><span class="countdown" data-ends-at="420000">7:00</span></span></div>
+  </div>
+  </section>
+  <section id="conversations" class="card span-4"><div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg><h2>Conversations</h2></div>
+  <p class="caption">Each holds the update for ten minutes after its app last sent BrowserAI anything but a ping. Every conversation loses BrowserAI when the update installs, whether it holds the update or not.</p>
+  <div class="hold-list">
+  <div class="hold-item"><span class="sess-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 10l3 2.2L7 14.5M12.5 15h4.5"/></svg></span><div><b>Claude Code in market-notes</b><p class="sub">Claude Code 2.1.300</p><p class="sub">Holds the update until its countdown runs out, if its app sends nothing but pings.</p><p class="sub warning">After an update, run /mcp in that terminal, choose BrowserAI, then Reconnect.</p></div><span class="chip"><span class="countdown" data-ends-at="480000">8:00</span></span></div>
+  </div>
+  </section>
+  <section id="install-now" class="card span-12"><div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/></svg><h2>If you install it now</h2></div>
+  <p>Installing now does not wait for any of the above:</p>
+  <ul class="effects">
+  <li>Every browser closes cleanly, windows included, with what is open in them. Each session comes back where it was when its agent resumes it.</li>
+  <li>Every conversation loses BrowserAI. Claude Code in VS Code reconnects by itself; in a terminal, run /mcp there, choose BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.</li>
+  <li>BrowserAI starts again by itself once 9.1.0 is installed, and a notification says so.</li>
+  </ul>
+  <p><button type="button" id="b-install-now-bottom" class="btn danger" data-action="install-now" data-version="9.1.0">Install BrowserAI 9.1.0 now</button></p>
+  </section>
+  </div>
+  
+  </main>
+  <footer class="foot"><span>BrowserAI 9.0.0</span><a id="l-foot-changelog" href="changelog?tab=2">What is new</a><a id="l-foot-install" href="install?tab=2">This install</a></footer>
+  </body>
+  </html>
+  "
+  
+  at Assert.That(update.Body).Contains("Each holds the update for 7 min after its app last sent BrowserAI anything but a ping.")
+    at BrowserAI.Tests.DashboardTests.TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt() in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\DashboardTests.cs:397
+    at BrowserAI.Tests.DashboardTests.TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt() in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\DashboardTests.cs:398
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\BrowserAI.app-<version>-full.nupkg
+  shipping release    ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\BrowserAI.app-<version>-full.nupkg, at the top of the directory and not under test-pack
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\dash-home rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-12T16:15:31.530Z is 2m33s newer than the newest of 235 inputs (src\BrowserAI.App\Page\UsageContent.cs, 2026-10-12T16:12:57.576Z) · exe and tree both 1.1.1-alpha.0.402 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/DashboardTests/TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 2 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 69,538 MiB (49.2%) · end 69,642 MiB (49.3%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 2 events, 0 about visible root windows and none of them this run's, 130 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 2 scans, 35 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=61712 created=134362976588577067), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  3 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed! - C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 1
+  failed: 1
+  succeeded: 0
+  skipped: 0
+  duration: 1s 602ms
+red3 dashboard run exit 2

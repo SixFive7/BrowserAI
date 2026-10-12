@@ -48,8 +48,15 @@ internal sealed class PageRig : IAsyncDisposable
         BrokenInstallNotice? install = null,
         bool installed = true,
         Func<PageFacts, PageFacts>? facts = null,
-        IPageListenerMemory? memory = null) =>
-        new(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts, memory);
+        IPageListenerMemory? memory = null)
+    {
+        var rig = new PageRig(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts, memory);
+
+        // The background's own start reads the after-update notice's record before any tab
+        // (57 a), so the rig's does too.
+        await rig.Page.PrepareAsync();
+        return rig;
+    }
 
     private PageRig(
         ScratchDirectory scratch,
@@ -97,6 +104,7 @@ internal sealed class PageRig : IAsyncDisposable
             // so an arm that sets no holds gets one where nothing waits.
             Holds = holds ?? new NothingHolds(),
             Folders = Folders,
+            Usage = Usage,
             Changelog = changelog,
             Install = install,
             Memory = memory ?? new PageListenerMemoryInProcess(),
@@ -111,6 +119,9 @@ internal sealed class PageRig : IAsyncDisposable
 
     /// <summary>The session folders and their sizes, as the arm sets them.</summary>
     public FakeFolders Folders { get; } = new();
+
+    /// <summary>What BrowserAI's processes use, as the arm sets it.</summary>
+    public FakeUsage Usage { get; } = new();
 
     public RecordingHost Host { get; } = new();
 
@@ -239,6 +250,31 @@ internal sealed class FakeFolders : IPageFolders
         }
 
         return new FolderMeasure(At, [.. Folders.OrderByDescending(static folder => folder.Bytes ?? -1)]);
+    }
+}
+
+/// <summary>What BrowserAI's processes use, scripted, and how many readings were asked for.</summary>
+/// <remarks>
+/// <b>Added 2026-10-12 for 59 b</b>: a reading answers <see cref="Reading"/> as the arm last set
+/// it, or throws <see cref="Failure"/> where one is set.
+/// </remarks>
+internal sealed class FakeUsage : IPageUsage
+{
+    /// <summary>What a reading answers.</summary>
+    public UsageReading Reading { get; set; } = new(new ProcessCounters(0, 0, 0), [], [], 4);
+
+    /// <summary>What a reading throws, or <see langword="null"/> for <see cref="Reading"/>.</summary>
+    public Exception? Failure { get; set; }
+
+    /// <summary>How many readings were asked for.</summary>
+    public int Reads => Volatile.Read(ref _reads);
+
+    private int _reads;
+
+    public Task<UsageReading> ReadAsync()
+    {
+        _ = Interlocked.Increment(ref _reads);
+        return Failure is { } failure ? Task.FromException<UsageReading>(failure) : Task.FromResult(Reading);
     }
 }
 

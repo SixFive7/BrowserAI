@@ -567,7 +567,10 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
 
         await using var linkScope = link.ConfigureAwait(false);
 
-        _roster.Add(greeting, link, idleAt);
+        // 65 a, 2026-10-11: the relay's own process, held while it is connected, which the
+        // page's CPU and memory reading reads; the roster closes it when the relay goes. The
+        // pid is the one Windows read off this connection, which still stands.
+        _roster.Add(greeting, link, idleAt, relayPid is { } pid ? BrowserProcesses.HoldConnected(pid) : null);
 
         var proxy = _host.Accept(connection);
 

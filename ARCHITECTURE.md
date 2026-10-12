@@ -1774,6 +1774,25 @@ address is answered `303 See Other` with that cookie and the address without the
 What it rests on:
 [kb](kb/windows/loopback-page.md#a-folder-link-comes-to-the-front-when-the-process-the-link-starts-opens-it----measured-2026-10-11).
 
+*Added 2026-10-12 by addition, the maintainer's 59 b, 61, 62 a, 65 a, 66 a, 67 and 57 a:* **the home
+counts and measures, and says an update once.** The home is the side column of
+[the decisions](DECISIONS.md#the-home-its-cpu-and-memory-and-the-after-update-notice-decided-2026-10-11):
+five counts and one button where the conversations were listed, the live CPU and memory below them,
+and the four cards beside (`OverviewContent`). The figures are the background's:
+`BackgroundPageUsage` reads, on a thread of its own, the background itself, each relay through the
+`HeldProcess` the roster takes at its connection (`RelayRoster.Processes`), and each held session's
+child job (`SessionManager.Jobs`, `ChildConnection.Job`), whose CPU total `JobObject.CpuTicks` keeps
+for the ended processes too and whose members `ProcessUsage.ReadMember` reads one by one after a
+membership check, a browser told from its server by full image path under the browsers root.
+`PageService` takes a reading every `ProcessBounds.PageUsageInterval` while a tab of the home or the
+conversations page is connected, folds it into `PageUsage`, which counts each process's CPU against
+the reading before, and sends those tabs a `usage` event of words and charts from `UsageContent`,
+which the page's script writes into every element that names the figure in `data-usage` or
+`data-usage-chart`; `UsageContent.SessionLines` writes a session's lines for the map's inspector. The
+after-update notice is the record `UpdateNoticeFile` keeps under the data root, written by the start
+after an update (`PageService.PrepareAsync`) and marked seen by the changelog page or the notice's
+`dismiss-notice`.
+
 ## Updates
 
 ⚠️ **Since 2026-10-08 the update is the background's**, *added 2026-10-10 by

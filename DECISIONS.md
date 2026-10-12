@@ -1244,6 +1244,62 @@ page that grows during the capture would also defeat. **The arm's row in
 red, and c takes the arm out of the load it met, so a red in its new place says less about a
 loaded machine than one in the old.
 
+### The home, its CPU and memory, and the after-update notice, decided 2026-10-11
+
+**Decided 2026-10-11 by the maintainer, each in his words verbatim**, of the questions put to
+him that afternoon with directions and a recommendation each, and built on 2026-10-12. His
+words that started the batch, of the home's list of conversations and of what each session
+costs: *"2 Can we remove the arbretary list of browsers and isntead show stats of all teh
+windows and everything we have on the data with a clear button to open the list going to
+the more converstations page? Or some other cleaner design."* and *"3 Show this all with
+realtime updates. Show the separate process memory and the shared base separately. The page
+has to show it all clearly."*, with *"Incorporate these all before we cut a release."* The
+layouts he chose from are the ones made for his screen that day, Firefox maximised to the
+bottom half of a rotated side screen, a viewport of about 1440 by 1170.
+
+| Decision | Outcome |
+|---|---|
+| **59 b: what each session uses, and a total on the home, read while a tab shows them** | ⚠️ **His words verbatim: _"59 b"_**, of *"a. Per session: memory and CPU now, read every 2 seconds while a dashboard tab is open and never otherwise. Shown on the map and on each session's page."* and *"b. a, plus one total line on the home, for example "BrowserAI's browsers use 1.2 GB and 3% CPU", including the background itself."* **Built 2026-10-12**: the background reads itself, each relay through the process the roster holds from its connection, and each open session's job, which holds the browser server, its console host and every browser process it started, the job's own CPU total counting the ended ones (`BackgroundPageUsage` over `ProcessUsage` and `JobObject.CpuTicks`, on a thread of its own, `BrowserAI usage`, so no pool worker waits in a reading). The page takes a reading every `ProcessBounds.PageUsageInterval`, 2 s, only while a tab of the overview or the conversations page is connected, and one before such a page is drawn; each reading's figures and charts are sent to those tabs as a `usage` event, which the page's script writes where they stand (`PageService`, `UsageContent`, `PageUsage`). `UsageContent.SessionLines` writes each session's CPU, its own memory and a link to the shared figure for the map's inspector. `HomeTests.TheFiguresAreReadOnlyWhileATabShowsThemAndEachReadingIsSentToIt`, `UsageTests`' arms over the arithmetic and the card, `BackgroundPageUsageTests` over real processes in a real job, and `HomeBrowserTests.InARealBrowserEachReadingIsWrittenWhereItsFigureStandsAndTheDismissFoldsTheNoticeAway`, in Chromium and Firefox, for the figure written where it stands |
+| **62 a: own memory exact per session; shared memory once for all of BrowserAI, said with about** | ⚠️ **His words verbatim: _"62 a"_**, of *"Each session shows its own memory, which is exact. The shared memory is shown once, for all of BrowserAI together, as an estimate: the largest shared amount any one of its processes uses, labelled "about"."* **Built 2026-10-12**: own memory is each process's private working set, `PrivateWorkingSetSize` of `PROCESS_MEMORY_COUNTERS_EX2`, added up, which no other process holds, so nothing is counted twice; the shared figure is the largest shared working set of any one process, its working set less its private working set, said once on the overview as *about*, and a session's lines point at it. Where Windows will not report the structure, the figures say *Not measured* and never zero. `UsageTests.OwnMemoryIsAddedUpInItsFourPartsAndSharedIsTheLargestAnyOneProcessHolds` and `.AReadingWindowsWouldNotGiveSaysNotMeasuredAndNeverZero` |
+| **65 a: the relays are counted in own memory, as a fourth line** | ⚠️ **His words verbatim: _"65 a"_**, of *"Include them as a fourth line, "Connections, one per conversation". (Recommended: then the total is the whole truth.)"* **Built 2026-10-12**: own memory's four parts are the browsers, the browser servers, the background, and *Connections, one per conversation*, each relay's private working set. `UsageTests.TheCardSaysEveryFigureWhereEachReadingSendsItAndSaysAboutOfTheSharedMemory` and `BackgroundPageUsageTests.ARelayIsReadThroughTheProcessTheRosterHoldsAndLeftOutOnceItIsClosed` |
+| **61, layout 1: the side column, with no conversation listed on the home** | ⚠️ **His words verbatim: _"61 I like 1"_.** **Built 2026-10-12** (`OverviewContent`): the headline shares a band with the after-update notice; the main column holds *Right now*, five counts, the conversations with how many are working now, the windows on the screen, the hidden browsers, the browsers not open and the sessions kept for later, and one button, *See the conversations and browsers*, above the live CPU and memory card; the side column holds the update, Claude Code and Codex, the storage and this install, each at its own height. No conversation is listed, so the card's *See all* and *N more conversations* are gone. The sentence under the headline says how many browser windows are on the screen, the zero case being *"None of them has a browser window open on your screen."*, which replaces *"Each is listed below, with the browsers it opened."*, wrong once rows were hidden. A waiting update is counted on the home in one line, *Held by 1 window, 3 hidden browsers and 3 active conversations.*, and listed on the update page, whose caption now says how long a conversation holds it from the relay's own countdown, as the home's list did for fact 6 of the reader pass of 2026-10-11. `HomeTests.TheHomeCountsWhatRunsAndLeadsToTheConversationsByOneButtonWithNoRowListed`, `.TheLedeSaysNoneOfThemWhenNoWindowIsOnTheScreenAndNeverThatEachIsListed` and `DashboardTests.TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt` |
+| **66 a: the CPU and memory card keeps its Per session link** | ⚠️ **His words verbatim: _"66 a"_**, of *"Keep it, because it leads straight to each session's figures on the map. (Recommended.)"* **Built 2026-10-12**: the card's head carries *Per session*, a second way to the conversations page beside the *Right now* card's button. |
+| **67: the new words** | ⚠️ **His words verbatim: _"67 ok"_**, of *"Windows on your screen"* (was *"On your screen"*), *"Browsers not open"*, *"Own memory"*, *"Shared memory"* and *"Browser servers"*, and the update line *"Held by 1 window, 3 hidden browsers and 3 active conversations"*, with the shared figure saying *about* under 62 a. **Built 2026-10-12** with every one of them; the build's other new words are in this batch's list for the reader pass. |
+| **57 a: the after-update notice is shown once, and can be dismissed** | ⚠️ **His words verbatim: _"57 a - also allow dismissing the banner in a nice way."_**, of *"a. Opening the changelog page by any of the three "What is new" links counts as seen. They all carry the same label."*, with *"Either way: BrowserAI writes the seen version into its data folder, and the banner returns only when a newer version is installed."* **Built 2026-10-12**: the start after an update records its version as one whose notice waits to be seen, in `update-notice.txt` under the data root (`UpdateNoticeFile`, `PageService.PrepareAsync`); the overview shows the notice in every tab and after a restart until the changelog page is opened, which every *What is new* link does, or the notice's dismiss is pressed; the dismiss folds the notice away, and the page's script holds a new state back until the fold has finished. `HomeTests.TheAfterUpdateNoticeShowsUntilAWhatIsNewLinkIsPressedAndComesBackOnlyForANewerVersion` and `.TheNoticesDismissMarksItSeenAndTheHomeIsSentWithoutIt`, and in a real browser `HomeBrowserTests`' arm, which holds the fold where it is and sees the state wait for it. *Until 2026-10-12 the notice was the first tab's alone, and nothing remembered that it had been seen.* |
+
+**The build's choices, for his review:**
+
+1. **The shared figure is the shared working set, not `SharedCommitUsage`.** Both are in
+   `PROCESS_MEMORY_COUNTERS_EX2`, whose page says of the second only that it is the current
+   shared commit usage. Measured on headless Chromium 1247 on 2026-10-12, over seven starts:
+   the browser process's shared working set read 100.3 to 100.6 MB at every start, and its
+   shared commit 18.0 MB at four, 76.8 MB at two and 83.3 MB at one; and in one process of
+   each of five starts the shared commit was larger than the whole working set, so it counts
+   memory the process does not hold in RAM. The working set less its private part is memory
+   in RAM, which is what the card's sentence describes, and own and shared then add up to a
+   process's working set ([kb](kb/windows/processes.md#what-a-reading-of-browserais-cpu-and-memory-costs----measured-2026-10-12)).
+2. **Readings run only while a tab of the overview or the conversations page is connected**,
+   the first before such a page is drawn, so its memory is shown at once and its CPU from
+   the next reading; the pace and the charts' reach are two rows of
+   [the numbers index](kb/numbers.md#waits-between-processes----processbounds),
+   `ProcessBounds.PageUsageInterval` and `ProcessBounds.PageUsageWindow`, 2 s and 2 minutes.
+3. **A browser server is every process of a session's job not under the browsers root**: the
+   node child and the console host Windows gives it. Processes BrowserAI starts outside a
+   session's job are not counted: provisioning's installer, the server registry's reap, the
+   user-agent ask and RegisterAI's runs, each short-lived.
+4. **A relay's process is held by the roster from its connection to its end**, by the pid
+   Windows read off the connection, so a reading never opens a pid that may have been reused.
+5. **What counts as seeing the notice is any opening of the changelog page**: the three
+   *What is new* links, and the installed toast's *Changelog* button, which opens the same
+   page.
+6. **The charts have no point to hover**, since every figure changes every two seconds; the
+   newest segment and the newest reading are drawn apart. The CPU chart's top is the
+   smallest of 1, 2, 5, 10, 20, 25, 50 and 100 % above every reading of the window, and own
+   memory's the smallest power of two from 256 MB.
+7. **The update page's caption says the hold from the relay's countdown**, *"Each holds the
+   update for 10 min after its app last sent BrowserAI anything but a ping."*, where it wrote
+   *ten minutes* in its string.
+
 ### Still open
 
 1. ~~**Firefox's `parent.lock` preflight and its own stray detection.**~~ **Closed 2026-08-16** at Firefox support, and it is a charter requirement now, not a design. The preflight opens `parent.lock` for write before every Firefox launch and refuses on a sharing violation with [error row 11](src/BrowserAI/Sessions/SessionErrors.cs); attribution is `RmStartSession` → `RmRegisterResources` → `RmGetList`, intersected with the image-path candidate set and guarded on `ProcessStartTime`; and the restart-registration preference is written into every Firefox config. Measured against the developer's own running Firefox as the negative subject: a foreign browser is attributed to none of our sessions and cannot become a candidate. ⚠️ ***Corrected 2026-08-19 (previously "What remains open is not §D's: `browserai_init` still refuses `browser: "firefox"`, because offering it needs a per-family download size for row 6 and a decision about what `browserai_reinstall_browser` reinstalls when there are two trees -- both carried in TODO.md").*** **Both are done and Firefox is offered.** The download size is measured per family -- Firefox 127.2 MB down, 340.15 MiB on disk, from the CDN's own `content-length` and two clean provisioning runs ([kb](kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way----2026-08-19)) -- and `browserai_reinstall_browser` names the family it reinstalls (the row above). A real Firefox session now runs the front door end to end: `FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy`, which asserts by **full image path** that the browser that came up was Firefox, because every other assertion in that arm is satisfied just as happily by a Chromium.

@@ -56,6 +56,9 @@ internal sealed class DashboardTests
         "register-in-project",
         "unregister-from-project",
         "unregister-from-a-project",
+
+        // The after-update notice's dismiss, 57 a, which takes away a notice and no file.
+        "dismiss-notice",
     };
 
     /// <summary>
@@ -372,19 +375,27 @@ internal sealed class DashboardTests
     /// call</i>, a number written in a string where the numbers index's scan cannot see it, and
     /// a call where the countdown counts every message but a ping. A length the relay does not
     /// have shows the derivation: the card follows <see cref="PageFacts.RelayHold"/>. Planted
-    /// red that day against the card as it stood.
+    /// red that day against the card as it stood. ⚠️ <i>Corrected 2026-10-12 (previously
+    /// <c>TheHomeSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdown</c>, which read
+    /// the length on the home)</i>: the home counts what holds the update in one line since the
+    /// side-column layout (61, 67), and the update page's caption, which wrote <i>ten
+    /// minutes</i> in its string, says the length from the same countdown.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheHomeSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdown()
+    public async Task TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt()
     {
         await using var rig = await PageRig.CreateAsync(holds: new ScriptedHolds { Snapshot = Held() }, facts: facts => facts with { RelayHold = TimeSpan.FromMinutes(7) });
 
         var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
-        await Assert.That(home.Body).Contains("1 active conversation");
-        await Assert.That(home.Body).Contains("7 min after the last message to BrowserAI");
+        await Assert.That(home.Body).Contains("Held by 1 window, 1 hidden browser and 1 active conversation.");
         await Assert.That(home.Body).DoesNotContain("after each call");
+
+        var update = await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Update));
+
+        await Assert.That(update.Body).Contains("Each holds the update for 7 min after its app last sent BrowserAI anything but a ping.");
+        await Assert.That(update.Body).DoesNotContain("ten minutes");
     }
 
     /// <summary>
@@ -559,7 +570,8 @@ internal sealed class DashboardTests
             folders.Add(new SessionFolder(CensusPageSessions.IdOf(directory), directory, name.Length));
         }
 
-        await using var rig = await PageRig.CreateAsync(registration: new FakeRegistration { State = Apps() });
+        // After an update, so that the home also carries the notice's dismiss (57 a).
+        await using var rig = await PageRig.CreateAsync(registration: new FakeRegistration { State = Apps() }, occasion: Occasion.AfterUpdate);
 
         rig.Sessions.Snapshot = Busy();
         rig.Folders.Folders = folders;
