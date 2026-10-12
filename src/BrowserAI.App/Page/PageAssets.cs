@@ -37,7 +37,8 @@ namespace BrowserAI.App.Page;
 /// fold has finished (57 a). <i>Corrected 2026-10-12 (previously "seven things"), when the
 /// last two arrived.</i>
 /// ⚠️ <i>And a tenth since 2026-10-12, by addition, 73 b</i>: on a page drawn with folder
-/// links it puts the body's <c>data-link-hint</c> as one line under the page's first one.
+/// links it puts the body's <c>data-link-hint</c> as one line under the page's first one,
+/// and on the setup page below the group of rows that holds it (117 b, 2026-10-12).
 /// A folder link is an ordinary link the browser follows, and the script does nothing for it.
 /// </para>
 /// <para>
@@ -643,7 +644,9 @@ internal static class PageAssets
             const line = document.createElement('p');
             line.className = 'link-hint';
             line.textContent = words;
-            const anchor = first.closest('.btn-row, p.action, td') || first;
+            // 117 b, 2026-10-12: on the setup page the first link is a project's picker, and
+            // the line goes below that project's group of rows, not between them.
+            const anchor = first.closest('.actions') || first.closest('.btn-row, p.action, td') || first;
             if (anchor.tagName === 'TD') { anchor.appendChild(line); } else { anchor.after(line); }
           };
 

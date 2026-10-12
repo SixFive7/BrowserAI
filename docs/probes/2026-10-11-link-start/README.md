@@ -32,10 +32,12 @@ sending `WM_CLOSE` to that one window. It finds the pickers' owners through a WM
 filtered on the image name `LinkProbe.exe`, which is a selection by name, and in this
 directory the one file that selects by name is `2026-09-14-firstrun/observe.ps1`, kept
 by the decision of 2026-09-17 in [the index](../README.md), where a second is a new
-decision; the real scan, run over a copy of it on 2026-10-12, named it. It is held for the
-maintainer, with its digest in
-[the evidence batch](../../evidence/2026-10-11-link-start/README.md); the observations
-were taken before it ran, and it closed nothing a person had open.
+decision; the real scan, run over a copy of it on 2026-10-12, named it. ⚠️ *Decided
+2026-10-12 by the maintainer, 115, in his words verbatim: "115 your recommendation"*: its
+exact bytes are kept as `close-probe-windows.ps1.txt` in
+[the evidence batch](../../evidence/2026-10-11-link-start/README.md), with its digest, and
+not here. The observations were taken before it ran, and it closed nothing a person had
+open.
 
 ## What keeps it off the rest of the machine
 
@@ -76,4 +78,4 @@ snapshot read the key absent and the same 35 `Launcher` value names as before th
   exist. PowerShell reads both the same.
 - Nothing else in any file changed. The digests of the files as they ran are in the
   evidence batch.
-- `close-probe-windows.ps1` is held out, as above.
+- `close-probe-windows.ps1` is not here, as above: its bytes are in the evidence batch.

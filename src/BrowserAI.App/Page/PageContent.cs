@@ -160,6 +160,7 @@ internal static class PageContent
     /// open BrowserAI.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>73 b, the maintainer's words of 2026-10-11 verbatim: <i>"73 b"</i></b>, of a line
     /// whose wording he left to the build. Firefox asks per address, with a box that always
     /// allows it, and the address stays the same while the background runs and across its
@@ -167,9 +168,17 @@ internal static class PageContent
     /// reader's pass (previously "Allow it always, and folders open at once from then on."):
     /// on the setup page the first link opens the picker, not a folder, and one answer covers
     /// every link of the scheme.</i>
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>123 c, the maintainer's words of 2026-10-12 verbatim: <i>"123 your
+    /// recommendation"</i></b>, the line in these words exactly, since only Firefox was
+    /// measured and another browser may not ask, or may not offer to always allow it.
+    /// <i>Corrected 2026-10-12 (previously "The first time, your browser asks whether this page
+    /// may open BrowserAI. Allow it always, and it does not ask again.").</i>
+    /// </para>
     /// </remarks>
     public const string LinkHint =
-        "The first time, your browser asks whether this page may open BrowserAI. Allow it always, and it does not ask again.";
+        "The first time, your browser may ask whether this page may open BrowserAI. If it offers to always allow it, folders open at once from then on.";
 
     /// <summary>The part of the page a state event replaces.</summary>
     /// <param name="view">What is true now.</param>

@@ -15,4 +15,4 @@ e5d6f11fea60ca0111a7db990466160e887d34aa30b2bef2b18d13440971983e  start.ps1
 cbb7286463cf833271d248f89dd5f300285d5cfd147d481e92c05b75d7afbf42  auto/driver.mjs
 f4a0878414a2b8b4de5dfaaee2262855b1280e201045a9e1db9ae16cb0d8c8a5  auto/package-lock.json
 ddb01e253660bcbfc31379878619638a5233d542b0eefbb7ea6e0d501f8008ad  auto/package.json
-994d96f977c37d28f9bec311af73244f80b2ca49f0b439424a6caf8fce13b2b0  close-probe-windows.ps1  (held out of the stored rig)
+994d96f977c37d28f9bec311af73244f80b2ca49f0b439424a6caf8fce13b2b0  close-probe-windows.ps1  (not in the stored rig; its bytes are close-probe-windows.ps1.txt in this batch, 115 d)
