@@ -592,18 +592,35 @@ internal sealed class CanonicalPathTests
     /// caller; the caller's own path on its own does not say how far the walk
     /// got. It was considered as a one-or-the-other and kept as both.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Composed under a folder of the profile's scratch since 2026-10-12, and never
+    /// under the checkout's.</b> <i>Corrected that day (previously the levels were composed
+    /// under <c>ScratchDirectory.CreateAsync</c>, the checkout's <c>.work\test-scratch</c>)</i>:
+    /// the path past the limit is <c>AncestorWalkLimit + 2</c> levels of two characters
+    /// each, and its last assertion hands it to <c>SessionPath.For</c>, which refuses a
+    /// directory longer than <c>SessionPath.LongestSessionDirectory</c>. Under
+    /// <c>.work\wt\release2</c> the checkout's scratch made that path 241 characters
+    /// against 240, and the first release run of 2.0.0 went red on it, where a checkout one
+    /// character shorter had passed. The room is asserted before the walk, so a base too
+    /// long says so in those words.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheAncestorWalkGivesUpExactlyPastItsLimitAndSaysSoWhileStillAnsweringAPath()
     {
-        using var scratch = await ScratchDirectory.CreateAsync("walk-limit");
+        // Under the profile's scratch and not the checkout's, so the arm does not pass or
+        // fail with the length of the path the repository was cloned to.
+        using var scratch = await ScratchDirectory.CreateUnderProfileAsync("walk-limit");
 
         // Composed from the product's own bound. A number written here would be
         // a second copy of it, and the arm would stop testing the boundary the
         // day somebody moved the constant.
         var inside = Compose(scratch.Path, CanonicalPath.AncestorWalkLimit - 2);
         var past = Compose(scratch.Path, CanonicalPath.AncestorWalkLimit + 2);
+
+        await Assert.That(past.Length).IsLessThanOrEqualTo(SessionPath.LongestSessionDirectory)
+            .Because($"the path past the walk's limit must still be one a session may name, and under '{scratch.Path}' it is {past.Length} characters");
 
         var shallow = CanonicalPath.Of(inside, PathOrigin.Named, "directory");
 
