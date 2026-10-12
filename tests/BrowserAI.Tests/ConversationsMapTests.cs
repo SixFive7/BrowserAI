@@ -179,15 +179,28 @@ internal sealed class ConversationsMapTests
         await Assert.That(plain).DoesNotContain("aria-pressed=\"true\"");
         await Assert.That(plain).Contains("<div class=\"inspect-none\" id=\"inspect-none\">");
 
-        // A folder the background does not hold, and a name nothing knows.
-        var closed = (await PageRig.GetAsync(rig.Root + $"sessions?tab=1&id={CensusPageSessions.IdOf(Invoice)}")).Body;
+        // A folder the background does not hold, and a name nothing knows: each said once the
+        // measurement is in, which the stream's states carry.
+        var invoice = CensusPageSessions.IdOf(Invoice);
 
-        await Assert.That(closed).Contains("invoice-export is not open now, so this page does not show it. The Storage page lists its folder and its size.");
-        await Assert.That(closed).Contains("href=\"storage?tab=1\"");
+        _ = await PageRig.GetAsync(rig.Root + $"sessions?tab=1&id={invoice}");
 
-        var unknown = (await PageRig.GetAsync(rig.Root + "sessions?tab=1&id=0000000000000000")).Body;
+        using (var stream = await rig.StreamAsync(rig.Gate.Root, 1, "sessions", "id=" + invoice))
+        {
+            var closed = await DashboardTests.StateContainingAsync(stream, "is not open now");
 
-        await Assert.That(unknown).Contains("BrowserAI holds no session by that name now, and its last measurement of the session folders found none.");
+            await Assert.That(closed).IsNotNull();
+            await Assert.That(closed!).Contains("invoice-export is not open now, so this page does not show it. The Storage page lists its folder and its size.");
+            await Assert.That(closed).Contains("href=\"storage?tab=1\"");
+        }
+
+        using (var stream = await rig.StreamAsync(rig.Gate.Root, 1, "sessions", "id=0000000000000000"))
+        {
+            var unknown = await DashboardTests.StateContainingAsync(stream, "holds no session by that name");
+
+            await Assert.That(unknown).IsNotNull();
+            await Assert.That(unknown!).Contains("BrowserAI holds no session by that name now, and its last measurement of the session folders found none.");
+        }
 
         // No page links to the session page.
         foreach (var kind in Enum.GetValues<PageKind>())
