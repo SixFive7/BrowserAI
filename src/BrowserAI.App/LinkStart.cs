@@ -18,7 +18,7 @@ internal sealed record LinkDesktop(Func<string, Task<bool>> OpenFolder, Func<str
     /// <summary>The person's desktop: Explorer and the picker, each on a thread of its own in a single-threaded apartment.</summary>
     public static LinkDesktop Windows { get; } = new(
         directory => ShellInterop.OnAShellThreadAsync(() => ShellInterop.OpenInExplorer(directory), "BrowserAI link's Explorer"),
-        prompt => ShellInterop.OnAShellThreadAsync(() => ShellInterop.PickFolder(0, prompt), "BrowserAI link's folder picker"));
+        prompt => ShellInterop.PickFolderOnAShellThreadAsync(prompt, "BrowserAI link's folder picker"));
 }
 
 /// <summary>

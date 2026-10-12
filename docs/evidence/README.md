@@ -128,7 +128,7 @@ way, its rig and stand-in stored with `.txt` appended.
 own README says how**: [`2026-10-11-link-start`](2026-10-11-link-start/README.md) keeps three
 records under the `.trimmed.` name with the user profile path replaced, and its
 `originals.sha256` carries each original's digest and the digest of each file of the rig as
-it ran, four of which the stored rig rewords.
+it ran, four of which the stored rig changes.
 
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for

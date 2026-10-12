@@ -295,6 +295,23 @@ internal static partial class ShellInterop
         return answered.Task;
     }
 
+    /// <summary>
+    /// Shows Windows' folder picker with no owner on a shell thread of its own, and completes
+    /// with what was chosen: the picker of a folder link's start (75 a).
+    /// </summary>
+    /// <remarks>
+    /// <b>Here and not in the link start</b>, because the picker needs the single-threaded
+    /// apartment <see cref="OnAShellThreadAsync"/> asks for, and the file that opens the picker
+    /// is the file that asks for the apartment, which is what
+    /// <c>HouseRuleTests.EveryFolderPickerRunsOnAThreadThatAsksForASingleThreadedApartment</c>
+    /// can hold. <i>Added 2026-10-12.</i>
+    /// </remarks>
+    /// <param name="prompt">The sentence the picker shows.</param>
+    /// <param name="name">The thread's name.</param>
+    /// <returns>What was chosen.</returns>
+    public static Task<FolderPick> PickFolderOnAShellThreadAsync(string prompt, string name) =>
+        OnAShellThreadAsync(() => PickFolder(0, prompt), name);
+
     /// <summary>SW_SHOWNORMAL.</summary>
     private const int ShowNormal = 1;
 

@@ -219,6 +219,18 @@ as the positive control and moved out after: the scan named `observe.ps1` and no
 the rig. **The scan would still flag eleven files, and only `observe.ps1` selects a
 process by name.**
 
+⚠️ *Added 2026-10-12.* **Forty**, counted as its subdirectories, when
+[`2026-10-11-link-start`](2026-10-11-link-start/README.md) arrived with the maintainer's 55.
+Two spellings of the eight in its run, `Get-Process` in `stop.ps1`, which looks up a pid the
+run recorded by `-Id`, and `Win32_Process` in `close-probe-windows.ps1`, sent it through the
+real scan on 2026-10-12 at `3cf9d289`: its five script files and that sixth copied under
+`build/` with `observe.ps1` beside them as the positive control, and moved out after. The scan
+named `observe.ps1` and `close-probe-windows.ps1`, whose WMI query is filtered on the image
+name `LinkProbe.exe`, and no file of the stored rig. **That second true positive is held out
+of this directory**, with its digest in the rig's evidence batch, because a second is a new
+decision and the paragraph below says to ask; the question is the maintainer's. **The scan
+would still flag eleven files, and only `observe.ps1` selects a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -301,3 +313,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-08-input-check`](2026-10-08-input-check/README.md) | What the visible-input check costs: each read and the product's whole check in tight loops, and the shipped coalescable timer over twelve minutes beside the same timer with no tolerance, a timer that wakes for nothing and a process with no timer | |
 | [`2026-10-08-built-in-tool-list`](2026-10-08-built-in-tool-list/README.md) | The payload's own child asked for its tools under five session configurations, its answer compared byte for byte with the snapshot BrowserAI compiles in, and an older snapshot as the control | |
 | [`2026-10-11-reopen`](2026-10-11-reopen/README.md) | Whether a relay's standard handles can be reopened overlapped: each handle kind a stdio server can be handed, made the way its source makes it, and what Claude Code and Codex hand, read out of running relays | |
+| [`2026-10-11-link-start`](2026-10-11-link-start/README.md) | What comes to the front when a folder link is clicked: a link's start that opens the folder or Windows' folder picker itself, against a stand-in for the background with and without the right to come forward, in Firefox 157.0.1 with a scratch profile | the held-out `close-probe-windows.ps1` would, a true positive |

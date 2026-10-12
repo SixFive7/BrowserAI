@@ -354,7 +354,10 @@ internal sealed class PageListenerTests
         wildcard.Bind(new IPEndPoint(IPAddress.Any, port));
         wildcard.Listen();
 
-        var answer = await RawHttp.SendAsync(port, RawHttp.Get(port, $"/{listener.Gate.Token}/", $"Host: 127.0.0.1:{port}"));
+        // ⚠️ 74 a, 2026-10-12: the page by the token's address is answered with the cookie and
+        // the plain address, so the answer is read through that swap, both requests to the
+        // listener's address.
+        var answer = await RawHttp.OpenPageAsync($"http://127.0.0.1:{port}/{listener.Gate.Token}/");
 
         await Assert.That(answer.Status).IsEqualTo(200).Because(answer.Raw);
         await Assert.That(routes.Reached).IsEqualTo(1);

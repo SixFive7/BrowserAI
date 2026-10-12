@@ -92,7 +92,9 @@ internal sealed class PageServiceTests
         // texts polish of 2026-10-10 (previously the script's own sentence, with the Start
         // Menu advice on every build): an installed build points at the Start Menu, and a
         // build that is not installed, whose Start Menu entry starts another, does not.
-        await Assert.That(page.Body).Contains("data-unanswered=\"" + PageContent.Text("BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.") + "\"");
+        // Corrected 2026-10-12 (previously "BrowserAI is not answering this page. If it does
+        // not come back, open BrowserAI from the Start Menu again."), the maintainer's 71 a.
+        await Assert.That(page.Body).Contains("data-unanswered=\"" + PageContent.Text("BrowserAI is not answering this page. Start BrowserAI from the Start Menu, and it opens this page again in a new tab.") + "\"");
         await Assert.That(script.Body).Contains("say(unanswered)");
         await Assert.That(script.Body).DoesNotContain("Start Menu");
 

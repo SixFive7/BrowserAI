@@ -51,7 +51,7 @@ $beforePid = 0; [void][L55.Win]::GetWindowThreadProcessId($before, [ref] $before
 
 if ($found) {
     if ([L55.Win]::IsIconic($found.H)) { [void][L55.Win]::ShowWindow($found.H, 9) }
-    $fgThread = [L55.Win]::GetWindowThreadProcessId($before, [ref]([uint32]0))
+    $fgThread = [L55.Win]::GetWindowThreadProcessId($before, [ref]([uint32] 0))
     $me = [L55.Win]::GetCurrentThreadId()
     [void][L55.Win]::AttachThreadInput($fgThread, $me, $true)
     [void][L55.Win]::BringWindowToTop($found.H)

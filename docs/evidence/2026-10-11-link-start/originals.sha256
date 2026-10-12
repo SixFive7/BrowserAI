@@ -2,7 +2,7 @@
 40bb456cf30e0283195b2d2d028a0eafa4ceb64da5fac880a60770f21b634bd7  142740 bytes  observe-74560.jsonl  (16 profile paths replaced by %USERPROFILE%)
 8ce8cc1d7027e5a3d7787b46398f7f3e55fd05e2bfbb5dc35e2e78ec882ea1c4  3134 bytes  snapshot-before.txt  (30 profile paths replaced by %USERPROFILE%)
 8ce8cc1d7027e5a3d7787b46398f7f3e55fd05e2bfbb5dc35e2e78ec882ea1c4  3134 bytes  snapshot-after.txt  (30 profile paths replaced by %USERPROFILE%)
-# The rig's files as they ran on 2026-10-11, before the stored copy's four rewordings
+# The rig's files as they ran on 2026-10-11, before the stored copy changed four of them
 e73b8a2e2c9245a6360d3059614ee14d79bf4da7722c58694fa7a34c24e868e9  STEPS.txt
 e5d6f11fea60ca0111a7db990466160e887d34aa30b2bef2b18d13440971983e  start.ps1
 5009f4eb3e5e1f90bc9d2425cde71a524181c1c36f9a298f5870383c510ea933  stop.ps1

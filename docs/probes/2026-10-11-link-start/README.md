@@ -32,7 +32,8 @@ sending `WM_CLOSE` to that one window. It finds the pickers' owners through a WM
 filtered on the image name `LinkProbe.exe`, which is a selection by name, and in this
 directory the one file that selects by name is `2026-09-14-firstrun/observe.ps1`, kept
 by the decision of 2026-09-17 in [the index](../README.md), where a second is a new
-decision. It is held for the maintainer, with its digest in
+decision; the real scan, run over a copy of it on 2026-10-12, named it. It is held for the
+maintainer, with its digest in
 [the evidence batch](../../evidence/2026-10-11-link-start/README.md); the observations
 were taken before it ran, and it closed nothing a person had open.
 
@@ -69,6 +70,10 @@ observer had already removed the scheme, so `unregister` found nothing, and `sto
 snapshot read the key absent and the same 35 `Launcher` value names as before the run.
 
 - **Four phrases are reworded**, each naming who asked for or authorised the run: one
-  each in `STEPS.txt`, `start.ps1`, `focus.ps1` and `auto/driver.mjs`. Nothing else in any
-  file changed. The digests of the files as they ran are in the evidence batch.
+  each in `STEPS.txt`, `start.ps1`, `focus.ps1` and `auto/driver.mjs`.
+- **One cast in `focus.ps1` has a space in it**, `[ref]([uint32] 0)`, because the
+  repository's link scan read `[ref]([uint32]0)` as a Markdown link to a file that does not
+  exist. PowerShell reads both the same.
+- Nothing else in any file changed. The digests of the files as they ran are in the
+  evidence batch.
 - `close-probe-windows.ps1` is held out, as above.
