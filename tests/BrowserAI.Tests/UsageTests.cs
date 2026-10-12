@@ -25,6 +25,10 @@ internal sealed partial class UsageTests
 
     private const long Megabyte = 1024 * 1024;
 
+    private static readonly string[] ChartNames = ["cpu", "own"];
+
+    private static readonly string[] NotMeasuredOnly = ["Not measured"];
+
     [Test]
     public async Task TheCpuIsWhatEveryProcessAddedBetweenTwoReadingsAsAShareOfTheWholeProcessor()
     {
@@ -174,6 +178,98 @@ internal sealed partial class UsageTests
         await Assert.That(UsageContent.Megabytes(1276 * Megabyte)).IsEqualTo("1,276 MB");
         await Assert.That(UsageContent.Megabytes(Megabyte * 3 / 2)).IsEqualTo("2 MB");
     }
+
+    [Test]
+    public async Task TheCardSaysEveryFigureWhereEachReadingSendsItAndSaysAboutOfTheSharedMemory()
+    {
+        var first = PageUsage.Next(null, Card(0), Start, Window);
+        var usage = PageUsage.Next(first, Card(8_000_000), Start.AddSeconds(2), Window);
+        var card = UsageContent.Card(View(usage), Window);
+
+        // 0.8 s over 2 s on four processors is 10 %; own memory is its four parts.
+        await Assert.That(card).Contains("<b class=\"m-value\" data-usage=\"cpu\">10.0%</b>");
+        await Assert.That(card).Contains("<b class=\"m-value\" data-usage=\"own\">1,101 MB</b>");
+        await Assert.That(card).Contains("<dt>Browsers</dt><dd data-usage=\"own-browsers\">912 MB</dd>");
+        await Assert.That(card).Contains("<dt>Browser servers</dt><dd data-usage=\"own-servers\">118 MB</dd>");
+        await Assert.That(card).Contains("<dt>Background</dt><dd data-usage=\"own-background\">46 MB</dd>");
+        await Assert.That(card).Contains("<dt>Connections, one per conversation</dt><dd data-usage=\"own-connections\">25 MB</dd>");
+        await Assert.That(card).Contains("<b class=\"m-value\" data-usage=\"shared-about\">about 268 MB</b>");
+        await Assert.That(card).Contains("<a class=\"more\" id=\"l-per-session\" href=\"sessions?tab=3\">Per session");
+        await Assert.That(card).Contains("data-usage-chart=\"cpu\"");
+        await Assert.That(card).Contains("data-usage-chart=\"own\"");
+
+        // Every figure the card draws is one each reading sends, so none stands still.
+        var sent = UsageContent.Figures(usage);
+
+        foreach (var key in UsageKey().Matches(card).Select(static match => match.Groups[1].Value))
+        {
+            await Assert.That(sent.ContainsKey(key)).IsTrue().Because($"'{key}' is drawn and no reading sends it");
+        }
+
+        var charts = UsageContent.Charts(usage, Window);
+
+        await Assert.That(charts.Keys.Order().ToList()).IsEquivalentTo(ChartNames);
+        await Assert.That(charts["cpu"]).Contains("aria-label=\"CPU over the last 2 min, now 10.0%\"");
+        await Assert.That(charts["own"]).Contains("<span class=\"c-top\">2 GB</span>");
+        await Assert.That(card).Contains(charts["cpu"]);
+    }
+
+    [Test]
+    public async Task AReadingWindowsWouldNotGiveSaysNotMeasuredAndNeverZero()
+    {
+        var usage = PageUsage.Next(null, new UsageReading(new ProcessCounters(0, 0, 0), [], [], 4) { Unreadable = true }, Start, Window);
+        var figures = UsageContent.Figures(usage);
+
+        await Assert.That(usage.Unreadable).IsTrue();
+        await Assert.That(figures.Values.Distinct().ToList()).IsEquivalentTo(NotMeasuredOnly);
+        await Assert.That(UsageContent.Card(View(usage), Window)).Contains("Windows on this PC does not say what each process uses, so BrowserAI cannot show it.");
+        await Assert.That(UsageContent.SessionLines(View(usage), Session("0123456789abcdef"))).Contains("<dd data-usage=\"s:0123456789abcdef:cpu\">Not measured</dd>");
+        await Assert.That(usage.History.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task EachReadingSendsEveryFigureAndBothCharts()
+    {
+        var usage = PageUsage.Next(null, Card(0), Start, Window);
+
+        using var data = System.Text.Json.JsonDocument.Parse(UsageContent.EventData(usage, Window));
+
+        var text = data.RootElement.GetProperty("text").EnumerateObject().Select(static member => member.Name).Order().ToList();
+        var charts = data.RootElement.GetProperty("charts").EnumerateObject().Select(static member => member.Name).Order().ToList();
+
+        await Assert.That(text).IsEquivalentTo(UsageContent.Figures(usage).Keys.Order().ToList());
+        await Assert.That(charts).IsEquivalentTo(ChartNames);
+        await Assert.That(data.RootElement.GetProperty("text").GetProperty("own-connections").GetString()).IsEqualTo("25 MB");
+    }
+
+    [Test]
+    public async Task TheChartsTopsAreTheSmallestStepAboveEveryReading()
+    {
+        PageUsage? usage = null;
+
+        // 4 % of four processors for two readings, then the window's own-memory top past 1 GB.
+        usage = PageUsage.Next(usage, Reading(background: 0, own: 300 * Megabyte), Start, Window);
+        usage = PageUsage.Next(usage, Reading(background: 3_200_000, own: 300 * Megabyte), Start.AddSeconds(2), Window);
+
+        await Assert.That(UsageContent.Charts(usage, Window)["cpu"]).Contains("<span class=\"c-top\">5%</span>");
+        await Assert.That(UsageContent.Charts(usage, Window)["own"]).Contains("<span class=\"c-top\">512 MB</span>");
+
+        usage = PageUsage.Next(usage, Reading(background: 3_200_000, own: 1_300 * Megabyte), Start.AddSeconds(4), Window);
+
+        await Assert.That(UsageContent.Charts(usage, Window)["own"]).Contains("<span class=\"c-top\">2 GB</span>");
+
+        // Before any reading, both charts are drawn empty and the figures say they are being measured.
+        await Assert.That(UsageContent.Charts(null, Window)["cpu"]).DoesNotContain("c-line");
+        await Assert.That(UsageContent.Figures(null)["cpu"]).IsEqualTo("Measuring");
+    }
+
+    /// <summary>The card's reading: 46 MB of background, two relays and two sessions, as the memory arm's, with the background's CPU given.</summary>
+    private static UsageReading Card(long background) =>
+        new(
+            new ProcessCounters(background, 46 * Megabyte, 30 * Megabyte),
+            [new RelayReading(7, 70, new ProcessCounters(0, 12 * Megabyte, 25 * Megabyte)), new RelayReading(8, 80, new ProcessCounters(0, 13 * Megabyte, 26 * Megabyte))],
+            [new SessionReading("a", 0, 400 * Megabyte, 60 * Megabyte, 268 * Megabyte), new SessionReading("b", 0, 512 * Megabyte, 58 * Megabyte, 200 * Megabyte)],
+            4);
 
     /// <summary>A share to six places, which is as far as the arithmetic above is done by hand.</summary>
     private static double? Rounded(double? share) => share is { } known ? Math.Round(known, 6) : null;

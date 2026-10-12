@@ -49,6 +49,13 @@ internal static class PageIcons
         ["question"] = "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6\"/><circle cx=\"12\" cy=\"16.8\" r=\".7\" fill=\"currentColor\"/>",
         ["list"] = "<path d=\"M9 7h11M9 12h11M9 17h11\"/><circle cx=\"5\" cy=\"7\" r=\".8\" fill=\"currentColor\"/><circle cx=\"5\" cy=\"12\" r=\".8\" fill=\"currentColor\"/><circle cx=\"5\" cy=\"17\" r=\".8\" fill=\"currentColor\"/>",
         ["bolt"] = "<path d=\"M13 3 5 13.5h6L10 21l8-10.5h-6z\"/>",
+
+        // The overview's CPU and memory card and the notice's dismiss, 2026-10-12, as the
+        // side-column layout drew them (59 b, 57 a).
+        ["cpu"] = "<rect x=\"7\" y=\"7\" width=\"10\" height=\"10\" rx=\"1.6\"/><path d=\"M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5\"/>",
+        ["memory"] = "<rect x=\"3\" y=\"6.5\" width=\"18\" height=\"9\" rx=\"1.5\"/><path d=\"M7.5 9.5v3M11 9.5v3M14.5 9.5v3M6 15.5v2.5M10 15.5v2.5M14 15.5v2.5M18 15.5v2.5\"/>",
+        ["shared"] = "<circle cx=\"9.2\" cy=\"12\" r=\"5.4\"/><circle cx=\"14.8\" cy=\"12\" r=\"5.4\"/>",
+        ["x"] = "<path d=\"M7 7l10 10M17 7 7 17\"/>",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>The names an icon can be asked for.</summary>

@@ -49,7 +49,15 @@ internal sealed record UsageReading(
     ProcessCounters Background,
     IReadOnlyList<RelayReading> Relays,
     IReadOnlyList<SessionReading> Sessions,
-    int Processors);
+    int Processors)
+{
+    /// <summary>
+    /// Whether Windows would not report the background's own figures, which every reading
+    /// reads first: on a Windows without <c>PROCESS_MEMORY_COUNTERS_EX2</c> no process can be
+    /// read, and the figures are not measured, never zero.
+    /// </summary>
+    public bool Unreadable { get; init; }
+}
 
 /// <summary>Own memory, the memory only BrowserAI's processes hold, in its four parts.</summary>
 /// <param name="Browsers">Every open session's browser.</param>
@@ -140,6 +148,9 @@ internal sealed record PageUsage
     /// <summary>The reading these figures were drawn from, which the next reading's CPU is counted against.</summary>
     public UsageReading? Reading { get; init; }
 
+    /// <summary>Whether Windows would not report the figures, so that none is measured (<see cref="UsageReading.Unreadable"/>).</summary>
+    public bool Unreadable { get; init; }
+
     /// <summary>One session's figures, or <see langword="null"/> where no reading has seen it.</summary>
     /// <param name="id">The session's opaque name.</param>
     /// <returns>Its figures.</returns>
@@ -209,8 +220,11 @@ internal sealed record PageUsage
             Shared = shared,
             Sessions = sessions,
             Relays = relays,
-            History = [.. (before?.History ?? []).Where(point => point.At > since && point.At < at), new UsagePoint(at, cpu, own.Total)],
+            History = reading.Unreadable
+                ? []
+                : [.. (before?.History ?? []).Where(point => point.At > since && point.At < at), new UsagePoint(at, cpu, own.Total)],
             Reading = reading,
+            Unreadable = reading.Unreadable,
         };
     }
 
