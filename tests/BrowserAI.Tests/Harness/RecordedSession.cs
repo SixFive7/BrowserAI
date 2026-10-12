@@ -32,17 +32,17 @@ internal static class RecordedSession
     /// <summary>Every row of one session's log, oldest first.</summary>
     /// <param name="session">The session directory.</param>
     /// <returns>The rows.</returns>
-    public static IReadOnlyList<SessionLogRow> LogOf(SessionPath session)
+    public static async Task<IReadOnlyList<SessionLogRow>> LogOfAsync(SessionPath session)
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        using var store = SessionStore.OpenForReading(session.DataFile);
+        await using var store = await SessionStore.OpenForReadingAsync(session.DataFile);
 
-        return SessionRecordReader.Log(store, 0, -1);
+        return await store.LogRowsAsync(0, -1);
     }
 
     /// <summary>Every row of one session's log, oldest first.</summary>
     /// <param name="directory">The session directory, as a path.</param>
     /// <returns>The rows.</returns>
-    public static IReadOnlyList<SessionLogRow> LogOf(string directory) => LogOf(SessionPath.For(directory));
+    public static Task<IReadOnlyList<SessionLogRow>> LogOfAsync(string directory) => LogOfAsync(SessionPath.For(directory));
 }

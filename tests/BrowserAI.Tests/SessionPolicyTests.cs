@@ -446,7 +446,7 @@ internal sealed class SessionPolicyTests
             await Assert.That(sessions.SessionChildren.Any(child =>
                 child.ToolCallsReceived.Contains(invented, StringComparer.Ordinal))).IsFalse();
 
-            var recorded = RecordedSession.LogOf(directory).Where(row => row.Tool == invented).ToList();
+            var recorded = (await RecordedSession.LogOfAsync(directory)).Where(row => row.Tool == invented).ToList();
 
             await Assert.That(recorded.Count).IsEqualTo(1);
             await Assert.That(recorded[0].Outcome).IsEqualTo(SessionStore.Failed);
@@ -460,7 +460,7 @@ internal sealed class SessionPolicyTests
 
             await Assert.That((bool?)noSession["isError"]).IsTrue();
             await Assert.That(TextOf(noSession)).IsEqualTo(SessionErrors.ToolDoesNotExist(invented, tools));
-            await Assert.That(RecordedSession.LogOf(directory).Count(row => row.Tool == invented)).IsEqualTo(1);
+            await Assert.That((await RecordedSession.LogOfAsync(directory)).Count(row => row.Tool == invented)).IsEqualTo(1);
         }
 
         // ⚠️ THE POSITIVE CONTROLS. A real authored tool still answers, and an
@@ -563,7 +563,7 @@ internal sealed class SessionPolicyTests
         await Assert.That(session.HasStopped).IsFalse();
 
         // And the refused call is in the record, as every refused call is.
-        var recorded = RecordedSession.LogOf(directory).Single(row => row.Tool == LiveSession.BrowserCloseTool);
+        var recorded = (await RecordedSession.LogOfAsync(directory)).Single(row => row.Tool == LiveSession.BrowserCloseTool);
 
         await Assert.That(recorded.Outcome).IsEqualTo(SessionStore.Failed);
     }
@@ -787,7 +787,7 @@ internal sealed class SessionPolicyTests
 
         // And it is in the session's record, failed, carrying what the caller
         // was told.
-        var row = RecordedSession.LogOf(directory).Single(entry => entry.Tool == DebuggerResume);
+        var row = (await RecordedSession.LogOfAsync(directory)).Single(entry => entry.Tool == DebuggerResume);
 
         await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
         await Assert.That(row.Failure).IsEqualTo(text);
@@ -895,7 +895,7 @@ internal sealed class SessionPolicyTests
         // description mentioning it, no note saying it would refuse.
         await Assert.That(advertised.ToJsonString()).DoesNotContain(Denied);
 
-        var before = RecordedSession.LogOf(rig.Session!).Count;
+        var before = (await RecordedSession.LogOfAsync(rig.Session!)).Count;
         var callsBefore = sessions.SessionChildren.Sum(child => child.ToolCallsReceived.Count(tool => tool == Denied));
 
         var refused = await CallAsync(rig, Denied, new JsonObject
@@ -920,7 +920,7 @@ internal sealed class SessionPolicyTests
 
         // And it is in the record, failed and settled, carrying what the caller
         // was told and not a summary of it.
-        var log = RecordedSession.LogOf(rig.Session!);
+        var log = await RecordedSession.LogOfAsync(rig.Session!);
         var row = log.Single(entry => entry.Tool == Denied);
 
         await Assert.That(log.Count).IsEqualTo(before + 1);
@@ -998,7 +998,7 @@ internal sealed class SessionPolicyTests
             (Nowhere, SessionErrors.ToolDoesNotExist(Nowhere, ToolSignatures.From(advertised))),
         })
         {
-            var before = RecordedSession.LogOf(rig.Session!).Count;
+            var before = (await RecordedSession.LogOfAsync(rig.Session!)).Count;
             var callsBefore = sessions.SessionChildren.Sum(child => child.ToolCallsReceived.Count(received => received == tool));
 
             var refused = await CallAsync(rig, tool, new JsonObject
@@ -1029,7 +1029,7 @@ internal sealed class SessionPolicyTests
             // And the record keeps the name VERBATIM, because "what did it try
             // to call" is exactly what a reader of the record wants and the
             // record is not model-facing.
-            var log = RecordedSession.LogOf(rig.Session!);
+            var log = await RecordedSession.LogOfAsync(rig.Session!);
 
             await Assert.That(log.Count).IsEqualTo(before + 1);
             await Assert.That(log[^1].Tool).IsEqualTo(tool);

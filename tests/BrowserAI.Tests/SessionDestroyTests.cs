@@ -193,7 +193,7 @@ internal sealed class SessionDestroyTests
             NullLogger.Instance);
 
         await Assert.That(taken.Acquired).IsNotNull();
-        taken.Acquired?.Dispose();
+        await taken.Acquired.DisposeIfTakenAsync();
 
         var (refusal, held) = await SessionLock.TryHoldUnownedAsync(control);
 

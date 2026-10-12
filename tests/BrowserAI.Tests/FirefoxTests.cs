@@ -618,7 +618,7 @@ internal sealed class FirefoxTests
 
         StraySweepResult live;
 
-        using (taken.Acquired)
+        await using (taken.Acquired)
         {
             live = await SweepAsync(index);
         }
@@ -777,7 +777,7 @@ internal sealed class FirefoxTests
 
         // Taken and released: what a BrowserAI that exited leaves behind is a
         // browserai.lock with nothing holding it.
-        result.Acquired?.Dispose();
+        await result.Acquired.DisposeIfTakenAsync();
 
         return path;
     }

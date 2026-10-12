@@ -182,7 +182,7 @@ internal sealed class UnrecognisedArgumentTests
         // refused call is.
         await Assert.That(sessions.SessionChildren[0].ToolCallsReceived).DoesNotContain("browser_navigate");
 
-        var row = RecordedSession.LogOf(directory).Single(entry => entry.Tool == "browser_navigate");
+        var row = (await RecordedSession.LogOfAsync(directory)).Single(entry => entry.Tool == "browser_navigate");
 
         await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
         await Assert.That(row.Failure).IsEqualTo(text);

@@ -130,7 +130,7 @@ internal sealed partial class BuildVersionTests
         }
         finally
         {
-            acquired.Acquired?.Dispose();
+            await acquired.Acquired.DisposeIfTakenAsync();
         }
     }
 

@@ -218,7 +218,7 @@ internal sealed class SessionListTests
         // would be as far as the kernel is concerned.
         await Assert.That(SessionLock.ProbeLiveness(location).State).IsEqualTo(SessionLiveness.Held);
 
-        taken.Acquired!.Dispose();
+        await taken.Acquired!.DisposeAsync();
 
         var released = SessionLock.ProbeLiveness(location);
 
@@ -483,7 +483,7 @@ internal sealed class SessionListTests
             NullLogger.Instance);
 
         await index.RecordAsync(location);
-        taken.Acquired!.Dispose();
+        await taken.Acquired!.DisposeAsync();
     }
 
     /// <summary>

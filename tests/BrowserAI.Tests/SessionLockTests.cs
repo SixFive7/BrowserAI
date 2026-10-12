@@ -272,7 +272,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            refused.Acquired?.Dispose();
+            await refused.Acquired.DisposeIfTakenAsync();
         }
     }
 
@@ -355,7 +355,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            taken.Acquired?.Dispose();
+            await taken.Acquired.DisposeIfTakenAsync();
         }
     }
 
@@ -393,7 +393,7 @@ internal sealed class SessionLockTests
             }
             finally
             {
-                whileAlive.Acquired?.Dispose();
+                await whileAlive.Acquired.DisposeIfTakenAsync();
             }
 
             // TerminateProcess from outside: no finally, no shutdown hook, no
@@ -434,7 +434,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            reclaimed.Acquired?.Dispose();
+            await reclaimed.Acquired.DisposeIfTakenAsync();
         }
     }
 
@@ -496,7 +496,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            result.Acquired?.Dispose();
+            await result.Acquired.DisposeIfTakenAsync();
         }
     }
 
@@ -848,7 +848,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            first.Acquired?.Dispose();
+            await first.Acquired.DisposeIfTakenAsync();
         }
 
         // Released, and the record stays: that is what makes a stale lock a
@@ -864,7 +864,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            second.Acquired?.Dispose();
+            await second.Acquired.DisposeIfTakenAsync();
         }
     }
 
@@ -928,7 +928,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            first.Acquired?.Dispose();
+            await first.Acquired.DisposeIfTakenAsync();
         }
 
         // Released. The guard stays on disk, and it names this process -- which
@@ -971,7 +971,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            second.Acquired?.Dispose();
+            await second.Acquired.DisposeIfTakenAsync();
         }
     }
 
@@ -1041,7 +1041,7 @@ internal sealed class SessionLockTests
         // The `{}` that landed there is now a lock file this build refuses,
         // which is the strictness rule catching the experiment's own litter.
         var refused = await SessionLock.TryAcquireAsync(path, Request("after the experiment"), NullLogger.Instance);
-        refused.Acquired?.Dispose();
+        await refused.Acquired.DisposeIfTakenAsync();
         await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Unreadable);
 
         File.Delete(path.LockFile);
@@ -1061,7 +1061,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            result.Acquired?.Dispose();
+            await result.Acquired.DisposeIfTakenAsync();
         }
     }
 
@@ -1222,7 +1222,7 @@ internal sealed class SessionLockTests
         var (_, path) = NewSession(scratch, "strict");
 
         var first = await SessionLock.TryAcquireAsync(path, Request("the original"), NullLogger.Instance);
-        first.Acquired!.Dispose();
+        await first.Acquired!.DisposeAsync();
 
         var original = await File.ReadAllTextAsync(path.LockFile);
         var files = Directory.GetFiles(path.FullPath).Length;
@@ -1241,7 +1241,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            refused.Acquired?.Dispose();
+            await refused.Acquired.DisposeIfTakenAsync();
         }
 
         // The refusal changed nothing, which is what makes the recovery the
@@ -1308,7 +1308,7 @@ internal sealed class SessionLockTests
             refused = await SessionLock.TryAcquireAsync(landed, Request("the record lands and the re-open is refused"), NullLogger.Instance);
         }
 
-        refused.Acquired?.Dispose();
+        await refused.Acquired.DisposeIfTakenAsync();
 
         await Assert.That(refused.Taken).IsFalse();
         await Assert.That(refused.Message.Contains("nothing was changed", StringComparison.OrdinalIgnoreCase))
@@ -1338,7 +1338,7 @@ internal sealed class SessionLockTests
             unwritten = await SessionLock.TryAcquireAsync(never, Request("the write never lands"), NullLogger.Instance);
         }
 
-        unwritten.Acquired?.Dispose();
+        await unwritten.Acquired.DisposeIfTakenAsync();
 
         await Assert.That(unwritten.Taken).IsFalse();
         await Assert.That(unwritten.Message).Contains("nothing was changed");
@@ -1394,13 +1394,13 @@ internal sealed class SessionLockTests
         {
             await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsFalse();
 
-            held.AppendPurpose("a purpose written while the directory is held");
+            await held.AppendPurposeAsync("a purpose written while the directory is held");
 
             // THE PROPERTY, mid-session: the guard was never let go.
             await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsFalse();
             await Assert.That(held.Record.Purpose).IsEqualTo("a purpose written while the directory is held");
 
-            // A write that throws. `ReleaseAndDelete` and `Dispose` are the only
+            // A write that throws. `ReleaseAndDelete` and `DisposeAsync` are the only
             // things that close the store, and both take the directory with them
             // -- so the failing write is provoked from outside, by denying the
             // directory the store would have to create its next journal file in.
@@ -1410,7 +1410,7 @@ internal sealed class SessionLockTests
                 {
                     for (var i = 0; i < 200; i++)
                     {
-                        held.AppendPurpose($"a purpose the store may refuse {i.ToString(CultureInfo.InvariantCulture)}");
+                        await held.AppendPurposeAsync($"a purpose the store may refuse {i.ToString(CultureInfo.InvariantCulture)}");
                     }
                 }
 #pragma warning disable CA1031 // Whether the store refuses at all is the machine's business; what this test asserts is what happens to the guard either way.
@@ -1428,7 +1428,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            held.Dispose();
+            await held.DisposeAsync();
         }
 
         // And disposal really does release it, so the assertion above is not
@@ -1480,7 +1480,7 @@ internal sealed class SessionLockTests
             // Awaited with the in-process hang detector and nothing shorter: against a
             // delete that held the in-process lock, this disposal waits for the delete it
             // is waiting inside, and only the detector ends it.
-            await Task.Run(held.Dispose).WaitAsync(TestDefaults.InProcessHang);
+            await held.DisposeAsync().AsTask().WaitAsync(TestDefaults.InProcessHang);
             disposedDuringTheDelete = true;
 
             await TreeDelete.RemoveAsync(path.FullPath, []);
@@ -1527,7 +1527,7 @@ internal sealed class SessionLockTests
         await Assert.That(taken.Taken).IsTrue();
 
         var held = taken.Acquired!;
-        var row = held.Append("browser_navigate", "a call made before the release");
+        var row = await held.AppendAsync("browser_navigate", "a call made before the release");
         var before = await RowsInAsync(path);
 
         using var gate = MachineMutex.Create(path.MutexName);
@@ -1541,11 +1541,12 @@ internal sealed class SessionLockTests
 
             await Assert.That(release.IsCompleted).IsFalse();
 
-            _ = Assert.Throws<ObjectDisposedException>(() => _ = held.Append("browser_click", "a call made after the mark"));
-            _ = Assert.Throws<ObjectDisposedException>(() => held.AppendPurpose("a purpose set after the mark"));
-            _ = Assert.Throws<ObjectDisposedException>(() => held.AppendLifecycle(RecordFields.Closed, "a close set after the mark"));
-            _ = Assert.Throws<ObjectDisposedException>(() => _ = held.AppendSettings("{\"after\":\"the mark\"}"));
-            held.Settle(row, SessionStore.Successful, failure: null);
+            _ = await Assert.ThrowsAsync<ObjectDisposedException>(() => held.AppendAsync("browser_click", "a call made after the mark"));
+            _ = await Assert.ThrowsAsync<ObjectDisposedException>(() => held.AppendPurposeAsync("a purpose set after the mark"));
+            _ = await Assert.ThrowsAsync<ObjectDisposedException>(() => held.AppendLifecycleAsync(RecordFields.Closed, "a close set after the mark"));
+            _ = await Assert.ThrowsAsync<ObjectDisposedException>(() => held.AppendSettingsAsync("{\"after\":\"the mark\"}"));
+            _ = await Assert.ThrowsAsync<ObjectDisposedException>(() => held.RecordCloseAsync("{\"after\":\"the mark\"}", "a close recorded after the mark"));
+            await held.SettleAsync(row, SessionStore.Successful, failure: null);
 
             await Assert.That(await RowsInAsync(path)).IsEqualTo(before)
                 .Because("a writer that arrived after the release marked the session wrote to its store");
@@ -1560,18 +1561,93 @@ internal sealed class SessionLockTests
         await Assert.That(Directory.Exists(path.FullPath)).IsFalse();
     }
 
+    /// <summary>
+    /// A writer's statement that waits in the store holds no other caller of the session:
+    /// a second writer and the release return at once with their work handed over behind
+    /// it, and the directory is let go only once the statements and the close have run.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-12 for the maintainer's 82 b</b>, in his words verbatim:
+    /// <i>"78-82 your recommendation"</i>, which is that the session's lock guards state
+    /// only and is never held across a statement. The first statement is made to wait by
+    /// a connection of the arm's own that holds SQLite's write lock, so it waits in the
+    /// busy handler for as long as the arm keeps that lock: the widest a statement's wait
+    /// can be. With the lock held across a statement, the first call would not return to
+    /// the arm until the busy timeout had run out and the statement had failed, and the
+    /// second would wait the same again behind it.
+    /// </para>
+    /// <para>
+    /// <b>The release is the other half.</b> It is handed over behind the two writers, and
+    /// the directory stays held until the close has run, so no statement reaches the
+    /// file after the directory is let go.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AStatementThatWaitsInTheStoreHoldsNoOtherCallerOfTheSession()
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("session-statement-waits");
+        var (_, path) = NewSession(scratch, "statement-waits");
+
+        var taken = await SessionLock.TryAcquireAsync(path, Request("about to wait in its own store"), NullLogger.Instance);
+        await Assert.That(taken.Taken).IsTrue();
+
+        var held = taken.Acquired!;
+        Task<long> first;
+        Task second;
+        Task released;
+
+        using (var writer = SqliteDatabase.OpenForWriting(path.DataFile))
+        {
+            writer.Execute("BEGIN IMMEDIATE;");
+
+            first = held.AppendAsync("browser_navigate", "a call whose row waits for the store's write lock");
+            second = held.AppendPurposeAsync("a purpose set while the first statement waits");
+            released = held.DisposeAsync().AsTask();
+
+            // Every call has returned, and nothing any of them handed over has run: the
+            // store's thread is in the busy handler behind the arm's write lock.
+            await Assert.That(first.IsCompleted).IsFalse()
+                .Because("the first writer's call came back only after its statement had ended, so the lock was held across it");
+            await Assert.That(second.IsCompleted).IsFalse()
+                .Because("a second writer's statement ran while the first one's was still waiting");
+            await Assert.That(released.IsCompleted).IsFalse()
+                .Because("the release finished while a statement handed over before it was still waiting");
+
+            // And the directory is still held: the release waits for what was handed
+            // over before it, and for the close after that.
+            await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsFalse()
+                .Because("the directory was let go while a statement handed over before the release had not run");
+
+            writer.Execute("COMMIT;");
+        }
+
+        var row = await first.WaitAsync(TestDefaults.InProcessHang);
+        await second.WaitAsync(TestDefaults.InProcessHang);
+        await released.WaitAsync(TestDefaults.InProcessHang);
+
+        await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsTrue();
+        await Assert.That(held.Record.Purpose).IsEqualTo("a purpose set while the first statement waits");
+
+        await using var store = await SessionStore.OpenForReadingAsync(path.DataFile);
+
+        await Assert.That((await store.LogAsync()).Any(entry => entry.Id == row && entry.Tool == "browser_navigate")).IsTrue();
+        await Assert.That((await store.StatementsAsync())[^1].Value).IsEqualTo("a purpose set while the first statement waits");
+    }
+
     /// <summary>The rows a session's store holds, read through a connection of the arm's own.</summary>
     /// <param name="path">The session.</param>
     /// <returns>Its statements, then its log rows with each one's outcome.</returns>
-    private static Task<string> RowsInAsync(SessionPath path)
+    private static async Task<string> RowsInAsync(SessionPath path)
     {
-        using var store = SessionStore.OpenForReading(path.DataFile);
+        await using var store = await SessionStore.OpenForReadingAsync(path.DataFile);
 
-        var text = string.Join('\n', store.Statements().Select(static statement => $"{statement.Field}={statement.Value}"))
+        var text = string.Join('\n', (await store.StatementsAsync()).Select(static statement => $"{statement.Field}={statement.Value}"))
             + "\n--\n"
-            + string.Join('\n', store.Log().Select(static entry => $"{entry.Id}:{entry.Tool}:{entry.Outcome}"));
+            + string.Join('\n', (await store.LogAsync()).Select(static entry => $"{entry.Id}:{entry.Tool}:{entry.Outcome}"));
 
-        return Task.FromResult(text);
+        return text;
     }
 
     /// <summary>
@@ -1614,7 +1690,7 @@ internal sealed class SessionLockTests
 
         // A real guard, written by the product, then released -- so the file on
         // disk is exactly what a hold meets.
-        (await SessionLock.TryAcquireAsync(path, Request("the guard the hold is for"), NullLogger.Instance)).Acquired!.Dispose();
+        await (await SessionLock.TryAcquireAsync(path, Request("the guard the hold is for"), NullLogger.Instance)).Acquired!.DisposeAsync();
 
         var holder = LockFileHolder.ForThisProcess();
 
@@ -1723,7 +1799,7 @@ internal sealed class SessionLockTests
             new SessionLockRequest { Browser = "firefox", Purpose = "the session that is already here" },
             NullLogger.Instance);
 
-        first.Acquired!.Dispose();
+        await first.Acquired!.DisposeAsync();
 
         var before = await File.ReadAllTextAsync(path.LockFile);
 
@@ -1741,7 +1817,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            refused.Acquired?.Dispose();
+            await refused.Acquired.DisposeIfTakenAsync();
         }
 
         // Byte for byte. A refusal that appended a `browser` statement would
@@ -1760,7 +1836,7 @@ internal sealed class SessionLockTests
         }
         finally
         {
-            reclaimed.Acquired?.Dispose();
+            await reclaimed.Acquired.DisposeIfTakenAsync();
         }
     }
 
@@ -1863,7 +1939,7 @@ internal sealed class SessionLockTests
         {
             var logger = log.Factory.CreateLogger("BrowserAI.Tests");
             var result = await SessionLock.TryAcquireAsync(path, Request("watched"), NullLogger.Instance);
-            result.Acquired?.Dispose();
+            await result.Acquired.DisposeIfTakenAsync();
 
             // Taken again with the real logger, so that both the acquire record
             // and a record written by unrelated code inside the scope are
@@ -1887,7 +1963,7 @@ internal sealed class SessionLockTests
             }
             finally
             {
-                watched.Acquired?.Dispose();
+                await watched.Acquired.DisposeIfTakenAsync();
             }
         }
 

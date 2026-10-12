@@ -64,14 +64,14 @@ internal sealed class SessionRecordTests
         var path = NewSession(scratch, "purpose-rows");
 
         var first = await SessionLock.TryAcquireAsync(path, Request("reproducing the checkout 500 on staging"), NullLogger.Instance);
-        first.Acquired!.Dispose();
+        await first.Acquired!.DisposeAsync();
 
         var second = await SessionLock.TryAcquireAsync(path, Request("and the same 500 on the mobile checkout"), NullLogger.Instance);
-        second.Acquired!.Dispose();
+        await second.Acquired!.DisposeAsync();
 
         var third = await SessionLock.TryAcquireAsync(path, Request("tracking the checkout redirect loop"), NullLogger.Instance);
-        third.Acquired!.AppendPurpose("the redirect loop is a trailing-slash rule");
-        third.Acquired.Dispose();
+        await third.Acquired!.AppendPurposeAsync("the redirect loop is a trailing-slash rule");
+        await third.Acquired.DisposeAsync();
 
         var record = (await SessionLock.ReadRecordAsync(path))!;
 
@@ -134,12 +134,12 @@ internal sealed class SessionRecordTests
         {
             for (var i = 0; i < Rounds; i++)
             {
-                held.AppendPurpose($"purpose {i.ToString(CultureInfo.InvariantCulture)}");
+                await held.AppendPurposeAsync($"purpose {i.ToString(CultureInfo.InvariantCulture)}");
             }
         }
         finally
         {
-            held.Dispose();
+            await held.DisposeAsync();
         }
 
         // Restating the same value is not a statement about anything: four
@@ -147,8 +147,8 @@ internal sealed class SessionRecordTests
         // row.
         for (var i = 0; i < 3; i++)
         {
-            (await SessionLock.TryAcquireAsync(path, Request($"purpose {(Rounds - 1).ToString(CultureInfo.InvariantCulture)}"), NullLogger.Instance))
-                .Acquired!.Dispose();
+            await (await SessionLock.TryAcquireAsync(path, Request($"purpose {(Rounds - 1).ToString(CultureInfo.InvariantCulture)}"), NullLogger.Instance))
+                .Acquired!.DisposeAsync();
         }
 
         var record = (await SessionLock.ReadRecordAsync(path))!;
@@ -198,12 +198,12 @@ internal sealed class SessionRecordTests
         {
             // A forwarded call is one row and no statement, so this moves
             // `lastUsed` and leaves `created` where it was.
-            var row = held.Append("browser_navigate", "checking that lastUsed moves");
-            held.Settle(row, SessionStore.Successful, failure: null);
+            var row = await held.AppendAsync("browser_navigate", "checking that lastUsed moves");
+            await held.SettleAsync(row, SessionStore.Successful, failure: null);
         }
         finally
         {
-            held.Dispose();
+            await held.DisposeAsync();
         }
 
         var afterCall = (await SessionLock.ReadRecordAsync(path))!;
@@ -242,19 +242,19 @@ internal sealed class SessionRecordTests
 
         try
         {
-            var good = held.Append("browser_snapshot", "reading the page");
-            held.Settle(good, SessionStore.Successful, failure: null);
+            var good = await held.AppendAsync("browser_snapshot", "reading the page");
+            await held.SettleAsync(good, SessionStore.Successful, failure: null);
 
-            var bad = held.Append("browser_navigate", "loading a page that will not load");
-            held.Settle(bad, SessionStore.Failed, Encoding.UTF8.GetBytes(Detail));
+            var bad = await held.AppendAsync("browser_navigate", "loading a page that will not load");
+            await held.SettleAsync(bad, SessionStore.Failed, Encoding.UTF8.GetBytes(Detail));
         }
         finally
         {
-            held.Dispose();
+            await held.DisposeAsync();
         }
 
-        using var store = SessionStore.OpenForReading(path.DataFile);
-        var rows = SessionRecordReader.Log(store, 0, -1);
+        await using var store = await SessionStore.OpenForReadingAsync(path.DataFile);
+        var rows = await store.LogRowsAsync(0, -1);
 
         var success = rows.Single(row => row.Tool is "browser_snapshot");
         var failure = rows.Single(row => row.Tool is "browser_navigate");
@@ -293,13 +293,13 @@ internal sealed class SessionRecordTests
 
         try
         {
-            row = held.Append("browser_navigate", "a call nothing will answer");
+            row = await held.AppendAsync("browser_navigate", "a call nothing will answer");
 
             // ⚠️ READ FROM ANOTHER CONNECTION, BEFORE ANYTHING SETTLES IT. The
             // point is that the row is durable and visible to a reader at the
             // instant the call is forwarded, which is what a hung call leaves.
-            using var reader = SessionStore.OpenForReading(path.DataFile);
-            var pending = SessionRecordReader.Log(reader, 0, -1).Single(entry => entry.Id == row);
+            await using var reader = await SessionStore.OpenForReadingAsync(path.DataFile);
+            var pending = (await reader.LogRowsAsync(0, -1)).Single(entry => entry.Id == row);
 
             await Assert.That(pending.Outcome).IsEqualTo(SessionStore.InFlight);
             await Assert.That(pending.SettledAt).IsNull();
@@ -307,14 +307,14 @@ internal sealed class SessionRecordTests
         }
         finally
         {
-            held.Dispose();
+            await held.DisposeAsync();
         }
 
         // And nothing settled it on the way out, so it stays the true statement
         // about a call that never came back.
-        using var after = SessionStore.OpenForReading(path.DataFile);
+        await using var after = await SessionStore.OpenForReadingAsync(path.DataFile);
 
-        await Assert.That(SessionRecordReader.Log(after, 0, -1).Single(entry => entry.Id == row).Outcome)
+        await Assert.That((await after.LogRowsAsync(0, -1)).Single(entry => entry.Id == row).Outcome)
             .IsEqualTo(SessionStore.InFlight);
     }
 
@@ -444,16 +444,16 @@ internal sealed class SessionRecordTests
 
         try
         {
-            var row = held.Append("browser_teleport", Why);
-            held.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes("no such tool"));
+            var row = await held.AppendAsync("browser_teleport", Why);
+            await held.SettleAsync(row, SessionStore.Failed, Encoding.UTF8.GetBytes("no such tool"));
         }
         finally
         {
-            held.Dispose();
+            await held.DisposeAsync();
         }
 
-        using var store = SessionStore.OpenForReading(path.DataFile);
-        var entry = SessionRecordReader.Log(store, 0, -1).Single(row => row.Tool is not SessionToolSurface.Init);
+        await using var store = await SessionStore.OpenForReadingAsync(path.DataFile);
+        var entry = (await store.LogRowsAsync(0, -1)).Single(row => row.Tool is not SessionToolSurface.Init);
 
         await Assert.That(entry.Tool).IsEqualTo("browser_teleport");
         await Assert.That(entry.Why).IsEqualTo(Why);
@@ -567,7 +567,7 @@ internal sealed class SessionRecordTests
             """{"schemaVersion": 4, "purpose": []}""");
 
         var refused = await SessionLock.TryAcquireAsync(path, Request("about to meet the old format"), NullLogger.Instance);
-        refused.Acquired?.Dispose();
+        await refused.Acquired.DisposeIfTakenAsync();
 
         await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.NotThisFormat);
         await Assert.That(refused.Taken).IsFalse();

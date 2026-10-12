@@ -421,10 +421,14 @@ internal static class SessionRecordReader
             : DateTimeOffset.MinValue;
 
     /// <summary>Assembles the record from everything the store holds.</summary>
-    /// <param name="store">An open store.</param>
+    /// <remarks>
+    /// <b>On the store's own thread</b>, since the maintainer's 82 b of 2026-10-12: it is
+    /// handed the connection by <see cref="SessionStore.RunAsync{T}(Func{SessionStoreConnection, T})"/>.
+    /// </remarks>
+    /// <param name="store">The store's connection.</param>
     /// <returns>The record.</returns>
     /// <exception cref="SqliteException">SQLite refused.</exception>
-    public static SessionRecord Read(SessionStore store)
+    public static SessionRecord Read(SessionStoreConnection store)
     {
         ArgumentNullException.ThrowIfNull(store);
 
@@ -522,12 +526,12 @@ internal static class SessionRecordReader
     }
 
     /// <summary>One page of the log, oldest first.</summary>
-    /// <param name="store">An open store.</param>
+    /// <param name="store">The store's connection, on the store's own thread.</param>
     /// <param name="skip">How many rows to pass over.</param>
     /// <param name="take">How many to take; negative means all of them.</param>
     /// <returns>The rows.</returns>
     /// <exception cref="SqliteException">SQLite refused.</exception>
-    public static IReadOnlyList<SessionLogRow> Log(SessionStore store, long skip, long take)
+    public static IReadOnlyList<SessionLogRow> Log(SessionStoreConnection store, long skip, long take)
     {
         ArgumentNullException.ThrowIfNull(store);
 

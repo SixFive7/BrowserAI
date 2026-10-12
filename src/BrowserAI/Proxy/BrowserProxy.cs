@@ -747,14 +747,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <param name="why">What the caller said it was for.</param>
     /// <param name="refusal">What the caller is told.</param>
     /// <returns>The session's own logger, or the machine-wide one when there is none.</returns>
-    private ILogger RecordOnTheNamedSession(string? session, string tool, string? why, string refusal)
+    private async Task<ILogger> RecordOnTheNamedSessionAsync(string? session, string tool, string? why, string refusal)
     {
         if (string.IsNullOrWhiteSpace(session) || _sessions.Find(session) is not { } named)
         {
             return _logger;
         }
 
-        Refused(named, tool, why, refusal);
+        await RefusedAsync(named, tool, why, refusal).ConfigureAwait(false);
         return named.Logger;
     }
 
@@ -828,7 +828,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         {
             var named = name ?? "<none>";
             var absent = SessionErrors.ToolDoesNotExist(named, signatures);
-            var recordedIn = RecordOnTheNamedSession(session, named, why, absent);
+            var recordedIn = await RecordOnTheNamedSessionAsync(session, named, why, absent).ConfigureAwait(false);
 
             ProxyLog.ToolDoesNotExist(recordedIn, named);
             await RefuseAsync(caller, request.Id, absent, cancellationToken).ConfigureAwait(false);
@@ -854,7 +854,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // session it named, as every refused forwarded call is.
             var logger = SessionToolSurface.IsAuthored(name) && !string.Equals(name, SessionToolSurface.PageTool, StringComparison.Ordinal)
                 ? _logger
-                : RecordOnTheNamedSession(session, signature.Name, why, refusal);
+                : await RecordOnTheNamedSessionAsync(session, signature.Name, why, refusal).ConfigureAwait(false);
 
             ProxyLog.UnrecognisedArguments(logger, signature.Name, string.Join(", ", unrecognised));
             await RefuseAsync(caller, request.Id, refusal, cancellationToken).ConfigureAwait(false);
@@ -931,7 +931,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 var elsewhere = SessionErrors.SessionDrivenByAnotherClient(tool, live.Location.FullPath, holder!.Conversation());
 
                 ProxyLog.SessionDrivenElsewhere(live.Logger, tool, live.Location.FullPath);
-                Refused(live, tool, why, elsewhere);
+                await RefusedAsync(live, tool, why, elsewhere).ConfigureAwait(false);
                 await RefuseAsync(caller, request.Id, elsewhere, cancellationToken).ConfigureAwait(false);
                 return;
             }
@@ -1003,7 +1003,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             var refusal = decision.Refusal ?? SessionErrors.ToolDoesNotExist(tool, Signatures());
 
             ProxyLog.ToolRefused(live.Logger, tool, live.Location.FullPath);
-            Refused(live, tool, why, refusal);
+            await RefusedAsync(live, tool, why, refusal).ConfigureAwait(false);
             await RefuseAsync(caller, request.Id, refusal, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -1039,7 +1039,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             var closed = SessionErrors.SessionWasClosed(tool, live.Location.FullPath, closure, Connection);
 
             ProxyLog.SessionWasClosed(live.Logger, tool, live.Location.FullPath);
-            Refused(live, tool, why, closed);
+            await RefusedAsync(live, tool, why, closed).ConfigureAwait(false);
             await RefuseAsync(caller, request.Id, closed, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -1050,7 +1050,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // download and answer with upstream's `npx` advice at the end of it.
         if (await _sessions.ProvisioningRefusalAsync(tool, live).ConfigureAwait(false) is { } notYet)
         {
-            Refused(live, tool, why, notYet);
+            await RefusedAsync(live, tool, why, notYet).ConfigureAwait(false);
             await RefuseAsync(caller, request.Id, notYet, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -1081,12 +1081,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
         if (live.Child.ChildHasGone)
         {
             // 8 b: the next BrowserAI to open the session says why it was closed.
-            live.RecordTheServerEnded();
+            await live.RecordTheServerEndedAsync().ConfigureAwait(false);
 
             var gone = SessionErrors.BrowserServerHasGone(tool, live.Location.FullPath);
 
             ProxyLog.ChildHasGone(live.Logger, tool, live.Location.FullPath);
-            Refused(live, tool, why, gone);
+            await RefusedAsync(live, tool, why, gone).ConfigureAwait(false);
             await RefuseAsync(caller, request.Id, gone, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -1103,7 +1103,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         if (string.IsNullOrWhiteSpace(why))
         {
             ProxyLog.WhyMissing(live.Logger, tool, live.Location.FullPath);
-            Refused(live, tool, why, SessionErrors.WhyMissing(tool));
+            await RefusedAsync(live, tool, why, SessionErrors.WhyMissing(tool)).ConfigureAwait(false);
             await RefuseAsync(caller, request.Id, SessionErrors.WhyMissing(tool), cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -1135,7 +1135,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         try
         {
-            row = live.Lock.Append(tool, why);
+            row = await live.Lock.AppendAsync(tool, why).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {
@@ -1373,12 +1373,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // hanging. `browserai_catch_up` renders that as "no answer was
             // recorded", which is the true statement and the one a reader can
             // act on.
-            live.Lock.Settle(
+            await live.Lock.SettleAsync(
                 row,
                 outcome is SessionStore.InFlight ? SessionStore.Failed : outcome,
                 outcome is SessionStore.InFlight
                     ? Encoding.UTF8.GetBytes("The call did not reach the child, or the caller cancelled it before an answer arrived. BrowserAI never saw a result.")
-                    : payload);
+                    : payload).ConfigureAwait(false);
 
             // 8 b: once a call has left a browser up, its end is watched, so a
             // person closing its window closes the session. Armed above for an
@@ -1460,13 +1460,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <param name="tool">The tool name, verbatim, whatever the caller said.</param>
     /// <param name="why">What the caller said it was for, if it said anything.</param>
     /// <param name="refusal">What the caller is being told, which is the failure payload.</param>
-    private static void Refused(LiveSession live, string tool, string? why, string refusal)
+    /// <returns>The record, which never fails.</returns>
+    private static async Task RefusedAsync(LiveSession live, string tool, string? why, string refusal)
     {
         try
         {
-            var row = live.Lock.Append(tool, why ?? string.Empty);
+            var row = await live.Lock.AppendAsync(tool, why ?? string.Empty).ConfigureAwait(false);
 
-            live.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal));
+            await live.Lock.SettleAsync(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal)).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {

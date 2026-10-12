@@ -66,14 +66,14 @@ internal sealed class SessionIndexTests
         var first = await SessionLock.TryAcquireAsync(path, Request("the first"), NullLogger.Instance);
         await Assert.That(first.Outcome).IsEqualTo(SessionLockOutcome.Acquired);
         await index.RecordAsync(path);
-        first.Acquired!.Dispose();
+        await first.Acquired!.DisposeAsync();
 
         // resume: the same directory, taken again. The entry is re-asserted
         // and not written once, which is the whole reason a lost one heals.
         var second = await SessionLock.TryAcquireAsync(path, Request("the second"), NullLogger.Instance);
         await Assert.That(second.Outcome).IsEqualTo(SessionLockOutcome.Reclaimed);
         await index.RecordAsync(path);
-        second.Acquired!.Dispose();
+        await second.Acquired!.DisposeAsync();
 
         var entries = Directory.GetFiles(index.Root);
         await Assert.That(entries.Length).IsEqualTo(1);
@@ -97,7 +97,7 @@ internal sealed class SessionIndexTests
 
         var third = await SessionLock.TryAcquireAsync(path, Request("the third"), NullLogger.Instance);
         await index.RecordAsync(path);
-        third.Acquired!.Dispose();
+        await third.Acquired!.DisposeAsync();
 
         await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
         await Assert.That((await index.FollowAsync())[0].State).IsEqualTo(SessionIndexEntryState.Session);
@@ -111,7 +111,7 @@ internal sealed class SessionIndexTests
 
         var lease = await SessionLock.TryAcquireAsync(path, Request("about to be deleted"), NullLogger.Instance);
         await index.RecordAsync(path);
-        lease.Acquired!.Dispose();
+        await lease.Acquired!.DisposeAsync();
 
         await Assert.That((await index.FollowAsync())[0].State).IsEqualTo(SessionIndexEntryState.Session);
 
@@ -141,7 +141,7 @@ internal sealed class SessionIndexTests
 
         var lease = await SessionLock.TryAcquireAsync(path, Request("about to be destroyed"), NullLogger.Instance);
         await index.RecordAsync(path);
-        lease.Acquired!.Dispose();
+        await lease.Acquired!.DisposeAsync();
 
         // The directory survives both of its files, which is what a destroy
         // leaves behind if the caller keeps the folder.
@@ -212,7 +212,7 @@ internal sealed class SessionIndexTests
 
         var lease = await SessionLock.TryAcquireAsync(path, Request("rewriting its own record"), NullLogger.Instance);
         await index.RecordAsync(path);
-        lease.Acquired!.Dispose();
+        await lease.Acquired!.DisposeAsync();
 
         // Exactly what the window leaves on disk: neither file bound, the
         // durable write's temp file beside them.
@@ -295,7 +295,7 @@ internal sealed class SessionIndexTests
         SessionFolders.Create(path);
 
         var lease = await SessionLock.TryAcquireAsync(path, Request("raced for"), NullLogger.Instance);
-        lease.Acquired!.Dispose();
+        await lease.Acquired!.DisposeAsync();
 
         var startName = $@"Local\BrowserAI-Test-Start-{Guid.NewGuid():N}";
         using var start = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, startName, out var createdNew);
@@ -378,7 +378,7 @@ internal sealed class SessionIndexTests
 
         var lease = await SessionLock.TryAcquireAsync(path, Request("about to be corrupted"), NullLogger.Instance);
         await index.RecordAsync(path);
-        lease.Acquired!.Dispose();
+        await lease.Acquired!.DisposeAsync();
 
         var original = await File.ReadAllBytesAsync(path.DataFile);
 
@@ -392,7 +392,7 @@ internal sealed class SessionIndexTests
         // would make a directory that still exists permanently invisible to the
         // only inventory there is.
         var refused = await SessionLock.TryAcquireAsync(path, Request("trying to resume it"), NullLogger.Instance);
-        refused.Acquired?.Dispose();
+        await refused.Acquired.DisposeIfTakenAsync();
         await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Unreadable);
         await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
 
@@ -536,7 +536,7 @@ internal sealed class SessionIndexTests
 
         var lease = await SessionLock.TryAcquireAsync(path, Request("littered"), NullLogger.Instance);
         await index.RecordAsync(path);
-        lease.Acquired!.Dispose();
+        await lease.Acquired!.DisposeAsync();
 
         var abandoned = Path.Combine(index.Root, $"{path.IndexKey}.new-{Guid.NewGuid():N}");
         var live = Path.Combine(index.Root, $"{path.IndexKey}.new-{Guid.NewGuid():N}");
@@ -603,7 +603,7 @@ internal sealed class SessionIndexTests
         }
         finally
         {
-            lease.Acquired?.Dispose();
+            await lease.Acquired.DisposeIfTakenAsync();
         }
 
         // And Follow over an unusable root answers empty instead of throwing.
@@ -715,7 +715,7 @@ internal sealed class SessionIndexTests
 
             var lease = await SessionLock.TryAcquireAsync(session, Request($"the session called {name}"), NullLogger.Instance);
             await index.RecordAsync(session);
-            lease.Acquired!.Dispose();
+            await lease.Acquired!.DisposeAsync();
         }
 
         // ⚠️ THE DIVERGENT CLASS, PLANTED. An entry whose name is not the hash of
@@ -783,7 +783,7 @@ internal sealed class SessionIndexTests
         {
             var lease = await SessionLock.TryAcquireAsync(session, Request("a session somebody else's tree holds"), NullLogger.Instance);
             await index.RecordAsync(session);
-            lease.Acquired!.Dispose();
+            await lease.Acquired!.DisposeAsync();
         }
 
         // ReadData on the directory, inherited by the browserai.data inside it:
@@ -866,7 +866,7 @@ internal sealed class SessionIndexTests
         // exited would leave it: the record checkpointed, no -wal, no -shm.
         var lease = await SessionLock.TryAcquireAsync(path, Request("a session the sweep only passes over"), NullLogger.Instance);
         await index.RecordAsync(path);
-        lease.Acquired!.Dispose();
+        await lease.Acquired!.DisposeAsync();
 
         var afterClose = Directory.GetFiles(path.FullPath).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToList();
 

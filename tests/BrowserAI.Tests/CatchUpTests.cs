@@ -564,7 +564,7 @@ internal sealed class CatchUpTests
         // why." Previously the log gained nothing, and this arm asserted that.
         // The guard file above is still untouched: the row goes into the record
         // this BrowserAI already holds open.
-        var log = RecordedSession.LogOf(directory);
+        var log = await RecordedSession.LogOfAsync(directory);
 
         await Assert.That(log.Count).IsEqualTo(2);
         await Assert.That(text).DoesNotContain("the suite reading back what this session did");
@@ -621,7 +621,7 @@ internal sealed class CatchUpTests
         await Assert.That((bool?)refused["isError"]).IsTrue();
         await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.WhyMissing(SessionToolSurface.CatchUp));
 
-        var before = RecordedSession.LogOf(directory).Count;
+        var before = (await RecordedSession.LogOfAsync(directory)).Count;
 
         var read = await CallAsync(reader, SessionToolSurface.CatchUp, new JsonObject
         {
@@ -631,7 +631,7 @@ internal sealed class CatchUpTests
 
         await Assert.That((bool?)read["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(read)).Contains("a session read by a BrowserAI that does not hold it");
-        await Assert.That(RecordedSession.LogOf(directory).Count).IsEqualTo(before);
+        await Assert.That((await RecordedSession.LogOfAsync(directory)).Count).IsEqualTo(before);
     }
 
     /// <summary>
@@ -702,7 +702,7 @@ internal sealed class CatchUpTests
 
         // At the record, not only in the rendering: the row carries the whole
         // string, so nothing downstream can print a stump of it either.
-        var log = RecordedSession.LogOf(directory);
+        var log = await RecordedSession.LogOfAsync(directory);
 
         await Assert.That(log[0].Tool).IsEqualTo(SessionToolSurface.Init);
         await Assert.That(log[0].Why).IsEqualTo(Purpose);
@@ -802,7 +802,7 @@ internal sealed class CatchUpTests
 
         // ⚠️ And the catch_up above, since 2026-10-04: it takes a why and writes
         // its own row after it has read.
-        await Assert.That(RecordedSession.LogOf(directory).Select(entry => entry.Tool).ToArray())
+        await Assert.That((await RecordedSession.LogOfAsync(directory)).Select(entry => entry.Tool).ToArray())
             .IsEquivalentTo([SessionToolSurface.Init, SessionToolSurface.Resume, SessionToolSurface.ChangePurpose, SessionToolSurface.CatchUp]);
     }
 
@@ -1052,21 +1052,21 @@ internal sealed class CatchUpTests
         // through the store is the same thing that would be on disk afterwards.
         var path = SessionPath.For(directory);
 
-        using (var store = SessionStore.OpenForWriting(path.DataFile))
+        await using (var store = await SessionStore.OpenForWritingAsync(path.DataFile))
         {
-            _ = store.AppendLog(
+            _ = await store.AppendLogAsync(
                 SessionRecordReader.Stamp(DateTimeOffset.Now),
                 "browser_navigate",
                 "loading the page the process died on",
                 SessionStore.InFlight);
 
-            var failed = store.AppendLog(
+            var failed = await store.AppendLogAsync(
                 SessionRecordReader.Stamp(DateTimeOffset.Now),
                 "browser_click",
                 "clicking something that was not there",
                 SessionStore.InFlight);
 
-            _ = store.Settle(
+            _ = await store.SettleAsync(
                 failed,
                 SessionStore.Failed,
                 SessionRecordReader.Stamp(DateTimeOffset.Now),
@@ -1140,9 +1140,9 @@ internal sealed class CatchUpTests
         await Assert.That(TextOf(held)).StartsWith(SettingsHoldBack.HeldBackOnce);
 
         // The session's own record says held back.
-        using (var store = SessionStore.OpenForReading(SessionPath.For(directory).DataFile))
+        await using (var store = await SessionStore.OpenForReadingAsync(SessionPath.For(directory).DataFile))
         {
-            var row = store.Log().Single(entry => entry.Tool == SessionToolSurface.Resume);
+            var row = (await store.LogAsync()).Single(entry => entry.Tool == SessionToolSurface.Resume);
 
             await Assert.That(row.Outcome).IsEqualTo(SessionStore.HeldBack);
             await Assert.That(row.Outcome).IsEqualTo("held-back");

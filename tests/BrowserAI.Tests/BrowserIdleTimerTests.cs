@@ -352,11 +352,11 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(harness.Client.FramesReceived.Count).IsEqualTo(framesBefore + 1);
 
         await WaitUntilAsync(
-            () => RecordedSession.LogOf(session).Any(row => row.Tool == CloseReasons.LogRowTool && row.Outcome != SessionStore.InFlight),
+            async () => (await RecordedSession.LogOfAsync(session)).Any(row => row.Tool == CloseReasons.LogRowTool && row.Outcome != SessionStore.InFlight),
             TestDefaults.InProcessHang,
             "the idle close never settled its row");
 
-        await Assert.That(RecordedSession.LogOf(session).Count(row => row.Tool == CloseReasons.LogRowTool)).IsEqualTo(1);
+        await Assert.That((await RecordedSession.LogOfAsync(session)).Count(row => row.Tool == CloseReasons.LogRowTool)).IsEqualTo(1);
 
         // ⚠️ AND IT ASKED THE BROWSER TO CLOSE ITSELF, ONCE, Q367 a. Corrected
         // 2026-10-03 (previously "AND IT NEVER ASKED THE CHILD TO CLOSE ANYTHING,
@@ -457,12 +457,12 @@ internal sealed partial class BrowserIdleTimerTests
         // and not for a duration -- bounded by the suite's own hang detector
         // and by no number written here.
         await WaitUntilAsync(
-            () => RecordedSession.LogOf(session).Any(row =>
+            async () => (await RecordedSession.LogOfAsync(session)).Any(row =>
                 row.Tool == CloseReasons.LogRowTool && row.Outcome != SessionStore.InFlight),
             TestDefaults.InProcessHang,
             "the idle close never settled its row");
 
-        var closes = RecordedSession.LogOf(session)
+        var closes = (await RecordedSession.LogOfAsync(session))
             .Where(row => row.Tool == CloseReasons.LogRowTool)
             .ToList();
 
@@ -495,7 +495,7 @@ internal sealed partial class BrowserIdleTimerTests
         // row written on every session: the caller's own navigation is still
         // there beside it, and the close is not confused with it.
         await Assert.That(text).Contains("the call that arms the timer");
-        await Assert.That(RecordedSession.LogOf(session).Count(row => row.Tool == "browser_navigate")).IsEqualTo(1);
+        await Assert.That((await RecordedSession.LogOfAsync(session)).Count(row => row.Tool == "browser_navigate")).IsEqualTo(1);
     }
 
     /// <summary>
@@ -678,7 +678,7 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
 
         await WaitUntilAsync(
-            () => RecordedSession.LogOf(harness.Session!).Any(row =>
+            async () => (await RecordedSession.LogOfAsync(harness.Session!)).Any(row =>
                 row.Tool == CloseReasons.LogRowTool && row.Outcome == SessionStore.Successful),
             TestDefaults.InProcessHang,
             "the idle close never settled its row");
@@ -771,7 +771,7 @@ internal sealed partial class BrowserIdleTimerTests
         // And the session is closed the way any idle close leaves it: the row is
         // settled, and the next call is refused with the way back.
         await WaitUntilAsync(
-            () => RecordedSession.LogOf(harness.Session!).Any(row =>
+            async () => (await RecordedSession.LogOfAsync(harness.Session!)).Any(row =>
                 row.Tool == CloseReasons.LogRowTool && row.Outcome != SessionStore.InFlight),
             TestDefaults.InProcessHang,
             "the idle close never settled its row");
@@ -1040,7 +1040,7 @@ internal sealed partial class BrowserIdleTimerTests
 
         await Assert.That(child.HasStopped).IsFalse();
         await Assert.That(child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
-        await Assert.That(RecordedSession.LogOf(session).Any(row => row.Tool == CloseReasons.LogRowTool)).IsFalse();
+        await Assert.That((await RecordedSession.LogOfAsync(session)).Any(row => row.Tool == CloseReasons.LogRowTool)).IsFalse();
 
         // And the session was not closed: the next call reaches the same child.
         var again = await harness.Client.RoundTripAsync("tools/call", new JsonObject
@@ -1568,11 +1568,14 @@ internal sealed partial class BrowserIdleTimerTests
         string.Concat((result["content"]?.AsArray() ?? [])
             .Select(block => (string?)block?["text"] ?? string.Empty));
 
-    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan patience, string whatWentWrong)
+    private static Task WaitUntilAsync(Func<bool> condition, TimeSpan patience, string whatWentWrong) =>
+        WaitUntilAsync(() => Task.FromResult(condition()), patience, whatWentWrong);
+
+    private static async Task WaitUntilAsync(Func<Task<bool>> condition, TimeSpan patience, string whatWentWrong)
     {
         var waited = Stopwatch.StartNew();
 
-        while (!condition())
+        while (!await condition())
         {
             if (waited.Elapsed > patience)
             {

@@ -418,7 +418,7 @@ internal sealed class SettingsHoldBackTests
         await WaitUntilAsync(() => host.Host.Sessions.Find(directory) is null, "the session was never let go");
 
         // Another BrowserAI takes the session's guard, as a second install would.
-        using var held = (await SessionLock.TryAcquireAsync(
+        await using var held = (await SessionLock.TryAcquireAsync(
             SessionPath.For(directory),
             new SessionLockRequest { Browser = "chromium", Purpose = "the session another BrowserAI holds" },
             NullLogger.Instance)).Acquired!;
@@ -685,7 +685,7 @@ internal sealed class SettingsHoldBackTests
 
         SessionFolders.Create(path);
 
-        using ((await SessionLock.TryAcquireAsync(path, new SessionLockRequest { Browser = SessionManager.DefaultBrowser, Purpose = "a session from before settings were kept" }, NullLogger.Instance)).Acquired!)
+        await using ((await SessionLock.TryAcquireAsync(path, new SessionLockRequest { Browser = SessionManager.DefaultBrowser, Purpose = "a session from before settings were kept" }, NullLogger.Instance)).Acquired!)
         {
         }
 

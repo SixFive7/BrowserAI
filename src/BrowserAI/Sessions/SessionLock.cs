@@ -70,18 +70,30 @@ namespace BrowserAI.Sessions;
 /// about its own lifetime.</b> Nothing above <c>SessionManager</c> serialises
 /// tool calls, so a <c>browserai_change_purpose</c> and a
 /// <c>browserai_destroy</c> naming the same directory arrive at one instance
-/// concurrently. Every writing path and <b>both</b> disposal paths hold
-/// <see cref="_inProcess"/> for their whole body -- which is
+/// concurrently. Every writing path and <b>both</b> disposal paths take
+/// <see cref="_inProcess"/> to read the mark and hand their statements to the store's
+/// thread, which is
 /// [adversarial review B4](../../../docs/reviews/2026-08-18-adversarial-locking.md)
-/// and not defensive programming, and which is also what serialises the
-/// <c>INSERT</c>-then-<c>last_insert_rowid</c> pair on one SQLite connection.
+/// and not defensive programming. The store's thread runs what it is handed in that
+/// order, one item at a time, which is what keeps the
+/// <c>INSERT</c>-then-<c>last_insert_rowid</c> pair on one SQLite connection together.
+/// </para>
+/// <para>
+/// ⚠️ <b>The lock guards state only and is never held across a statement, since
+/// 2026-10-12</b>, decided by the maintainer, 82 b, in his words verbatim:
+/// <i>"78-82 your recommendation"</i>. A writer awaits its statement outside the lock,
+/// so a statement that waits in the disk or in SQLite's busy handler holds no other
+/// caller of the session. <i>Corrected that day (previously "Every writing path and
+/// both disposal paths hold <c>_inProcess</c> for their whole body", the statements
+/// included, which serialised the pair by holding the lock across it).</i>
 /// </para>
 /// </remarks>
-internal sealed class SessionLock : IDisposable
+internal sealed class SessionLock : IAsyncDisposable
 {
     /// <summary>
     /// The in-process half of the same exclusion: every writing path and
-    /// <b>both</b> disposal paths hold this for their whole body.
+    /// <b>both</b> disposal paths take this to read the mark and hand their statements
+    /// over, and release it before they await them.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -97,12 +109,20 @@ internal sealed class SessionLock : IDisposable
     /// blocked writer would wake holding.
     /// </para>
     /// <para>
-    /// ⚠️ <b>It carries a second job since the store arrived.</b> A
-    /// <c>SQLite</c> connection is one connection: <see cref="Append"/> is an
-    /// <c>INSERT</c> followed by <c>last_insert_rowid</c>, and two threads
-    /// interleaving there would hand one call the other's row id -- after which
-    /// a settle lands on somebody else's entry. The pair is atomic because it
-    /// runs in here.
+    /// ⚠️ <b>It carried a second job from the day the store arrived until
+    /// 2026-10-12.</b> A <c>SQLite</c> connection is one connection:
+    /// <see cref="AppendAsync"/> is an <c>INSERT</c> followed by
+    /// <c>last_insert_rowid</c>, and two threads interleaving there would hand one call
+    /// the other's row id -- after which a settle lands on somebody else's entry. The
+    /// pair is one item on the store's thread since the maintainer's 82 b, and nothing
+    /// runs between its two halves. <i>Corrected that day (previously "The pair is atomic
+    /// because it runs in here").</i>
+    /// </para>
+    /// <para>
+    /// <b>What it still orders is the hand-over.</b> A writer reads the mark and hands
+    /// its item to the store's thread inside this, and a disposal hands the close over
+    /// inside it too, so a writer that read no mark is ahead of the close in the queue
+    /// and one that comes after reads the mark and is refused.
     /// </para>
     /// <para>
     /// <b>It is not a fourth lock scope.</b> <see cref="LockScopes"/> names the
@@ -120,6 +140,7 @@ internal sealed class SessionLock : IDisposable
     private IDisposable? _callerScope;
     private long _opening;
     private int _disposed;
+    private volatile SessionRecord _record;
 
     private SessionLock(
         SessionPath location,
@@ -136,7 +157,7 @@ internal sealed class SessionLock : IDisposable
         _gate = gate;
         _hold = hold;
         _store = store;
-        Record = record;
+        _record = record;
         GateWasAbandoned = gateWasAbandoned;
         Logger = logger;
 
@@ -193,9 +214,11 @@ internal sealed class SessionLock : IDisposable
     /// A statement changes what the session <i>is</i> -- its purpose, its
     /// directory -- and every answer this product composes reads those; a log
     /// row changes only how much of a log there is, which is counted at the
-    /// moment somebody asks.
+    /// moment somebody asks. Since 2026-10-12 it is read again on the store's thread, in
+    /// the same item as the statement, so it is never older than the statement a writer
+    /// has finished awaiting.
     /// </remarks>
-    public SessionRecord Record { get; private set; }
+    public SessionRecord Record => _record;
 
     /// <summary>
     /// Whether the per-directory mutex was found abandoned when this lock was
@@ -367,21 +390,24 @@ internal sealed class SessionLock : IDisposable
     /// <returns>The row's id, for the settle that follows.</returns>
     /// <exception cref="SqliteException">The row could not be written.</exception>
     /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
-    public long Append(string tool, string why)
+    public async Task<long> AppendAsync(string tool, string why)
     {
         ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(why);
+
+        var at = SessionRecordReader.Stamp(DateTimeOffset.Now);
+        var named = RecordText.Sanitise(tool);
+        var said = RecordText.Sanitise(why);
+        Task<long> appended;
 
         lock (_inProcess)
         {
             ObjectDisposedException.ThrowIf(_disposed is not 0, this);
 
-            return _store.AppendLog(
-                SessionRecordReader.Stamp(DateTimeOffset.Now),
-                RecordText.Sanitise(tool),
-                RecordText.Sanitise(why),
-                SessionStore.InFlight);
+            appended = _store.RunAsync(store => store.AppendLog(at, named, said, SessionStore.InFlight));
         }
+
+        return await appended.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -403,14 +429,18 @@ internal sealed class SessionLock : IDisposable
     /// about bookkeeping.
     /// </para>
     /// </remarks>
-    /// <param name="id">The row from <see cref="Append"/>.</param>
+    /// <param name="id">The row from <see cref="AppendAsync"/>.</param>
     /// <param name="outcome">
     /// <see cref="SessionStore.Successful"/>, <see cref="SessionStore.Failed"/>, or
     /// <see cref="SessionStore.HeldBack"/> for a call the hold-back held, since 2026-10-10.
     /// </param>
     /// <param name="failure">Why it failed, or what a held call was told, or <see langword="null"/> when it did neither.</param>
-    public void Settle(long id, string outcome, byte[]? failure)
+    /// <returns>The settle, which never fails.</returns>
+    public async Task SettleAsync(long id, string outcome, byte[]? failure)
     {
+        var at = SessionRecordReader.Stamp(DateTimeOffset.Now);
+        Task<bool> settled;
+
         lock (_inProcess)
         {
             if (_disposed is not 0)
@@ -418,21 +448,23 @@ internal sealed class SessionLock : IDisposable
                 return;
             }
 
-            try
+            settled = _store.RunAsync(store => store.Settle(id, outcome, at, failure));
+        }
+
+        try
+        {
+            if (!await settled.ConfigureAwait(false))
             {
-                if (!_store.Settle(id, outcome, SessionRecordReader.Stamp(DateTimeOffset.Now), failure))
-                {
-                    SessionLog.OutcomeLanded(Logger, id, Location.FullPath);
-                }
+                SessionLog.OutcomeLanded(Logger, id, Location.FullPath);
             }
-            catch (SqliteException refused)
-            {
-                // The answer is already on its way back to the caller. What is
-                // lost is the outcome of one row, which `browserai_catch_up`
-                // renders as "no answer was recorded" -- a true statement about
-                // the record and not a failed call.
-                SessionLog.OutcomeNotRecorded(Logger, id, Location.FullPath, refused);
-            }
+        }
+        catch (SqliteException refused)
+        {
+            // The answer is already on its way back to the caller. What is
+            // lost is the outcome of one row, which `browserai_catch_up`
+            // renders as "no answer was recorded" -- a true statement about
+            // the record and not a failed call.
+            SessionLog.OutcomeNotRecorded(Logger, id, Location.FullPath, refused);
         }
     }
 
@@ -451,14 +483,12 @@ internal sealed class SessionLock : IDisposable
     /// </remarks>
     /// <param name="outcome">How the opening call ended.</param>
     /// <param name="failure">Why it failed, or <see langword="null"/> when it did not.</param>
-    public void SettleOpening(string outcome, byte[]? failure)
+    /// <returns>The settle, which never fails.</returns>
+    public Task SettleOpeningAsync(string outcome, byte[]? failure)
     {
         var id = Interlocked.Exchange(ref _opening, 0);
 
-        if (id is not 0)
-        {
-            Settle(id, outcome, failure);
-        }
+        return id is 0 ? Task.CompletedTask : SettleAsync(id, outcome, failure);
     }
 
     /// <summary>
@@ -473,23 +503,17 @@ internal sealed class SessionLock : IDisposable
     /// caller had just written. A row is a row; "current" means the newest.
     /// </remarks>
     /// <param name="purpose">What the session is for, sanitised by the caller.</param>
+    /// <returns>The statement, written and read back.</returns>
     /// <exception cref="SqliteException">The statement could not be written.</exception>
     /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
-    public void AppendPurpose(string purpose)
+    public Task AppendPurposeAsync(string purpose)
     {
         ArgumentNullException.ThrowIfNull(purpose);
 
-        lock (_inProcess)
-        {
-            ObjectDisposedException.ThrowIf(_disposed is not 0, this);
-
-            _store.Append(new StoredStatement(
-                RecordFields.Purpose,
-                SessionRecordReader.Stamp(DateTimeOffset.Now),
-                purpose));
-
-            Record = SessionRecordReader.Read(_store);
-        }
+        return AppendStatementAsync(new StoredStatement(
+            RecordFields.Purpose,
+            SessionRecordReader.Stamp(DateTimeOffset.Now),
+            purpose));
     }
 
     /// <summary>
@@ -497,15 +521,16 @@ internal sealed class SessionLock : IDisposable
     /// dedup: two closes with the same reason are two closes.
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-10-04 for 8 b</b>, beside <see cref="AppendPurpose"/> and under
+    /// <b>Added 2026-10-04 for 8 b</b>, beside <see cref="AppendPurposeAsync"/> and under
     /// the same in-process lock, and the record is read again after it so an answer
     /// composed next sees it.
     /// </remarks>
     /// <param name="field">The field, <see cref="RecordFields.Opened"/> or <see cref="RecordFields.Closed"/>.</param>
     /// <param name="value">What it says.</param>
+    /// <returns>The statement, written and read back.</returns>
     /// <exception cref="SqliteException">The statement could not be written.</exception>
     /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
-    public void AppendLifecycle(string field, string value)
+    public Task AppendLifecycleAsync(string field, string value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
@@ -514,14 +539,52 @@ internal sealed class SessionLock : IDisposable
             throw new ArgumentException($"'{field}' is not a lifecycle field.", nameof(field));
         }
 
+        return AppendStatementAsync(new StoredStatement(field, SessionRecordReader.Stamp(DateTimeOffset.Now), value));
+    }
+
+    /// <summary>
+    /// Records a close: a <c>closed</c> statement, and a log row saying why, settled at
+    /// once, when there is a reason to write one, as one item on the store's thread.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 with the maintainer's 82 b.</b> A close was a statement, a row
+    /// and its settle, three hand-overs a release could come between; as one item it is
+    /// handed over before the call returns, so a caller that cannot await it, the
+    /// browser's end among them, still has it in the queue ahead of the release.
+    /// </remarks>
+    /// <param name="closed">The <c>closed</c> statement's value.</param>
+    /// <param name="why">The log row's <c>why</c>, or <see langword="null"/> for a close a call of its own already stands for.</param>
+    /// <returns>The close, written and read back.</returns>
+    /// <exception cref="SqliteException">The close could not be written.</exception>
+    /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
+    public async Task RecordCloseAsync(string closed, string? why)
+    {
+        ArgumentNullException.ThrowIfNull(closed);
+
+        var at = SessionRecordReader.Stamp(DateTimeOffset.Now);
+        var said = why is null ? null : RecordText.Sanitise(why);
+        Task recorded;
+
         lock (_inProcess)
         {
             ObjectDisposedException.ThrowIf(_disposed is not 0, this);
 
-            _store.Append(new StoredStatement(field, SessionRecordReader.Stamp(DateTimeOffset.Now), value));
+            recorded = _store.RunAsync(store =>
+            {
+                store.Append(new StoredStatement(RecordFields.Closed, at, closed));
 
-            Record = SessionRecordReader.Read(_store);
+                if (said is not null)
+                {
+                    var row = store.AppendLog(at, CloseReasons.LogRowTool, said, SessionStore.InFlight);
+
+                    _ = store.Settle(row, SessionStore.Successful, at, failure: null);
+                }
+
+                _record = SessionRecordReader.Read(store);
+            });
         }
+
+        await recorded.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -529,34 +592,68 @@ internal sealed class SessionLock : IDisposable
     /// differ from the newest one.
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-10-08 for F2 d</b>, beside <see cref="AppendLifecycle"/> and under the
+    /// <b>Added 2026-10-08 for F2 d</b>, beside <see cref="AppendLifecycleAsync"/> and under the
     /// same in-process lock. <b>Deduplicated, unlike an opening or a close</b>: what a
     /// resume compares with is the newest row, and a session resumed a thousand times at
-    /// the same settings has one fact to record and not a thousand.
+    /// the same settings has one fact to record and not a thousand. The comparison is in
+    /// the statement's own item since 2026-10-12, so two of these cannot both find the
+    /// newest row different and write it twice.
     /// </remarks>
     /// <param name="value">The JSON of the run's <see cref="SessionRunSettings"/>.</param>
     /// <returns>Whether a statement was added.</returns>
     /// <exception cref="SqliteException">The statement could not be written.</exception>
     /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
-    public bool AppendSettings(string value)
+    public async Task<bool> AppendSettingsAsync(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
+
+        var at = SessionRecordReader.Stamp(DateTimeOffset.Now);
+        Task<bool> appended;
 
         lock (_inProcess)
         {
             ObjectDisposedException.ThrowIf(_disposed is not 0, this);
 
-            if (Record.SettingsHistory is [.., var newest] && string.Equals(newest.Value, value, StringComparison.Ordinal))
+            appended = _store.RunAsync(store =>
             {
-                return false;
-            }
+                if (_record.SettingsHistory is [.., var newest] && string.Equals(newest.Value, value, StringComparison.Ordinal))
+                {
+                    return false;
+                }
 
-            _store.Append(new StoredStatement(RecordFields.Settings, SessionRecordReader.Stamp(DateTimeOffset.Now), value));
+                store.Append(new StoredStatement(RecordFields.Settings, at, value));
 
-            Record = SessionRecordReader.Read(_store);
+                _record = SessionRecordReader.Read(store);
 
-            return true;
+                return true;
+            });
         }
+
+        return await appended.ConfigureAwait(false);
+    }
+
+    /// <summary>Hands one statement to the store's thread and reads the record again after it.</summary>
+    /// <param name="statement">The statement.</param>
+    /// <returns>The statement, written and read back.</returns>
+    /// <exception cref="SqliteException">The statement could not be written.</exception>
+    /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
+    private async Task AppendStatementAsync(StoredStatement statement)
+    {
+        Task appended;
+
+        lock (_inProcess)
+        {
+            ObjectDisposedException.ThrowIf(_disposed is not 0, this);
+
+            appended = _store.RunAsync(store =>
+            {
+                store.Append(statement);
+
+                _record = SessionRecordReader.Read(store);
+            });
+        }
+
+        await appended.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -610,7 +707,7 @@ internal sealed class SessionLock : IDisposable
     /// body, the gate's wait included).</i> B4 stays closed by the same two facts: no
     /// writer takes the gate, so the order holds nothing a writer waits for; and a writer
     /// already inside the in-process lock finishes before the store is disposed, while
-    /// one that arrives after the mark is refused, as it was. <see cref="Dispose"/> leaves
+    /// one that arrives after the mark is refused, as it was. <see cref="DisposeAsync"/> leaves
     /// a lock this has marked to this.
     /// </para>
     /// <para>
@@ -622,6 +719,12 @@ internal sealed class SessionLock : IDisposable
     /// lock to this, which <c>SessionLockTests</c> holds. <i>Corrected that day (previously
     /// an <see cref="Action"/> run inside the in-process lock, which held a writer of the
     /// same session parked on the lock for as long as the walk took).</i>
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The store's close runs on the store's thread since the same day</b>, the
+    /// maintainer's 82 b: the lock is held to hand the close over, behind every statement
+    /// handed over before the mark, and the hold is dropped once the close has run, so no
+    /// statement reaches the file after the directory is let go.
     /// </para>
     /// </remarks>
     public async Task ReleaseAndDeleteAsync(Func<Task> delete)
@@ -637,6 +740,8 @@ internal sealed class SessionLock : IDisposable
 
         try
         {
+            Task closing;
+
             lock (_inProcess)
             {
                 SessionLog.Released(Logger, Location.FullPath);
@@ -644,9 +749,11 @@ internal sealed class SessionLock : IDisposable
                 // The store first: closing the last connection checkpoints and
                 // removes the write-ahead log, so what the delete below meets is
                 // one file and not three.
-                _store.Dispose();
-                _hold.Dispose();
+                closing = _store.CloseAsync();
             }
+
+            await closing.ConfigureAwait(false);
+            _hold.Dispose();
 
             await delete().ConfigureAwait(false);
         }
@@ -668,11 +775,23 @@ internal sealed class SessionLock : IDisposable
     /// holder is what makes a stale lock a sentence and not a refusal, and
     /// the record is the whole of what the session did.
     /// </summary>
-    public void Dispose()
+    /// <remarks>
+    /// <b>Asynchronous since 2026-10-12</b>, the maintainer's 82 b: the store's close is
+    /// I/O and runs on the store's thread, behind every statement handed over before it,
+    /// and the directory is let go once it has run. So the directory is free when this
+    /// completes, and never before. <i>Corrected that day (previously <c>Dispose</c>,
+    /// which closed the store on its caller's thread inside the in-process lock).</i>
+    /// </remarks>
+    /// <returns>The release.</returns>
+    public async ValueTask DisposeAsync()
     {
         // ⚠️ IT WAITS FOR AN IN-FLIGHT WRITE , NOT RACING ONE. Disposing
         // _gate underneath a writer that is holding it is B4. See _inProcess.
         // A lock ReleaseAndDeleteAsync has marked is that one's to dispose.
+        // The close is handed over inside the lock, behind every write a
+        // writer handed over before the mark, and awaited outside it.
+        Task closing;
+
         lock (_inProcess)
         {
             if (Interlocked.CompareExchange(ref _disposed, 1, 0) is not 0)
@@ -682,7 +801,15 @@ internal sealed class SessionLock : IDisposable
 
             SessionLog.Released(Logger, Location.FullPath);
 
-            _store.Dispose();
+            closing = _store.CloseAsync();
+        }
+
+        try
+        {
+            await closing.ConfigureAwait(false);
+        }
+        finally
+        {
             _hold.Dispose();
             Interlocked.Exchange(ref _callerScope, null)?.Dispose();
             _logScope?.Dispose();
@@ -888,9 +1015,12 @@ internal sealed class SessionLock : IDisposable
         {
             try
             {
-                using var store = SessionStore.OpenForReading(location.DataFile);
+                var store = await SessionStore.OpenForReadingAsync(location.DataFile).ConfigureAwait(false);
 
-                return SessionRecordReader.Read(store);
+                await using (store.ConfigureAwait(false))
+                {
+                    return await store.RunAsync(SessionRecordReader.Read).ConfigureAwait(false);
+                }
             }
             catch (SqliteException refused)
             {
@@ -1223,14 +1353,18 @@ internal sealed class SessionLock : IDisposable
 
             try
             {
-                store = SessionStore.OpenForWriting(location.DataFile);
+#pragma warning disable CA2000 // The finally below awaits its disposal, which the rule's dataflow does not follow into an await.
+                store = await SessionStore.OpenForWritingAsync(location.DataFile).ConfigureAwait(false);
+#pragma warning restore CA2000
 
                 // ⚠️ ONE TRANSACTION, and this is the only explicit one in the
                 // store. The holder row and the statements saying what this
                 // session now is are one fact: a reader that saw half of it would
                 // see a session held by somebody for no reason, or a reason with
                 // no holder.
-                store.RecordAcquisition(Compose(location, request, previous, holder, now));
+                var statements = Compose(location, request, previous, holder, now);
+
+                await store.RunAsync(opened => opened.RecordAcquisition(statements)).ConfigureAwait(false);
             }
             catch (SqliteException refused)
             {
@@ -1252,15 +1386,18 @@ internal sealed class SessionLock : IDisposable
             // acquisition succeeded; what has not happened yet is the browser
             // launch, and a row written `successful` at this line would say a
             // session opened when what it means is that a directory was taken.
-            var opening = request.Entry is { } entry
-                ? store.AppendLog(
-                    SessionRecordReader.Stamp(now),
-                    RecordText.Sanitise(entry.Tool),
-                    RecordText.Sanitise(entry.Why),
-                    SessionStore.InFlight)
-                : 0;
+            var (opening, record) = await store.RunAsync(opened =>
+            {
+                var row = request.Entry is { } entry
+                    ? opened.AppendLog(
+                        SessionRecordReader.Stamp(now),
+                        RecordText.Sanitise(entry.Tool),
+                        RecordText.Sanitise(entry.Why),
+                        SessionStore.InFlight)
+                    : 0;
 
-            var record = SessionRecordReader.Read(store);
+                return (row, SessionRecordReader.Read(opened));
+            }).ConfigureAwait(false);
 
             // CA2000 is disabled for this one statement and nothing else. The
             // pattern the rule asks for is already here -- locals declared
@@ -1285,9 +1422,18 @@ internal sealed class SessionLock : IDisposable
         }
         finally
         {
-            store?.Dispose();
+            // The store's close before the hold, as the lock's own release orders them.
+            if (store is not null)
+            {
+                await store.DisposeAsync().ConfigureAwait(false);
+            }
+
             hold?.Dispose();
-            taken?.Dispose();
+
+            if (taken is not null)
+            {
+                await taken.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 

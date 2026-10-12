@@ -212,7 +212,7 @@ internal sealed class SessionLogTests
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var before = RecordedSession.LogOf(rig.Session!).Count;
+        var before = (await RecordedSession.LogOfAsync(rig.Session!)).Count;
 
         var refused = await CallAsync(rig, RepositoryVerdicts.ADenial.Name, new JsonObject
         {
@@ -222,7 +222,7 @@ internal sealed class SessionLogTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
-        var after = RecordedSession.LogOf(rig.Session!);
+        var after = await RecordedSession.LogOfAsync(rig.Session!);
         var row = after.Single(entry => entry.Tool == RepositoryVerdicts.ADenial.Name);
 
         await Assert.That(after.Count).IsEqualTo(before + 1);
@@ -379,7 +379,7 @@ internal sealed class SessionLogTests
 
             // ⚠️ THE CLAIM. Another connection, reading the file on disk, sees
             // the row with what the call was for and no answer.
-            var pending = RecordedSession.LogOf(directory).Single(row => row.Tool is "browser_navigate");
+            var pending = (await RecordedSession.LogOfAsync(directory)).Single(row => row.Tool is "browser_navigate");
 
             await Assert.That(pending.Outcome).IsEqualTo(SessionStore.InFlight);
             await Assert.That(pending.Why).IsEqualTo("a call that is watched while it is still outstanding");
@@ -439,7 +439,7 @@ internal sealed class SessionLogTests
 
         while (true)
         {
-            var log = RecordedSession.LogOf(directory);
+            var log = await RecordedSession.LogOfAsync(directory);
 
             if (log.Count > 0 && log.All(row => row.Outcome is not SessionStore.InFlight))
             {

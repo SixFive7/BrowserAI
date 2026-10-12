@@ -354,7 +354,7 @@ internal sealed class ConversationReaderTests
             ClientRecordFile.FoldersIn,
             ClientRecordFile.ReadHeadAsync,
             ClientRecordFile.FilesUnder,
-            CodexState.TitleOf);
+            CodexState.TitleOfAsync);
 
         await File.AppendAllTextAsync(index, Indexed(Thread, "Lemon list, renamed again") + "\n");
 
@@ -488,7 +488,7 @@ internal sealed class ConversationReaderTests
                 walks++;
                 return ClientRecordFile.FilesUnder(path, pattern);
             },
-            CodexState.TitleOf);
+            CodexState.TitleOfAsync);
         var reader = new ConversationReader(access);
         var memo = new ConversationMemo();
 
@@ -737,6 +737,6 @@ internal sealed class ConversationReaderTests
             ClientRecordFile.FoldersIn,
             ClientRecordFile.ReadHeadAsync,
             ClientRecordFile.FilesUnder,
-            CodexState.TitleOf);
+            CodexState.TitleOfAsync);
     }
 }

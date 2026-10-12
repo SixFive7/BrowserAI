@@ -70,7 +70,7 @@ internal sealed class CodexStateTests
         }
 
         await Assert.That(FilesIn(closed)).IsEqualTo(CodexState.FileName);
-        await Assert.That(CodexState.TitleOf(closedDatabase, Thread)).IsEqualTo("Plan the lemon harvest");
+        await Assert.That(await CodexState.TitleOfAsync(closedDatabase, Thread)).IsEqualTo("Plan the lemon harvest");
         await Assert.That(FilesIn(closed)).IsEqualTo(CodexState.FileName);
 
         // Held by a writer, every row still in its log.
@@ -87,7 +87,7 @@ internal sealed class CodexStateTests
         var held = FilesIn(live);
 
         await Assert.That(held).IsEqualTo($"{CodexState.FileName}, {CodexState.FileName}-shm, {CodexState.FileName}-wal");
-        await Assert.That(CodexState.TitleOf(liveDatabase, Thread)).IsEqualTo("Weigh the lemons");
+        await Assert.That(await CodexState.TitleOfAsync(liveDatabase, Thread)).IsEqualTo("Weigh the lemons");
         await Assert.That(FilesIn(live)).IsEqualTo(held);
 
         // A log with no -shm beside it, copied while the writer holds both.
@@ -98,12 +98,12 @@ internal sealed class CodexStateTests
         await CopySharedAsync(liveDatabase, orphanDatabase);
         await CopySharedAsync(liveDatabase + "-wal", orphanDatabase + "-wal");
 
-        await Assert.That(CodexState.TitleOf(orphanDatabase, Thread)).IsNull();
+        await Assert.That(await CodexState.TitleOfAsync(orphanDatabase, Thread)).IsNull();
         await Assert.That(FilesIn(orphan)).IsEqualTo($"{CodexState.FileName}, {CodexState.FileName}-wal");
 
         // A thread the table does not have, and a home with no database.
-        await Assert.That(CodexState.TitleOf(liveDatabase, "99999999-9999-7999-8999-999999999999")).IsNull();
-        await Assert.That(CodexState.TitleOf(Path.Combine(scratch.Path, "no-home", CodexState.FileName), Thread)).IsNull();
+        await Assert.That(await CodexState.TitleOfAsync(liveDatabase, "99999999-9999-7999-8999-999999999999")).IsNull();
+        await Assert.That(await CodexState.TitleOfAsync(Path.Combine(scratch.Path, "no-home", CodexState.FileName), Thread)).IsNull();
     }
 
     /// <summary>

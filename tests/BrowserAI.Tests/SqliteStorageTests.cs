@@ -63,7 +63,7 @@ internal sealed class SqliteStorageTests
 
         var path = Path.Combine(scratch.Path, SessionStore.DataFileName);
 
-        var failure = Assert.Throws<SqliteException>(() => SessionStore.OpenForReading(path).Dispose());
+        var failure = await Assert.ThrowsAsync<SqliteException>(() => SessionStore.OpenForReadingAsync(path));
 
         await Assert.That(failure!.Result).IsEqualTo(Sqlite.CannotOpen);
         await Assert.That(failure.Message).Contains(path);
@@ -126,6 +126,72 @@ internal sealed class SqliteStorageTests
     }
 
     /// <summary>
+    /// Every statement on a session store runs on the store's own thread, which is not
+    /// its caller's and no pool worker, and a connection carried off that thread refuses
+    /// every statement it has.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-12 for the maintainer's 82 b</b>, in his words verbatim:
+    /// <i>"78-82 your recommendation"</i>. SQLite has no asynchronous form, so a statement
+    /// waits in the call, and the thread that waits there is the store's: the caller
+    /// awaits. Both halves are held here. The work handed over runs on one thread for the
+    /// whole store, which is neither the caller's nor a pool worker; and a connection that
+    /// escaped its item, the one way a statement could still run elsewhere, refuses each
+    /// of its eleven statements.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryStatementOnASessionStoreRunsOnTheStoresOwnThreadAndNowhereElse()
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-own-thread");
+        await using var store = await SessionStore.OpenForWritingAsync(Path.Combine(scratch.Path, SessionStore.DataFileName));
+
+        var caller = Environment.CurrentManagedThreadId;
+        var (id, pooled, name) = await store.RunAsync(_ => (Environment.CurrentManagedThreadId, Thread.CurrentThread.IsThreadPoolThread, Thread.CurrentThread.Name));
+        var second = await store.RunAsync(_ => Environment.CurrentManagedThreadId);
+
+        await Assert.That(id).IsNotEqualTo(caller).Because("the store's work ran on the thread that handed it over");
+        await Assert.That(pooled).IsFalse().Because("the store's work ran on a pool worker");
+        await Assert.That(name).IsEqualTo("BrowserAI session store");
+        await Assert.That(second).IsEqualTo(id).Because("two items of one store ran on two threads");
+
+        var escaped = await store.RunAsync(connection => connection);
+        var at = Now();
+        var statements = new (string Name, Action Make)[]
+        {
+            (nameof(SessionStoreConnection.Statements), () => _ = escaped.Statements()),
+            (nameof(SessionStoreConnection.Log), () => _ = escaped.Log()),
+            (nameof(SessionStoreConnection.LogLength), () => _ = escaped.LogLength()),
+            (nameof(SessionStoreConnection.NewestLogAt), () => _ = escaped.NewestLogAt()),
+            (nameof(SessionStoreConnection.JournalMode), () => _ = escaped.JournalMode()),
+            (nameof(SessionStoreConnection.BusyTimeoutInMilliseconds), () => _ = escaped.BusyTimeoutInMilliseconds()),
+            (nameof(SessionStoreConnection.RecordedSchemaVersion), () => _ = escaped.RecordedSchemaVersion()),
+            (nameof(SessionStoreConnection.Append), () => escaped.Append(new StoredStatement("purpose", at, "made off the store's thread"))),
+            (nameof(SessionStoreConnection.AppendLog), () => _ = escaped.AppendLog(at, "browser_click", "made off the store's thread", SessionStore.InFlight)),
+            (nameof(SessionStoreConnection.Settle), () => _ = escaped.Settle(1, SessionStore.Successful, at, failure: null)),
+            (nameof(SessionStoreConnection.RecordAcquisition), () => escaped.RecordAcquisition([new StoredStatement("purpose", at, "made off the store's thread")])),
+        };
+
+        foreach (var (statement, make) in statements)
+        {
+            var refused = Assert.Throws<InvalidOperationException>(make);
+
+            await Assert.That(refused?.Message).Contains("82 b").Because($"{statement} ran on a thread that is not its store's");
+        }
+
+        // Nothing the refusals were handed reached the file, and the same statement made
+        // where it belongs goes through.
+        await Assert.That(await store.LogLengthAsync()).IsEqualTo(0);
+        await Assert.That((await store.StatementsAsync()).Count).IsEqualTo(0);
+
+        _ = await store.AppendLogAsync(at, "browser_snapshot", "made on the store's thread", SessionStore.InFlight);
+
+        await Assert.That(await store.LogLengthAsync()).IsEqualTo(1);
+    }
+
+    /// <summary>
     /// A fresh store is schema version one, in write-ahead logging mode, and
     /// carrying the same patience the per-directory gate gives a contender.
     /// </summary>
@@ -150,11 +216,11 @@ internal sealed class SqliteStorageTests
     public async Task AFreshStoreIsVersionOneInWalModeWithTheDirectoryGatesPatience()
     {
         using var scratch = await ScratchDirectory.CreateAsync("sqlite-fresh");
-        using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
+        await using var store = await SessionStore.OpenForWritingAsync(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
-        await Assert.That(store.RecordedSchemaVersion()).IsEqualTo((long)SessionStore.SchemaVersion);
-        await Assert.That(store.JournalMode()).IsEqualTo("wal");
-        await Assert.That(store.BusyTimeoutInMilliseconds()).IsEqualTo((long)SessionStore.BusyTimeout.TotalMilliseconds);
+        await Assert.That(await store.RecordedSchemaVersionAsync()).IsEqualTo((long)SessionStore.SchemaVersion);
+        await Assert.That(await store.JournalModeAsync()).IsEqualTo("wal");
+        await Assert.That(await store.BusyTimeoutInMillisecondsAsync()).IsEqualTo((long)SessionStore.BusyTimeout.TotalMilliseconds);
 
         // And the file that makes WAL what it is exists beside the store, which
         // is the half a mode string alone does not prove.
@@ -180,9 +246,9 @@ internal sealed class SqliteStorageTests
 
         var path = Path.Combine(scratch.Path, SessionStore.DataFileName);
 
-        using (var store = SessionStore.OpenForWriting(path))
+        await using (var store = await SessionStore.OpenForWritingAsync(path))
         {
-            await Assert.That(store.RecordedSchemaVersion()).IsEqualTo((long)SessionStore.SchemaVersion);
+            await Assert.That(await store.RecordedSchemaVersionAsync()).IsEqualTo((long)SessionStore.SchemaVersion);
         }
 
         using (var raw = SqliteDatabase.OpenForWriting(path))
@@ -190,8 +256,8 @@ internal sealed class SqliteStorageTests
             raw.Execute("PRAGMA user_version = 7;");
         }
 
-        var writing = Assert.Throws<SqliteException>(() => SessionStore.OpenForWriting(path).Dispose());
-        var reading = Assert.Throws<SqliteException>(() => SessionStore.OpenForReading(path).Dispose());
+        var writing = await Assert.ThrowsAsync<SqliteException>(() => SessionStore.OpenForWritingAsync(path));
+        var reading = await Assert.ThrowsAsync<SqliteException>(() => SessionStore.OpenForReadingAsync(path));
 
         foreach (var failure in new[] { writing, reading })
         {
@@ -216,20 +282,20 @@ internal sealed class SqliteStorageTests
     public async Task AnAcquisitionsStatementsArriveTogetherOrNotAtAll()
     {
         using var scratch = await ScratchDirectory.CreateAsync("sqlite-acquire");
-        using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
+        await using var store = await SessionStore.OpenForWritingAsync(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         var at = Now();
 
-        store.RecordAcquisition(
+        await store.RecordAcquisitionAsync(
         [
             new StoredStatement("directory", at, scratch.Path),
             new StoredStatement("browser", at, "chromium"),
             new StoredStatement("purpose", at, "read the two properties this test is about"),
         ]);
 
-        await Assert.That(store.Statements().Count).IsEqualTo(3);
-        await Assert.That(store.Statements()[0].Field).IsEqualTo("directory");
-        await Assert.That(store.Statements()[2].Value).IsEqualTo("read the two properties this test is about");
+        await Assert.That((await store.StatementsAsync()).Count).IsEqualTo(3);
+        await Assert.That((await store.StatementsAsync())[0].Field).IsEqualTo("directory");
+        await Assert.That((await store.StatementsAsync())[2].Value).IsEqualTo("read the two properties this test is about");
 
         // A second acquisition in which one statement cannot be written. The
         // refusal has to come from SQLite and not from a guard in this
@@ -248,7 +314,7 @@ internal sealed class SqliteStorageTests
                 """);
         }
 
-        var failure = Assert.Throws<SqliteException>(() => store.RecordAcquisition(
+        var failure = await Assert.ThrowsAsync<SqliteException>(() => store.RecordAcquisitionAsync(
         [
             new StoredStatement("browserAiVersion", at, "1.0.0"),
             new StoredStatement("directory", at, "the value the trigger refuses"),
@@ -259,14 +325,14 @@ internal sealed class SqliteStorageTests
 
         // Nothing from the failed acquisition survived, including the statement
         // that was written before the one that failed.
-        await Assert.That(store.Statements().Count).IsEqualTo(3);
-        await Assert.That(store.Statements().Any(statement => statement.Field is "browserAiVersion")).IsFalse();
+        await Assert.That((await store.StatementsAsync()).Count).IsEqualTo(3);
+        await Assert.That((await store.StatementsAsync()).Any(statement => statement.Field is "browserAiVersion")).IsFalse();
 
         // And the store is still usable, which is what the rollback buys: a
         // transaction left open would refuse every append after it.
-        store.Append(new StoredStatement("purpose", Now(), "and it still works afterwards"));
+        await store.AppendAsync(new StoredStatement("purpose", Now(), "and it still works afterwards"));
 
-        await Assert.That(store.Statements().Count).IsEqualTo(4);
+        await Assert.That((await store.StatementsAsync()).Count).IsEqualTo(4);
 
         // A guard in this layer would have refused before SQLite saw anything,
         // which is a different code path and would leave the rollback above
@@ -291,19 +357,19 @@ internal sealed class SqliteStorageTests
     public async Task ALogRowIsWrittenInFlightAndSettledOnTheSameRow()
     {
         using var scratch = await ScratchDirectory.CreateAsync("sqlite-log");
-        using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
+        await using var store = await SessionStore.OpenForWritingAsync(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
-        var hung = store.AppendLog(Now(), "browser_navigate", "the one that never came back", SessionStore.InFlight);
-        var answered = store.AppendLog(Now(), "browser_click", "the one that did", SessionStore.InFlight);
+        var hung = await store.AppendLogAsync(Now(), "browser_navigate", "the one that never came back", SessionStore.InFlight);
+        var answered = await store.AppendLogAsync(Now(), "browser_click", "the one that did", SessionStore.InFlight);
 
         await Assert.That(answered).IsGreaterThan(hung);
 
         var payload = Encoding.UTF8.GetBytes("{\"error\":{\"code\":-32000,\"message\":\"the child said no\"}}");
 
-        await Assert.That(store.Settle(answered, SessionStore.Failed, Now(), payload)).IsTrue();
-        await Assert.That(store.Settle(hung + answered + 1_000, SessionStore.Successful, Now(), null)).IsFalse();
+        await Assert.That(await store.SettleAsync(answered, SessionStore.Failed, Now(), payload)).IsTrue();
+        await Assert.That(await store.SettleAsync(hung + answered + 1_000, SessionStore.Successful, Now(), null)).IsFalse();
 
-        var rows = store.Log();
+        var rows = await store.LogAsync();
 
         await Assert.That(rows.Count).IsEqualTo(2);
 
@@ -323,9 +389,9 @@ internal sealed class SqliteStorageTests
 
         // A successful settle stores no payload, which is the decision that
         // keeps the common path small.
-        await Assert.That(store.Settle(hung, SessionStore.Successful, Now(), null)).IsTrue();
-        await Assert.That(store.Log()[0].Failure).IsNull();
-        await Assert.That(store.Log()[0].Outcome).IsEqualTo(SessionStore.Successful);
+        await Assert.That(await store.SettleAsync(hung, SessionStore.Successful, Now(), null)).IsTrue();
+        await Assert.That((await store.LogAsync())[0].Failure).IsNull();
+        await Assert.That((await store.LogAsync())[0].Outcome).IsEqualTo(SessionStore.Successful);
     }
 
     /// <summary>
@@ -352,13 +418,13 @@ internal sealed class SqliteStorageTests
     public async Task AStoredValueCarryingAZeroByteComesBackWhole()
     {
         using var scratch = await ScratchDirectory.CreateAsync("sqlite-nul");
-        using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
+        await using var store = await SessionStore.OpenForWritingAsync(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         const string Why = "before\0after";
 
-        _ = store.AppendLog(Now(), "browser_navigate", Why, SessionStore.InFlight);
+        _ = await store.AppendLogAsync(Now(), "browser_navigate", Why, SessionStore.InFlight);
 
-        var stored = store.Log()[0].Why;
+        var stored = (await store.LogAsync())[0].Why;
 
         await Assert.That(stored).IsEqualTo(Why);
         await Assert.That(stored.Length).IsEqualTo(Why.Length);
@@ -366,10 +432,10 @@ internal sealed class SqliteStorageTests
         // The empty string is the other end of the same problem: a zero-length
         // buffer marshals to a pointer SQLite reads as SQL NULL, so an empty
         // `why` would be stored as "there was no why at all".
-        _ = store.AppendLog(Now(), "browser_click", string.Empty, SessionStore.InFlight);
+        _ = await store.AppendLogAsync(Now(), "browser_click", string.Empty, SessionStore.InFlight);
 
-        await Assert.That(store.Log()[1].Why).IsEqualTo(string.Empty);
-        await Assert.That(store.Log()[1].Why).IsNotNull();
+        await Assert.That((await store.LogAsync())[1].Why).IsEqualTo(string.Empty);
+        await Assert.That((await store.LogAsync())[1].Why).IsNotNull();
     }
 
     /// <summary>
@@ -389,31 +455,31 @@ internal sealed class SqliteStorageTests
     public async Task NothingInTheStoreIsCappedByLengthOrByCount()
     {
         using var scratch = await ScratchDirectory.CreateAsync("sqlite-uncapped");
-        using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
+        await using var store = await SessionStore.OpenForWritingAsync(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         // Comfortably past every cap the old record carried, and past the
         // 2,048-character client truncation budget as well, so the number is
         // chosen against the constraints it is about and not at random.
         var essay = new string('w', 100_000);
 
-        _ = store.AppendLog(Now(), "browser_navigate", essay, SessionStore.InFlight);
-        store.Append(new StoredStatement("purpose", Now(), essay));
+        _ = await store.AppendLogAsync(Now(), "browser_navigate", essay, SessionStore.InFlight);
+        await store.AppendAsync(new StoredStatement("purpose", Now(), essay));
 
-        await Assert.That(store.Log()[0].Why.Length).IsEqualTo(essay.Length);
-        await Assert.That(store.Statements()[0].Value.Length).IsEqualTo(essay.Length);
+        await Assert.That((await store.LogAsync())[0].Why.Length).IsEqualTo(essay.Length);
+        await Assert.That((await store.StatementsAsync())[0].Value.Length).IsEqualTo(essay.Length);
 
         // And the count, which is where the 250-entry cap used to bite.
         for (var index = 0; index < 500; index++)
         {
-            _ = store.AppendLog(Now(), "browser_click", index.ToString(CultureInfo.InvariantCulture), SessionStore.InFlight);
+            _ = await store.AppendLogAsync(Now(), "browser_click", index.ToString(CultureInfo.InvariantCulture), SessionStore.InFlight);
         }
 
-        await Assert.That(store.LogLength()).IsEqualTo(501);
+        await Assert.That(await store.LogLengthAsync()).IsEqualTo(501);
 
         // The first entry is still the first entry: nothing evicted out of the
         // middle, which is what made paging unstable in the shape this replaces.
-        await Assert.That(store.Log(skip: 0, take: 1)[0].Why.Length).IsEqualTo(essay.Length);
-        await Assert.That(store.Log(skip: 500, take: 1)[0].Why).IsEqualTo("499");
+        await Assert.That((await store.LogAsync(skip: 0, take: 1))[0].Why.Length).IsEqualTo(essay.Length);
+        await Assert.That((await store.LogAsync(skip: 500, take: 1))[0].Why).IsEqualTo("499");
     }
 
     /// <summary>
@@ -445,28 +511,28 @@ internal sealed class SqliteStorageTests
         var data = Path.Combine(scratch.Path, SessionStore.DataFileName);
 
         using var hold = await LockFile.TakeAndWriteAsync(lockFile, LockFileHolder.ForThisProcess());
-        using var writer = SessionStore.OpenForWriting(data);
+        await using var writer = await SessionStore.OpenForWritingAsync(data);
 
-        writer.RecordAcquisition([new StoredStatement("purpose", Now(), "be read from while it is being written to")]);
+        await writer.RecordAcquisitionAsync([new StoredStatement("purpose", Now(), "be read from while it is being written to")]);
 
-        var first = writer.AppendLog(Now(), "browser_navigate", "the first call", SessionStore.InFlight);
+        var first = await writer.AppendLogAsync(Now(), "browser_navigate", "the first call", SessionStore.InFlight);
 
-        using (var reader = SessionStore.OpenForReading(data))
+        await using (var reader = await SessionStore.OpenForReadingAsync(data))
         {
             await Assert.That(reader.IsWritable).IsFalse();
-            await Assert.That(reader.LogLength()).IsEqualTo(1);
-            await Assert.That(reader.Statements()[0].Value).IsEqualTo("be read from while it is being written to");
+            await Assert.That(await reader.LogLengthAsync()).IsEqualTo(1);
+            await Assert.That((await reader.StatementsAsync())[0].Value).IsEqualTo("be read from while it is being written to");
         }
 
         // Now write more, with the guard still held, and open a second reader.
-        _ = writer.Settle(first, SessionStore.Successful, Now(), null);
-        _ = writer.AppendLog(Now(), "browser_click", "the second call", SessionStore.InFlight);
+        _ = await writer.SettleAsync(first, SessionStore.Successful, Now(), null);
+        _ = await writer.AppendLogAsync(Now(), "browser_click", "the second call", SessionStore.InFlight);
 
-        using (var reader = SessionStore.OpenForReading(data))
+        await using (var reader = await SessionStore.OpenForReadingAsync(data))
         {
-            await Assert.That(reader.LogLength()).IsEqualTo(2);
-            await Assert.That(reader.Log()[0].Outcome).IsEqualTo(SessionStore.Successful);
-            await Assert.That(reader.Log()[1].Why).IsEqualTo("the second call");
+            await Assert.That(await reader.LogLengthAsync()).IsEqualTo(2);
+            await Assert.That((await reader.LogAsync())[0].Outcome).IsEqualTo(SessionStore.Successful);
+            await Assert.That((await reader.LogAsync())[1].Why).IsEqualTo("the second call");
         }
 
         // And the guard was held throughout, which is the condition all of the
@@ -530,11 +596,11 @@ internal sealed class SqliteStorageTests
         // -wal that follows carries nothing but the log row. Without this the
         // copy would be refused for having no schema, which is a different
         // failure wearing the same message.
-        SessionStore.OpenForWriting(livePath).Dispose();
+        await (await SessionStore.OpenForWritingAsync(livePath)).DisposeAsync();
 
-        using (var writer = SessionStore.OpenForWriting(livePath))
+        await using (var writer = await SessionStore.OpenForWritingAsync(livePath))
         {
-            _ = writer.AppendLog(Now(), "browser_navigate", "committed into the log and never folded back", SessionStore.InFlight);
+            _ = await writer.AppendLogAsync(Now(), "browser_navigate", "committed into the log and never folded back", SessionStore.InFlight);
 
             await CopyWhileHeldAsync(livePath, deadPath);
             await CopyWhileHeldAsync(livePath + "-wal", deadPath + "-wal");
@@ -548,7 +614,7 @@ internal sealed class SqliteStorageTests
 
         using (var denial = DirectoryDenial.Apply(dead, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None))
         {
-            var refused = Assert.Throws<SqliteException>(() => SessionStore.OpenForReading(deadPath).Dispose());
+            var refused = await Assert.ThrowsAsync<SqliteException>(() => SessionStore.OpenForReadingAsync(deadPath));
 
             await Assert.That(refused).IsNotNull();
             await Assert.That(refused!.Message).Contains(deadPath);
@@ -560,18 +626,18 @@ internal sealed class SqliteStorageTests
         }
 
         // The next acquisition is a read-write open, and it recovers the log.
-        using (var recovered = SessionStore.OpenForWriting(deadPath))
+        await using (var recovered = await SessionStore.OpenForWritingAsync(deadPath))
         {
-            await Assert.That(recovered.LogLength()).IsEqualTo(1);
-            await Assert.That(recovered.Log()[0].Why).IsEqualTo("committed into the log and never folded back");
+            await Assert.That(await recovered.LogLengthAsync()).IsEqualTo(1);
+            await Assert.That((await recovered.LogAsync())[0].Why).IsEqualTo("committed into the log and never folded back");
         }
 
         // The positive control: the same read-only open, on the same file, now
         // works -- so the refusal above was about the wal-index it could not
         // build and not about opening read-only at all.
-        using var reader = SessionStore.OpenForReading(deadPath);
+        await using var reader = await SessionStore.OpenForReadingAsync(deadPath);
 
-        await Assert.That(reader.LogLength()).IsEqualTo(1);
+        await Assert.That(await reader.LogLengthAsync()).IsEqualTo(1);
     }
 
     /// <summary>
@@ -615,11 +681,11 @@ internal sealed class SqliteStorageTests
         var livePath = Path.Combine(live, SessionStore.DataFileName);
         var deadPath = Path.Combine(dead, SessionStore.DataFileName);
 
-        SessionStore.OpenForWriting(livePath).Dispose();
+        await (await SessionStore.OpenForWritingAsync(livePath)).DisposeAsync();
 
-        using (var writer = SessionStore.OpenForWriting(livePath))
+        await using (var writer = await SessionStore.OpenForWritingAsync(livePath))
         {
-            _ = writer.AppendLog(Now(), "browser_navigate", "committed by a holder that never closed", SessionStore.InFlight);
+            _ = await writer.AppendLogAsync(Now(), "browser_navigate", "committed by a holder that never closed", SessionStore.InFlight);
 
             await CopyWhileHeldAsync(livePath, deadPath);
             await CopyWhileHeldAsync(livePath + "-wal", deadPath + "-wal");
@@ -627,13 +693,13 @@ internal sealed class SqliteStorageTests
 
         await Assert.That(File.Exists(deadPath + "-shm")).IsFalse();
 
-        using (var reader = SessionStore.OpenForReading(deadPath))
+        await using (var reader = await SessionStore.OpenForReadingAsync(deadPath))
         {
             // The rows are there, so the read-only connection recovered the log
             // instead of answering from the store file alone -- which is the
             // reading that would have been a confident wrong answer.
-            await Assert.That(reader.LogLength()).IsEqualTo(1);
-            await Assert.That(reader.Log()[0].Why).IsEqualTo("committed by a holder that never closed");
+            await Assert.That(await reader.LogLengthAsync()).IsEqualTo(1);
+            await Assert.That((await reader.LogAsync())[0].Why).IsEqualTo("committed by a holder that never closed");
         }
 
         // And the price: a file appeared in a directory that was only read.

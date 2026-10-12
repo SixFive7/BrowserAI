@@ -207,7 +207,10 @@ internal static class SessionProbe
         }
         finally
         {
-            result?.Acquired?.Dispose();
+            if (result?.Acquired is { } acquired)
+            {
+                await acquired.DisposeAsync();
+            }
         }
 
         return 0;
@@ -323,7 +326,10 @@ internal static class SessionProbe
         }
         finally
         {
-            result.Acquired?.Dispose();
+            if (result.Acquired is { } acquired)
+            {
+                await acquired.DisposeAsync();
+            }
         }
     }
 
@@ -567,7 +573,7 @@ internal static class SessionProbe
                     // round on purpose: a reader has to be able to tell that
                     // what it saw changed under it, and a hundred identical
                     // purposes would prove nothing.
-                    held.AppendPurpose($"rewrite {round.ToString(CultureInfo.InvariantCulture)}");
+                    await held.AppendPurposeAsync($"rewrite {round.ToString(CultureInfo.InvariantCulture)}");
 
                     completed++;
                 }
@@ -590,7 +596,10 @@ internal static class SessionProbe
         }
         finally
         {
-            result.Acquired?.Dispose();
+            if (result.Acquired is { } acquired)
+            {
+                await acquired.DisposeAsync();
+            }
         }
     }
 

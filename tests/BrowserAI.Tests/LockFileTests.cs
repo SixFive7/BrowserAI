@@ -253,7 +253,7 @@ internal sealed class LockFileTests
         var path = Path.Combine(scratch.Path, LockFile.FileName);
 
         using var hold = await LockFile.TakeAndWriteAsync(path, LockFileHolder.ForThisProcess());
-        using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
+        await using var store = await SessionStore.OpenForWritingAsync(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         var written = await ReadWhileHeldAsync(path);
         var stamped = File.GetLastWriteTimeUtc(path);
@@ -261,7 +261,7 @@ internal sealed class LockFileTests
 
         for (var index = 0; index < 200; index++)
         {
-            _ = store.AppendLog(
+            _ = await store.AppendLogAsync(
                 DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture),
                 "browser_click",
                 index.ToString(CultureInfo.InvariantCulture),
@@ -281,7 +281,7 @@ internal sealed class LockFileTests
         await Assert.That(Directory.GetFiles(scratch.Path, LockFile.TemporaryFilePattern).Length).IsEqualTo(0);
 
         // And the store really did the writing the guard was being held across.
-        await Assert.That(store.LogLength()).IsEqualTo(200);
+        await Assert.That(await store.LogLengthAsync()).IsEqualTo(200);
     }
 
     /// <summary>

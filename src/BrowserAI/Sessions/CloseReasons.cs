@@ -163,7 +163,7 @@ internal static class CloseReasons
             // a second time, round 2 of the texts review, #29 (previously "BrowserAI
             // closed this session's browser at ..."). The background's end records the
             // reason for every session it closes, whether or not a browser is up
-            // (LiveSession.CloseTheBrowserForShutdownAsync, RecordTheBackgroundsEnd), so
+            // (LiveSession.CloseTheBrowserForShutdownAsync, RecordTheBackgroundsEndAsync), so
             // the sentence says what is true of both.
             //
             // ⚠️ Corrected 2026-10-10 a second time, the texts polish, pages #30 and #31

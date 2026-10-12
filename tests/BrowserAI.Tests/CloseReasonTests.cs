@@ -83,7 +83,7 @@ internal sealed class CloseReasonTests
 
         await Assert.That(record.ClosedHistory.Select(close => close.Value.Cause).ToArray()).IsEquivalentTo([SessionCloseCause.WindowClosed]);
         await Assert.That(record.ClosedHistory[^1].Value.ExitCode).IsEqualTo(0);
-        await Assert.That(RecordedSession.LogOf(directory).Any(row =>
+        await Assert.That((await RecordedSession.LogOfAsync(directory)).Any(row =>
             row.Tool == CloseReasons.LogRowTool && row.Why.StartsWith("A person closed this session's browser window", StringComparison.Ordinal))).IsTrue();
 
         var resumed = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
@@ -437,9 +437,9 @@ internal sealed class CloseReasonTests
         var location = SessionPath.For(directory);
         var taken = await SessionLock.TryAcquireAsync(location, new SessionLockRequest { Browser = ProvisionedBrowsers.Chromium, Purpose = "a holder the suite plays dead" }, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
 
-        using (var held = taken.Acquired!)
+        await using (var held = taken.Acquired!)
         {
-            held.AppendLifecycle(RecordFields.Opened, SessionToolSurface.Resume);
+            await held.AppendLifecycleAsync(RecordFields.Opened, SessionToolSurface.Resume);
         }
 
         await using (var sessions = await SessionsAsync())

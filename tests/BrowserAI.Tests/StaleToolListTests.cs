@@ -184,8 +184,8 @@ internal sealed class StaleToolListTests
         await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var older = PlantASessionWrittenBy(sessions, "q261-resume-older", AnOlderBuild);
-        var same = PlantASessionWrittenBy(sessions, "q261-resume-same", BuildVersion.Current);
+        var older = await PlantASessionWrittenByAsync(sessions, "q261-resume-older", AnOlderBuild);
+        var same = await PlantASessionWrittenByAsync(sessions, "q261-resume-same", BuildVersion.Current);
 
         var resumedOlder = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
@@ -238,8 +238,8 @@ internal sealed class StaleToolListTests
         await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var older = PlantASessionWrittenBy(sessions, "q261-catchup-older", AnOlderBuild);
-        var same = PlantASessionWrittenBy(sessions, "q261-catchup-same", BuildVersion.Current);
+        var older = await PlantASessionWrittenByAsync(sessions, "q261-catchup-older", AnOlderBuild);
+        var same = await PlantASessionWrittenByAsync(sessions, "q261-catchup-same", BuildVersion.Current);
 
         var read = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { ["why"] = "the suite reading back what this session did", [SessionToolSurface.SessionParameter] = older });
 
@@ -265,7 +265,7 @@ internal sealed class StaleToolListTests
     /// <param name="name">The directory's name.</param>
     /// <param name="version">The build the record says wrote it.</param>
     /// <returns>The absolute path of the planted session.</returns>
-    private static string PlantASessionWrittenBy(RigSessionEnvironment sessions, string name, string version)
+    private static async Task<string> PlantASessionWrittenByAsync(RigSessionEnvironment sessions, string name, string version)
     {
         var directory = Path.Combine(sessions.Root, name);
 
@@ -277,9 +277,9 @@ internal sealed class StaleToolListTests
         // ordering of the statements a resume adds is unambiguous.
         var at = SessionRecordReader.Stamp(DateTimeOffset.Now.AddDays(-1));
 
-        using var store = SessionStore.OpenForWriting(location.DataFile);
+        await using var store = await SessionStore.OpenForWritingAsync(location.DataFile);
 
-        store.RecordAcquisition(
+        await store.RecordAcquisitionAsync(
         [
             new StoredStatement(RecordFields.Directory, at, location.FullPath),
             new StoredStatement(RecordFields.Browser, at, SessionManager.DefaultBrowser),

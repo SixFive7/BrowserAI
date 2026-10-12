@@ -992,7 +992,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
             return AgentClose.AlreadyClosed;
         }
 
-        Record(closure, writeRow: false);
+        await RecordAsync(closure, writeRow: false).ConfigureAwait(false);
 
         if (!BrowserIsOpen)
         {
@@ -1115,7 +1115,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 
             if (Interlocked.CompareExchange(ref _closed, closure, null) is null)
             {
-                Record(closure, writeRow: true);
+                await RecordAsync(closure, writeRow: true).ConfigureAwait(false);
             }
             else
             {
@@ -1320,7 +1320,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
             _reap.Start(reapCause);
         }
 
-        Lock.Dispose();
+        await Lock.DisposeAsync().ConfigureAwait(false);
 
         // ⚠️ AFTER THE CHILD, and the order is the guarantee, not tidiness.
         // Releasing the claim tells the machine that nothing of this session is
@@ -1445,7 +1445,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 
         if (Child.ChildHasGone)
         {
-            RecordTheServerEnded();
+            _ = RecordTheServerEndedAsync();
             return;
         }
 
@@ -1461,7 +1461,10 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
             return;
         }
 
-        Record(closure, writeRow: true);
+        // Not awaited: this is the wait on the browser's callback. The record is handed
+        // to the store's thread before the call returns, so it is ahead of the release
+        // the lines below lead to, and its failure is logged where it is met (82 b).
+        _ = RecordAsync(closure, writeRow: true);
 
         // A closed session holds nothing until the resume that opens it again, as
         // after the idle close and the caller's own (P4 b, P3 b).
@@ -1482,14 +1485,15 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// <see cref="SessionErrors.BrowserServerHasGone"/>, which says the same thing in
     /// its own words.
     /// </remarks>
-    public void RecordTheServerEnded()
+    /// <returns>The record, which never fails.</returns>
+    public Task RecordTheServerEndedAsync()
     {
         if (Closed is not null || Interlocked.Exchange(ref _serverEndRecorded, 1) is not 0)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        Record(new SessionClosure(SessionCloseCause.ServerEnded, _clock.GetUtcNow(), Idle?.Period), writeRow: true);
+        return RecordAsync(new SessionClosure(SessionCloseCause.ServerEnded, _clock.GetUtcNow(), Idle?.Period), writeRow: true);
     }
 
     /// <summary>
@@ -1503,19 +1507,19 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// </remarks>
     /// <param name="cause">Why the background ended: an update, a stop or a failure.</param>
     /// <param name="by">The client whose connection the end closed.</param>
-    public void RecordTheBackgroundsEnd(SessionCloseCause cause, string? by)
+    /// <returns>The record, which never fails.</returns>
+    public Task RecordTheBackgroundsEndAsync(SessionCloseCause cause, string? by)
     {
         if (Closed is not null || Volatile.Read(ref _serverEndRecorded) is not 0)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period) { By = by };
 
-        if (Interlocked.CompareExchange(ref _closed, closure, null) is null)
-        {
-            Record(closure, writeRow: true);
-        }
+        return Interlocked.CompareExchange(ref _closed, closure, null) is null
+            ? RecordAsync(closure, writeRow: true)
+            : Task.CompletedTask;
     }
 
     /// <summary>
@@ -1524,19 +1528,19 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// </summary>
     /// <param name="by">The client that drove it and went away.</param>
     /// <param name="detail">What there was to keep: nothing, in one clause.</param>
-    public void RecordTheRelease(string? by, string detail)
+    /// <returns>The record, which never fails.</returns>
+    public Task RecordTheReleaseAsync(string? by, string detail)
     {
         if (Closed is not null || Volatile.Read(ref _serverEndRecorded) is not 0)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var closure = new SessionClosure(SessionCloseCause.Released, _clock.GetUtcNow(), Idle?.Period) { By = by, Detail = detail };
 
-        if (Interlocked.CompareExchange(ref _closed, closure, null) is null)
-        {
-            Record(closure, writeRow: true);
-        }
+        return Interlocked.CompareExchange(ref _closed, closure, null) is null
+            ? RecordAsync(closure, writeRow: true)
+            : Task.CompletedTask;
     }
 
     /// <summary>
@@ -1546,10 +1550,15 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// <remarks>
     /// <b>A record that cannot be written stops nothing</b>, for the reason the idle
     /// close gives: there is no caller to refuse, and the close has happened.
+    /// <b>The statement, the row and its settle are one hand-over since 2026-10-12</b>, the
+    /// maintainer's 82 b: <see cref="SessionLock.RecordCloseAsync"/> queues them before
+    /// this returns its task, so a caller that cannot await it still has its close ahead
+    /// of the release.
     /// </remarks>
     /// <param name="closure">The close.</param>
     /// <param name="writeRow">Whether to write the log row.</param>
-    private void Record(SessionClosure closure, bool writeRow)
+    /// <returns>The record, which never fails.</returns>
+    private async Task RecordAsync(SessionClosure closure, bool writeRow)
     {
         // A closed session's window is no one's to use: it leaves the input check, and
         // the check stops once no visible session is left in it (F4).
@@ -1557,14 +1566,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 
         try
         {
-            Lock.AppendLifecycle(RecordFields.Closed, closure.Recorded.Write());
-
-            if (writeRow)
-            {
-                var row = Lock.Append(CloseReasons.LogRowTool, CloseReasons.Of(closure, asking: null));
-
-                Lock.Settle(row, SessionStore.Successful, failure: null);
-            }
+            await Lock.RecordCloseAsync(closure.Recorded.Write(), writeRow ? CloseReasons.Of(closure, asking: null) : null).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {
@@ -1673,7 +1675,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
         }
 
         // 8 b: the reason is recorded; the row is the idle close's own, below.
-        Record(idle, writeRow: false);
+        await RecordAsync(idle, writeRow: false).ConfigureAwait(false);
 
         var finished = BeginTheCloseInFlight();
 
@@ -1686,7 +1688,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
                 // ⚠️ Under CloseReasons.LogRowTool since 2026-10-10, the texts review's
                 // #180 (previously browser_close, which no model can call since F1 a):
                 // the row is the one close nobody asked for, and its name says so.
-                row = Lock.Append(CloseReasons.LogRowTool, IdleCloseWhy);
+                row = await Lock.AppendAsync(CloseReasons.LogRowTool, IdleCloseWhy).ConfigureAwait(false);
             }
             catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
             {
@@ -1697,7 +1699,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 
             await Child.DisposeAsync().ConfigureAwait(false);
 
-            Settle(Lock, row, SessionStore.Successful, failure: null);
+            await SettleAsync(Lock, row, SessionStore.Successful, failure: null).ConfigureAwait(false);
 
             // ⚠️ AFTER the teardown and never before it: a browser tree was up and is
             // now dead, so upstream's registry holds a descriptor nothing else will
@@ -1807,16 +1809,12 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// <param name="row">The row's id, or <see langword="null"/> when none was written.</param>
     /// <param name="outcome">One of <see cref="SessionStore"/>'s three spells.</param>
     /// <param name="failure">What failed, or <see langword="null"/>.</param>
-    private static void Settle(SessionLock sessionLock, long? row, string outcome, byte[]? failure)
-    {
-        if (row is { } id)
-        {
-            // `SessionLock.Settle` already swallows a SQLite refusal and returns
-            // early on a disposed lock, which is the whole set of ways this can
-            // fail after the browser has been asked to close.
-            sessionLock.Settle(id, outcome, failure);
-        }
-    }
+    /// <returns>The settle, which never fails.</returns>
+    private static Task SettleAsync(SessionLock sessionLock, long? row, string outcome, byte[]? failure) =>
+        // `SessionLock.SettleAsync` already swallows a SQLite refusal and returns
+        // early on a disposed lock, which is the whole set of ways this can
+        // fail after the browser has been asked to close.
+        row is { } id ? sessionLock.SettleAsync(id, outcome, failure) : Task.CompletedTask;
 
     private async Task TryDeleteConfigAsync()
     {

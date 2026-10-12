@@ -219,7 +219,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
 
             // 1.4 a's middle step: the thread's first message, from Codex's state
             // database where there is one, and else from the thread's rollout.
-            if (access.StateTitle(Path.Combine(home, CodexState.FileName), thread) is { } title && AsFirstMessage(title) is { } stated)
+            if (await access.StateTitle(Path.Combine(home, CodexState.FileName), thread).ConfigureAwait(false) is { } title && AsFirstMessage(title) is { } stated)
             {
                 return new(thread, stated, ConversationSource.CodexCall, NameSource.CodexState);
             }

@@ -456,7 +456,7 @@ internal sealed class SessionToolTests
 
         // And the durable half: the session's own calls, in its own record, in
         // order -- which is what a log file used to be opened for.
-        var log = RecordedSession.LogOf(alpha);
+        var log = await RecordedSession.LogOfAsync(alpha);
 
         await Assert.That(log.Count).IsGreaterThan(0);
         await Assert.That(log[0].Tool).IsEqualTo(SessionToolSurface.Init);

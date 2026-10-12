@@ -624,7 +624,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // Row 8 -- held. A second acquisition against a lock this process still
         // owns is the same refusal a second BrowserAI would meet.
-        using (var held = (await SessionLock.TryAcquireAsync(location, request, logger)).Acquired!)
+        await using (var held = (await SessionLock.TryAcquireAsync(location, request, logger)).Acquired!)
         {
             var contended = await SessionLock.TryAcquireAsync(location, request, logger);
 
@@ -641,7 +641,7 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(reclaimed.Acquired).IsNotNull();
         await Assert.That(reclaimed.Message).Contains("Reclaiming it");
         Record(nameof(SessionErrors.LockReclaimed));
-        reclaimed.Acquired!.Dispose();
+        await reclaimed.Acquired!.DisposeAsync();
 
         // The row added 2026-08-19 -- `browserai.lock` is there, nobody is holding it,
         // and this process cannot open it. THIS ARM USED TO THROW. The first open
@@ -665,7 +665,7 @@ internal sealed partial class ErrorCatalogueTests
             denied = await SessionLock.TryAcquireAsync(location, request, logger);
         }
 
-        denied.Acquired?.Dispose();
+        await denied.Acquired.DisposeIfTakenAsync();
 
         await Assert.That(denied.Taken).IsFalse();
         await Assert.That(denied.Outcome).IsEqualTo(SessionLockOutcome.Unreadable);
@@ -1011,7 +1011,7 @@ internal sealed partial class ErrorCatalogueTests
 
         var location = SessionPath.For(directory);
 
-        using var held = (await SessionLock.TryAcquireAsync(
+        await using var held = (await SessionLock.TryAcquireAsync(
             location,
             new SessionLockRequest { Browser = "chromium", Purpose = "the session another BrowserAI holds" },
             Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance)).Acquired!;
@@ -1368,7 +1368,7 @@ internal sealed partial class ErrorCatalogueTests
 
         while (true)
         {
-            if (RecordedSession.LogOf(session).LastOrDefault(entry => entry.Tool == tool) is { Outcome: not SessionStore.InFlight } row)
+            if ((await RecordedSession.LogOfAsync(session)).LastOrDefault(entry => entry.Tool == tool) is { Outcome: not SessionStore.InFlight } row)
             {
                 return row;
             }

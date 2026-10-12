@@ -112,7 +112,7 @@ internal sealed class SessionCloseTests
         await Assert.That(first.ToolCallsReceived.Count(tool => tool == "browser_navigate")).IsEqualTo(1);
 
         // The refusal is in the record, as every refused call is.
-        await Assert.That(RecordedSession.LogOf(directory).Any(row =>
+        await Assert.That((await RecordedSession.LogOfAsync(directory)).Any(row =>
             row.Tool == "browser_navigate" && row.Outcome == SessionStore.Failed)).IsTrue();
 
         var resumed = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
@@ -207,7 +207,7 @@ internal sealed class SessionCloseTests
         await WaitUntilAsync(() => first.HasStopped, "browserai_close never ended the session's child");
 
         // The row is the call's own, settled as answered.
-        await Assert.That(RecordedSession.LogOf(directory).Any(row =>
+        await Assert.That((await RecordedSession.LogOfAsync(directory)).Any(row =>
             row.Tool == SessionToolSurface.Close && row.Outcome == SessionStore.Successful)).IsTrue();
 
         var refused = await NavigateAsync(rig, directory, "the call after the agent's own close");
@@ -306,7 +306,7 @@ internal sealed class SessionCloseTests
         await WaitUntilAsync(() => first.HasStopped, "browserai_close left the child of a session with no browser running");
 
         // The row is written and settled like any call's.
-        await Assert.That(RecordedSession.LogOf(directory).Any(row =>
+        await Assert.That((await RecordedSession.LogOfAsync(directory)).Any(row =>
             row.Tool == SessionToolSurface.Close && row.Outcome == SessionStore.Successful)).IsTrue();
 
         // And the session is closed: the next call is refused, and nothing new starts.
@@ -412,10 +412,10 @@ internal sealed class SessionCloseTests
 
         _ = Directory.CreateDirectory(nobody);
 
-        (await SessionLock.TryAcquireAsync(
+        await (await SessionLock.TryAcquireAsync(
             SessionPath.For(nobody),
             new SessionLockRequest { Browser = ProvisionedBrowsers.Chromium, Purpose = "a session nobody holds" },
-            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance)).Acquired!.Dispose();
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance)).Acquired!.DisposeAsync();
 
         var notOpen = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {

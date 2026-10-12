@@ -121,7 +121,7 @@ internal sealed class ScreenshotLimitTests
             await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ScreenshotPastChromiumsLimit(width, height, file: null));
             await Assert.That(TextOf(answer)).Contains(ScreenshotLimit.ChromiumIssue);
 
-            var row = RecordedSession.LogOf(directory).Single(entry => entry.Tool == ScreenshotLimit.ScreenshotTool);
+            var row = (await RecordedSession.LogOfAsync(directory)).Single(entry => entry.Tool == ScreenshotLimit.ScreenshotTool);
 
             await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
             await Assert.That(row.Failure).IsEqualTo(TextOf(answer));

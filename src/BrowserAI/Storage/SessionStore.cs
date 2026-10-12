@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 
 namespace BrowserAI.Storage;
@@ -56,7 +57,7 @@ namespace BrowserAI.Storage;
 /// machine</b> (added 2026-08-26 -- this paragraph said <i>the caller</i> and
 /// meant it). <c>Program.Main</c> starts the stray sweep, one pass calls
 /// <c>SessionIndex.Sweep</c>, and that follows every entry in the machine-wide
-/// index through <see cref="OpenForReading"/> -- so one process start is one
+/// index through <see cref="OpenForReadingAsync"/> -- so one process start is one
 /// store open, and one <c>-shm</c> and <c>-wal</c>, per registered session on
 /// the host. Measured that day through the published binary against a
 /// cleanly-closed session, with a second BrowserAI that sent nothing but
@@ -76,8 +77,21 @@ namespace BrowserAI.Storage;
 /// is that an append is an <c>INSERT</c> and not a durable rewrite of the
 /// whole record.
 /// </para>
+/// <para>
+/// ⚠️ <b>Every statement runs on the store's own thread since 2026-10-12</b>, decided by
+/// the maintainer, 82 b, in his words verbatim: <i>"78-82 your recommendation"</i>. SQLite
+/// has no asynchronous form: Microsoft's own page on <c>Microsoft.Data.Sqlite</c> says
+/// <i>"SQLite doesn't support asynchronous I/O"</i>, and a statement waits in the disk, in
+/// a sync of the write-ahead log, or in the busy handler for as long as
+/// <see cref="BusyTimeout"/> allows. So each store starts a thread of its own when it is
+/// opened, the open, every statement and the close run there, and a caller awaits them.
+/// The statements are on <see cref="SessionStoreConnection"/>, which the store hands only
+/// to work running on that thread, and each of them refuses a caller on any other.
+/// <i>Corrected that day (previously every member here ran on its caller's thread, and the
+/// session's lock was held across each statement).</i>
+/// </para>
 /// </remarks>
-internal sealed class SessionStore : IDisposable
+internal sealed class SessionStore : IAsyncDisposable
 {
     /// <summary>The store's file name inside a session directory.</summary>
     /// <remarks>
@@ -122,19 +136,22 @@ internal sealed class SessionStore : IDisposable
     /// </remarks>
     public const string HeldBack = "held-back";
 
-    private readonly SqliteDatabase _database;
+    private readonly DedicatedThread _thread;
+    private readonly SessionStoreConnection _connection;
+    private readonly Lock _closing = new();
+    private Task? _closed;
 
-    private SessionStore(SqliteDatabase database, bool writable)
+    private SessionStore(DedicatedThread thread, SessionStoreConnection connection)
     {
-        _database = database;
-        IsWritable = writable;
+        _thread = thread;
+        _connection = connection;
     }
 
-    /// <summary>Whether this connection may write.</summary>
-    public bool IsWritable { get; }
+    /// <summary>Whether this store may write.</summary>
+    public bool IsWritable => _connection.IsWritable;
 
     /// <summary>The file this store was opened against.</summary>
-    public string Path => _database.Path;
+    public string Path => _connection.Path;
 
     /// <summary>
     /// How long a contended statement retries before it answers
@@ -162,17 +179,163 @@ internal sealed class SessionStore : IDisposable
     /// created in a mode it will not be used in.
     /// </remarks>
     /// <param name="path">The store file.</param>
-    /// <returns>The store.</returns>
+    /// <returns>The store, its thread started.</returns>
     /// <exception cref="SqliteException">SQLite refused, or the schema is not this build's.</exception>
-    public static SessionStore OpenForWriting(string path)
+    public static Task<SessionStore> OpenForWritingAsync(string path) => OpenAsync(path, writable: true);
+
+    /// <summary>
+    /// Opens a session's store for reading, taking nothing and changing
+    /// nothing.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Read-only is a constraint on the store file and not on the
+    /// directory</b>, which is the half that surprises: against a crashed
+    /// holder's hot write-ahead log this open builds a <c>-shm</c> beside the
+    /// store and recovers the log, and it is refused only where it may not
+    /// create that file. The type's own remarks carry the measurement. What it
+    /// genuinely cannot do is create the <i>store</i>, which is what makes
+    /// *there is no store here* an answer and not a directory quietly
+    /// gaining one.
+    /// </remarks>
+    /// <param name="path">The store file.</param>
+    /// <returns>The store, its thread started.</returns>
+    /// <exception cref="SqliteException">SQLite refused, or the schema is not this build's.</exception>
+    public static Task<SessionStore> OpenForReadingAsync(string path) => OpenAsync(path, writable: false);
+
+    /// <summary>Runs <paramref name="work"/> on this store's thread, after everything handed over before it.</summary>
+    /// <typeparam name="T">What the work returns.</typeparam>
+    /// <param name="work">The statements, made through the connection it is handed.</param>
+    /// <returns>Its result, or its exception.</returns>
+    /// <exception cref="ObjectDisposedException">The store is closed.</exception>
+    public Task<T> RunAsync<T>(Func<SessionStoreConnection, T> work)
     {
+        ArgumentNullException.ThrowIfNull(work);
+
+        return _thread.RunAsync(() => work(_connection));
+    }
+
+    /// <summary>Runs <paramref name="work"/> on this store's thread, after everything handed over before it.</summary>
+    /// <param name="work">The statements, made through the connection it is handed.</param>
+    /// <returns>Its completion, or its exception.</returns>
+    /// <exception cref="ObjectDisposedException">The store is closed.</exception>
+    public Task RunAsync(Action<SessionStoreConnection> work)
+    {
+        ArgumentNullException.ThrowIfNull(work);
+
+        return _thread.RunAsync(() => work(_connection));
+    }
+
+    /// <summary>
+    /// Closes the connection on this store's thread, after every statement handed over
+    /// before it, and ends the thread. Calling it again answers with the same close.
+    /// </summary>
+    /// <remarks>
+    /// <b>The close is the store's last item</b>: work handed over after it is refused
+    /// with <see cref="ObjectDisposedException"/>, so nothing reaches the file once the
+    /// close has been asked for. Closing the last connection checkpoints the write-ahead
+    /// log and removes it, which is why the close is I/O and runs where a statement does.
+    /// </remarks>
+    /// <returns>The close.</returns>
+    public Task CloseAsync()
+    {
+        lock (_closing)
+        {
+            if (_closed is null)
+            {
+                _closed = _thread.RunAsync(_connection.Close);
+                _thread.Complete();
+            }
+
+            return _closed;
+        }
+    }
+
+    /// <summary>The same as <see cref="CloseAsync"/>.</summary>
+    /// <returns>The close.</returns>
+    public ValueTask DisposeAsync() => new(CloseAsync());
+
+    /// <summary>Starts the store's thread and opens the connection on it.</summary>
+    /// <param name="path">The store file.</param>
+    /// <param name="writable">Whether the connection may write.</param>
+    /// <returns>The store.</returns>
+    private static async Task<SessionStore> OpenAsync(string path, bool writable)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+
+        var thread = new DedicatedThread("BrowserAI session store");
+
+        try
+        {
+            var connection = await thread.RunAsync(() => SessionStoreConnection.Open(path, writable, thread)).ConfigureAwait(false);
+
+            return new SessionStore(thread, connection);
+        }
+        catch
+        {
+            thread.Complete();
+            throw;
+        }
+    }
+}
+
+/// <summary>
+/// One session store's connection, and every statement the store makes. It is handed only
+/// to work running on its store's thread, and each member refuses a caller on any other.
+/// </summary>
+/// <remarks>
+/// <b>Added 2026-10-12 for the maintainer's 82 b</b>, in his words verbatim:
+/// <i>"78-82 your recommendation"</i>, with the members <see cref="SessionStore"/> carried
+/// until that day, unchanged but for the check. One thread runs them, in the order they
+/// were handed over, so <see cref="AppendLog"/>'s <c>INSERT</c> and the
+/// <c>last_insert_rowid</c> after it are one item and nothing interleaves between them.
+/// </remarks>
+internal sealed class SessionStoreConnection
+{
+    private readonly SqliteDatabase _database;
+    private readonly DedicatedThread _thread;
+
+    private SessionStoreConnection(SqliteDatabase database, bool writable, DedicatedThread thread)
+    {
+        _database = database;
+        _thread = thread;
+        IsWritable = writable;
+    }
+
+    /// <summary>Whether this connection may write.</summary>
+    public bool IsWritable { get; }
+
+    /// <summary>The file this connection was opened against.</summary>
+    public string Path => _database.Path;
+
+    /// <summary>Opens a connection on its store's thread.</summary>
+    /// <param name="path">The store file.</param>
+    /// <param name="writable">Whether to open it for writing, creating and initialising it when it is not there.</param>
+    /// <param name="thread">The store's thread, which is the calling thread.</param>
+    /// <returns>The connection.</returns>
+    /// <exception cref="SqliteException">SQLite refused, or the schema is not this build's.</exception>
+    internal static SessionStoreConnection Open(string path, bool writable, DedicatedThread thread)
+    {
+        if (!thread.IsCurrent)
+        {
+            throw OffItsThread();
+        }
+
         Sqlite.RequireASupportedBuild();
 
+        return writable ? OpenForWriting(path, thread) : OpenForReading(path, thread);
+    }
+
+    /// <summary>The open for writing, as <see cref="SessionStore.OpenForWritingAsync"/> describes it.</summary>
+    /// <param name="path">The store file.</param>
+    /// <param name="thread">The store's thread.</param>
+    /// <returns>The connection.</returns>
+    private static SessionStoreConnection OpenForWriting(string path, DedicatedThread thread)
+    {
         var database = SqliteDatabase.OpenForWriting(path);
 
         try
         {
-            database.SetBusyTimeout(BusyTimeout);
+            database.SetBusyTimeout(SessionStore.BusyTimeout);
 
             // A query and not an Execute: `PRAGMA journal_mode` answers with
             // the mode it ended up in, and it is allowed to answer with a
@@ -196,12 +359,12 @@ internal sealed class SessionStore : IDisposable
             {
                 Create(database);
             }
-            else if (version != SchemaVersion)
+            else if (version != SessionStore.SchemaVersion)
             {
                 throw NotThisSchema(path, version);
             }
 
-            return new SessionStore(database, writable: true);
+            return new SessionStoreConnection(database, writable: true, thread);
         }
         catch
         {
@@ -210,41 +373,26 @@ internal sealed class SessionStore : IDisposable
         }
     }
 
-    /// <summary>
-    /// Opens a session's store for reading, taking nothing and changing
-    /// nothing.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>Read-only is a constraint on the store file and not on the
-    /// directory</b>, which is the half that surprises: against a crashed
-    /// holder's hot write-ahead log this open builds a <c>-shm</c> beside the
-    /// store and recovers the log, and it is refused only where it may not
-    /// create that file. The type's own remarks carry the measurement. What it
-    /// genuinely cannot do is create the <i>store</i>, which is what makes
-    /// *there is no store here* an answer and not a directory quietly
-    /// gaining one.
-    /// </remarks>
+    /// <summary>The open for reading, as <see cref="SessionStore.OpenForReadingAsync"/> describes it.</summary>
     /// <param name="path">The store file.</param>
-    /// <returns>The store.</returns>
-    /// <exception cref="SqliteException">SQLite refused, or the schema is not this build's.</exception>
-    public static SessionStore OpenForReading(string path)
+    /// <param name="thread">The store's thread.</param>
+    /// <returns>The connection.</returns>
+    private static SessionStoreConnection OpenForReading(string path, DedicatedThread thread)
     {
-        Sqlite.RequireASupportedBuild();
-
         var database = SqliteDatabase.OpenForReading(path);
 
         try
         {
-            database.SetBusyTimeout(BusyTimeout);
+            database.SetBusyTimeout(SessionStore.BusyTimeout);
 
             var version = SchemaVersionOf(database);
 
-            if (version != SchemaVersion)
+            if (version != SessionStore.SchemaVersion)
             {
                 throw NotThisSchema(path, version);
             }
 
-            return new SessionStore(database, writable: false);
+            return new SessionStoreConnection(database, writable: false, thread);
         }
         catch
         {
@@ -270,6 +418,7 @@ internal sealed class SessionStore : IDisposable
     /// <exception cref="SqliteException">SQLite refused; nothing was written.</exception>
     public void RecordAcquisition(IReadOnlyList<StoredStatement> statements)
     {
+        Require();
         ArgumentNullException.ThrowIfNull(statements);
 
         _database.Execute("BEGIN IMMEDIATE;");
@@ -304,7 +453,11 @@ internal sealed class SessionStore : IDisposable
     /// <summary>Appends one statement about the session.</summary>
     /// <param name="statement">The statement.</param>
     /// <exception cref="SqliteException">SQLite refused.</exception>
-    public void Append(StoredStatement statement) => Insert(statement);
+    public void Append(StoredStatement statement)
+    {
+        Require();
+        Insert(statement);
+    }
 
     /// <summary>
     /// Appends one log row and answers with its id.
@@ -318,11 +471,13 @@ internal sealed class SessionStore : IDisposable
     /// <param name="at">When the call was made, round-trippable.</param>
     /// <param name="tool">The tool name, verbatim, whatever the caller said.</param>
     /// <param name="why">What the caller said it was for.</param>
-    /// <param name="outcome">One of <see cref="InFlight"/>, <see cref="Successful"/> or <see cref="Failed"/>.</param>
+    /// <param name="outcome">One of <see cref="SessionStore.InFlight"/>, <see cref="SessionStore.Successful"/> or <see cref="SessionStore.Failed"/>.</param>
     /// <returns>The row's id.</returns>
     /// <exception cref="SqliteException">SQLite refused.</exception>
     public long AppendLog(string at, string tool, string why, string outcome)
     {
+        Require();
+
         using (var statement = _database.Prepare(
             "INSERT INTO log (at, tool, why, outcome, settled_at, failure) VALUES (?, ?, ?, ?, NULL, NULL);"))
         {
@@ -354,6 +509,8 @@ internal sealed class SessionStore : IDisposable
     /// <exception cref="SqliteException">SQLite refused.</exception>
     public bool Settle(long id, string outcome, string settledAt, byte[]? failure)
     {
+        Require();
+
         using (var statement = _database.Prepare(
             "UPDATE log SET outcome = ?, settled_at = ?, failure = ? WHERE id = ?;"))
         {
@@ -381,6 +538,8 @@ internal sealed class SessionStore : IDisposable
     /// <exception cref="SqliteException">SQLite refused.</exception>
     public IReadOnlyList<StoredStatement> Statements()
     {
+        Require();
+
         var rows = new List<StoredStatement>();
 
         using var statement = _database.Prepare("SELECT field, at, value FROM statements ORDER BY rowid;");
@@ -409,6 +568,8 @@ internal sealed class SessionStore : IDisposable
     /// <exception cref="SqliteException">SQLite refused.</exception>
     public IReadOnlyList<StoredLogEntry> Log(long skip = 0, long take = -1)
     {
+        Require();
+
         var rows = new List<StoredLogEntry>();
 
         using var statement = _database.Prepare(
@@ -434,7 +595,12 @@ internal sealed class SessionStore : IDisposable
     /// <summary>How many log rows there are.</summary>
     /// <returns>The count.</returns>
     /// <exception cref="SqliteException">SQLite refused.</exception>
-    public long LogLength() => _database.QueryInt64("SELECT COUNT(*) FROM log;") ?? 0;
+    public long LogLength()
+    {
+        Require();
+
+        return _database.QueryInt64("SELECT COUNT(*) FROM log;") ?? 0;
+    }
 
     /// <summary>When the newest call was made, or <see langword="null"/> for a log with nothing in it.</summary>
     /// <remarks>
@@ -448,6 +614,8 @@ internal sealed class SessionStore : IDisposable
     /// <exception cref="SqliteException">SQLite refused.</exception>
     public string? NewestLogAt()
     {
+        Require();
+
         using var statement = _database.Prepare("SELECT at FROM log ORDER BY id DESC LIMIT 1;");
 
         return statement.Step() ? statement.TextAt(0) : null;
@@ -458,6 +626,8 @@ internal sealed class SessionStore : IDisposable
     /// <exception cref="SqliteException">SQLite refused.</exception>
     public string JournalMode()
     {
+        Require();
+
         var answer = _database.Query("PRAGMA journal_mode;");
 
         return answer.Count is 0 ? string.Empty : answer[0];
@@ -466,15 +636,29 @@ internal sealed class SessionStore : IDisposable
     /// <summary>The busy timeout this connection is carrying, in milliseconds.</summary>
     /// <returns>The value SQLite reports.</returns>
     /// <exception cref="SqliteException">SQLite refused.</exception>
-    public long BusyTimeoutInMilliseconds() => _database.QueryInt64("PRAGMA busy_timeout;") ?? 0;
+    public long BusyTimeoutInMilliseconds()
+    {
+        Require();
+
+        return _database.QueryInt64("PRAGMA busy_timeout;") ?? 0;
+    }
 
     /// <summary>The schema version recorded in the file.</summary>
     /// <returns>The version.</returns>
     /// <exception cref="SqliteException">SQLite refused.</exception>
-    public long RecordedSchemaVersion() => SchemaVersionOf(_database);
+    public long RecordedSchemaVersion()
+    {
+        Require();
 
-    /// <inheritdoc />
-    public void Dispose() => _database.Dispose();
+        return SchemaVersionOf(_database);
+    }
+
+    /// <summary>Closes the connection. The store's thread ends after it.</summary>
+    internal void Close()
+    {
+        Require();
+        _database.Dispose();
+    }
 
     /// <summary>Reads <c>PRAGMA user_version</c>.</summary>
     /// <param name="database">The connection.</param>
@@ -528,7 +712,7 @@ internal sealed class SessionStore : IDisposable
         new(
             Sqlite.NotADatabase,
             $"'{path}' records schema version {version.ToString(CultureInfo.InvariantCulture)} and this build of BrowserAI reads version "
-            + $"{SchemaVersion.ToString(CultureInfo.InvariantCulture)}. "
+            + $"{SessionStore.SchemaVersion.ToString(CultureInfo.InvariantCulture)}. "
             + (version is 0
                 ? "A version of zero means the file is a database that BrowserAI never created. Point BrowserAI at a directory of its own."
                 : "There is no converter: use a build of BrowserAI that reads that version, or start a new session directory."));
@@ -546,6 +730,21 @@ internal sealed class SessionStore : IDisposable
             .BindText(2, statement.At)
             .BindText(3, statement.Value)
             .Run();
+    }
+
+    /// <summary>The refusal for a statement made off the store's thread.</summary>
+    /// <returns>The exception, for the caller to throw.</returns>
+    private static InvalidOperationException OffItsThread() =>
+        new("A statement on a session's store was made off that store's own thread. Hand it to SessionStore.RunAsync, "
+            + "the one thread each store's statements run on (the maintainer's 82 b).");
+
+    /// <summary>Refuses a caller on any thread but the store's own.</summary>
+    private void Require()
+    {
+        if (!_thread.IsCurrent)
+        {
+            throw OffItsThread();
+        }
     }
 }
 

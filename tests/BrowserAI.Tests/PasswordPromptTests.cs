@@ -88,7 +88,7 @@ internal sealed class PasswordPromptTests
         // ⚠️ DECLARED BEFORE THE CHILDREN, so it is released after them: a
         // browser whose session guard is unheld is a stray to every sweeper on
         // this machine. See SessionGuards.
-        using var guards = new SessionGuards();
+        await using var guards = new SessionGuards();
 
         await using var product = await StartAsync(scratch, "product", withArguments: true, guards);
         await using var control = await StartAsync(scratch, "control", withArguments: false, guards);
@@ -178,7 +178,7 @@ internal sealed class PasswordPromptTests
         using var scratch = await ScratchDirectory.CreateAsync("password-prompt-firefox");
 
         // Held for the child's life, for the reason SessionGuards gives.
-        using var guards = new SessionGuards();
+        await using var guards = new SessionGuards();
 
         await using var child = await StartAsync(scratch, "firefox", withArguments: true, guards, ProvisionedBrowsers.Firefox);
 
@@ -405,7 +405,7 @@ internal sealed class PasswordPromptTests
     /// processes, and not from a sibling arm sharing a key.
     /// </para>
     /// </remarks>
-    private sealed class SessionGuards : IDisposable
+    private sealed class SessionGuards : IAsyncDisposable
     {
         private readonly List<SessionLock> _held = [];
 
@@ -429,11 +429,12 @@ internal sealed class PasswordPromptTests
         }
 
         /// <summary>Releases every guard, after the children are gone.</summary>
-        public void Dispose()
+        /// <returns>The release.</returns>
+        public async ValueTask DisposeAsync()
         {
             foreach (var held in _held)
             {
-                held.Dispose();
+                await held.DisposeAsync();
             }
 
             _held.Clear();

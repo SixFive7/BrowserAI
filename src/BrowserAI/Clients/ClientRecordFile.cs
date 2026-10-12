@@ -28,7 +28,7 @@ namespace BrowserAI.Clients;
 internal static class ClientRecordFile
 {
     /// <summary>Every source of names the background reads, as the product reads them.</summary>
-    public static ClientRecordAccess Files { get; } = new(ReadAllAsync, ReadEndsAsync, FoldersIn, ReadHeadAsync, FilesUnder, CodexState.TitleOf);
+    public static ClientRecordAccess Files { get; } = new(ReadAllAsync, ReadEndsAsync, FoldersIn, ReadHeadAsync, FilesUnder, CodexState.TitleOfAsync);
 
     /// <summary>The first bytes of a file, as UTF-8 text, for a record whose start is all that names anything.</summary>
     /// <param name="path">The file.</param>
@@ -214,4 +214,4 @@ internal sealed record ClientRecordAccess(
     Func<string, IReadOnlyList<string>> FoldersIn,
     Func<string, int, Task<string?>> ReadHead,
     Func<string, string, IReadOnlyList<string>> FilesUnder,
-    Func<string, string, string?> StateTitle);
+    Func<string, string, Task<string?>> StateTitle);

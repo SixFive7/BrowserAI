@@ -129,7 +129,7 @@ internal sealed class CloseOrderingTests
         await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
 
         // The close's row is settled as answered, ahead of the resume's own row.
-        var log = RecordedSession.LogOf(harness.Session!);
+        var log = await RecordedSession.LogOfAsync(harness.Session!);
         var close = log.Single(row => row.Tool == CloseReasons.LogRowTool);
 
         await Assert.That(close.Outcome).IsEqualTo(SessionStore.Successful);

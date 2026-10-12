@@ -1196,7 +1196,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // nothing up is let go and says so.
             if (live.Child.ChildHasGone)
             {
-                live.RecordTheServerEnded();
+                await live.RecordTheServerEndedAsync().ConfigureAwait(false);
             }
             else if ((connection.EndedFor ?? Declared) is { } ending)
             {
@@ -1205,11 +1205,11 @@ internal sealed class SessionManager : IAsyncDisposable
                 // or the background had already said why it is ending when its pipe
                 // closed. (Previously every such session read as let go because its
                 // client went away.)
-                live.RecordTheBackgroundsEnd(ending, connection.Conversation());
+                await live.RecordTheBackgroundsEndAsync(ending, connection.Conversation()).ConfigureAwait(false);
             }
             else
             {
-                live.RecordTheRelease(connection.Conversation(), "no browser was open");
+                await live.RecordTheReleaseAsync(connection.Conversation(), "no browser was open").ConfigureAwait(false);
             }
 
             await ReleaseDetachedAsync(live, nothingToKeep).ConfigureAwait(false);
@@ -1598,7 +1598,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 {
                     SessionToolLog.Why(already.Logger, SessionToolSurface.Resume, why);
 
-                    var heldRow = already.Lock.Append(SessionToolSurface.Resume, why);
+                    var heldRow = await already.Lock.AppendAsync(SessionToolSurface.Resume, why).ConfigureAwait(false);
                     var heldBack = SessionErrors.SettingsHeldBack(
                         differences,
                         already.Settings,
@@ -1609,7 +1609,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     // 23.2 c, 2026-10-10. The client is still told it did not go through,
                     // and browserai_catch_up lists the call as held back beside what it was
                     // told. Until that day the row was settled failed.
-                    already.Lock.Settle(heldRow, SessionStore.HeldBack, Encoding.UTF8.GetBytes(heldBack));
+                    await already.Lock.SettleAsync(heldRow, SessionStore.HeldBack, Encoding.UTF8.GetBytes(heldBack)).ConfigureAwait(false);
 
                     return new ToolOutcome(heldBack, IsError: true);
                 }
@@ -1627,14 +1627,14 @@ internal sealed class SessionManager : IAsyncDisposable
                     // forwarded call's is, because one outcome vocabulary across
                     // every row is what lets `browserai_catch_up` say "no answer
                     // was recorded" without having to know which tool wrote it.
-                    var row = already.Lock.Append(SessionToolSurface.Resume, why);
+                    var row = await already.Lock.AppendAsync(SessionToolSurface.Resume, why).ConfigureAwait(false);
 
                     if (appended is not null)
                     {
-                        already.Lock.AppendPurpose(RecordText.Sanitise(appended));
+                        await already.Lock.AppendPurposeAsync(RecordText.Sanitise(appended)).ConfigureAwait(false);
                     }
 
-                    already.Lock.Settle(row, SessionStore.Successful, failure: null);
+                    await already.Lock.SettleAsync(row, SessionStore.Successful, failure: null).ConfigureAwait(false);
 
                     return new ToolOutcome(
                         await DescribeAsync(already, notes, lead: AlreadyLive(browserUp, purposeChanged: appended is not null, never: already.Settings.Idle.IsNever)).ConfigureAwait(false),
@@ -1694,7 +1694,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 // before this teardown ends what is left of the session.
                 if (already.Closed is null && already.Child.ChildHasGone)
                 {
-                    already.RecordTheServerEnded();
+                    await already.RecordTheServerEndedAsync().ConfigureAwait(false);
                 }
 
                 createdHere = already.CreatedHere;
@@ -1913,7 +1913,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 var elsewhere = SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Close, location.FullPath, holder!.Conversation());
 
-                RecordTheRefusal(found, SessionToolSurface.Close, why, elsewhere);
+                await RecordTheRefusalAsync(found, SessionToolSurface.Close, why, elsewhere).ConfigureAwait(false);
                 return new ToolOutcome(elsewhere, IsError: true);
             }
 
@@ -1939,7 +1939,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         try
         {
-            row = live.Lock.Append(SessionToolSurface.Close, why);
+            row = await live.Lock.AppendAsync(SessionToolSurface.Close, why).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {
@@ -1961,7 +1961,7 @@ internal sealed class SessionManager : IAsyncDisposable
             else if (live.Child.ChildHasGone)
             {
                 // 8 b: a browser server that ended on its own is recorded as the close.
-                live.RecordTheServerEnded();
+                await live.RecordTheServerEndedAsync().ConfigureAwait(false);
                 answer = ServerHadAlreadyEnded;
             }
             else
@@ -1983,7 +1983,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 };
             }
 
-            live.Lock.Settle(row, SessionStore.Successful, failure: null);
+            await live.Lock.SettleAsync(row, SessionStore.Successful, failure: null).ConfigureAwait(false);
             settled = true;
 
             return new ToolOutcome(answer, IsError: false);
@@ -1992,10 +1992,10 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             if (!settled)
             {
-                live.Lock.Settle(
+                await live.Lock.SettleAsync(
                     row,
                     SessionStore.Failed,
-                    Encoding.UTF8.GetBytes("The caller stopped waiting before the close was over. The close went on, and the session's browser server was ended once it was."));
+                    Encoding.UTF8.GetBytes("The caller stopped waiting before the close was over. The close went on, and the session's browser server was ended once it was.")).ConfigureAwait(false);
             }
         }
     }
@@ -2045,13 +2045,14 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="tool">The tool.</param>
     /// <param name="why">What the caller said it was for.</param>
     /// <param name="refusal">What the caller is told.</param>
-    private static void RecordTheRefusal(LiveSession live, string tool, string why, string refusal)
+    /// <returns>The record, which never fails.</returns>
+    private static async Task RecordTheRefusalAsync(LiveSession live, string tool, string why, string refusal)
     {
         try
         {
-            var row = live.Lock.Append(tool, why);
+            var row = await live.Lock.AppendAsync(tool, why).ConfigureAwait(false);
 
-            live.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal));
+            await live.Lock.SettleAsync(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal)).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {
@@ -2139,9 +2140,9 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             SessionToolLog.Why(held.Logger, SessionToolSurface.CatchUp, why);
 
-            var row = held.Lock.Append(SessionToolSurface.CatchUp, why);
+            var row = await held.Lock.AppendAsync(SessionToolSurface.CatchUp, why).ConfigureAwait(false);
 
-            held.Lock.Settle(row, SessionStore.Successful, failure: null);
+            await held.Lock.SettleAsync(row, SessionStore.Successful, failure: null).ConfigureAwait(false);
         }
         else
         {
@@ -2196,9 +2197,12 @@ internal sealed class SessionManager : IAsyncDisposable
 
         try
         {
-            using var store = SessionStore.OpenForReading(location.DataFile);
+            var store = await SessionStore.OpenForReadingAsync(location.DataFile).ConfigureAwait(false);
 
-            rows = SessionRecordReader.Log(store, skip, PageSize);
+            await using (store.ConfigureAwait(false))
+            {
+                rows = await store.RunAsync(opened => SessionRecordReader.Log(opened, skip, PageSize)).ConfigureAwait(false);
+            }
         }
         catch (SqliteException refused)
         {
@@ -3095,10 +3099,10 @@ internal sealed class SessionManager : IAsyncDisposable
             // and a reader that lands between them finds a purpose change whose
             // explanation has ALREADY arrived, which is the harmless order. The
             // reverse would show a purpose nothing accounts for.
-            var row = live.Lock.Append(SessionToolSurface.ChangePurpose, why);
+            var row = await live.Lock.AppendAsync(SessionToolSurface.ChangePurpose, why).ConfigureAwait(false);
 
-            live.Lock.AppendPurpose(purpose);
-            live.Lock.Settle(row, SessionStore.Successful, failure: null);
+            await live.Lock.AppendPurposeAsync(purpose).ConfigureAwait(false);
+            await live.Lock.SettleAsync(row, SessionStore.Successful, failure: null).ConfigureAwait(false);
 
             SessionToolLog.Why(live.Logger, SessionToolSurface.ChangePurpose, why);
             SessionToolLog.PurposeChanged(_logger, location.FullPath, previous, purpose);
@@ -3126,8 +3130,8 @@ internal sealed class SessionManager : IAsyncDisposable
         }
 
         held.ScopeTheCallersRecords();
-        held.SettleOpening(SessionStore.Successful, failure: null);
-        held.Dispose();
+        await held.SettleOpeningAsync(SessionStore.Successful, failure: null).ConfigureAwait(false);
+        await held.DisposeAsync().ConfigureAwait(false);
 
         // THE PROCESS LOG, because a closed session has no logging stack of its
         // own -- SessionLogging is created by OpenAsync and disposed when the
@@ -3835,14 +3839,14 @@ internal sealed class SessionManager : IAsyncDisposable
             // which is the same ordering every forwarded call uses and for the
             // same reason: a launch that hangs still leaves a record of what the
             // directory was for.
-            held.SettleOpening(SessionStore.Successful, failure: null);
+            await held.SettleOpeningAsync(SessionStore.Successful, failure: null).ConfigureAwait(false);
             await _index.RecordAsync(location).ConfigureAwait(false);
             SessionToolLog.Opened(sessionLogger, location.FullPath, settings.Headed, createdHere);
 
             // ⚠️ 8 b, 2026-10-04: a close nobody recorded is written down now, dated
             // when it was found, and then this opening, so a reader can tell an
             // opening no close followed. Best effort: the session is open either way.
-            RecordTheOpening(held, request.Entry?.Tool ?? SessionToolSurface.Init, unrecorded, settings, sessionLogger);
+            await RecordTheOpeningAsync(held, request.Entry?.Tool ?? SessionToolSurface.Init, unrecorded, settings, sessionLogger).ConfigureAwait(false);
 
             if (why is not null)
             {
@@ -3871,7 +3875,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // runtime that failed to start. The refusal is the exception's own
             // message, and it names the first tool that differs.
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, broken);
-            Failed(acquired, broken);
+            await FailedAsync(acquired, broken).ConfigureAwait(false);
 
             // ⚠️ 10 b, 2026-10-10: the person is told too, by one toast per background
             // run and a notice on the dashboard, and the model reads the refusal below
@@ -3892,14 +3896,14 @@ internal sealed class SessionManager : IAsyncDisposable
             // reads the family out of browserai.data, because `init` could not record
             // Firefox at all.
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, collision);
-            Failed(acquired, collision);
+            await FailedAsync(acquired, collision).ConfigureAwait(false);
 
             return new ToolOutcome(collision.Message, IsError: true);
         }
         catch (Exception failure) when (failure is not OperationCanceledException)
         {
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, failure);
-            Failed(acquired, failure);
+            await FailedAsync(acquired, failure).ConfigureAwait(false);
 
             return new ToolOutcome(
                 SessionErrors.BrowserRuntimeDidNotStart(location.FullPath, failure.Message),
@@ -3925,7 +3929,10 @@ internal sealed class SessionManager : IAsyncDisposable
                     // A failed open must not leave the directory owned. The
                     // record stays on disk, which is what makes the next resume
                     // able to say who had it.
-                    acquired?.Dispose();
+                    if (acquired is not null)
+                    {
+                        await acquired.DisposeAsync().ConfigureAwait(false);
+                    }
 
                     // And nor may it leave the browsers root claimed. A shared
                     // claim nobody releases is a reinstall that can never run
@@ -3964,21 +3971,18 @@ internal sealed class SessionManager : IAsyncDisposable
     /// newest: F2 d, 2026-10-08, what a later resume is compared with.
     /// </param>
     /// <param name="logger">The session's own logger.</param>
-    private static void RecordTheOpening(SessionLock held, string tool, Statement<RecordedClose>? unrecorded, SessionRunSettings settings, ILogger logger)
+    /// <returns>The record, which never fails.</returns>
+    private static async Task RecordTheOpeningAsync(SessionLock held, string tool, Statement<RecordedClose>? unrecorded, SessionRunSettings settings, ILogger logger)
     {
         try
         {
             if (unrecorded is { } found)
             {
-                held.AppendLifecycle(RecordFields.Closed, found.Value.Write());
-
-                var row = held.Append(CloseReasons.LogRowTool, CloseReasons.Of(found));
-
-                held.Settle(row, SessionStore.Successful, failure: null);
+                await held.RecordCloseAsync(found.Value.Write(), CloseReasons.Of(found)).ConfigureAwait(false);
             }
 
-            held.AppendLifecycle(RecordFields.Opened, tool);
-            _ = held.AppendSettings(settings.Write());
+            await held.AppendLifecycleAsync(RecordFields.Opened, tool).ConfigureAwait(false);
+            _ = await held.AppendSettingsAsync(settings.Write()).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {
@@ -4060,8 +4064,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     /// <param name="acquired">The lock, if one was taken.</param>
     /// <param name="failure">What went wrong.</param>
-    private static void Failed(SessionLock? acquired, Exception failure) =>
-        acquired?.SettleOpening(SessionStore.Failed, Encoding.UTF8.GetBytes(failure.ToString()));
+    /// <returns>The settle, which never fails.</returns>
+    private static Task FailedAsync(SessionLock? acquired, Exception failure) =>
+        acquired?.SettleOpeningAsync(SessionStore.Failed, Encoding.UTF8.GetBytes(failure.ToString())) ?? Task.CompletedTask;
 
     /// <summary>
     /// The namespace this session's outgoing request ids are allocated in.

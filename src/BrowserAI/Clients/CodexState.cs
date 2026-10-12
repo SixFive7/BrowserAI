@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text;
+using BrowserAI.Runtime;
 using BrowserAI.Storage;
 
 namespace BrowserAI.Clients;
@@ -56,14 +57,33 @@ internal static class CodexState
     public const string FileName = "state_5.sqlite";
 
     /// <summary>The thread's first message, when Codex's state database has the thread.</summary>
+    /// <remarks>
+    /// <b>On a thread of its own since 2026-10-12</b>, with the maintainer's 82 b, in his
+    /// words verbatim: <i>"78-82 your recommendation"</i>. The read is SQLite's, which has
+    /// no asynchronous form, so the database is opened, read and closed on a thread
+    /// started for the read, the way each session store's statements run on the store's
+    /// own, and the caller awaits it. <i>Corrected that day (previously <c>TitleOf</c>, on
+    /// its caller's thread, which was a pool worker).</i>
+    /// </remarks>
     /// <param name="database">The database.</param>
     /// <param name="threadId">The thread.</param>
     /// <returns>Its <c>title</c>; <see langword="null"/> when there is no database, no such thread, or no read.</returns>
-    public static string? TitleOf(string database, string threadId)
+    public static async Task<string?> TitleOfAsync(string database, string threadId)
     {
         ArgumentNullException.ThrowIfNull(database);
         ArgumentNullException.ThrowIfNull(threadId);
 
+        using var thread = new DedicatedThread("BrowserAI Codex state");
+
+        return await thread.RunAsync(() => ReadTitle(database, threadId)).ConfigureAwait(false);
+    }
+
+    /// <summary>The read itself, on the thread <see cref="TitleOfAsync"/> started for it.</summary>
+    /// <param name="database">The database.</param>
+    /// <param name="threadId">The thread.</param>
+    /// <returns>Its <c>title</c>, or <see langword="null"/>.</returns>
+    private static string? ReadTitle(string database, string threadId)
+    {
         for (var attempt = 0; attempt < 2; attempt++)
         {
             if (!File.Exists(database))
