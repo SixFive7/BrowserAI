@@ -18,6 +18,13 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class ChangelogPageTests
 {
+    /// <summary>
+    /// What opens a Markdown link's target, for the fixtures whose links are written relative to
+    /// the repository's root: spelled through this constant, a link in a fixture is not read by
+    /// <see cref="DocumentationLinkTests"/> as this file's own, which it would resolve from here.
+    /// </summary>
+    private const string To = "](";
+
     /// <summary>A small changelog in the real one's shape.</summary>
     private const string Sample = """
         # Changelog
@@ -241,7 +248,7 @@ internal sealed class ChangelogPageTests
     [Test]
     public async Task ALinkIntoTheRepositoryOpensThatFileOnGitHubAtTheBuildsRef()
     {
-        const string Linked = """
+        const string Linked = $$"""
             # Changelog
 
             ## [Unreleased]
@@ -249,14 +256,14 @@ internal sealed class ChangelogPageTests
             ### Added
 
             - ✨ **A change.**
-              [The hazard row](HAZARDS.md#hazard-index).
+              [The hazard row{{To}}HAZARDS.md#hazard-index).
 
             ## [1.2.0] - 2026-10-10
 
             ### Fixed
 
             - 🐛 **A fix.**
-              [The hazard row](HAZARDS.md#hazard-index), [the kb](kb/packaging/velopack.md), [a folder](docs/probes/), [this file](#unreleased), [a page](https://example.invalid/x), [outside](../outside.md), [a script](javascript:alert) and [a <b>bold</b> label](DECISIONS.md#the-dashboard-decided-2026-10-11).
+              [The hazard row{{To}}HAZARDS.md#hazard-index), [the kb{{To}}kb/packaging/velopack.md), [a folder{{To}}docs/probes/), [this file{{To}}#unreleased), [a page{{To}}https://example.invalid/x), [outside{{To}}../outside.md), [a script{{To}}javascript:alert) and [a <b>bold</b> label{{To}}DECISIONS.md#the-dashboard-decided-2026-10-11).
             """;
 
         await using var release = await PageRig.CreateAsync(changelog: ChangelogPageContent.SectionFor(Linked, "1.2.0"), facts: facts => facts with { Version = "1.2.0" });
@@ -297,7 +304,7 @@ internal sealed class ChangelogPageTests
     [Test]
     public async Task EachReleasesLinksPointAtItsOwnTagAndOnlyWhatIsNotYetReleasedAtTheBuilds()
     {
-        const string Linked = """
+        const string Linked = $$"""
             # Changelog
 
             ## [Unreleased]
@@ -305,21 +312,21 @@ internal sealed class ChangelogPageTests
             ### Added
 
             - ✨ **Next.**
-              [The row](HAZARDS.md#hazard-index).
+              [The row{{To}}HAZARDS.md#hazard-index).
 
             ## [1.2.0] - 2026-10-10
 
             ### Fixed
 
             - 🐛 **Now.**
-              [The row](HAZARDS.md#hazard-index).
+              [The row{{To}}HAZARDS.md#hazard-index).
 
             ## [1.1.0] - 2026-09-23
 
             ### Added
 
             - ✨ **Then.**
-              [The row](HAZARDS.md#hazard-index).
+              [The row{{To}}HAZARDS.md#hazard-index).
             """;
 
         static string row(string at) =>

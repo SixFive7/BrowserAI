@@ -424,10 +424,13 @@ internal sealed class PageBrowserTests
 
             await openAsync(address);
 
-            // Five lines on from BrowserAI, each named: a closed browser, a window and a hidden
-            // one for the first conversation, the second's "No browser yet", and the kept session.
+            // Once the script has drawn the lines, which it does in one go, labels and all, so the
+            // count is read at once and not waited for: five lines on from BrowserAI, each
+            // named, a closed browser, a window and a hidden one for the first conversation, the
+            // second's "No browser yet", and the kept session.
             await Assert.That(await WaitForAsync(async () =>
-                (await evaluateAsync("() => 'labels=' + document.querySelectorAll('#wires .lab').length")).Contains("labels=5", StringComparison.Ordinal))).IsTrue();
+                !(await evaluateAsync("() => 'wires=' + document.querySelectorAll('#wires path.wire').length")).Contains("wires=0", StringComparison.Ordinal))).IsTrue();
+            await Assert.That(await evaluateAsync("() => 'labels=' + document.querySelectorAll('#wires .lab').length")).Contains("labels=5");
             await Assert.That(await evaluateAsync("() => [...document.querySelectorAll('#wires .lab text')].map((text) => text.textContent).sort().join('|')"))
                 .Contains("Hidden|Kept|No browser|No browser|On screen");
 
@@ -457,13 +460,12 @@ internal sealed class PageBrowserTests
 
             await Assert.That(await evaluateAsync("() => 'focus=' + (document.activeElement ? document.activeElement.id : '')")).Contains("focus=n-s-");
 
-            // An address that names a session opens with that session chosen, and a new state
-            // keeps it.
+            // An address that names a session opens with that session chosen, the page's script
+            // having run by the time the navigation returns, and a new state keeps it.
             await openAsync(address + "&id=" + pricing);
 
-            await Assert.That(await WaitForAsync(async () =>
-                (await evaluateAsync($"() => 'shown=' + !document.getElementById('inspect-s-{pricing}').hidden + ',pressed=' + document.getElementById('n-s-{pricing}').getAttribute('aria-pressed')"))
-                    .Contains("shown=true,pressed=true", StringComparison.Ordinal))).IsTrue();
+            await Assert.That(await evaluateAsync($"() => 'shown=' + !document.getElementById('inspect-s-{pricing}').hidden + ',pressed=' + document.getElementById('n-s-{pricing}').getAttribute('aria-pressed')"))
+                .Contains("shown=true,pressed=true");
 
             _ = await evaluateAsync("() => { document.querySelector('#main > *').dataset.old = 'yes'; return 'marked'; }");
 

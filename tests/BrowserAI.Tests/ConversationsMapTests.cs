@@ -292,7 +292,7 @@ internal sealed class ConversationsMapTests
         var closed = RowOf(html!, "invoice-export");
 
         await Assert.That(open).Contains($"href=\"sessions?tab=1&amp;id={CensusPageSessions.IdOf(Pricing)}\"");
-        await Assert.That(closed).DoesNotContain("href=");
+        await Assert.That(closed).DoesNotContain("href=\"sessions?");
         await Assert.That(closed).Contains("Not open now. A conversation that names this session opens it again.");
     }
 
@@ -332,7 +332,64 @@ internal sealed class ConversationsMapTests
         await Assert.That(list).DoesNotContain(">Details</a>");
     }
 
+    /// <summary>
+    /// A session's panel says what its own processes use, its CPU and its own memory, right
+    /// under its browser, and its shared memory is the one figure for all of BrowserAI,
+    /// linked to where the home says it.
+    /// </summary>
+    /// <remarks>
+    /// <b>59 b, 62 a and 65 a, the maintainer's of 2026-10-11</b>, with his words verbatim:
+    /// <i>"Show this all with realtime updates. Show the separate process memory and the shared
+    /// base separately. The page has to show it all clearly."</i> The lines are
+    /// <see cref="UsageContent.SessionLines"/>, which the home's work made for the inspector.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASessionsPanelSaysItsCpuAndOwnMemoryAndPointsItsSharedMemoryAtTheOneTotal()
+    {
+        const long MiB = 1024 * 1024;
+        var pricing = CensusPageSessions.IdOf(Pricing);
+
+        // Two readings two seconds apart on four processors: the session added 2,080,000 ticks
+        // of 80,000,000, which is 2.6% of the PC.
+        var first = PageUsage.Next(null, new UsageReading(new ProcessCounters(0, 0, 0), [], [new SessionReading(pricing, 0, 405 * MiB, 133 * MiB, 141 * MiB)], 4), Now, TimeSpan.FromMinutes(2));
+        var second = PageUsage.Next(first, new UsageReading(new ProcessCounters(0, 0, 0), [], [new SessionReading(pricing, 2_080_000, 405 * MiB, 133 * MiB, 141 * MiB)], 4), Now.AddSeconds(2), TimeSpan.FromMinutes(2));
+
+        var html = ConversationsContent.Render(new PageView(Facts(), Mixed(), null) { Tab = 1, Now = Now.AddSeconds(2), Usage = second });
+        var panel = PanelOf(html, "s-" + pricing);
+
+        await Assert.That(panel).Contains($"<dt>CPU</dt><dd data-usage=\"s:{pricing}:cpu\">2.6%</dd>");
+        await Assert.That(panel).Contains($"<dt>Own memory</dt><dd data-usage=\"s:{pricing}:own\">538 MB</dd>");
+        await Assert.That(panel).Contains($"<dt>Shared memory</dt><dd><a id=\"l-shared-{pricing}\" href=\"./?tab=1#card-usage\" data-usage=\"shared-all\">About 141 MB for all of BrowserAI</a></dd>");
+        await Assert.That(panel).Contains("<p class=\"kind\">Uses now</p>");
+
+        var browser = panel.IndexOf("<dt>Browser</dt>", StringComparison.Ordinal);
+        var cpu = panel.IndexOf("<dt>CPU</dt>", StringComparison.Ordinal);
+        var purpose = panel.IndexOf("<dt>For</dt>", StringComparison.Ordinal);
+
+        await Assert.That(browser).IsGreaterThan(-1);
+        await Assert.That(browser).IsLessThan(cpu);
+        await Assert.That(cpu).IsLessThan(purpose);
+
+        // Before the first reading every figure says it is being measured.
+        var none = PanelOf(ConversationsContent.Render(new PageView(Facts(), Mixed(), null) { Tab = 1, Now = Now }), "s-" + pricing);
+
+        await Assert.That(none).Contains($"<dt>CPU</dt><dd data-usage=\"s:{pricing}:cpu\">Measuring</dd>");
+    }
+
     // ---- The rig's data -----------------------------------------------------------
+
+    /// <summary>What does not change, for an arm that draws a page straight from a view.</summary>
+    private static PageFacts Facts() => new()
+    {
+        Version = "9.0.0",
+        InstallRoot = @"C:\install",
+        DataRoot = @"C:\data",
+        LogDirectory = @"C:\data\logs",
+        ServerCommand = null,
+        ServerRefusal = null,
+        RelayHold = BrowserAI.Relay.RelayConstants.IdleCountdown,
+    };
 
     /// <summary>The tab every card on the map carries, which says it can be chosen and whether it is.</summary>
     internal const string Cue = "<span class=\"cue\" aria-hidden=\"true\"><span class=\"off\">Details</span><span class=\"on\">Selected</span>";
