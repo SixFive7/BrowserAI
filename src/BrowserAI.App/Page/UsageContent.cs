@@ -186,7 +186,10 @@ internal static class UsageContent
 
         return new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["cpu"] = Chart(cpu, at, window, cpuTop, string.Create(CultureInfo.InvariantCulture, $"{cpuTop}%"), "CPU", usage is { Unreadable: false } ? Cpu(usage.Cpu) : null),
+            // The CPU's figure is named in the chart's label only once it is known: a first
+            // reading knows the memory and not yet the CPU (the reader pass of 2026-10-12,
+            // previously "CPU over the last 2 min, now Measuring").
+            ["cpu"] = Chart(cpu, at, window, cpuTop, string.Create(CultureInfo.InvariantCulture, $"{cpuTop}%"), "CPU", usage is { Unreadable: false, Cpu: { } share } ? Cpu(share) : null),
             ["own"] = Chart(own, at, window, ownTop, MemoryLabel(ownTop), "Own memory", usage is { Unreadable: false } ? Megabytes(usage.Own.Total) : null),
         };
     }

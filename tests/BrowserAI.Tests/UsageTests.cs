@@ -212,6 +212,13 @@ internal sealed partial class UsageTests
         await Assert.That(charts["cpu"]).Contains("aria-label=\"CPU over the last 2 min, now 10.0%\"");
         await Assert.That(charts["own"]).Contains("<span class=\"c-top\">2 GB</span>");
         await Assert.That(card).Contains(charts["cpu"]);
+
+        // The first reading knows the memory and not yet the CPU: the CPU chart's name, read
+        // aloud, then says nothing of the figure, which beside it says Measuring.
+        var firstCharts = UsageContent.Charts(first, Window);
+
+        await Assert.That(firstCharts["cpu"]).Contains("aria-label=\"CPU over the last 2 min\"");
+        await Assert.That(firstCharts["own"]).Contains("aria-label=\"Own memory over the last 2 min, now 1,101 MB\"");
     }
 
     [Test]
