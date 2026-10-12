@@ -4,6 +4,7 @@
 using System.Buffers;
 using System.Text;
 using System.Threading.Channels;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Protocol;
 
@@ -98,9 +99,14 @@ internal sealed class StdioChannel : IDisposable
     /// </para>
     /// <para>
     /// <b>The reading thread is the input's for the process's life</b>, and the frames it
-    /// reads are awaited by whoever reads <see cref="Input"/>. A write runs on a thread made
-    /// for it, in turn, and the caller awaits it. Both are listed for the maintainer's
-    /// review with the batch, as the waits this tree keeps.
+    /// reads are awaited by whoever reads <see cref="Input"/>. The writing thread is the
+    /// output's for the channel's life, and a flush hands it the bytes and awaits them.
+    /// ⚠️ <b>Both kept, decided 2026-10-12 by the maintainer</b>, 78 a and b, in his words
+    /// verbatim: <i>"78-82 your recommendation"</i>. The two calls that wait are suppressed
+    /// with the measured reason beside them, and <c>StdioPipeKindsTests</c> rebuilds both
+    /// clients' pipe kinds and fails the day Windows reopens one overlapped (78 c).
+    /// <i>Corrected that day (previously "A write runs on a thread made for it, in turn",
+    /// a thread per flush, and both waits listed for his review).</i>
     /// </para>
     /// </remarks>
     /// <returns>The channel.</returns>
@@ -119,8 +125,8 @@ internal sealed class StdioChannel : IDisposable
 
     /// <summary>
     /// Wraps a stream no overlapped write can be made on the way <see cref="Output"/> is
-    /// wrapped: a write is kept in memory, and a flush puts it on the wire from a thread
-    /// made for it, in turn.
+    /// wrapped: a write is kept in memory, and a flush puts it on the wire from a thread of
+    /// the wrapper's own, one flush at a time.
     /// </summary>
     /// <remarks>
     /// <b>For the suite's stand-ins</b>, since 2026-10-11: a probe that writes to a standard
@@ -279,9 +285,11 @@ internal sealed class StdioChannel : IDisposable
             {
                 while (true)
                 {
-                    // KEPT, for the maintainer's review: a read of a handle no overlapped
-                    // read can be made on, on the input's own thread.
+                    // Kept, the maintainer's 78 a: the client's handle is a synchronous
+                    // pipe end, and the read waits in the kernel on this thread.
+#pragma warning disable RS0030 // Kept at the maintainer's 78 a: both clients hand a synchronous pipe end that Windows refuses to reopen overlapped (231), switch in place or bind to a completion port (87), measured 2026-10-11, so the input's own thread reads it.
                     var read = _raw.Read(buffer, 0, buffer.Length);
+#pragma warning restore RS0030
 
                     if (read is 0)
                     {
@@ -304,13 +312,33 @@ internal sealed class StdioChannel : IDisposable
 
     /// <summary>
     /// The process's standard output: a write is kept in memory, and the flush puts it on
-    /// the wire from a thread made for it, in turn.
+    /// the wire from the output's own thread, one flush at a time.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>One thread for the channel's life since 2026-10-12</b>, the maintainer's 78 b,
+    /// in his words verbatim: <i>"78-82 your recommendation"</i>. <i>Corrected that day
+    /// (previously a thread started for every flush).</i> Frames leave in the order they were
+    /// written, and a flush completes once its bytes are written and flushed, as before.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THE BOUND: one flush's bytes, and nothing queued behind them.</b> A flush holds
+    /// the turn from taking the bytes until the thread has written them, so the thread's
+    /// queue holds one item at most; and a write waits for the turn, holding no thread, so
+    /// while a client that stopped reading keeps one flush on the wire, no later frame is
+    /// kept here. That frame's bytes, and the 64 KiB each client's pipe buffers (measured
+    /// 2026-10-11), are what a stuck client holds; every frame after it stays with its
+    /// caller, which awaits. The choice of 2026-10-12, his condition being <i>"decide and
+    /// state a bound"</i>.
+    /// </para>
+    /// </remarks>
+    /// <param name="raw">The output's stream, which the pump disposes and whose writes the output's own thread makes.</param>
     private sealed class OutputPump(Stream raw) : Stream
     {
         private readonly SemaphoreSlim _turn = new(1, 1);
         private readonly Lock _gate = new();
         private readonly ArrayBufferWriter<byte> _pending = new();
+        private readonly DedicatedThread _writer = new("BrowserAI standard output");
 
         public override bool CanRead => false;
 
@@ -326,16 +354,23 @@ internal sealed class StdioChannel : IDisposable
             set => throw new NotSupportedException();
         }
 
-        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            // The bound: a write waits while a flush is on the wire, so nothing is kept
+            // behind the bytes a stuck client is not reading.
+            await _turn.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-            lock (_gate)
+            try
             {
-                _pending.Write(buffer.Span);
+                lock (_gate)
+                {
+                    _pending.Write(buffer.Span);
+                }
             }
-
-            return ValueTask.CompletedTask;
+            finally
+            {
+                _ = _turn.Release();
+            }
         }
 
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
@@ -360,33 +395,15 @@ internal sealed class StdioChannel : IDisposable
                     return;
                 }
 
-                var written = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-                var writer = new Thread(() =>
+                await _writer.RunAsync(() =>
                 {
-                    try
-                    {
-                        // KEPT, for the maintainer's review: a write of a handle no
-                        // overlapped write can be made on, on a thread of its own.
-                        raw.Write(bytes, 0, bytes.Length);
-                        raw.Flush();
-                        written.TrySetResult();
-                    }
-#pragma warning disable CA1031 // The thread's boundary: the failure goes to the caller, who awaits it.
-                    catch (Exception failure)
-#pragma warning restore CA1031
-                    {
-                        written.TrySetException(failure);
-                    }
-                })
-                {
-                    IsBackground = true,
-                    Name = "BrowserAI standard output",
-                };
-
-                writer.Start();
-
-                await written.Task.ConfigureAwait(false);
+                    // Kept, the maintainer's 78 a: the client's handle is a synchronous
+                    // pipe end, and the write waits in the kernel on the output's thread.
+#pragma warning disable RS0030 // Kept at the maintainer's 78 a: both clients hand a synchronous pipe end that Windows refuses to reopen overlapped (231), switch in place or bind to a completion port (87), measured 2026-10-11, so the output's own thread writes it.
+                    raw.Write(bytes, 0, bytes.Length);
+                    raw.Flush();
+#pragma warning restore RS0030
+                }).ConfigureAwait(false);
             }
             finally
             {
@@ -408,6 +425,7 @@ internal sealed class StdioChannel : IDisposable
         {
             if (disposing)
             {
+                _writer.Dispose();
                 raw.Dispose();
                 _turn.Dispose();
             }
