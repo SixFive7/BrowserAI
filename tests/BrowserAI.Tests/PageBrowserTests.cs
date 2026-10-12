@@ -336,7 +336,8 @@ internal sealed class PageBrowserTests
     /// <summary>
     /// In a real browser the home's folder buttons are links of the install's scheme carrying
     /// the page's token, and the line about the browser's question sits under the first of
-    /// them, put there by the page's script.
+    /// them, put there by the page's script; on the setup page it sits below the group of
+    /// rows that holds the first link (117 b).
     /// </summary>
     /// <remarks>
     /// <b>55 a, 70 a and 73 b, the maintainer's words of 2026-10-11 verbatim: <i>"55 a"</i>,
@@ -364,7 +365,7 @@ internal sealed class PageBrowserTests
 
         PublishedSlice.EnsureFresh();
 
-        await using var rig = await PageRig.CreateAsync(facts: facts => facts with { LinkScheme = "browserai-test" });
+        await using var rig = await PageRig.CreateAsync(registration: new FakeRegistration { State = DashboardTests.Apps() }, facts: facts => facts with { LinkScheme = "browserai-test" });
         using var scratch = await ScratchDirectory.CreateAsync($"page-links-{browser}");
 
         var address = await rig.HandOutAsync();
@@ -414,6 +415,21 @@ internal sealed class PageBrowserTests
             await Assert.That(await evaluateAsync("() => document.querySelector('.link-hint').textContent")).Contains(PageContent.LinkHint);
             await Assert.That(await evaluateAsync("() => 'under=' + (document.querySelector('a[data-link]').closest('.btn-row').nextElementSibling === document.querySelector('.link-hint'))"))
                 .Contains("under=true");
+
+            // ⚠️ 117 b, the maintainer's words of 2026-10-12 verbatim: "117 your recommendation".
+            // On the setup page the first link is a project's picker, and the line goes below
+            // that project's group of rows, never between them.
+            _ = await CallAsync(client, "browser_navigate", new JsonObject
+            {
+                ["url"] = new Uri(address).GetLeftPart(UriPartial.Authority) + "/setup?tab=1",
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the suite opening the setup page, whose first folder link is a project's picker",
+            });
+
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync("() => 'page=' + document.body.dataset.page + ' hints=' + document.querySelectorAll('.link-hint').length")).Contains("page=setup hints=1", StringComparison.Ordinal))).IsTrue();
+            await Assert.That(await evaluateAsync("() => 'below=' + (document.querySelector('a[data-link]').closest('.actions').nextElementSibling === document.querySelector('.link-hint'))"))
+                .Contains("below=true");
         }
         finally
         {
