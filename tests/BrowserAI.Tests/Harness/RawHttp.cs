@@ -140,6 +140,28 @@ internal static class RawHttp
     public static string Post(string target, string body, params string[] headers) =>
         $"POST {target} HTTP/1.1\r\n{string.Concat(headers.Select(header => header + "\r\n"))}Content-Length: {Encoding.UTF8.GetByteCount(body).ToString(CultureInfo.InvariantCulture)}\r\nConnection: close\r\n\r\n{body}";
 
+    /// <summary>
+    /// The header block of a POST that declares a body of <paramref name="length"/> bytes and
+    /// sends none of it, carrying the headers given and <c>Connection: close</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>For a body the server refuses on its declared length, since 2026-10-13.</b> The gate
+    /// answers such a request before it reads the body, and Kestrel then closes the
+    /// connection. When the body went out with the request, bytes of it could still be
+    /// arriving or unread at that close, Windows then answered the close with a reset, and a
+    /// reset throws away what this client has not read yet: 48 answers of 400 came back
+    /// empty through <see cref="SendAsync(int, string)"/> on 2026-10-13
+    /// ([kb](../../../kb/windows/loopback-page.md#the-products-listener-under-attack----measured-2026-10-03)).
+    /// With no body on the wire the server closes with nothing unread, and the answer was
+    /// sent before any byte of the body.
+    /// </remarks>
+    /// <param name="target">The request target.</param>
+    /// <param name="length">The length the header declares.</param>
+    /// <param name="headers">Every header except the length.</param>
+    /// <returns>The request's text.</returns>
+    public static string PostDeclaring(string target, int length, params string[] headers) =>
+        $"POST {target} HTTP/1.1\r\n{string.Concat(headers.Select(header => header + "\r\n"))}Content-Length: {length.ToString(CultureInfo.InvariantCulture)}\r\nConnection: close\r\n\r\n";
+
     /// <summary>Whether a whole answer has arrived: a header block, and as much body as it declared.</summary>
     /// <param name="received">What has arrived.</param>
     /// <returns>Whether it is whole.</returns>

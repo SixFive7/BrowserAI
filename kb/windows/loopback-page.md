@@ -163,6 +163,24 @@ before the gate is asked.** Measured from raw sockets against
   `Host`; HTTP/1.0 with no `Host`; another `Origin` on a read or a write; a write
   with no `Origin`; a form content type; a body one byte over 64 KB; a chunked
   body; a preflight; `PUT`; a route that does not exist.
+- ⚠️ **The body one byte over 64 KB is declared and not sent since 2026-10-13**,
+  *added that day by addition*, because sent with the request its `404` did not
+  always reach the client. The gate refuses that request on its `Content-Length`
+  and answers before reading the body, and Kestrel then closes the connection, as
+  the request asks. Sent with its 65,537 bytes, 400 times through the arm's raw
+  client, the request came back empty 48 times and never as anything but `404`;
+  400 more, read to the end, ended 287 times in `SocketError.ConnectionReset`
+  after the `404`, 43 times in it with nothing read, and 70 times in an orderly
+  close after the `404`. Bytes of the body still arriving or unread at the close
+  make Windows answer it with a reset, and a reset discards what the client has
+  not read. The header block alone, declaring the same length, was answered `404`
+  and closed in order 400 times of 400. Measured from the test host over the
+  product at `44368995`, under the versions above, read again that day. A
+  browser whose write is refused for its size can see a failed request where the
+  `404` would be, and the refusal is the same either way. **Re-establish** the
+  loss by sending `RawHttp.Post` with a body of `PageGate.MaximumBody + 1` bytes
+  to a `PageListener` 400 times and counting the empty answers; the arm itself
+  holds the other half, through `RawHttp.PostDeclaring`.
 - **Answered by Kestrel before the gate, empty, and no route reached**: two
   `Host` headers, `400`; an HTTP/1.1 request with no `Host`, `400`; a header
   block over the 8 KB limit, `431`; bytes that are not HTTP, `400`. The

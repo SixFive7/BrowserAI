@@ -211,7 +211,12 @@ internal sealed class PageListenerTests
             RawHttp.Post($"/{token}/action", "{}", host, "Origin: https://attacker.example", "Content-Type: application/json"),
             RawHttp.Post($"/{token}/action", "{}", host, "Content-Type: application/json"),
             RawHttp.Post($"/{token}/action", "a=1", host, origin, "Content-Type: application/x-www-form-urlencoded"),
-            RawHttp.Post($"/{token}/action", new string('x', PageGate.MaximumBody + 1), host, origin, "Content-Type: application/json"),
+
+            // ⚠️ Declared and not sent since 2026-10-13. Sent with the request, a body the gate
+            // refuses on its length could still be arriving or unread when Kestrel closed the
+            // connection, Windows answered that close with a reset, and the reset lost the 404
+            // before it was read, 48 sends of 400 (RawHttp.PostDeclaring).
+            RawHttp.PostDeclaring($"/{token}/action", PageGate.MaximumBody + 1, host, origin, "Content-Type: application/json"),
             $"POST /{token}/action HTTP/1.1\r\n{host}\r\n{origin}\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n2\r\n{{}}\r\n0\r\n\r\n",
             $"OPTIONS /{token}/action HTTP/1.1\r\n{host}\r\n{origin}\r\nAccess-Control-Request-Method: POST\r\nConnection: close\r\n\r\n",
             $"PUT /{token}/ HTTP/1.1\r\n{host}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
