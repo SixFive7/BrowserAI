@@ -376,6 +376,10 @@ internal static partial class Program
         using var inbox = new CoordinatorInbox();
         var tool = RegisterAiTool.Beside(Environment.ProcessPath);
 
+        // 59 b, 62 a and 65 a, 2026-10-11: what this process, each relay and each session's
+        // job use, read on a thread of its own while a tab shows the figures.
+        using var usage = new BackgroundPageUsage(host.Sessions.Jobs, roster.Processes, paths.BrowsersDirectory);
+
         var page = new PageService(
             // 43 b, 2026-10-11: when the background started and how, which the page says.
             await PageOpener.FactsForAsync(paths, RelayConstants.IdleCountdown).ConfigureAwait(false) with { StartedAt = startedAt, StartedHow = BackgroundStartOf(startedBy) },
@@ -404,11 +408,16 @@ internal static partial class Program
             Holds = updates,
             // 80 c, 2026-10-12: the session manager's measurement, which browserai_list reads too.
             Folders = host.Sessions.Folders,
+            Usage = usage,
             Changelog = ShippedChangelog.ForThisBuild(),
             Install = install,
         };
 
         await using var pageScope = page.ConfigureAwait(false);
+
+        // 57 a, 2026-10-11: the start after an update records its version as one whose notice
+        // waits to be seen, whether or not a tab is opened before the next start.
+        await page.PrepareAsync().ConfigureAwait(false);
 
         install.Changed = page.InstallHealthChanged;
 

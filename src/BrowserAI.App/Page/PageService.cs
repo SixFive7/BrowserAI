@@ -178,6 +178,24 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
     /// <summary>Whether the person asked for the running measurement, which the storage page says while it runs.</summary>
     private bool _measuring;
 
+    /// <summary>The newest reading of what BrowserAI's processes use, or <see langword="null"/> before the first (59 b).</summary>
+    private PageUsage? _usage;
+
+    /// <summary>How many connected tabs show the figures: the readings run while one does, and never otherwise (59 a and b).</summary>
+    private int _usageTabs;
+
+    /// <summary>The readings' timer, while a tab shows the figures.</summary>
+    private ITimer? _usageWatch;
+
+    /// <summary>Whether a reading is running, so a slow one is not overtaken by the next.</summary>
+    private int _reading;
+
+    /// <summary>What the after-update notice's record says, once it has been read (57 a).</summary>
+    private UpdateNotice? _notice;
+
+    /// <summary>The one read of the notice's record, and the record written after an update.</summary>
+    private TaskCompletionSource? _noticeLoaded;
+
     /// <summary>What holds a downloaded update, and the person's install-now: the background's update core.</summary>
     /// <remarks>
     /// <i>Required since 2026-10-10</i> (#73 of the texts review): the one background
@@ -188,6 +206,9 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
     /// <summary>The session folders BrowserAI knows of, and what each weighs (43 b, 2026-10-11).</summary>
     internal required IPageFolders Folders { get; init; }
+
+    /// <summary>What BrowserAI's own processes use, read by the background (59 b, 62 a and 65 a, 2026-10-11).</summary>
+    internal required IPageUsage Usage { get; init; }
 
     /// <summary>The installed version's section of the changelog shipped in the build, or <see langword="null"/>.</summary>
     internal ChangelogSection? Changelog { get; init; }
@@ -434,6 +455,8 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
                 Folders = _folders,
                 Measuring = _measuring,
                 Now = _clock.GetUtcNow(),
+                Usage = _usage,
+                UpdatedTo = _notice is { Seen: false } waiting && string.Equals(waiting.Version, _facts.Version, StringComparison.Ordinal) ? waiting.Version : null,
             };
         }
     }
@@ -514,6 +537,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             await ending.DisposeAsync().ConfigureAwait(false);
         }
 
+        StopReadingUsage();
         _starting.Dispose();
     }
 
@@ -606,6 +630,23 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             _ = StartRegistrationRead();
         }
 
+        // 57 a: every What is new link opens this page, and opening it is seeing the notice.
+        if (kind is PageKind.Changelog)
+        {
+            await MarkNoticeSeenAsync().ConfigureAwait(false);
+        }
+        else
+        {
+            await EnsureNoticeAsync().ConfigureAwait(false);
+        }
+
+        // 59 b: a page that shows the figures is drawn with a first reading, and the
+        // readings that follow come with its tab's stream.
+        if (ShowsUsage(kind) && LastUsage() is null)
+        {
+            await ReadUsageAsync().ConfigureAwait(false);
+        }
+
         if (kind is PageKind.Status or PageKind.Sessions or PageKind.Session or PageKind.Storage)
         {
             StartMeasure(asked: false);
@@ -666,8 +707,15 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             return;
         }
 
+        if (ShowsUsage(page))
+        {
+            UsageTabArrived();
+        }
+
         try
         {
+            await EnsureNoticeAsync().ConfigureAwait(false);
+
             context.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
             context.Response.StatusCode = StatusCodes.Status200OK;
             context.Response.ContentType = "text/event-stream";
@@ -704,6 +752,12 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         }
         finally
         {
+            // Before the tab is let go, so that a tab counted gone no longer has a reading coming.
+            if (ShowsUsage(page))
+            {
+                UsageTabLeft();
+            }
+
             tabs.Disconnect(stream);
         }
     }
@@ -741,6 +795,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             "open-trace" => OpenTrace(String(request, "trace")),
             "refresh-sessions" => Run(RefreshSessionsAsync(CancellationToken.None)),
             "measure-sessions" => MeasureAsked(),
+            "dismiss-notice" => Run(MarkNoticeSeenAsync()),
             "read-registration" => StartRegistrationRead(),
             "register" or "unregister" or "register-in-project" or "unregister-from-project" or "unregister-from-a-project" =>
                 StartRegistration(String(request, "client"), action),
@@ -973,6 +1028,212 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         before is not null
         && before.Folders.Count == after.Folders.Count
         && before.Folders.Zip(after.Folders).All(static pair => pair.First == pair.Second);
+
+    /// <summary>
+    /// How often the figures are read while a tab shows them: every 2 s, 59 b. Their charts
+    /// reach back <see cref="UsageWindow"/>.
+    /// </summary>
+    internal static TimeSpan UsageInterval { get; } = ProcessBounds.PageUsageInterval;
+
+    /// <summary>How far back the CPU and memory charts reach: 2 minutes.</summary>
+    internal static TimeSpan UsageWindow { get; } = ProcessBounds.PageUsageWindow;
+
+    /// <summary>
+    /// Reads the after-update notice's record once, and after an update records the new
+    /// version as one whose notice waits to be seen (57 a).
+    /// </summary>
+    /// <remarks>
+    /// <b>The background calls it as it starts</b>, so the record of an update is written
+    /// whether or not a page is opened before the next start; each page and stream awaits it
+    /// before it is drawn.
+    /// </remarks>
+    /// <returns>The read, which never faults.</returns>
+    public Task PrepareAsync() => EnsureNoticeAsync();
+
+    /// <summary>Whether a page shows the CPU and memory figures: the overview and the conversations page, whose inspector says each session's.</summary>
+    private static bool ShowsUsage(PageKind kind) => kind is PageKind.Status or PageKind.Sessions;
+
+    /// <summary>The newest reading, or <see langword="null"/>.</summary>
+    private PageUsage? LastUsage()
+    {
+        lock (_gate)
+        {
+            return _usage;
+        }
+    }
+
+    /// <summary>A tab that shows the figures connected: the first starts the readings.</summary>
+    private void UsageTabArrived()
+    {
+        lock (_gate)
+        {
+            if (_usageTabs++ is 0 && !_stopping)
+            {
+                _usageWatch = _clock.CreateTimer(static page => _ = ((PageService)page!).ReadUsageAsync(), this, UsageInterval, UsageInterval);
+            }
+        }
+    }
+
+    /// <summary>A tab that shows the figures left: the last stops the readings.</summary>
+    private void UsageTabLeft()
+    {
+        lock (_gate)
+        {
+            if (--_usageTabs is not 0)
+            {
+                return;
+            }
+        }
+
+        StopReadingUsage();
+    }
+
+    private void StopReadingUsage()
+    {
+        ITimer? ending;
+
+        lock (_gate)
+        {
+            ending = _usageWatch;
+            _usageWatch = null;
+        }
+
+        ending?.Dispose();
+    }
+
+    /// <summary>
+    /// One reading: what BrowserAI's processes use now, the figures counted against the
+    /// reading before, and the figures sent to every tab that shows them (59 b).
+    /// </summary>
+    /// <remarks>
+    /// <b>The reading runs on the reader's own thread and is awaited</b>, so no pool worker
+    /// waits in it (54). A reading still running when the next is due is not overtaken; one
+    /// that fails is a line in the log, and the figures stay at the last reading.
+    /// </remarks>
+    /// <returns>The reading, which never faults.</returns>
+    private async Task ReadUsageAsync()
+    {
+        if (Interlocked.Exchange(ref _reading, 1) is not 0)
+        {
+            return;
+        }
+
+        try
+        {
+            UsageReading reading;
+
+            try
+            {
+                reading = await Usage.ReadAsync().ConfigureAwait(false);
+            }
+            catch (ObjectDisposedException)
+            {
+                // The background is going, and its reader with it.
+                return;
+            }
+#pragma warning disable CA1031 // A reading that failed is a line in the log, and the figures stay at the last one.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                PageServiceLog.UsageUnread(_logger, failure);
+                return;
+            }
+
+            PageUsage usage;
+
+            lock (_gate)
+            {
+                usage = _usage = PageUsage.Next(_usage, reading, _clock.GetUtcNow(), UsageWindow);
+            }
+
+            var figures = new PageEvent(PageEvents.Usage, UsageContent.EventData(usage, UsageWindow));
+
+            Tabs?.Broadcast(stream => ShowsUsage(stream.Page) ? figures : null);
+        }
+        finally
+        {
+            Volatile.Write(ref _reading, 0);
+        }
+    }
+
+    /// <summary>Reads the notice's record once; every caller awaits the same read.</summary>
+    private Task EnsureNoticeAsync()
+    {
+        var mine = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        if (Interlocked.CompareExchange(ref _noticeLoaded, mine, null) is { } loading)
+        {
+            return loading.Task;
+        }
+
+        _ = LoadNoticeAsync(mine);
+        return mine.Task;
+    }
+
+    private async Task LoadNoticeAsync(TaskCompletionSource loaded)
+    {
+        try
+        {
+            var record = await UpdateNoticeFile.ReadAsync(_facts.DataRoot).ConfigureAwait(false);
+
+            // The start after an update: its version's notice waits to be seen, unless the
+            // record already names that version.
+            if (_firstOccasion is Occasion.AfterUpdate && !string.Equals(record?.Version, _facts.Version, StringComparison.Ordinal))
+            {
+                record = new UpdateNotice(_facts.Version, Seen: false);
+
+                lock (_gate)
+                {
+                    _notice = record;
+                }
+
+                await WriteNoticeAsync(record).ConfigureAwait(false);
+            }
+
+            lock (_gate)
+            {
+                _notice = record;
+            }
+        }
+        finally
+        {
+            _ = loaded.TrySetResult();
+        }
+    }
+
+    /// <summary>The person has seen what is new: the notice goes from every tab, and the record says so (57 a).</summary>
+    /// <returns>The change, which never faults.</returns>
+    private async Task MarkNoticeSeenAsync()
+    {
+        await EnsureNoticeAsync().ConfigureAwait(false);
+
+        UpdateNotice seen;
+
+        lock (_gate)
+        {
+            if (_notice is not { Seen: false } waiting)
+            {
+                return;
+            }
+
+            _notice = seen = waiting with { Seen = true };
+        }
+
+        Push();
+        await WriteNoticeAsync(seen).ConfigureAwait(false);
+    }
+
+    private async Task WriteNoticeAsync(UpdateNotice notice)
+    {
+        try
+        {
+            await UpdateNoticeFile.WriteAsync(_facts.DataRoot, notice).ConfigureAwait(false);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            PageServiceLog.NoticeUnwritten(_logger, failure);
+        }
+    }
 
     /// <summary>The update page's install button: the person's install-now, through the background.</summary>
     /// <param name="version">The version the page showed.</param>
@@ -1421,5 +1682,11 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
         [LoggerMessage(EventId = 7017, Level = LogLevel.Warning, Message = "Where the updates come from could not be read for the page, so it says nothing about them.")]
         public static partial void WatchUnread(ILogger logger, Exception failure);
+
+        [LoggerMessage(EventId = 7018, Level = LogLevel.Warning, Message = "What BrowserAI's processes use could not be read for the page, so it shows the last reading.")]
+        public static partial void UsageUnread(ILogger logger, Exception failure);
+
+        [LoggerMessage(EventId = 7019, Level = LogLevel.Warning, Message = "The after-update notice's record could not be written, so the notice may show again after the next start.")]
+        public static partial void NoticeUnwritten(ILogger logger, Exception failure);
     }
 }

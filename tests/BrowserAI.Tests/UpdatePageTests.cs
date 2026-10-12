@@ -84,7 +84,9 @@ internal sealed class UpdatePageTests
         await Assert.That(conversations).Contains("<p class=\"sub\">Claude Code 2.1.290</p>");
         await Assert.That(conversations).Contains("<b>Codex in two</b>");
         // #84, 2026-10-10: a client's ping does not start a conversation's ten minutes again.
-        await Assert.That(conversations).Contains("Each holds the update for ten minutes after its app last sent BrowserAI anything but a ping.");
+        // Since 2026-10-12 the length is the relay's countdown, the page facts' 10 min here
+        // (previously "for ten minutes", written in the string).
+        await Assert.That(conversations).Contains("Each holds the update for 10 min after its app last sent BrowserAI anything but a ping.");
         await Assert.That(conversations).Contains(Countdown(Now.AddMinutes(8), "8:00"));
         await Assert.That(conversations).Contains("Holds the update until its countdown runs out, if its app sends nothing but pings.");
         await Assert.That(conversations).Contains(PageContent.Text(UpdatePageContent.ReconnectSentence(RelayReconnect.McpReconnect)));

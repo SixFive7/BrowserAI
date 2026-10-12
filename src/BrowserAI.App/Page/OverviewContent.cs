@@ -10,9 +10,9 @@ using BrowserAI.Updates;
 namespace BrowserAI.App.Page;
 
 /// <summary>
-/// The home a Start Menu start opens: what needs the person, what runs now, the update,
-/// Claude Code and Codex, the session folders and this install, each a card that leads to
-/// a page of its own.
+/// The home a Start Menu start opens: what needs the person, what runs now and what it
+/// uses, the update, Claude Code and Codex, the session folders and this install, each a
+/// card that leads to a page of its own.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -26,12 +26,20 @@ namespace BrowserAI.App.Page;
 /// <b>It keeps the status page's address</b>, <c>/&lt;token&gt;/?tab=N</c>, which the Start
 /// Menu, the installer and the broken install's toast open.
 /// </para>
+/// <para>
+/// <b>Layout 1, the side column, the maintainer's 61 of 2026-10-11, in his words verbatim
+/// <i>"61 I like 1"</i></b>, made for his screen, Firefox maximised to the bottom half of a
+/// rotated side screen, a viewport of about 1440 by 1170. The headline shares a band with the
+/// after-update notice; the main column holds what runs now, as counts and one button, above
+/// the live CPU and memory; the side column holds the update, the two apps, the storage and
+/// this install, each at its own height. <b>No conversation is listed here</b>, his words
+/// verbatim: <i>"Can we remove the arbretary list of browsers and isntead show stats of all
+/// teh windows and everything we have on the data with a clear button to open the list going
+/// to the more converstations page?"</i>
+/// </para>
 /// </remarks>
 internal static class OverviewContent
 {
-    /// <summary>How many conversations the home lists before it leaves the rest to the conversations page.</summary>
-    public const int RowsShown = 4;
-
     /// <summary>The home's main part.</summary>
     /// <param name="view">What is true now.</param>
     /// <param name="occasion">Why this tab was opened.</param>
@@ -45,22 +53,22 @@ internal static class OverviewContent
         var html = new StringBuilder();
         var (headline, lede) = Headline(view, board, needs.Count, occasion);
 
-        _ = html.Append("<section class=\"hello\"><h1>").Append(PageContent.Text(headline)).Append("</h1><p class=\"lede\">").Append(PageContent.Text(lede)).Append("</p></section>\n");
+        // The headline and the after-update notice share one band (61, layout 1).
+        _ = html.Append(view.UpdatedTo is null ? "<div class=\"band\">" : "<div class=\"band two\">")
+            .Append("<section class=\"hello\"><h1>").Append(PageContent.Text(headline)).Append("</h1><p class=\"lede\">").Append(PageContent.Text(lede)).Append("</p></section>\n");
+
+        if (view.UpdatedTo is { } version)
+        {
+            _ = html.Append(UpdatedNotice(view, version));
+        }
+
+        _ = html.Append("</div>\n");
 
         PageContent.AppendNote(html, view.Note);
 
         foreach (var notice in needs)
         {
             _ = html.Append(notice);
-        }
-
-        if (occasion is Occasion.AfterUpdate)
-        {
-            _ = html.Append(PageContent.Notice(
-                "good",
-                $"Updated to BrowserAI {view.Facts.Version}",
-                "BrowserAI updated itself and started again.",
-                PageContent.LinkButton("l-notice-changelog", PageContent.Route(PageKind.Changelog, view.Tab), "What is new")));
         }
 
         if (occasion is Occasion.FirstRun)
@@ -72,16 +80,40 @@ internal static class OverviewContent
                 PageContent.LinkButton("l-notice-setup", PageContent.Route(PageKind.Setup, view.Tab), "See the setup")));
         }
 
-        _ = html.Append("<div class=\"grid\">\n")
+        _ = html.Append("<div class=\"split\">\n<div class=\"col col-main\">\n")
             .Append(NowCard(view, board))
+            .Append(UsageContent.Card(view, PageService.UsageWindow))
+            .Append("</div>\n<div class=\"col col-side\">\n")
             .Append(UpdateCard(view))
             .Append(AppsCard(view))
             .Append(StorageCard(view, board))
             .Append(InstallCard(view))
-            .Append("</div>\n");
+            .Append("</div>\n</div>\n");
 
         return html.ToString();
     }
+
+    /// <summary>
+    /// The after-update notice, once: <i>What is new</i>, and a dismiss that folds it away
+    /// (57 a, the maintainer's words verbatim: <i>"57 a - also allow dismissing the banner in
+    /// a nice way."</i>).
+    /// </summary>
+    /// <remarks>
+    /// <b>It shows until a <i>What is new</i> link or the dismiss is pressed</b>, in every tab
+    /// and after a restart, and comes back only when a newer version is installed: the
+    /// background keeps that in the data root (<see cref="UpdateNoticeFile"/>). The fold is the
+    /// page's script's, which waits for it to finish before the next state replaces the page.
+    /// </remarks>
+    private static string UpdatedNotice(PageView view, string version) =>
+        "<div class=\"fold\" id=\"fold-updated\"><div class=\"fold-in\">"
+        + PageContent.Notice(
+            "good",
+            $"Updated to BrowserAI {version}",
+            "BrowserAI updated itself and started again.",
+            PageContent.LinkButton("l-notice-changelog", PageContent.Route(PageKind.Changelog, view.Tab), "What is new")
+            + "<button type=\"button\" id=\"b-dismiss-updated\" class=\"dismiss\" data-action=\"dismiss-notice\" aria-label=\"Dismiss this notice\" title=\"Dismiss\">"
+            + PageIcons.Of("x") + "</button>")
+        + "</div></div>\n";
 
     /// <summary>Every notice of something the person has to act on, in the order the write-up ranked them.</summary>
     /// <remarks>
@@ -173,16 +205,18 @@ internal static class OverviewContent
                     : string.Create(CultureInfo.InvariantCulture, $"BrowserAI keeps {board.Kept} sessions for the next conversation that names one."));
         }
 
-        var said = new List<string>();
-
-        if (board.OnScreen is 1)
+        // The window's sentence always, its zero case included, since the home lists no
+        // conversation: "Each is listed below, with the browsers it opened." became wrong
+        // once rows were hidden (61, 2026-10-11).
+        var said = new List<string>
         {
-            said.Add("A browser window is open on your screen.");
-        }
-        else if (board.OnScreen > 1)
-        {
-            said.Add(string.Create(CultureInfo.InvariantCulture, $"{board.OnScreen} browser windows are open on your screen."));
-        }
+            board.OnScreen switch
+            {
+                0 => "None of them has a browser window open on your screen.",
+                1 => "A browser window is open on your screen.",
+                _ => string.Create(CultureInfo.InvariantCulture, $"{board.OnScreen} browser windows are open on your screen."),
+            },
+        };
 
         if (view.Holds is { State: UpdateHoldState.Held, Version: { } version })
         {
@@ -190,74 +224,48 @@ internal static class OverviewContent
         }
 
         return (conversations is 1 ? "1 conversation is using BrowserAI" : string.Create(CultureInfo.InvariantCulture, $"{conversations} conversations are using BrowserAI"),
-            said.Count > 0 ? string.Join(' ', said) : "Each is listed below, with the browsers it opened.");
+            string.Join(' ', said));
     }
 
-    /// <summary>The card that answers what runs now.</summary>
+    /// <summary>The card that answers what runs now: five counts and the one way to the conversations and their browsers.</summary>
+    /// <remarks>
+    /// <b>The counts are the sessions' states and the conversations</b>: every conversation, with
+    /// how many of them are working now; every browser that is a window on the screen; every
+    /// hidden browser; every session whose browser is not open; and every session kept for a
+    /// conversation to pick up again, which is also counted in one of the three before it. The
+    /// button is the card's one link (58 a); the CPU and memory card's <i>Per session</i> is the
+    /// other way to the same page (66 a).
+    /// </remarks>
     private static string NowCard(PageView view, PageBoard board)
     {
-        var html = new StringBuilder("<article class=\"card span-8\" id=\"card-now\">\n")
-            .Append(PageContent.CardHead("pulse", "Right now", ("l-see-all", "See all", PageContent.Route(PageKind.Sessions, view.Tab))))
-            .Append("<p class=\"caption\">Conversations in Claude Code and Codex that use BrowserAI, and the browsers they opened.</p>\n");
+        var working = board.Conversations.Count(static conversation => conversation.Working);
+        var notOpen = board.All.Count(static session => PageBoard.StateOf(session) is BrowserState.Closed);
+        var conversations = board.Conversations.Count;
 
-        if (board.Conversations.Count is 0 && board.All.Count is 0)
-        {
-            return html.Append(PageContent.Empty("chat", "No conversation is using BrowserAI", "When an agent in Claude Code or Codex calls a BrowserAI tool, its conversation appears here, with the browser it opened."))
-                .Append("</article>\n").ToString();
-        }
-
-        _ = html.Append("<div class=\"stats\">")
-            .Append(Stat("chat", board.Conversations.Count, "Conversation", "Conversations", warn: false))
-            .Append(Stat("window", board.OnScreen, "On your screen", "On your screen", warn: board.OnScreen > 0))
-            .Append(Stat("hidden", board.HiddenBrowsers, "Hidden browser", "Hidden browsers", warn: false))
-            .Append(Stat("folder", board.Kept, "Kept for later", "Kept for later", warn: false))
-            .Append("</div>\n<div class=\"rows\">\n");
-
-        foreach (var conversation in board.Conversations.Take(RowsShown))
-        {
-            var chips = conversation.Sessions.Count is 0
-                ? "<span class=\"chip\">No browser yet</span>"
-                : string.Concat(conversation.Sessions.Select(session => PageParts.Chip(session, view.Now)));
-
-            _ = html.Append("<a class=\"row\" id=\"l-row-").Append(PageContent.Text(conversation.Key)).Append("\" href=\"").Append(PageContent.Route(PageKind.Sessions, view.Tab)).Append("\">")
-                .Append(PageContent.Badge(conversation.ClientName))
-                .Append("<span class=\"row-main\"><span class=\"row-title\">").Append(PageContent.Text(conversation.Name)).Append("</span>")
-                .Append("<span class=\"row-sub\">").Append(PageContent.Text(conversation.Place)).Append("<span class=\"sep\" aria-hidden=\"true\"></span>")
-                .Append(PageContent.Text(PageWords.NameOf(conversation.Relay.Description.WorkingDirectory)))
-                .Append(conversation.Working ? "<span class=\"sep\" aria-hidden=\"true\"></span><span class=\"working\"><span class=\"pulse\" aria-hidden=\"true\"></span>Working now</span>" : string.Empty)
-                .Append("</span></span><span class=\"row-side\">").Append(chips).Append("</span>").Append(PageIcons.Of("chevron")).Append("</a>\n");
-        }
-
-        foreach (var session in board.Unlinked)
-        {
-            _ = html.Append("<a class=\"row\" id=\"l-row-s-").Append(PageContent.Text(session.Id)).Append("\" href=\"").Append(PageContent.SessionRoute(session.Id, view.Tab)).Append("\">")
-                .Append("<span class=\"app kept\" aria-hidden=\"true\">").Append(PageIcons.Of("folder")).Append("</span>")
-                .Append("<span class=\"row-main\"><span class=\"row-title\">").Append(PageContent.Text(PageWords.NameOf(session.Directory))).Append("</span>")
-                .Append("<span class=\"row-sub\">").Append(session.Kept ? "Kept after its conversation ended" : "No conversation is connected to it now").Append("</span></span>")
-                .Append("<span class=\"row-side\">").Append(PageParts.Chip(session, view.Now)).Append("</span>").Append(PageIcons.Of("chevron")).Append("</a>\n");
-        }
-
-        _ = html.Append("</div>\n");
-
-        if (board.Conversations.Count > RowsShown)
-        {
-            var more = board.Conversations.Count - RowsShown;
-
-            _ = html.Append("<p class=\"small more-line\"><a id=\"l-more\" href=\"").Append(PageContent.Route(PageKind.Sessions, view.Tab)).Append("\">")
-                .Append(more is 1 ? "1 more conversation" : string.Create(CultureInfo.InvariantCulture, $"{more} more conversations")).Append("</a></p>\n");
-        }
-
-        return html.Append("</article>\n").ToString();
+        return new StringBuilder("<article class=\"card\" id=\"card-now\">\n")
+            .Append(PageContent.CardHead("pulse", "Right now"))
+            .Append("<p class=\"caption\">Conversations in Claude Code and Codex that use BrowserAI, and the browsers they opened.</p>\n")
+            .Append("<div class=\"stats five\">")
+            .Append(Stat("s-conversations", "chat", conversations, "Conversation", "Conversations", warn: false,
+                working > 0 ? "<small><span class=\"working\"><span class=\"pulse\" aria-hidden=\"true\"></span>" + PageContent.Text(string.Create(CultureInfo.InvariantCulture, $"{working} working now")) + "</span></small>" : null))
+            .Append(Stat("s-onscreen", "window", board.OnScreen, "Window on your screen", "Windows on your screen", warn: board.OnScreen > 0))
+            .Append(Stat("s-hidden", "hidden", board.HiddenBrowsers, "Hidden browser", "Hidden browsers", warn: false))
+            .Append(Stat("s-notopen", "closed", notOpen, "Browser not open", "Browsers not open", warn: false))
+            .Append(Stat("s-kept", "folder", board.Kept, "Kept for later", "Kept for later", warn: false))
+            .Append("</div>\n")
+            .Append("<a class=\"btn primary go wide\" id=\"l-conversations\" href=\"").Append(PageContent.Route(PageKind.Sessions, view.Tab)).Append("\">See the conversations and browsers").Append(PageIcons.Of("chevron")).Append("</a>\n")
+            .Append("</article>\n")
+            .ToString();
     }
 
-    private static string Stat(string icon, int count, string one, string many, bool warn) =>
-        "<div class=\"stat" + (warn ? " warn" : string.Empty) + "\">" + PageIcons.Of(icon) + "<div><b>"
-        + count.ToString(CultureInfo.InvariantCulture) + "</b><span>" + PageContent.Text(count is 1 ? one : many) + "</span></div></div>";
+    private static string Stat(string id, string icon, int count, string one, string many, bool warn, string? below = null) =>
+        "<div class=\"stat" + (warn ? " warn" : string.Empty) + "\" id=\"" + id + "\">" + PageIcons.Of(icon) + "<div><b>"
+        + count.ToString(CultureInfo.InvariantCulture) + "</b><span>" + PageContent.Text(count is 1 ? one : many) + "</span>" + (below ?? string.Empty) + "</div></div>";
 
     /// <summary>The card that says when the update installs, or that none waits and when BrowserAI last looked.</summary>
     private static string UpdateCard(PageView view)
     {
-        var html = new StringBuilder("<article class=\"card span-4\" id=\"card-update\">\n").Append(PageContent.CardHead("update", "Update"));
+        var html = new StringBuilder("<article class=\"card\" id=\"card-update\">\n").Append(PageContent.CardHead("update", "Update"));
         var facts = view.Facts;
         var now = view.Now;
 
@@ -283,7 +291,12 @@ internal static class OverviewContent
                 }
 
                 _ = html.Append("<p>").Append(UpdatePageContent.WaitSentence(wait, now)).Append("</p>\n");
-                AppendHolders(html, holds, now, facts.RelayHold);
+
+                if (HeldBy(holds, now) is { } heldBy)
+                {
+                    _ = html.Append("<p class=\"small\">").Append(PageContent.Text(heldBy)).Append("</p>\n");
+                }
+
                 _ = html.Append("<div class=\"btn-row\">").Append(PageContent.LinkButton("l-update", PageContent.Route(PageKind.Update, view.Tab), "See what holds it", "btn primary")).Append("</div>\n");
                 break;
 
@@ -310,47 +323,44 @@ internal static class OverviewContent
         return html.Append("</article>\n").ToString();
     }
 
-    /// <summary>What holds a waiting update, one short line each.</summary>
+    /// <summary>What holds a waiting update, in one sentence: <i>Held by 1 window, 3 hidden browsers and 3 active conversations.</i></summary>
     /// <remarks>
-    /// <b>The conversations' line says how long each holds it from <paramref name="relayHold"/></b>,
-    /// since fact 6 of the reader pass of 2026-10-11 (previously <i>10 min after each call</i>,
-    /// written in the string).
+    /// <b>One line where the home listed each holder</b>, the side-column layout's, whose words
+    /// the maintainer accepted, 67, in his words verbatim: <i>"67 ok"</i>. The update page lists
+    /// each one with its countdown, and says how long a conversation holds the update.
     /// </remarks>
-    private static void AppendHolders(StringBuilder html, UpdateHoldSnapshot holds, DateTimeOffset now, TimeSpan relayHold)
+    /// <returns>The sentence, or <see langword="null"/> when nothing holds it.</returns>
+    internal static string? HeldBy(UpdateHoldSnapshot holds, DateTimeOffset now)
     {
-        var lines = new StringBuilder();
+        ArgumentNullException.ThrowIfNull(holds);
 
-        foreach (var window in holds.VisibleWindows)
-        {
-            _ = lines.Append(Mini("window", "window", PageWords.NameOf(window.Directory), window.ClosesAt is { } at && at > now ? PageContent.Countdown(at, now) : "<span class=\"small\">never closes</span>"));
-        }
-
-        foreach (var session in holds.HiddenSessions)
-        {
-            _ = lines.Append(Mini("hidden", "hidden", PageWords.NameOf(session.Directory), session.ClosesAt is { } at && at > now ? PageContent.Countdown(at, now) : "<span class=\"small\">never closes</span>"));
-        }
-
+        var parts = new List<string>();
+        var windows = holds.VisibleWindows.Count;
+        var hidden = holds.HiddenSessions.Count;
         var active = holds.HoldingRelaysAt(now).Count();
+
+        if (windows > 0)
+        {
+            parts.Add(PageWords.Count(windows, "window", "windows"));
+        }
+
+        if (hidden > 0)
+        {
+            parts.Add(PageWords.Count(hidden, "hidden browser", "hidden browsers"));
+        }
 
         if (active > 0)
         {
-            _ = lines.Append(Mini("chat", string.Empty, active is 1 ? "1 active conversation" : string.Create(CultureInfo.InvariantCulture, $"{active} active conversations"), "<span class=\"small\">" + PageContent.Text(PageWords.Minutes(relayHold) + " after the last message to BrowserAI") + "</span>"));
+            parts.Add(PageWords.Count(active, "active conversation", "active conversations"));
         }
 
-
-        if (lines.Length > 0)
-        {
-            _ = html.Append("<div class=\"minis\">").Append(lines).Append("</div>\n");
-        }
+        return parts.Count is 0 ? null : "Held by " + PageParts.Listed(parts) + ".";
     }
-
-    private static string Mini(string icon, string style, string label, string side) =>
-        "<div class=\"mini\"><span class=\"mini-ic " + style + "\">" + PageIcons.Of(icon) + "</span><span>" + PageContent.Text(label) + "</span>" + side + "</div>";
 
     /// <summary>The card that says how Claude Code and Codex are set up.</summary>
     private static string AppsCard(PageView view)
     {
-        var html = new StringBuilder("<article class=\"card span-4\" id=\"card-apps\">\n")
+        var html = new StringBuilder("<article class=\"card\" id=\"card-apps\">\n")
             .Append(PageContent.CardHead("plug", "Claude Code and Codex", ("l-manage", "Manage", PageContent.Route(PageKind.Setup, view.Tab))))
             .Append("<p class=\"caption\">Your agents reach BrowserAI through these apps.</p>\n");
 
@@ -383,7 +393,7 @@ internal static class OverviewContent
     /// <summary>The card that says how much the session folders take.</summary>
     private static string StorageCard(PageView view, PageBoard board)
     {
-        var html = new StringBuilder("<article class=\"card span-4\" id=\"card-storage\">\n")
+        var html = new StringBuilder("<article class=\"card\" id=\"card-storage\">\n")
             .Append(PageContent.CardHead("disk", "Storage", ("l-storage", "Details", PageContent.Route(PageKind.Storage, view.Tab))));
 
         if (view.Folders is not { } measured)
@@ -420,7 +430,7 @@ internal static class OverviewContent
     private static string InstallCard(PageView view)
     {
         var facts = view.Facts;
-        var html = new StringBuilder("<article class=\"card span-4\" id=\"card-install\">\n")
+        var html = new StringBuilder("<article class=\"card\" id=\"card-install\">\n")
             .Append(PageContent.CardHead("info", "This install", ("l-install", "Paths", PageContent.Route(PageKind.Install, view.Tab))))
             .Append("<dl class=\"facts\">")
             .Append("<dt>Version</dt><dd>").Append(PageContent.Text(facts.Version)).Append(", <a id=\"l-whats-new\" href=\"").Append(PageContent.Route(PageKind.Changelog, view.Tab)).Append("\">what is new</a></dd>");

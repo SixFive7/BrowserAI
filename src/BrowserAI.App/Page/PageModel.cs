@@ -307,6 +307,13 @@ internal sealed record PageView(
     /// </summary>
     public PageUsage? Usage { get; init; }
 
+    /// <summary>
+    /// The version an update installed whose notice the overview shows, until a <i>What is
+    /// new</i> link or the notice's dismiss is pressed; <see langword="null"/> otherwise (57 a,
+    /// 2026-10-11).
+    /// </summary>
+    public string? UpdatedTo { get; init; }
+
     /// <summary>The moment the page is drawn at.</summary>
     public DateTimeOffset Now { get; init; }
 }
