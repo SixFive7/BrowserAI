@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text;
+using System.Text.RegularExpressions;
 using BrowserAI.App.Page;
 using BrowserAI.Tests.Harness;
 
@@ -16,7 +17,7 @@ namespace BrowserAI.Tests;
 /// from the changelog shipped in the build, which works for development builds too.
 /// A release reads its own section and any other build the unreleased one.
 /// </remarks>
-internal sealed class ChangelogPageTests
+internal sealed partial class ChangelogPageTests
 {
     /// <summary>
     /// What opens a Markdown link's target, for the fixtures whose links are written relative to
@@ -358,6 +359,160 @@ internal sealed class ChangelogPageTests
     }
 
     /// <summary>
+    /// A link in an older release's section to a file renamed since that release opens today's
+    /// file at the build's ref, and every other link in that section stays at the release's tag.
+    /// </summary>
+    /// <remarks>
+    /// <b>122 b, the maintainer's answer of 2026-10-12, in his words verbatim: <i>"122 b"</i></b>:
+    /// the [1.0.0] section links <c>AGENTS.md</c>, which <c>v1.0.0</c> holds as <c>CLAUDE.md</c>,
+    /// so at that release's tag the link opened nothing. A section dated after the rename keeps
+    /// its own tag for the same file.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnOlderReleasesLinkToAFileRenamedSinceOpensTodaysFileAtTheBuildsRef()
+    {
+        const string Renamed = $$"""
+            # Changelog
+
+            ## [Unreleased]
+
+            ## [2.0.0] - 2026-10-20
+
+            ### Added
+
+            - ✨ **Now.**
+              [The instructions{{To}}AGENTS.md#subfolder-instructions).
+
+            ## [1.0.0] - 2026-09-17
+
+            ### Added
+
+            - ✨ **Then.**
+              [The instructions{{To}}AGENTS.md#subfolder-instructions) and [the readme{{To}}README.md).
+            """;
+
+        static string link(string at, string path, string label) =>
+            $"<a href=\"https://github.com/SixFive7/BrowserAI/blob/{at}/{path}\" target=\"_blank\" rel=\"noopener noreferrer\">{label}</a>";
+
+        // A release build, 2.0.0: the older section's renamed file at the build's tag, its other
+        // file at its own.
+        await using var release = await PageRig.CreateAsync(
+            changelog: ChangelogPageContent.SectionFor(Renamed, "2.0.0"),
+            releases: ChangelogPageContent.Releases(Renamed),
+            facts: facts => facts with { Version = "2.0.0" });
+
+        _ = await release.HandOutAsync(PageKind.Changelog);
+
+        var older = (await PageRig.GetAsync(release.Root + "changelog?tab=1&version=1.0.0")).Body;
+
+        await Assert.That(older).Contains(link("v2.0.0", "AGENTS.md#subfolder-instructions", "The instructions"));
+        await Assert.That(older).Contains(link("v1.0.0", "README.md", "the readme"));
+        await Assert.That(older).DoesNotContain("blob/v1.0.0/AGENTS.md");
+
+        // A pre-release build: the renamed file at master from the older section, and at its own
+        // tag from the section dated after the rename.
+        await using var development = await PageRig.CreateAsync(
+            changelog: ChangelogPageContent.SectionFor(Renamed, "2.0.1-alpha.0.3"),
+            releases: ChangelogPageContent.Releases(Renamed),
+            facts: facts => facts with { Version = "2.0.1-alpha.0.3" });
+
+        _ = await development.HandOutAsync(PageKind.Changelog);
+
+        var there = (await PageRig.GetAsync(development.Root + "changelog?tab=1&version=1.0.0")).Body;
+
+        await Assert.That(there).Contains(link("master", "AGENTS.md#subfolder-instructions", "The instructions"));
+        await Assert.That(there).Contains(link("v1.0.0", "README.md", "the readme"));
+        await Assert.That((await PageRig.GetAsync(development.Root + "changelog?tab=1&version=2.0.0")).Body)
+            .Contains(link("v2.0.0", "AGENTS.md#subfolder-instructions", "The instructions"));
+    }
+
+    /// <summary>
+    /// Every link the shipped changelog's releases draw into the repository opens a file the ref
+    /// it is drawn at holds: the release's own tag, as git says, or the build's ref, which this
+    /// tree is, for a file the tag holds under another name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>122 b, the maintainer's answer of 2026-10-12, in his words verbatim: <i>"122 b"</i></b>.
+    /// A reading of the page's words on 2026-10-12 found the [1.0.0] section linking
+    /// <c>AGENTS.md</c> three times, a file <c>v1.0.0</c> holds as <c>CLAUDE.md</c>, so the links
+    /// 92 b drew at that tag opened nothing. A file renamed after a release that links it fails
+    /// here until the page knows of the rename, and a link sent to the build's ref although its
+    /// tag holds the file fails here too.
+    /// </para>
+    /// <para>
+    /// <b>Git is the oracle</b>, and without git the arm skips loudly. The page is drawn as a
+    /// pre-release build, so the build's ref is <see cref="ChangelogPageContent.PreReleaseRef"/>
+    /// and every other ref is a release's tag.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryLinkTheShippedReleasesDrawIntoTheRepositoryOpensAFileItsRefHolds()
+    {
+        await SuiteEnvironment.RequireGitAsync();
+
+        const string Build = "0.0.0-alpha.0.1";
+        var releases = ShippedChangelog.Releases();
+
+        await using var rig = await PageRig.CreateAsync(
+            changelog: ChangelogPageContent.SectionFor(ShippedChangelog.Text()!, Build),
+            releases: releases,
+            facts: facts => facts with { Version = Build });
+
+        _ = await rig.HandOutAsync(PageKind.Changelog);
+
+        var drawn = 0;
+        var wrong = new List<string>();
+
+        foreach (var release in releases.Where(static release => release.Version is not null))
+        {
+            var tag = "v" + release.Version;
+
+            if (await GitOracle.PathsAtTagAsync(tag) is not { } held)
+            {
+                wrong.Add($"{tag}: this checkout holds no such tag; fetch the tags with 'git fetch --tags'");
+                continue;
+            }
+
+            var page = (await PageRig.GetAsync(rig.Root + "changelog?tab=1&version=" + release.Version)).Body;
+
+            foreach (Match link in RepositoryLink().Matches(page))
+            {
+                var at = Uri.UnescapeDataString(link.Groups["at"].Value);
+                var path = Uri.UnescapeDataString(link.Groups["path"].Value).TrimEnd('/');
+                var here = Path.Combine(RepositoryLayout.Root.FullName, path);
+
+                drawn++;
+
+                if (string.Equals(at, tag, StringComparison.Ordinal))
+                {
+                    if (!held.Contains(path))
+                    {
+                        wrong.Add($"[{release.Version}] {path}: drawn at {tag}, which does not hold it");
+                    }
+                }
+                else if (!string.Equals(at, ChangelogPageContent.PreReleaseRef, StringComparison.Ordinal))
+                {
+                    wrong.Add($"[{release.Version}] {path}: drawn at {at}, which is neither its release's tag nor the build's ref");
+                }
+                else if (held.Contains(path))
+                {
+                    wrong.Add($"[{release.Version}] {path}: drawn at the build's ref, although {tag} holds it");
+                }
+                else if (!File.Exists(here) && !Directory.Exists(here))
+                {
+                    wrong.Add($"[{release.Version}] {path}: drawn at the build's ref, and this tree does not hold it");
+                }
+            }
+        }
+
+        await Assert.That(drawn).IsGreaterThan(30).Because("the positive control: the shipped [1.0.0] section alone links the repository more than thirty times");
+        await Assert.That(string.Join(Environment.NewLine, wrong)).IsEmpty();
+    }
+
+    /// <summary>
     /// An address that asks for what is not yet released, on a build whose changelog lists
     /// nothing there, says that in words and shows the installed release.
     /// </summary>
@@ -448,4 +603,8 @@ internal sealed class ChangelogPageTests
         await Assert.That(ChangelogPageContent.SectionFor(shipped!, "0.0.0-alpha.0.1")!.Version).IsNull();
         await Assert.That(ChangelogPageContent.SectionFor(shipped!, "1.1.0")?.Version).IsEqualTo("1.1.0");
     }
+
+    /// <summary>A link the page draws to a file of this repository on GitHub: the ref, then the path before any anchor.</summary>
+    [GeneratedRegex("""href="https://github\.com/SixFive7/BrowserAI/blob/(?<at>[^/"]+)/(?<path>[^"#]*)""")]
+    private static partial Regex RepositoryLink();
 }
