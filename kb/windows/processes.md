@@ -2472,6 +2472,12 @@ depend on it.)*
 **Re-establish it** with the same four calls against any child you start and keep a
 handle to: list, open, query the image, wait with a zero timeout.
 
+⚠️ *Added 2026-10-12 by addition:* **a toolhelp snapshot leaves an exited process out
+the same way, the image read through the held handle fails with error 31, and
+`IsProcessInJob` still answers that it is in its job**, 20 of 20 on Windows 11 Pro
+10.0.26300.9550. The rounds, and what they cost a walk of a job's tree, are in
+[job objects](job-objects.md).
+
 ### One wait holds 64 handles -- measured 2026-09-25
 
 `[STABLE]` for the limit. `WaitHandle.WaitAny` over 65 handles threw

@@ -49,6 +49,58 @@ observable difference between *reported dead* and *nothing is left*. `[FLOATS]`
 > membership check uses the union. Measured 2026-08-16; one phantom,
 > reproducibly, before the change.
 
+**A member that has exited while a handle to it is open is still in the job to
+`IsProcessInJob`, and in neither the job's own list nor a process snapshot.**
+`[STABLE]`. Measured 2026-10-12 on Windows 11 Pro 10.0.26300.9550, from
+PowerShell 7.6.6 on .NET 10.0.12, 20 rounds, each in a kill-on-close job of the
+rig's own with a completion port: one parked child started suspended with no
+window, assigned, resumed and held by its creation handle, read alive, ended with
+`TerminateProcess`, and read again with that handle still open. Every round read
+the same:
+
+| Asked of the member | Alive | Exited, its handle still open |
+|---|---|---|
+| `IsProcessInJob`, through the held handle | true | **true** |
+| `IsProcessInJob`, through a new `OpenProcess` by pid | | **true**: the open succeeds and names the same process |
+| the job's own list, `JobObjectBasicProcessIdList` | listed | **not listed** |
+| a toolhelp snapshot | listed | **not listed** |
+| `EnumProcesses` | listed | not listed, as [processes](processes.md) has it since 2026-09-24 |
+| `QueryFullProcessImageNameW`, through the held handle | | **fails, error 31** |
+| `WaitForSingleObject` with a zero timeout | `WAIT_TIMEOUT` | `WAIT_OBJECT_0` |
+
+With the rig's handles closed, a new open by pid failed with error 87 in 18 rounds
+and still named the exited process in 2, so something else on the machine held it
+a moment longer. **The port, in the same rounds:** each child brought a second
+member, its console host, which joined with it, two `JOB_OBJECT_MSG_NEW_PROCESS`
+(6), and left with it, two `JOB_OBJECT_MSG_EXIT_PROCESS` (7) and then
+`JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO` (4), with the job's active count at 0. A
+message posted by hand with `PostQueuedCompletionStatus` as 6, the port's key and
+a pid is dequeued with the same three values.
+
+**What it costs a walk of a live tree.** A probe that finds a process in a
+snapshot and asks the job about it afterwards reads a member that exited in
+between as a live member while anything still holds it, and a list taken
+afterwards leaves it out. The red of 2026-10-11 is that shape, a row whose
+`inOurJob` was true and whose `inJobProcessIdList` was false; a Chromium helper
+retiring while the browser held its handle fits it, read and not measured. And
+because Windows does not reuse a pid while a handle to it is open and does reuse
+one otherwise ([processes](processes.md), measured 2026-08-18), a pid kept as a
+bare number can name a process outside the job by the time it is walked, which
+fits the red of 2026-10-12, `escapees` 2. **Since 2026-10-12, the maintainer's 95
+a and c**, the suite's `job-launcher` probe opens each member at its join message
+and holds it until its report is written, keeps it only while `IsProcessInJob`
+says it is the job's, seeds its walk with those processes, and asks each walked
+process whether it is still there before it asks the job; a row found gone reads
+`Exited` and counts neither way.
+
+Re-establish it with any child you start in a job you created and keep the handle
+of: end it, and with the handle still open ask `IsProcessInJob`, the job's list, a
+toolhelp snapshot and the image path.
+`JobContainmentTests.AWalkedMemberThatHadExitedByItsQueryIsExitedAndCountedNeitherWay`
+drives the probe through that state on every run, and
+`JobContainmentTests.APidThePortReportedThatNamesAProcessOutsideTheJobIsNeitherWalkedNorCounted`
+posts the hand-made join message.
+
 **Firefox registers itself for restart and Chromium does not**, asked of the live
 processes with `GetApplicationRestartSettings`, not argued from a command
 line's length. Every Chromium process in the tree answers `0x80070490`
