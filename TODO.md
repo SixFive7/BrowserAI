@@ -246,6 +246,31 @@ is named as candidates and says so.
       both revisions, a test sends both openings to the published binary, and
       the pin offers both.
 
+- [ ] **Reorder the release checklist so the six runs follow the stamp, the maintainer's 103 e.**
+      Since 2026-10-08 the changelog is compiled into the binary, so the stamp, which
+      [the running order](RELEASING.md#the-order-the-last-six-steps-are-executed-in----and-it-is-not-the-numbering)
+      puts after the six runs, changes what the shipped binary shows a person: the gated
+      binary carries `[Unreleased]`, the shipped one the stamped section with its links at
+      the tag. For 2.0.0 the shipped `BrowserAI.exe` is searched for its stamped heading
+      after the clean re-pack, his 103 b. **What to do:** after the release, move the stamp
+      and its seal before the six runs, so they gate the shipped content but for its
+      version string, and keep green the two arms that set today's order: the changelog's
+      empty `[Unreleased]` and the production feed, which needs a published release.
+      [`DECISIONS.md`](DECISIONS.md#licence-release-policy-and-the-tool-surface) has the
+      decision.
+
+- [ ] **Narrow the stale-list refusal to a tool list that differs, the maintainer's 127 c.**
+      [Q261 b](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)
+      refuses, once, the first call of a connection that has not listed. A relay re-dialled
+      with no update between meets it too, and its sentence then says the list came from a
+      different BrowserAI, which is false there. **What to do:** after this release, record
+      under the data root, for each client process, the digest of the tool list it last
+      listed, and have a new relay refuse a call made before a list only when the digest of
+      the list it answers differs from the one recorded for its client; what a relay with no
+      record for its client does is the build's to propose. The sentence is not reworded
+      until then. **Done when** a re-dial on the same build forwards its first call, a
+      re-dial across an update that moved the list is refused as today, and arms hold both.
+
 - [ ] **The update toast, and the sessions page it opens.** The decision is
       [Q254](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)
       and the alternatives are at

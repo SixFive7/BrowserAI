@@ -83,12 +83,12 @@ not have is refused.
 
 - ✨ **The dashboard's folder buttons open the folder in front of your browser.**
   Each is a link your browser hands to BrowserAI, which opens the folder, or Windows' folder
-  picker for a project; both come to the front, as measured in Firefox. The first time, the
-  browser asks whether the page may open BrowserAI: allow it always, and it does not ask again. A
-  link opens only a folder the dashboard shows, and only with the key of the dashboard open now.
-  While BrowserAI is not running, a click opens nothing, and the page says to start BrowserAI from
-  the Start Menu. [`DECISIONS.md`](DECISIONS.md#the-folder-links-decided-2026-10-11) has the
-  decision.
+  picker for a project; both come to the front, as measured in Firefox. The first time, your
+  browser may ask whether the page may open BrowserAI. If it offers to always allow it, folders
+  open at once from then on. A link opens only a folder the dashboard shows, and only with the key
+  of the dashboard open now. While BrowserAI is not running, a click opens nothing, and the page
+  says to start BrowserAI from the Start Menu.
+  [`DECISIONS.md`](DECISIONS.md#the-folder-links-decided-2026-10-11) has the decision.
 
 - ✨ **The dashboard's home shows the CPU and memory BrowserAI's own processes use, as they change.**
   Every two seconds while the home or the conversations page is open, BrowserAI reads its
