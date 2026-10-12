@@ -49,7 +49,31 @@ internal static class Program
                     args[2],
                     TimeSpan.FromSeconds(double.Parse(args[3], CultureInfo.InvariantCulture)),
                     args[4],
-                    args[5..]),
+                    args[5..],
+                    LauncherPlant.None),
+            // <reportedPid> <outputDirectory> <readyFile> <readySeconds> <command> [arguments...].
+            // The same launcher with one join message more, naming <reportedPid>, posted to the
+            // job's port before the child starts: what the port says of a member whose pid
+            // Windows has since given to a process outside the job (95 a, 2026-10-12).
+            "job-launcher-told-of" when args.Length >= 6 =>
+                await JobProbe.LauncherAsync(
+                    args[2],
+                    args[3],
+                    TimeSpan.FromSeconds(double.Parse(args[4], CultureInfo.InvariantCulture)),
+                    args[5],
+                    args[6..],
+                    new LauncherPlant(ReportedStranger: int.Parse(args[1], CultureInfo.InvariantCulture), EndsOneMember: false)),
+            // <outputDirectory> <readyFile> <readySeconds> <command> [arguments...]. The same
+            // launcher, ending the child's first grandchild between the walk and its rows and
+            // holding it open past its exit (95 c, 2026-10-12).
+            "job-launcher-ending-one" when args.Length >= 5 =>
+                await JobProbe.LauncherAsync(
+                    args[1],
+                    args[2],
+                    TimeSpan.FromSeconds(double.Parse(args[3], CultureInfo.InvariantCulture)),
+                    args[4],
+                    args[5..],
+                    new LauncherPlant(ReportedStranger: 0, EndsOneMember: true)),
             "job-child" when args.Length is 3 =>
                 await JobProbe.ChildAsync(args[1], int.Parse(args[2], CultureInfo.InvariantCulture)),
             "job-grandchild" when args.Length is 1 => await JobProbe.GrandchildAsync(),

@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
+using BrowserAI.TestProbe;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -293,9 +294,50 @@ internal sealed class BrowserContainmentTests
 
         await LauncherWait.ForDoneAsync(donePath, ReportPatience, scratch.Path, launcher.Id, launcherCreated);
 
-        var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "report.json")))!;
+        var reportPath = Path.Combine(scratch.Path, "report.json");
+        var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(reportPath))!;
         var walk = report["walk"]!.AsArray();
 
+        // ⚠️ 95 d, the maintainer's words of 2026-10-12 verbatim: "95 your recommendation".
+        // The red of that day read escapees 2 and named no process, and the report that
+        // named them went with the scratch directory. The count is asserted with its rows
+        // since, and a failure anywhere below copies the report out first.
+        var kept = ContainmentReport.KeptPathFor($"browser-containment-{browser}");
+
+        try
+        {
+            await AssertTheReportAndTheTeardownAsync(browser, scratch.Path, report, walk, kept, launcher.Id, launcherCreated, profile);
+        }
+        catch
+        {
+            await ContainmentReport.KeepAsync(reportPath, kept);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Everything the arm asserts once the launcher's report is in: the report, the browser
+    /// under our root, its restart registration, the external kill and the profile delete.
+    /// </summary>
+    /// <param name="browser">The family.</param>
+    /// <param name="scratchPath">The arm's scratch directory, whose files a failure inlines.</param>
+    /// <param name="report">The launcher's report.</param>
+    /// <param name="walk">Its walk.</param>
+    /// <param name="kept">Where the report is copied if anything here fails.</param>
+    /// <param name="launcherId">The launcher's pid.</param>
+    /// <param name="launcherCreated">Its creation time.</param>
+    /// <param name="profile">The browser's profile directory.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task AssertTheReportAndTheTeardownAsync(
+        string browser,
+        string scratchPath,
+        JsonObject report,
+        JsonArray walk,
+        string kept,
+        int launcherId,
+        long launcherCreated,
+        string profile)
+    {
         // The flags, read back inside the launcher from the job that actually
         // contained this browser.
         await Assert.That((uint)report["limitFlags"]!).IsEqualTo(0x00002000u);
@@ -305,8 +347,8 @@ internal sealed class BrowserContainmentTests
         // A tree that never came up would satisfy "no escapees" vacuously. A
         // real browser is node + the browser + its helpers, so the floor is well
         // above the two processes a failed launch would produce.
-        await Assert.That(walk.Count).IsGreaterThanOrEqualTo(4);
-        await Assert.That((int)report["escapees"]!).IsEqualTo(0);
+        await Assert.That(walk.Count).IsGreaterThanOrEqualTo(4).Because(ContainmentReport.Kept(kept));
+        await Assert.That((int)report["escapees"]!).IsEqualTo(0).Because(ContainmentReport.EscapeesIn(walk, kept));
 
         // ⚠️ EACH ROW'S OWN REPORT IS THE REASON OF ITS ASSERTIONS -- 2026-10-11. The
         // hazard index's open row for this arm asked for the failing row of the next red,
@@ -314,8 +356,25 @@ internal sealed class BrowserContainmentTests
         // said only "Expected to be true but found False".
         foreach (var row in walk)
         {
-            var said = row!.ToJsonString();
+            var said = row!.ToJsonString() + Environment.NewLine + ContainmentReport.Kept(kept);
+            var verdict = (string)row["verdict"]!;
 
+            // ⚠️ A ROW THAT HAD GONE BY ITS QUERY COUNTS NEITHER WAY AND OWES NO JOB LIST --
+            // 95 c, the maintainer's words of 2026-10-12 verbatim: "95 your recommendation".
+            // Chromium retires helpers while the walk runs, and a helper born after the first
+            // membership list and gone before the second is in neither, because the job's list
+            // leaves an exited member out even while a handle holds it (20 of 20, measured
+            // 2026-10-12, kb/windows/job-objects.md). The launcher asks whether a process is
+            // still there before it asks the job, so such a row reads Exited, and the
+            // teardown below holds it to the only claim left: that it is not alive.
+            // JobContainmentTests keeps the stricter row, a static tree's.
+            if (verdict is nameof(ProcessQueryVerdict.Verdict.Exited))
+            {
+                await Assert.That((string)row["note"]!).Contains("between the walk and the query").Because(said);
+                continue;
+            }
+
+            await Assert.That(verdict).IsEqualTo(nameof(ProcessQueryVerdict.Verdict.Queried)).Because(said);
             await Assert.That((bool?)row["inOurJob"] is true).IsTrue().Because(said);
             await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue().Because(said);
             await Assert.That((string)row["note"]!).IsEmpty().Because(said);
@@ -323,7 +382,7 @@ internal sealed class BrowserContainmentTests
 
         // The cross-check in the other direction: a job member the walk never
         // reached would mean the seeding failed.
-        await Assert.That(report["jobMembersTheWalkMissed"]!.AsArray().Count).IsEqualTo(0);
+        await Assert.That(report["jobMembersTheWalkMissed"]!.AsArray().Count).IsEqualTo(0).Because(ContainmentReport.Kept(kept));
 
         // And the tree really is a browser out of BrowserAI's own root, not
         // four processes that happened to start. Two independent facts:
@@ -346,14 +405,18 @@ internal sealed class BrowserContainmentTests
             .IsTrue()
             .Because(
                 $"the driver did not navigate. Its answer was: {(string?)child["answer"] ?? "<none>"}"
-                + Environment.NewLine + await LauncherWait.EvidenceAsync(scratch.Path));
+                + Environment.NewLine + await LauncherWait.EvidenceAsync(scratchPath));
 
-        var walked = walk.Select(row => (int)row!["pid"]!).ToHashSet();
+        // By who each walked process is, pid and creation time, and not by its number:
+        // the launcher lets its handles go once the report is written, so a pid of the
+        // walk can name a browser of another arm by now, out of the same root (95 a,
+        // 2026-10-12).
+        var walked = walk.Select(row => ((int)row!["pid"]!, (long)row["createdFileTime"]!)).ToHashSet();
 
         // Matched on the full image PATH, which is the documented detection
         // route; an image name would find the user's own Chrome just as readily.
         var fromOurRoot = BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory)
-            .Where(process => walked.Contains(process.ProcessId))
+            .Where(process => walked.Contains((process.ProcessId, process.CreatedFileTime)))
             .ToList();
 
         await Assert.That(fromOurRoot.Count).IsGreaterThan(0);
@@ -413,8 +476,8 @@ internal sealed class BrowserContainmentTests
         // The event under test. TerminateProcess, not a graceful stop: the
         // launcher runs no code after this line, so nothing but the kernel
         // closing its last job handle can be what cleans up.
-        ProcessIdentity.Terminate(launcher.Id, launcherCreated);
-        recorded.Add((launcher.Id, launcherCreated));
+        ProcessIdentity.Terminate(launcherId, launcherCreated);
+        recorded.Add((launcherId, launcherCreated));
 
         var survivors = await WaitForNoneAliveAsync(recorded, TeardownPatience);
 
@@ -444,10 +507,14 @@ internal sealed class BrowserContainmentTests
             fromOurRoot.Count,
             registered.Count,
             (double)report["readyMilliseconds"]!,
-            (double)report["readyPatienceMilliseconds"]!);
+            (double)report["readyPatienceMilliseconds"]!,
+            (int)report["membersHeld"]!,
+            report["joinsNotHeld"]!.AsArray().Count,
+            walk.Count(row => (string?)row!["verdict"] is nameof(ProcessQueryVerdict.Verdict.Exited)));
     }
 
     /// <remarks>
+    /// <para>
     /// ⚠️ <b><c>readyMilliseconds</c> is recorded on every run, including the
     /// ones that pass, and that is the point of it.</b> A bound can only be
     /// called too tight against a distribution, and a distribution cannot be
@@ -455,6 +522,13 @@ internal sealed class BrowserContainmentTests
     /// machine: unloaded, this whole test is 5.3-5.7 s over eight consecutive
     /// runs -- the launcher's ready-wait is a small fraction of that, against a
     /// patience of 180 s.
+    /// </para>
+    /// <para>
+    /// <b>The three counts of 95 a and c are recorded the same way</b>, since 2026-10-12: how
+    /// many members the launcher held when the walk began, how many join messages held
+    /// nothing, and how many rows had gone by their query. They are what the probe's
+    /// churn is, on a passing run, and nothing asserts them.
+    /// </para>
     /// </remarks>
     private static async Task RecordAsync(
         string browser,
@@ -464,7 +538,10 @@ internal sealed class BrowserContainmentTests
         int fromOurRoot,
         int restartRegistered,
         double readyMilliseconds,
-        double readyPatienceMilliseconds)
+        double readyPatienceMilliseconds,
+        int membersHeld,
+        int joinsNotHeld,
+        int rowsExited)
     {
         var summary = new JsonObject
         {
@@ -477,6 +554,9 @@ internal sealed class BrowserContainmentTests
             ["profileDeletedCleanly"] = true,
             ["readyMilliseconds"] = readyMilliseconds,
             ["readyPatienceMilliseconds"] = readyPatienceMilliseconds,
+            ["membersHeldWhenTheWalkBegan"] = membersHeld,
+            ["joinMessagesThatHeldNothing"] = joinsNotHeld,
+            ["rowsGoneByTheirQuery"] = rowsExited,
             ["utc"] = DateTimeOffset.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
         };
 
