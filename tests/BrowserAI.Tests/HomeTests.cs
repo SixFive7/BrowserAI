@@ -250,7 +250,7 @@ internal sealed class HomeTests
 
         await Assert.That(home.Status).IsEqualTo(200).Because(home.Raw);
         await Assert.That(home.Body).Contains("<b class=\"m-value\" data-usage=\"cpu\">Measuring</b>");
-        await Assert.That(logs.Records.Any(record => record.EventId.Id == 7018)).IsTrue();
+        await Assert.That(logs.Records.Any(record => record.EventId.Id == 7020)).IsTrue();
         await Assert.That(logs.Logged("What BrowserAI's processes use could not be read for the page, so it shows the last reading.")).IsTrue();
     }
 

@@ -1683,10 +1683,10 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         [LoggerMessage(EventId = 7017, Level = LogLevel.Warning, Message = "Where the updates come from could not be read for the page, so it says nothing about them.")]
         public static partial void WatchUnread(ILogger logger, Exception failure);
 
-        [LoggerMessage(EventId = 7018, Level = LogLevel.Warning, Message = "What BrowserAI's processes use could not be read for the page, so it shows the last reading.")]
+        [LoggerMessage(EventId = 7020, Level = LogLevel.Warning, Message = "What BrowserAI's processes use could not be read for the page, so it shows the last reading.")]
         public static partial void UsageUnread(ILogger logger, Exception failure);
 
-        [LoggerMessage(EventId = 7019, Level = LogLevel.Warning, Message = "The after-update notice's record could not be written, so the notice may show again after the next start.")]
+        [LoggerMessage(EventId = 7021, Level = LogLevel.Warning, Message = "The after-update notice's record could not be written, so the next start may not know whether the notice was seen.")]
         public static partial void NoticeUnwritten(ILogger logger, Exception failure);
     }
 }
