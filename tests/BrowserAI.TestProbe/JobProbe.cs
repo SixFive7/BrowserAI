@@ -46,8 +46,16 @@ internal static partial class JobProbe
 {
     private const uint JobObjectMessageNewProcess = 6;
     private const int JobObjectAssociateCompletionPortClass = 7;
+    private const nuint CompletionKey = 0x4242;
     private const uint SnapshotProcesses = 0x00000002;
     private const uint ProcessQueryLimitedInformation = 0x00001000;
+    private const uint ProcessTerminate = 0x00000001;
+
+    /// <summary>
+    /// Required to ask a process handle whether it is signalled, and not implied by
+    /// <see cref="ProcessQueryLimitedInformation"/>.
+    /// </summary>
+    private const uint Synchronize = 0x00100000;
     private const uint CreateBreakawayFromJob = 0x01000000;
     private const uint CreateNoWindow = 0x08000000;
     private const uint JobObjectLimitKillOnJobClose = 0x00002000;
@@ -87,13 +95,15 @@ internal static partial class JobProbe
     /// <param name="readyPatience">How long the child gets to report, which is the host's whole budget.</param>
     /// <param name="command">The executable to start inside the job.</param>
     /// <param name="arguments">Its arguments.</param>
+    /// <param name="plant">What a planted run adds, or <see cref="LauncherPlant.None"/>.</param>
     /// <returns>Never, on the happy path: the process parks until it is terminated.</returns>
     public static async Task<int> LauncherAsync(
         string outputDirectory,
         string readyFile,
         TimeSpan readyPatience,
         string command,
-        IReadOnlyList<string> arguments)
+        IReadOnlyList<string> arguments,
+        LauncherPlant plant)
     {
         _ = Directory.CreateDirectory(outputDirectory);
 
@@ -109,6 +119,14 @@ internal static partial class JobProbe
         var port = AssociateCompletionPort(job);
         var drain = new Thread(() => DrainCompletionPort(port)) { IsBackground = true };
         drain.Start();
+
+        if (plant.ReportedStranger is not 0)
+        {
+            // The plant of 95 a: one join message more, in the shape the job's own messages
+            // have, naming a live process outside the job. It is what the port says of a
+            // member that exited before the walk once Windows has given its pid away.
+            PostJoin(port, plant.ReportedStranger);
+        }
 
         using var process = JobLauncher.Start(job, command, arguments, outputDirectory, ChildEnvironment.Build());
 
@@ -175,6 +193,11 @@ internal static partial class JobProbe
         var jobProcessIdSet = jobBefore.Concat(jobAfter).ToHashSet();
         var stableJobMembers = jobBefore.Where(jobAfter.Contains).ToList();
 
+        // The plant of 95 c: one member of the walk ended between the second membership list
+        // and its row, and held open past its exit, which is what a Chromium helper that
+        // retires during the walk is while its parent still holds it.
+        using var ended = plant.EndsOneMember ? await EndOneMemberAsync(job, walk, readyFile, readyPatience) : null;
+
         var rows = new JsonArray();
         var escapees = 0;
 
@@ -182,6 +205,7 @@ internal static partial class JobProbe
         {
             var inOurJob = default(bool?);
             var inAnyJob = default(bool?);
+            var imagePath = default(string);
             var note = string.Empty;
             var verdict = ProcessQueryVerdict.Verdict.Queried;
 
@@ -219,6 +243,10 @@ internal static partial class JobProbe
                 inOurJob = job.Contains(handle);
                 inAnyJob = JobObject.IsInAnyJob(handle);
 
+                // Read off the handle and only ever printed: a failing arm names the
+                // processes it counted with it (95 d), and nothing here compares it.
+                imagePath = ImagePathOf(handle);
+
                 if (inOurJob is false)
                 {
                     escapees++;
@@ -231,6 +259,7 @@ internal static partial class JobProbe
                 ["parentPid"] = entry.ParentProcessId,
                 ["createdFileTime"] = entry.CreatedFileTime,
                 ["depth"] = entry.Depth,
+                ["imagePath"] = imagePath,
                 ["inOurJob"] = inOurJob,
                 ["inAnyJob"] = inAnyJob,
                 ["inJobProcessIdList"] = jobProcessIdSet.Contains(entry.ProcessId),
@@ -255,6 +284,13 @@ internal static partial class JobProbe
                 [.. stableJobMembers.Where(id => !walked.Contains(id)).Select(id => JsonValue.Create(id))]),
             ["escapees"] = escapees,
             ["walk"] = rows,
+            ["endedMember"] = ended is null
+                ? null
+                : new JsonObject
+                {
+                    ["pid"] = ended.ProcessId,
+                    ["createdFileTime"] = ended.CreatedFileTime,
+                },
             ["childReport"] = await ReadChildReportAsync(readyFile),
         };
 
@@ -532,6 +568,83 @@ internal static partial class JobProbe
         }
     }
 
+    /// <summary>
+    /// Ends the child's first grandchild and waits for its exit, and keeps it open: the plant
+    /// of 95 c, a walked member that has gone by the time its row is read while a handle still
+    /// holds it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It acts on one process, a member of this launcher's own job whose identity it reads
+    /// twice.</b> The pid comes from the child's report and the creation time from the walk,
+    /// and the handle it ends the process through is refused unless it names that same process
+    /// and <c>IsProcessInJob</c> says the process is in the job this launcher created.
+    /// </para>
+    /// <para>
+    /// <b>The handle stays open after the exit</b>, as a Chromium helper's does while the browser
+    /// holds it, so the member is still an object Windows answers for at its query:
+    /// <c>OpenProcess</c> on its pid succeeds, <c>IsProcessInJob</c> says it is in the job, and
+    /// neither the job's own list nor a toolhelp snapshot names it (20 of 20, measured
+    /// 2026-10-12, kb).
+    /// </para>
+    /// </remarks>
+    /// <param name="job">The launcher's job.</param>
+    /// <param name="walk">The walk the member must be part of.</param>
+    /// <param name="readyFile">The child's report, which names its grandchildren.</param>
+    /// <param name="patience">How long the exit is waited for: the host's budget.</param>
+    /// <returns>The ended member, still open.</returns>
+    private static async Task<EndedMember> EndOneMemberAsync(JobObject job, List<ProcessEntry> walk, string readyFile, TimeSpan patience)
+    {
+        var childReport = await ReadChildReportAsync(readyFile);
+        var named = childReport?["grandchildPids"]?.AsArray().FirstOrDefault()
+            ?? throw new InvalidOperationException($"The child's report at '{readyFile}' names no grandchild, so the plant has nothing to end.");
+        var processId = (int)named;
+        var victim = walk.Find(entry => entry.ProcessId == processId);
+
+        if (victim.ProcessId != processId)
+        {
+            throw new InvalidOperationException($"The walk did not reach the child's first grandchild, pid {processId.ToString(CultureInfo.InvariantCulture)}, so the plant has nothing to end.");
+        }
+
+        var handle = OpenProcessToEnd(ProcessTerminate | Synchronize | ProcessQueryLimitedInformation, bInheritHandle: false, (uint)processId);
+
+        if (handle.IsInvalid)
+        {
+            var error = Marshal.GetLastPInvokeError();
+            handle.Dispose();
+            throw new Win32Exception(error, $"Could not open the child's first grandchild, pid {processId.ToString(CultureInfo.InvariantCulture)}, to end it.");
+        }
+
+        var ended = new EndedMember(processId, victim.CreatedFileTime, handle);
+
+        try
+        {
+            if (!GetProcessTimes(handle, out var created, out _, out _, out _) || created != victim.CreatedFileTime)
+            {
+                throw new InvalidOperationException($"Pid {processId.ToString(CultureInfo.InvariantCulture)} no longer names the grandchild the walk listed, so the plant ends nothing.");
+            }
+
+            if (!IsProcessInJob(handle, job.Handle, out var member) || !member)
+            {
+                throw new InvalidOperationException($"Pid {processId.ToString(CultureInfo.InvariantCulture)} is not in this launcher's job, so the plant ends nothing.");
+            }
+
+            if (!TerminateProcess(handle, 1))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), $"Could not end the child's first grandchild, pid {processId.ToString(CultureInfo.InvariantCulture)}.");
+            }
+
+            return await HandleWaits.WhenSignaledAsync(ended, patience)
+                ? ended
+                : throw new TimeoutException($"The child's first grandchild, pid {processId.ToString(CultureInfo.InvariantCulture)}, was still running {patience.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)} s after it was ended.");
+        }
+        catch
+        {
+            ended.Dispose();
+            throw;
+        }
+    }
+
     private static async Task WaitForFileAsync(string path, TimeSpan patience)
     {
         var deadline = Stopwatch.StartNew();
@@ -560,7 +673,7 @@ internal static partial class JobProbe
 
         var association = new JobObjectAssociateCompletionPort
         {
-            CompletionKey = 0x4242,
+            CompletionKey = CompletionKey,
             CompletionPort = port,
         };
 
@@ -571,6 +684,23 @@ internal static partial class JobProbe
             (uint)Unsafe.SizeOf<JobObjectAssociateCompletionPort>())
             ? port
             : throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not associate a completion port with the job.");
+    }
+
+    /// <summary>Posts one join message to the job's port, in the shape the job's own have.</summary>
+    /// <remarks>
+    /// A job's message arrives as its number where a transfer's byte count would be, the key
+    /// the port was associated with, and the pid where an <c>OVERLAPPED</c> pointer would be,
+    /// and one posted with <c>PostQueuedCompletionStatus</c> is dequeued with the same three
+    /// values: 20 of 20, measured 2026-10-12 (kb).
+    /// </remarks>
+    /// <param name="port">The job's completion port.</param>
+    /// <param name="processId">The pid the message names.</param>
+    private static void PostJoin(nint port, int processId)
+    {
+        if (!PostQueuedCompletionStatus(port, JobObjectMessageNewProcess, CompletionKey, processId))
+        {
+            throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not post the planted join message to the job's port.");
+        }
     }
 
     private static void DrainCompletionPort(nint port)
@@ -704,8 +834,53 @@ internal static partial class JobProbe
         return !handle.IsInvalid && GetProcessTimes(handle, out var creation, out _, out _, out _) ? creation : 0;
     }
 
+    /// <summary>
+    /// A process's full image path, read off a handle to it, for a report a person reads.
+    /// </summary>
+    /// <remarks>
+    /// Never compared with anything: the rule is never to select a process by its image, and
+    /// this is printed beside the pid and creation time that identify the process. Windows
+    /// refuses the read for a process that has exited, with error 31 (measured 2026-10-12, kb),
+    /// so an exited row has none.
+    /// </remarks>
+    /// <param name="handle">An open handle to the process.</param>
+    /// <returns>The path, or <see langword="null"/> when Windows would not give it.</returns>
+    private static string? ImagePathOf(SafeProcessHandle handle)
+    {
+        // Sized for the extended limit, as the product's own read is.
+        var buffer = new char[32768];
+        var length = (uint)buffer.Length;
+
+        return QueryFullProcessImageNameW(handle, 0, ref buffer[0], ref length)
+            ? new string(buffer, 0, (int)length)
+            : null;
+    }
+
     /// <summary>One process in the snapshot: identity only, never a name.</summary>
     private readonly record struct ProcessEntry(int ProcessId, int ParentProcessId, long CreatedFileTime, int Depth);
+
+    /// <summary>
+    /// The member the plant of 95 c ended, held open past its exit until the launcher ends.
+    /// </summary>
+    private sealed class EndedMember : WaitHandle
+    {
+        /// <summary>Wraps the open handle the member was ended through.</summary>
+        /// <param name="processId">The member's pid.</param>
+        /// <param name="createdFileTime">Its creation time, read off the walk.</param>
+        /// <param name="handle">The open handle, which this owns from here on.</param>
+        public EndedMember(int processId, long createdFileTime, SafeWaitHandle handle)
+        {
+            ProcessId = processId;
+            CreatedFileTime = createdFileTime;
+            SafeWaitHandle = handle;
+        }
+
+        /// <summary>The member's pid.</summary>
+        public int ProcessId { get; }
+
+        /// <summary>The member's creation time.</summary>
+        public long CreatedFileTime { get; }
+    }
 
     /// <summary>
     /// The 260-character image-name field, declared so the structure is the
@@ -835,6 +1010,15 @@ internal static partial class JobProbe
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool PostQueuedCompletionStatus(
+        nint completionPort,
+        uint dwNumberOfBytesTransferred,
+        nuint dwCompletionKey,
+        nint lpOverlapped);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool SetInformationJobObject(
         SafeJobHandle hJob,
         int jobObjectInformationClass,
@@ -897,6 +1081,49 @@ internal static partial class JobProbe
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool QueryFullProcessImageNameW(
+        SafeProcessHandle hProcess,
+        uint dwFlags,
+        ref char lpExeName,
+        ref uint lpdwSize);
+
+    /// <summary>
+    /// <c>OpenProcess</c>, answering a handle a <see cref="WaitHandle"/> can own: the one process
+    /// the plant of 95 c ends, waited for through the product's <c>HandleWaits</c>.
+    /// </summary>
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "OpenProcess", SetLastError = true)]
+    private static partial SafeWaitHandle OpenProcessToEnd(
+        uint dwDesiredAccess,
+        [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
+        uint dwProcessId);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetProcessTimes(
+        SafeWaitHandle hProcess,
+        out long lpCreationTime,
+        out long lpExitTime,
+        out long lpKernelTime,
+        out long lpUserTime);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsProcessInJob(
+        SafeWaitHandle processHandle,
+        SafeJobHandle jobHandle,
+        [MarshalAs(UnmanagedType.Bool)] out bool result);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool TerminateProcess(SafeWaitHandle hProcess, uint uExitCode);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CreateProcessW(
         string? lpApplicationName,
         ref char lpCommandLine,
@@ -913,6 +1140,21 @@ internal static partial class JobProbe
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CloseHandle(nint hObject);
+}
+
+/// <summary>What a planted run of the launcher adds to its ordinary run.</summary>
+/// <param name="ReportedStranger">
+/// A pid posted to the job's port as one join message more before the child starts, or 0 for
+/// none: the plant of 95 a.
+/// </param>
+/// <param name="EndsOneMember">
+/// Whether the launcher ends the child's first grandchild between the walk and its rows and
+/// holds it open past its exit: the plant of 95 c.
+/// </param>
+internal readonly record struct LauncherPlant(int ReportedStranger, bool EndsOneMember)
+{
+    /// <summary>The ordinary run, with nothing planted.</summary>
+    public static LauncherPlant None => default;
 }
 
 /// <summary>A toolhelp snapshot handle that closes itself.</summary>

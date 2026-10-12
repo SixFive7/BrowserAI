@@ -293,9 +293,50 @@ internal sealed class BrowserContainmentTests
 
         await LauncherWait.ForDoneAsync(donePath, ReportPatience, scratch.Path, launcher.Id, launcherCreated);
 
-        var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "report.json")))!;
+        var reportPath = Path.Combine(scratch.Path, "report.json");
+        var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(reportPath))!;
         var walk = report["walk"]!.AsArray();
 
+        // ⚠️ 95 d, the maintainer's words of 2026-10-12 verbatim: "95 your recommendation".
+        // The red of that day read escapees 2 and named no process, and the report that
+        // named them went with the scratch directory. The count is asserted with its rows
+        // since, and a failure anywhere below copies the report out first.
+        var kept = ContainmentReport.KeptPathFor($"browser-containment-{browser}");
+
+        try
+        {
+            await AssertTheReportAndTheTeardownAsync(browser, scratch.Path, report, walk, kept, launcher.Id, launcherCreated, profile);
+        }
+        catch
+        {
+            await ContainmentReport.KeepAsync(reportPath, kept);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Everything the arm asserts once the launcher's report is in: the report, the browser
+    /// under our root, its restart registration, the external kill and the profile delete.
+    /// </summary>
+    /// <param name="browser">The family.</param>
+    /// <param name="scratchPath">The arm's scratch directory, whose files a failure inlines.</param>
+    /// <param name="report">The launcher's report.</param>
+    /// <param name="walk">Its walk.</param>
+    /// <param name="kept">Where the report is copied if anything here fails.</param>
+    /// <param name="launcherId">The launcher's pid.</param>
+    /// <param name="launcherCreated">Its creation time.</param>
+    /// <param name="profile">The browser's profile directory.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task AssertTheReportAndTheTeardownAsync(
+        string browser,
+        string scratchPath,
+        JsonObject report,
+        JsonArray walk,
+        string kept,
+        int launcherId,
+        long launcherCreated,
+        string profile)
+    {
         // The flags, read back inside the launcher from the job that actually
         // contained this browser.
         await Assert.That((uint)report["limitFlags"]!).IsEqualTo(0x00002000u);
@@ -305,8 +346,8 @@ internal sealed class BrowserContainmentTests
         // A tree that never came up would satisfy "no escapees" vacuously. A
         // real browser is node + the browser + its helpers, so the floor is well
         // above the two processes a failed launch would produce.
-        await Assert.That(walk.Count).IsGreaterThanOrEqualTo(4);
-        await Assert.That((int)report["escapees"]!).IsEqualTo(0);
+        await Assert.That(walk.Count).IsGreaterThanOrEqualTo(4).Because(ContainmentReport.Kept(kept));
+        await Assert.That((int)report["escapees"]!).IsEqualTo(0).Because(ContainmentReport.EscapeesIn(walk, kept));
 
         // ⚠️ EACH ROW'S OWN REPORT IS THE REASON OF ITS ASSERTIONS -- 2026-10-11. The
         // hazard index's open row for this arm asked for the failing row of the next red,
@@ -314,7 +355,7 @@ internal sealed class BrowserContainmentTests
         // said only "Expected to be true but found False".
         foreach (var row in walk)
         {
-            var said = row!.ToJsonString();
+            var said = row!.ToJsonString() + Environment.NewLine + ContainmentReport.Kept(kept);
 
             await Assert.That((bool?)row["inOurJob"] is true).IsTrue().Because(said);
             await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue().Because(said);
@@ -323,7 +364,7 @@ internal sealed class BrowserContainmentTests
 
         // The cross-check in the other direction: a job member the walk never
         // reached would mean the seeding failed.
-        await Assert.That(report["jobMembersTheWalkMissed"]!.AsArray().Count).IsEqualTo(0);
+        await Assert.That(report["jobMembersTheWalkMissed"]!.AsArray().Count).IsEqualTo(0).Because(ContainmentReport.Kept(kept));
 
         // And the tree really is a browser out of BrowserAI's own root, not
         // four processes that happened to start. Two independent facts:
@@ -346,7 +387,7 @@ internal sealed class BrowserContainmentTests
             .IsTrue()
             .Because(
                 $"the driver did not navigate. Its answer was: {(string?)child["answer"] ?? "<none>"}"
-                + Environment.NewLine + await LauncherWait.EvidenceAsync(scratch.Path));
+                + Environment.NewLine + await LauncherWait.EvidenceAsync(scratchPath));
 
         var walked = walk.Select(row => (int)row!["pid"]!).ToHashSet();
 
@@ -413,8 +454,8 @@ internal sealed class BrowserContainmentTests
         // The event under test. TerminateProcess, not a graceful stop: the
         // launcher runs no code after this line, so nothing but the kernel
         // closing its last job handle can be what cleans up.
-        ProcessIdentity.Terminate(launcher.Id, launcherCreated);
-        recorded.Add((launcher.Id, launcherCreated));
+        ProcessIdentity.Terminate(launcherId, launcherCreated);
+        recorded.Add((launcherId, launcherCreated));
 
         var survivors = await WaitForNoneAliveAsync(recorded, TeardownPatience);
 

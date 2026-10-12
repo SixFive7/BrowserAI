@@ -216,6 +216,93 @@ internal sealed class JobContainmentTests
         }
     }
 
+    /// <summary>
+    /// <b>A join message whose pid names a process outside the job seeds nothing</b>, and the
+    /// walk neither reaches that process nor counts it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>95 a, decided 2026-10-12 by the maintainer, in his words verbatim: <i>"95 your
+    /// recommendation"</i>.</b> The Chromium arm of <see cref="BrowserContainmentTests"/> went
+    /// red in 4 of 77 full runs, the last time with <c>escapees</c> 2. The launcher seeded its
+    /// walk with every pid the job's port had reported, as a bare number, so a helper Chromium
+    /// had retired before the walk, whose pid Windows had given to a process outside the job,
+    /// was seeded, walked, opened and counted, and a console process brings a <c>conhost</c>
+    /// child the walk then reaches too.
+    /// </para>
+    /// <para>
+    /// <b>The plant is that join message, posted to the port by hand</b>: the launcher's
+    /// <c>job-launcher-told-of</c> mode posts one more, in the shape the job's own have, naming
+    /// this test host, which is alive and outside the launcher's job. A walk seeded by bare pid
+    /// counts the test host and everything it started; a launcher that opens each member at
+    /// its join message and keeps it only when <c>IsProcessInJob</c> says it is the job's
+    /// drops it there, and says so in the report's <c>joinsNotHeld</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APidThePortReportedThatNamesAProcessOutsideTheJobIsNeitherWalkedNorCounted()
+    {
+        var stranger = Environment.ProcessId;
+
+        var report = await RunAsync(
+            "job-probe-told-of",
+            ProbePath,
+            ["job-child", "{ready}", "3"],
+            expectedMinimumProcesses: 4,
+            mode: ["job-launcher-told-of", stranger.ToString(CultureInfo.InvariantCulture)]);
+
+        var said = report.ToJsonString();
+
+        await Assert.That(report["walk"]!.AsArray().Select(row => (int)row!["pid"]!)).DoesNotContain(stranger).Because(said);
+        await Assert.That(report["joinsNotHeld"]?.AsArray().Select(entry => (int)entry!["pid"]!) ?? []).Contains(stranger).Because(said);
+    }
+
+    /// <summary>
+    /// <b>A walked member that has exited by the time its row is read is <c>Exited</c></b>,
+    /// counted neither in the job nor out of it, while a handle still holds it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>95 c, decided 2026-10-12 by the maintainer, in his words verbatim: <i>"95 your
+    /// recommendation"</i>.</b> A Chromium helper that retires during the walk is still an
+    /// object Windows answers for while the browser holds a handle to it: <c>OpenProcess</c> on
+    /// its pid succeeds and <c>IsProcessInJob</c> says it is in the job, while neither the
+    /// job's own list nor a toolhelp snapshot names it any more (20 of 20, measured
+    /// 2026-10-12, [kb](../../kb/windows/job-objects.md)). A query that asks the job first
+    /// reads that corpse as a live member, which is the red of 2026-10-11: a row whose
+    /// <c>inOurJob</c> was true and whose <c>inJobProcessIdList</c> was false.
+    /// </para>
+    /// <para>
+    /// <b>The plant ends one member between the walk and its row and holds it open</b>: the
+    /// launcher's <c>job-launcher-ending-one</c> mode ends the child's first grandchild, a
+    /// member of the launcher's own job whose pid and creation time it checks first, waits for
+    /// its exit and keeps the handle. Its row has to read <c>Exited</c>, with no membership
+    /// read off it at all.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AWalkedMemberThatHadExitedByItsQueryIsExitedAndCountedNeitherWay()
+    {
+        var report = await RunAsync(
+            "job-probe-ending-one",
+            ProbePath,
+            ["job-child", "{ready}", "3"],
+            expectedMinimumProcesses: 4,
+            mode: ["job-launcher-ending-one"]);
+
+        var ended = report["endedMember"]!;
+        var said = report.ToJsonString();
+
+        var row = report["walk"]!.AsArray().Single(candidate =>
+            (int)candidate!["pid"]! == (int)ended["pid"]! && (long)candidate["createdFileTime"]! == (long)ended["createdFileTime"]!)!;
+
+        await Assert.That((string)row["verdict"]!).IsEqualTo(nameof(ProcessQueryVerdict.Verdict.Exited)).Because(said);
+        await Assert.That((bool?)row["inOurJob"]).IsNull().Because(said);
+        await Assert.That((bool?)row["inAnyJob"]).IsNull().Because(said);
+    }
+
     [Test]
     public async Task TheBundledNodeAndItsDescendantsAreContained()
     {
@@ -241,17 +328,23 @@ internal sealed class JobContainmentTests
     /// <param name="command">The executable the launcher starts inside the job.</param>
     /// <param name="arguments">Its arguments. A literal <c>{ready}</c> is replaced by the ready-file path.</param>
     /// <param name="expectedMinimumProcesses">The smallest tree that counts as having been built at all.</param>
+    /// <param name="mode">
+    /// The launcher's mode and the arguments before its own, <c>job-launcher</c> when
+    /// <see langword="null"/>; a planted run names one of the planted modes.
+    /// </param>
     /// <returns>The launcher's report.</returns>
     private static async Task<JsonObject> RunAsync(
         string label,
         string command,
         string[] arguments,
-        int expectedMinimumProcesses)
+        int expectedMinimumProcesses,
+        string[]? mode = null)
     {
         using var scratch = await ScratchDirectory.CreateAsync(label);
 
         var readyFile = Path.Combine(scratch.Path, "ready.json");
         var donePath = Path.Combine(scratch.Path, "done");
+        var reportPath = Path.Combine(scratch.Path, "report.json");
 
         // The suite's own job, so an assertion that throws below cannot leave
         // the launcher -- or anything under it -- running.
@@ -261,7 +354,7 @@ internal sealed class JobContainmentTests
             ProbePath,
             scratch.Path,
             [
-                "job-launcher",
+                .. mode ?? ["job-launcher"],
                 scratch.Path,
                 readyFile,
                 // One budget: the launcher's ready-wait is this test's patience.
@@ -278,76 +371,89 @@ internal sealed class JobContainmentTests
 
         await LauncherWait.ForDoneAsync(donePath, ReportPatience, scratch.Path, launcher.Id, launcherCreated);
 
-        var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "report.json")))!;
+        var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(reportPath))!;
         var walk = report["walk"]!.AsArray();
 
-        // The flags, read back inside the launcher from the job that actually
-        // contained this tree.
-        await Assert.That((uint)report["limitFlags"]!).IsEqualTo(0x00002000u);
-        await Assert.That((uint)report["uiRestrictions"]!).IsEqualTo(0u);
-        await Assert.That((bool)report["handleIsInheritable"]!).IsFalse();
+        // 95 d: a failure names the rows it is about and keeps the report the scratch
+        // directory takes with it. See ContainmentReport.
+        var kept = ContainmentReport.KeptPathFor(label);
 
-        // A tree that never came up would satisfy "no escapees" vacuously.
-        await Assert.That(walk.Count).IsGreaterThanOrEqualTo(expectedMinimumProcesses);
-        await Assert.That((int)report["escapees"]!).IsEqualTo(0);
-
-        foreach (var row in walk)
+        try
         {
-            var pid = (int)row!["pid"]!;
-            var verdict = (string)row["verdict"]!;
+            // The flags, read back inside the launcher from the job that actually
+            // contained this tree.
+            await Assert.That((uint)report["limitFlags"]!).IsEqualTo(0x00002000u);
+            await Assert.That((uint)report["uiRestrictions"]!).IsEqualTo(0u);
+            await Assert.That((bool)report["handleIsInheritable"]!).IsFalse();
 
-            await Assert.That(pid).IsNotEqualTo(0);
+            // A tree that never came up would satisfy "no escapees" vacuously.
+            await Assert.That(walk.Count).IsGreaterThanOrEqualTo(expectedMinimumProcesses).Because(ContainmentReport.Kept(kept));
+            await Assert.That((int)report["escapees"]!).IsEqualTo(0).Because(ContainmentReport.EscapeesIn(walk, kept));
 
-            // ⚠️ THE KERNEL'S MEMBERSHIP SNAPSHOT IS ASSERTED FOR EVERY ROW,
-            // whatever the per-row query managed. This is the containment claim
-            // and it does not weaken below: a process the walk reached must have
-            // been in the job's own member list, taken either side of the walk.
-            await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue();
-
-            if (verdict is nameof(ProcessQueryVerdict.Verdict.Exited))
+            foreach (var row in walk)
             {
-                // It was gone before the row could be queried, which is
-                // containment holding and not failing: an exited process is
-                // neither a survivor nor an escapee, and the teardown assertion
-                // below covers it in the only sense that remains. The note says
-                // what happened, so this branch is visible in the report and
-                // not silent.
-                await Assert.That((string)row["note"]!).Contains("between the walk and the query");
-                continue;
+                var pid = (int)row!["pid"]!;
+                var verdict = (string)row["verdict"]!;
+                var said = row.ToJsonString() + Environment.NewLine + ContainmentReport.Kept(kept);
+
+                await Assert.That(pid).IsNotEqualTo(0).Because(said);
+
+                // ⚠️ THE KERNEL'S MEMBERSHIP SNAPSHOT IS ASSERTED FOR EVERY ROW,
+                // whatever the per-row query managed. This is the containment claim
+                // and it does not weaken below: a process the walk reached must have
+                // been in the job's own member list, taken either side of the walk.
+                await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue().Because(said);
+
+                if (verdict is nameof(ProcessQueryVerdict.Verdict.Exited))
+                {
+                    // It was gone before the row could be queried, which is
+                    // containment holding and not failing: an exited process is
+                    // neither a survivor nor an escapee, and the teardown assertion
+                    // below covers it in the only sense that remains. The note says
+                    // what happened, so this branch is visible in the report and
+                    // not silent.
+                    await Assert.That((string)row["note"]!).Contains("between the walk and the query").Because(said);
+                    continue;
+                }
+
+                // IsProcessInJob for every pid in the descendant tree, and the
+                // kernel's own member list for the same pid. Either alone can be
+                // incomplete; disagreeing is the interesting case.
+                await Assert.That(verdict).IsEqualTo(nameof(ProcessQueryVerdict.Verdict.Queried)).Because(said);
+                await Assert.That((bool?)row["inOurJob"] is true).IsTrue().Because(said);
+                await Assert.That((string)row["note"]!).IsEmpty().Because(said);
             }
 
-            // IsProcessInJob for every pid in the descendant tree, and the
-            // kernel's own member list for the same pid. Either alone can be
-            // incomplete; disagreeing is the interesting case.
-            await Assert.That(verdict).IsEqualTo(nameof(ProcessQueryVerdict.Verdict.Queried));
-            await Assert.That((bool?)row["inOurJob"] is true).IsTrue();
-            await Assert.That((string)row["note"]!).IsEmpty();
+            // The cross-check in the other direction: a job member the walk never
+            // reached would mean the seeding failed.
+            await Assert.That(report["jobMembersTheWalkMissed"]!.AsArray().Count).IsEqualTo(0).Because(ContainmentReport.Kept(kept));
+
+            var recorded = walk
+                .Select(row => ((int)row!["pid"]!, (long)row["createdFileTime"]!))
+                .ToList();
+
+            // The event under test. TerminateProcess, not a graceful stop: the
+            // launcher runs no code after this line, so nothing but the kernel
+            // closing its last job handle can be what cleans up.
+            ProcessIdentity.Terminate(launcher.Id, launcherCreated);
+
+            // The launcher goes in the same list. TerminateProcess only INITIATES
+            // termination and returns immediately, so a check made on the next line
+            // races the kernel -- measured 2026-08-16, the tree was already gone
+            // while the launcher had not finished terminating.
+            recorded.Add((launcher.Id, launcherCreated));
+
+            var survivors = await WaitForNoneAliveAsync(recorded, TeardownPatience);
+
+            await Assert.That(string.Join(", ", survivors)).IsEmpty().Because(ContainmentReport.Kept(kept));
+
+            return report;
         }
-
-        // The cross-check in the other direction: a job member the walk never
-        // reached would mean the seeding failed.
-        await Assert.That(report["jobMembersTheWalkMissed"]!.AsArray().Count).IsEqualTo(0);
-
-        var recorded = walk
-            .Select(row => ((int)row!["pid"]!, (long)row["createdFileTime"]!))
-            .ToList();
-
-        // The event under test. TerminateProcess, not a graceful stop: the
-        // launcher runs no code after this line, so nothing but the kernel
-        // closing its last job handle can be what cleans up.
-        ProcessIdentity.Terminate(launcher.Id, launcherCreated);
-
-        // The launcher goes in the same list. TerminateProcess only INITIATES
-        // termination and returns immediately, so a check made on the next line
-        // races the kernel -- measured 2026-08-16, the tree was already gone
-        // while the launcher had not finished terminating.
-        recorded.Add((launcher.Id, launcherCreated));
-
-        var survivors = await WaitForNoneAliveAsync(recorded, TeardownPatience);
-
-        await Assert.That(string.Join(", ", survivors)).IsEmpty();
-
-        return report;
+        catch
+        {
+            await ContainmentReport.KeepAsync(reportPath, kept);
+            throw;
+        }
     }
 
     /// <summary>
