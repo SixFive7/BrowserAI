@@ -106,6 +106,10 @@ internal static partial class PageOpener
             ServerArguments = target is not null ? (await InstallerSettings.SavedForAsync(target.InstallRoot, InstallLocation.AppId).ConfigureAwait(false)).RelayArguments : InstallerSettings.None.RelayArguments,
             ServerRefusal = resolution.Resolved ? null : resolution.Refusal,
             RelayHold = relayHold,
+
+            // 55 a and 72 a, 2026-10-11: the scheme this install's hooks registered, and none
+            // for a build that is not installed, which registered nothing.
+            LinkScheme = InstallLocation.RootAppDir is { Length: > 0 } ? LinkScheme.NameFor(InstallLocation.AppId) : null,
         };
     }
 

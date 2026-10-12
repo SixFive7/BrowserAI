@@ -1192,6 +1192,138 @@ internal sealed class CatchUpTests
         await Assert.That(text).Contains(SessionToolSurface.Init);
     }
 
+    /// <summary>
+    /// The last file written is the newest file in the directory that is not one of
+    /// BrowserAI's own record files: the guard, the record and the files SQLite keeps beside
+    /// it. A file of the same name inside the profile is the browser's, and counts.
+    /// </summary>
+    /// <remarks>
+    /// <b>86 a, the maintainer's words verbatim: <i>"86 a"</i></b>, after a measurement on
+    /// 2026-10-12 on the installed 1.1.1-alpha.0.346: <c>browserai_catch_up</c> on two closed
+    /// sessions with no browser said the last file was written 0 seconds ago, while the only
+    /// file written at that second was the record's shared-memory index, built by the read of
+    /// the record <c>browserai_catch_up</c> makes itself. The record's files are given the
+    /// newest times here, so the walk answers with the profile's time only when it leaves
+    /// them out.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheLastFileWrittenLeavesOutBrowserAisOwnRecordFiles()
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("last-written");
+
+        var directory = Path.Combine(scratch.Path, "planted");
+        var profileFile = Path.Combine(directory, SessionLayout.ProfileFolderName, "Default", "Network", "Cookies");
+        var outputFile = Path.Combine(directory, SessionLayout.OutputFolderName, "page.png");
+        var sameNameInTheProfile = Path.Combine(directory, SessionLayout.ProfileFolderName, SessionLayout.DataFileName + "-shm");
+        var browsers = DateTime.UtcNow.AddHours(-2);
+        var older = browsers.AddHours(-1);
+        var records = DateTime.UtcNow;
+
+        string[] recordFiles =
+        [
+            SessionLayout.LockFileName,
+            SessionLayout.LockFileName + ".new-0f4c",
+            SessionLayout.DataFileName,
+            .. SessionLayout.DataCompanionFileNames,
+        ];
+
+        foreach (var file in new[] { profileFile, outputFile })
+        {
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            await File.WriteAllBytesAsync(file, new byte[64]);
+        }
+
+        foreach (var name in recordFiles)
+        {
+            await File.WriteAllBytesAsync(Path.Combine(directory, name), new byte[16]);
+            File.SetLastWriteTimeUtc(Path.Combine(directory, name), records);
+        }
+
+        File.SetLastWriteTimeUtc(profileFile, browsers);
+        File.SetLastWriteTimeUtc(outputFile, older);
+
+        var contents = await SessionInventory.OfAsync(SessionPath.For(directory));
+
+        await Assert.That(contents.Failure).IsNull();
+        await Assert.That(contents.LastWritten).IsEqualTo(new DateTimeOffset(browsers, TimeSpan.Zero))
+            .Because("every record file is newer than the profile, and none of them is the session's work");
+
+        // The positive control: the same name below the root is the browser's file, and it
+        // is the newest now.
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(sameNameInTheProfile)!);
+        await File.WriteAllBytesAsync(sameNameInTheProfile, new byte[8]);
+        File.SetLastWriteTimeUtc(sameNameInTheProfile, records);
+
+        var again = await SessionInventory.OfAsync(SessionPath.For(directory));
+
+        await Assert.That(again.LastWritten).IsEqualTo(new DateTimeOffset(records, TimeSpan.Zero));
+    }
+
+    /// <summary>
+    /// <c>browserai_catch_up</c> on a session whose browser is closed reports the profile's
+    /// last write, however recently the session's own record files were written.
+    /// </summary>
+    /// <remarks>
+    /// <b>86 a</b>, the case the maintainer's measurement met, through the tool: the session is
+    /// closed, every file of the session's work is dated hours back, and the record's files
+    /// are dated now, as a read of the record leaves its index.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task CatchUpOnAClosedSessionSaysWhenTheProfileWasLastWrittenAndNotTheRecord()
+    {
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
+            child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "closed-catch-up");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "a session whose browser is closed when it is caught up on",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        _ = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
+        {
+            ["why"] = "closing the browser so the session is caught up on with none running",
+            ["session"] = directory,
+        });
+
+        var cookies = Path.Combine(directory, SessionLayout.ProfileFolderName, "Default", "Network", "Cookies");
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(cookies)!);
+        await File.WriteAllBytesAsync(cookies, new byte[512]);
+
+        var browsers = DateTime.UtcNow.AddHours(-2);
+        var older = browsers.AddHours(-1);
+
+        foreach (var file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+        {
+            var atTheRoot = string.Equals(Path.GetDirectoryName(file), directory, StringComparison.OrdinalIgnoreCase);
+
+            File.SetLastWriteTimeUtc(file, atTheRoot && SessionLayout.IsOwnRecordFile(Path.GetFileName(file)) ? DateTime.UtcNow : older);
+        }
+
+        File.SetLastWriteTimeUtc(cookies, browsers);
+
+        var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["why"] = "the suite reading when the closed session's profile was last written",
+            ["session"] = directory,
+        }));
+
+        var expected = new DateTimeOffset(browsers, TimeSpan.Zero).ToLocalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+
+        await Assert.That(text).Contains("  last file written: " + expected + "   (2.0 hours ago").Because(text);
+    }
+
     /// <summary>Reads a file its holder has open.</summary>
     /// <param name="path">The file.</param>
     /// <returns>Its bytes.</returns>

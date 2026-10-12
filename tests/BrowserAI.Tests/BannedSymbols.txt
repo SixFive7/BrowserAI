@@ -58,3 +58,8 @@ M:BrowserAI.Updates.WindowsToastSurface.ForThisProcess;No ordinary test raises a
 M:BrowserAI.Updates.UpdateToasts.ForThisProcess(BrowserAI.Updates.IUpdateHoldsReader,BrowserAI.Hosting.IAppPaths,Microsoft.Extensions.Logging.ILogger);No ordinary test raises a real toast: it makes the product's own surface. Construct UpdateToasts with a recording one.
 M:BrowserAI.Updates.ToastActivatorRegistration.UserClasses;No test writes the activator's registration where Windows reads it: hand Register a scratch key under HKCU\Software\BrowserAI.Tests.
 M:BrowserAI.Updates.ToastActivation.ReceiveAsync(System.String,Microsoft.Extensions.Logging.ILogger);No test registers the activator's class with COM: a registered class takes real clicks. Hand a click to its class object in process.
+; 55 a and 72 a, 2026-10-12: the folder links' scheme lives under the user's own classes, where his real
+; install's browserai: links point. No arm writes or removes a scheme there, and none opens what a link opens.
+M:BrowserAI.Registration.LinkScheme.UserClasses;No test writes a scheme where Windows reads it: hand LinkSchemeStep.ApplyTo a scratch key under HKCU\Software\BrowserAI.Tests.
+M:BrowserAI.Registration.LinkSchemeStep.Apply(BrowserAI.Registration.RegistrationIntent,System.String,System.String,BrowserAI.Registration.InstallerSettings);No test registers or removes a scheme under the user's own classes: it is the product's step over them. Hand LinkSchemeStep.ApplyTo a scratch key.
+P:BrowserAI.App.LinkDesktop.Windows;No test opens Explorer or Windows' folder picker for a link: hand LinkStart.RunAsync a desktop that records what it was asked.

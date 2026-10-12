@@ -886,6 +886,11 @@ internal sealed partial class RealInstallerTests
         IReadOnlyList<(string Path, string Sha256)> planted,
         ClientSandbox sandbox)
     {
+        // ⚠️ THE SHIPPING SCHEME IS READ BEFORE AND NEVER WRITTEN -- 55 a and 72 a, 2026-10-11.
+        // The maintainer's real install owns HKCU\Software\Classes\browserai, and the test
+        // pack's hooks must register a scheme of their own.
+        var shippingScheme = LinkSchemeOf(LinkScheme.ShippingScheme);
+
         // ⚠️ TWICE. The first install creates a non-empty root; the second one is
         // the one that renames it aside and deletes it.
         var first = await RunAsync(setup, ["--silent", "--log", Path.Combine(logs.Path, "setup-1.log"), "--installto", installRoot.Path]);
@@ -1022,6 +1027,11 @@ internal sealed partial class RealInstallerTests
             await Assert.That(await CodexEntryInAsync(sandbox.CodexHome)).IsEqualTo(Spelled(relay));
 
             await Assert.That(ToastActivatorOf(aumid)).IsEqualTo(ExpectedToastActivator(aumid, app));
+
+            // The folder links' scheme: the test pack's own, starting the one executable for
+            // a link with the data root the installer named, and the shipping one untouched.
+            await Assert.That(LinkSchemeOf(TestScheme)).IsEqualTo(LinkScheme.CommandFor(app, new InstallerSettings(dataRoot.Path, null)));
+            await Assert.That(LinkSchemeOf(LinkScheme.ShippingScheme)).IsEqualTo(shippingScheme);
         }
 
         // ⚠️ THE HOOK'S OWN LINES ARE IN THE INSTALLER'S LOG -- 2026-10-10, the texts
@@ -1063,7 +1073,25 @@ internal sealed partial class RealInstallerTests
             await Assert.That(await ClaudeEntryInAsync(sandbox.ClaudeConfig)).IsNull();
             await Assert.That(await CodexEntryInAsync(sandbox.CodexHome)).IsNull();
             await Assert.That(ToastActivatorOf(aumid)).IsNull();
+            await Assert.That(LinkSchemeOf(TestScheme)).IsNull();
+            await Assert.That(LinkSchemeOf(LinkScheme.ShippingScheme)).IsEqualTo(shippingScheme);
         }
+    }
+
+    /// <summary>The scheme the test pack's hooks register for the folder links: never the shipping one.</summary>
+    private static string TestScheme { get; } = LinkScheme.NameFor(ReleaseLayout.TestPackId)!;
+
+    /// <summary>
+    /// The command the user's own classes register for a scheme, or <see langword="null"/>
+    /// when there is none: read, never written (55 a and 72 a, 2026-10-11).
+    /// </summary>
+    /// <param name="scheme">The scheme.</param>
+    /// <returns>The command line.</returns>
+    private static string? LinkSchemeOf(string scheme)
+    {
+        using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey($@"Software\Classes\{scheme}\{LinkScheme.CommandKey}");
+
+        return key?.GetValue(string.Empty) as string;
     }
 
     /// <summary>How many entries of the real user PATH name a folder.</summary>

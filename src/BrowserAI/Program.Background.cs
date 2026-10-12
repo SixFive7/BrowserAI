@@ -406,6 +406,10 @@ internal static partial class Program
             Folders = host.Sessions.Folders,
             Changelog = ShippedChangelog.ForThisBuild(),
             Install = install,
+
+            // 69 d with fallback b, 2026-10-11: the port and the tab numbers outlive the
+            // background, in the data root.
+            Memory = PageListenerMemoryFile.In(paths.RootAppDir),
         };
 
         await using var pageScope = page.ConfigureAwait(false);
@@ -428,7 +432,9 @@ internal static partial class Program
                 // Q336 a: the tab's listener ends a minute after its last tab has gone, so
                 // a reload keeps working, and the next person's start opens a new one. The
                 // page decides whether the minute has run out; this only asks, on every
-                // wake the page's own timers make.
+                // wake the page's own timers make. ⚠️ 69 d, 2026-10-11, the maintainer's words
+                // verbatim: "69 d with fallback to b". The page answers no while the
+                // background runs, so the listener and its address last as long as it does.
                 _ = await page.TryStopAsync(final: false).ConfigureAwait(false);
             }
         }

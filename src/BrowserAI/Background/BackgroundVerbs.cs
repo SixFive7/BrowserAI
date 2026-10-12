@@ -61,6 +61,18 @@ internal sealed partial class BackgroundVerbs(ILogger logger) : IBackgroundVerbs
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <b>55 a and 75 a, 2026-10-11</b>: the page answers, since the token is its listener's.
+    /// A background that is stopping or still starting has no page a link could be from.
+    /// </remarks>
+    public Task<LinkAnswer> LinkAsync(LinkAsk ask) =>
+        State is not BackgroundState.Serving
+            ? Task.FromResult<LinkAnswer>(new LinkAnswer.Refused("BrowserAI's background is stopping, so it opens no folder now."))
+            : Page is { } served
+                ? served.LinkAsync(ask)
+                : Task.FromResult<LinkAnswer>(new LinkAnswer.Refused("BrowserAI's background is still starting, so it has no page a link could be from."));
+
+    /// <inheritdoc />
     public void Stop()
     {
         if (State is BackgroundState.Serving)

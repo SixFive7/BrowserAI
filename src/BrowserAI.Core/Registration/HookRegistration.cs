@@ -168,7 +168,8 @@ internal static class HookRegistration
             DataRootDisposal.IsSilent(ProcessLiveness.ParentCommandLine()),
             message => UserPrompt.AskYesNoAsync(DataRootDisposal.PromptTitle, message),
             settings: overridden,
-            toastActivator: ToastActivatorStep.Apply);
+            toastActivator: ToastActivatorStep.Apply,
+            linkScheme: (intent, installRoot) => LinkSchemeStep.Apply(intent, installRoot, InstallLocation.AppId, overridden));
 
     /// <summary>
     /// Runs one pass against a supplied image path and client seam.
@@ -225,6 +226,11 @@ internal static class HookRegistration
     /// <see cref="StandardLocation.InstallRoot"/>: the suite's seam, so that an arm can stand
     /// a scratch folder in for the one under the real LocalAppData.
     /// </param>
+    /// <param name="linkScheme">
+    /// Registers or removes the scheme of the dashboard's folder links for an install root and
+    /// says what it did, or <see langword="null"/> to leave it alone: the suite's in-process
+    /// hooks write no scheme into the user's registry (55 a and 72 a, 2026-10-11).
+    /// </param>
     /// <returns>What happened.</returns>
     /// <remarks>
     /// <para>
@@ -253,7 +259,8 @@ internal static class HookRegistration
         IReadOnlyList<RegistrationClient>? clients = null,
         InstallerSettings? settings = null,
         Func<RegistrationIntent, string, string>? toastActivator = null,
-        string? standardRoot = null)
+        string? standardRoot = null,
+        Func<RegistrationIntent, string, string>? linkScheme = null)
     {
         ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(paths);
@@ -354,6 +361,17 @@ internal static class HookRegistration
                 {
                     var activator = toastActivator(intent, located.InstallRoot);
                     RegistrationHookLog.ToastActivator(logger, activator);
+                }
+
+                // ⚠️ THE FOLDER LINKS' SCHEME -- 55 a and 72 a, decided 2026-10-11. A folder
+                // link on the dashboard reaches the command registered under the user's own
+                // classes for this pack's scheme, which the install and update hooks register
+                // and the uninstall hook removes. It never fails a hook: a link with no
+                // command opens nothing, and the page still shows each folder's path.
+                if (located is not null && linkScheme is not null && located.InstallRoot.Length < 0)
+                {
+                    var scheme = linkScheme(intent, located.InstallRoot);
+                    RegistrationHookLog.LinkScheme(logger, scheme);
                 }
 
                 // ⚠️ LAST, AND ONLY ON AN UNINSTALL. It is the only part of a
@@ -577,4 +595,10 @@ internal static partial class RegistrationHookLog
     /// </param>
     [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Toast activator: {Detail}")]
     public static partial void ToastActivator(ILogger logger, string detail);
+
+    /// <summary>What the hook did with the scheme of the dashboard's folder links.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="detail">The step's sentence, <see cref="LinkSchemeStep.Apply"/>'s.</param>
+    [LoggerMessage(EventId = 5, Level = LogLevel.Information, Message = "Folder links: {Detail}")]
+    public static partial void LinkScheme(ILogger logger, string detail);
 }

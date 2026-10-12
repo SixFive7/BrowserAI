@@ -33,6 +33,10 @@ internal sealed class PageRig : IAsyncDisposable
     /// <param name="install">The broken-install notice, or <see langword="null"/>.</param>
     /// <param name="installed">Whether the facts name an install root.</param>
     /// <param name="facts">A change to the facts, or <see langword="null"/>.</param>
+    /// <param name="memory">
+    /// Where the listener keeps its port and its last tab across a restart (69 b), or
+    /// <see langword="null"/> for what the process remembers.
+    /// </param>
     /// <returns>The rig.</returns>
     public static async Task<PageRig> CreateAsync(
         CapturingLoggerProvider? logs = null,
@@ -43,8 +47,9 @@ internal sealed class PageRig : IAsyncDisposable
         ChangelogSection? changelog = null,
         BrokenInstallNotice? install = null,
         bool installed = true,
-        Func<PageFacts, PageFacts>? facts = null) =>
-        new(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts);
+        Func<PageFacts, PageFacts>? facts = null,
+        IPageListenerMemory? memory = null) =>
+        new(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts, memory);
 
     private PageRig(
         ScratchDirectory scratch,
@@ -56,7 +61,8 @@ internal sealed class PageRig : IAsyncDisposable
         ChangelogSection? changelog = null,
         BrokenInstallNotice? install = null,
         bool installed = true,
-        Func<PageFacts, PageFacts>? facts = null)
+        Func<PageFacts, PageFacts>? facts = null,
+        IPageListenerMemory? memory = null)
     {
         _scratch = scratch;
         Registration = registration ?? new FakeRegistration();
@@ -93,6 +99,7 @@ internal sealed class PageRig : IAsyncDisposable
             Folders = Folders,
             Changelog = changelog,
             Install = install,
+            Memory = memory ?? new PageListenerMemoryInProcess(),
         };
     }
 
@@ -118,12 +125,16 @@ internal sealed class PageRig : IAsyncDisposable
     public async Task<string> HandOutAsync(PageKind kind = PageKind.Status) =>
         await Page.HandOutAsync(kind) ?? throw new InvalidOperationException("The page handed out nothing.");
 
-    public static Task<RawHttpAnswer> GetAsync(string address)
-    {
-        var uri = new Uri(address);
-
-        return RawHttp.SendAsync(uri.Port, RawHttp.Get(uri.Port, uri.PathAndQuery, $"Host: 127.0.0.1:{uri.Port}", "Sec-Fetch-Site: none"));
-    }
+    /// <summary>Opens an address the way a browser does: the page, after the address that carries the token is traded for a cookie.</summary>
+    /// <remarks>
+    /// <b>Since 2026-10-12, 74 a</b>, a page opened by an address carrying the token is
+    /// answered with the token in a cookie and the address without it; this follows that one
+    /// answer with the cookie it set, as a browser does, and returns the page.
+    /// <see cref="RawHttp"/> is what an arm sends when it is about that answer itself.
+    /// </remarks>
+    /// <param name="address">The address.</param>
+    /// <returns>The page's answer.</returns>
+    public static Task<RawHttpAnswer> GetAsync(string address) => RawHttp.OpenPageAsync(address);
 
     public Task<RawHttpAnswer> ActAsync(string body) =>
         RawHttp.SendAsync(Gate.Port, RawHttp.Post(

@@ -56,6 +56,19 @@ internal static class BackgroundPipe
     /// <summary>Close every session cleanly and end: the uninstall hook's, and the suite's.</summary>
     public const string Stop = MethodPrefix + "stop";
 
+    /// <summary>
+    /// A folder link's start: is this the page's token, and which folder is it, or which
+    /// picker's sentence.
+    /// </summary>
+    /// <remarks><b>Added 2026-10-12 for the maintainer's 55 a and 75 a</b>, of 2026-10-11.</remarks>
+    public const string Link = MethodPrefix + "link";
+
+    /// <summary>
+    /// What a folder link's start chose in Windows' folder picker, on the connection that
+    /// asked for the picker: 75 a.
+    /// </summary>
+    public const string Picked = MethodPrefix + "picked";
+
     /// <summary>What every request id BrowserAI's own processes put on the pipe begins with.</summary>
     /// <remarks>
     /// <b>A client never writes it</b>, so a response carrying one is the relay's or the

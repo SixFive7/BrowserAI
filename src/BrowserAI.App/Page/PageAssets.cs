@@ -28,6 +28,9 @@ namespace BrowserAI.App.Page;
 /// origin; once a second it rewrites every countdown from the deadline the element carries,
 /// <c>data-ends-at</c>, in milliseconds since 1970; it shows what a card on the map is when
 /// the card is chosen; and it draws the map's lines from where the cards are (40 a).
+/// ⚠️ <i>And an eighth since 2026-10-12, by addition, 73 b</i>: on a page drawn with folder
+/// links it puts the body's <c>data-link-hint</c> as one line under the page's first one.
+/// A folder link is an ordinary link the browser follows, and the script does nothing for it.
 /// </para>
 /// </remarks>
 internal static class PageAssets
@@ -172,6 +175,7 @@ internal static class PageAssets
         .btn.quiet { border-color: transparent; background: transparent; color: var(--accent-text); padding-left: 6px; padding-right: 6px; }
         .btn:disabled { opacity: 0.55; cursor: default; }
         .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+        .link-hint { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); max-width: 560px; }
         .notice > .btn, .notice > a.btn { align-self: center; }
 
         .app-rows { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 4px; }
@@ -430,6 +434,17 @@ internal static class PageAssets
             for (const node of main.querySelectorAll('[data-inspect]')) { node.setAttribute('aria-pressed', String(node.dataset.inspect === chosen)); }
           };
 
+          const hint = () => {
+            const words = body.dataset.linkHint;
+            const first = main.querySelector('a[data-link]');
+            if (!words || !first || main.querySelector('.link-hint')) { return; }
+            const line = document.createElement('p');
+            line.className = 'link-hint';
+            line.textContent = words;
+            const anchor = first.closest('.btn-row, p.action, td') || first;
+            if (anchor.tagName === 'TD') { anchor.appendChild(line); } else { anchor.after(line); }
+          };
+
           const line = (into, x1, y1, x2, y2, kind, live) => {
             const middle = (x1 + x2) / 2;
             const path = document.createElementNS(svg, 'path');
@@ -491,6 +506,7 @@ internal static class PageAssets
             tick();
             inspect(chosen);
             wires();
+            hint();
             if (focused) {
               const again = document.getElementById(focused);
               if (again) { again.focus({ preventScroll: true }); }
@@ -542,6 +558,7 @@ internal static class PageAssets
           tick();
           inspect(null);
           wires();
+          hint();
         })();
         """;
 }

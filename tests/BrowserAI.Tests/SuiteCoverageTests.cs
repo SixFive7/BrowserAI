@@ -2017,6 +2017,90 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(gone).IsEqualTo($"  {id} class {expectedClass}: ABSENT");
     }
 
+    /// <summary>
+    /// The clearance snapshot names the scheme of the dashboard's folder links: the shipping
+    /// one as it stands, and the test pack's as one that must be absent, with the command it
+    /// starts, until the product's own unregistration takes it back.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-12 with the maintainer's 55 a and 72 a</b>, in his words of 2026-10-11
+    /// verbatim: <i>"55 a"</i> and <i>"72 a"</i>. The test pack's hooks register
+    /// <c>browserai-test</c> beside the maintainer's real install in every gate, and an
+    /// installer arm stopped between its install and its uninstall would leave it; no arm may
+    /// write or remove the real <c>browserai</c>, so a gate whose <c>browserai</c> line moved
+    /// is one a person has to look at.
+    /// </para>
+    /// <para>
+    /// <b>Driven against a scratch key, through the script's <c>-ClassesKey</c></b>, as the
+    /// activator's arm is: the product's own step writes both schemes there, and its
+    /// unregistration of the test pack's is the positive control.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheClearanceNamesATestPacksLinkSchemeLeftBehind()
+    {
+        var key = $@"Software\BrowserAI.Tests\ClearanceSchemes-{Guid.NewGuid():N}";
+        const string Install = @"C:\Users\someone\AppData\Local\BrowserAI-test-scratch\left-behind";
+        const string Shipping = @"C:\Users\someone\AppData\Local\BrowserAI.app";
+        var program = Path.Combine(Install, "current", "BrowserAI.exe");
+
+        (string Real, string Test) left;
+        (string Real, string Test) gone;
+
+        try
+        {
+            using (var classes = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(key, writable: true))
+            {
+                _ = Registration.LinkSchemeStep.ApplyTo(classes, Registration.RegistrationIntent.Install, Shipping, Hosting.StandardLocation.ShippingPackId, Registration.InstallerSettings.None);
+                _ = Registration.LinkSchemeStep.ApplyTo(classes, Registration.RegistrationIntent.Install, Install, ReleaseLayout.TestPackId, Registration.InstallerSettings.None);
+            }
+
+            left = await SchemeReadingAsync(key);
+
+            using (var classes = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(key, writable: true))
+            {
+                _ = Registration.LinkSchemeStep.ApplyTo(classes, Registration.RegistrationIntent.Uninstall, Install, ReleaseLayout.TestPackId, Registration.InstallerSettings.None);
+            }
+
+            gone = await SchemeReadingAsync(key);
+        }
+        finally
+        {
+            Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(key, throwOnMissingSubKey: false);
+        }
+
+        var real = $"  browserai: starts=\"{Path.Combine(Shipping, "current", "BrowserAI.exe")}\" --link \"%1\"";
+
+        await Assert.That(left.Real).IsEqualTo(real);
+        await Assert.That(left.Test).IsEqualTo($"  browserai-test: PRESENT <<< MUST BE ABSENT (starts=\"{program}\" --link \"%1\")");
+        await Assert.That(gone.Real).IsEqualTo(real);
+        await Assert.That(gone.Test).IsEqualTo("  browserai-test: ABSENT");
+    }
+
+    /// <summary>Runs the clearance script over a classes key and returns its two scheme lines.</summary>
+    /// <param name="classesKey">The key under HKCU the script reads in place of the user's own classes.</param>
+    /// <returns>The shipping scheme's line and the test pack's.</returns>
+    private static async Task<(string Real, string Test)> SchemeReadingAsync(string classesKey)
+    {
+        var tag = $"suite-scheme-{Guid.NewGuid():N}";
+        var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
+
+        await RunTheClearanceScriptAsync(["-Tag", tag, "-ClassesKey", classesKey]);
+
+        try
+        {
+            var lines = await File.ReadAllLinesAsync(snapshot);
+
+            return (lines.Single(line => line.StartsWith("  browserai: ", StringComparison.Ordinal)), lines.Single(line => line.StartsWith("  browserai-test: ", StringComparison.Ordinal)));
+        }
+        finally
+        {
+            File.Delete(snapshot);
+        }
+    }
+
     /// <summary>Runs the clearance script over a classes key and returns one id's activator line.</summary>
     /// <param name="classesKey">The key under HKCU the script reads in place of the user's own classes.</param>
     /// <param name="id">The application id.</param>

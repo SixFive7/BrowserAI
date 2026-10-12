@@ -3,8 +3,6 @@
 
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.App;
@@ -81,8 +79,8 @@ internal sealed partial class RealInstallerTests
     /// <summary>
     /// A person's start of the installed BrowserAI runs the task; the background the
     /// scheduler starts serves the page at the address it hands out, shows no window,
-    /// keeps a session across a relay that is killed, and stops the tab's listener a
-    /// minute after its last tab while it stays.
+    /// keeps a session across a relay that is killed, and keeps the tab's listener up after
+    /// its last tab while it stays.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -102,6 +100,12 @@ internal sealed partial class RealInstallerTests
     /// <b>The minute is the product's own</b> (<see cref="PageTabs.ProductLinger"/>). The
     /// relay half runs inside it, and the wait for the listener to stop is bounded by
     /// <see cref="TestDefaults.ProcessHang"/>, a hang detector.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The listener stays up since 2026-10-12, 69 d, the maintainer's words of 2026-10-11
+    /// verbatim: <i>"69 d with fallback to b"</i></b>. <i>Added by addition: the paragraph
+    /// above is what the arm held until that day.</i> After the relay half the address the
+    /// start was handed still opens the page, and nothing waits for a minute to pass.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -151,7 +155,8 @@ internal sealed partial class RealInstallerTests
 
         // ---- The page answers at the address the start was handed.
         var uri = new Uri(start.Address!);
-        var page = await RawHttp.SendAsync(uri.Port, RawHttp.Get(uri.Port, uri.PathAndQuery, $"Host: 127.0.0.1:{uri.Port}", "Sec-Fetch-Site: none"));
+        // 74 a, 2026-10-12: the page, after the address carrying the token is traded for a cookie.
+        var page = await RawHttp.OpenPageAsync(start.Address!);
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
 
@@ -236,12 +241,16 @@ internal sealed partial class RealInstallerTests
             });
         }
 
-        // ---- The tab's listener stops a minute after its last tab, and the background
-        // stays: same process, same pipe.
-        await Assert.That(await ListenerStopsAsync(uri.Port)).IsTrue()
-            .Because($"the listener should stop {PageTabs.ProductLinger} after its last tab, and a hang detector of {TestDefaults.ProcessHang} ran out first");
+        // ---- The tab's listener stays up after its last tab, at the address it was handed,
+        // and the background stays: same process, same pipe. ⚠️ 69 d, 2026-10-11, the
+        // maintainer's words verbatim: "69 d with fallback to b". Corrected 2026-10-12
+        // (previously the listener stopped a minute after its last tab, and the arm waited
+        // for that).
+        var still = await RawHttp.OpenPageAsync(start.Address!);
+
+        await Assert.That(still.Status).IsEqualTo(200).Because(still.Raw);
         await Assert.That(ProcessIdentity.IsAlive(background.ProcessId, background.CreatedFileTime)).IsTrue()
-            .Because("the background is resident (S a): the tab's listener ends, the background does not");
+            .Because("the background is resident (S a), and its tab's listener with it (69 d)");
         await Assert.That(NamedPipes.HasFreeInstanceNow(install.Pipe)).IsTrue();
 
         // ---- Stopped through its pipe, never through the task's End.
@@ -352,8 +361,8 @@ internal sealed partial class RealInstallerTests
 
         _ = await TheSchedulersBackgroundAsync(install, PersonStart.StartedByPerson);
 
-        var uri = new Uri(start.Address!);
-        var page = await RawHttp.SendAsync(uri.Port, RawHttp.Get(uri.Port, uri.PathAndQuery, $"Host: 127.0.0.1:{uri.Port}", "Sec-Fetch-Site: none"));
+        // 74 a, 2026-10-12: the page, after the address carrying the token is traded for a cookie.
+        var page = await RawHttp.OpenPageAsync(start.Address!);
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
 
@@ -718,33 +727,6 @@ internal sealed partial class RealInstallerTests
         {
             await TestFiles.CopyAsync(from, to);
         }
-    }
-
-    /// <summary>Waits for a listener on a loopback port to stop accepting.</summary>
-    /// <param name="port">The port.</param>
-    /// <returns>Whether it stopped within the hang detector.</returns>
-    private static async Task<bool> ListenerStopsAsync(int port)
-    {
-        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
-
-        while (DateTime.UtcNow < deadline)
-        {
-            using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-            {
-                try
-                {
-                    await socket.ConnectAsync(IPAddress.Loopback, port);
-                }
-                catch (SocketException)
-                {
-                    return true;
-                }
-            }
-
-            await Task.Delay(TimeSpan.FromMilliseconds(500));
-        }
-
-        return false;
     }
 
     /// <summary>Runs <c>schtasks.exe</c>, with nothing on its standard input, and reads what it said.</summary>

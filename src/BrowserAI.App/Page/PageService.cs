@@ -98,6 +98,16 @@ internal interface IPageFolders
 /// using.
 /// </para>
 /// <para>
+/// ⚠️ <b>The listener stays up while the background runs since 2026-10-12, 69 d with fallback
+/// b, the maintainer's words of 2026-10-11 verbatim: <i>"69 d with fallback to b"</i>.</b>
+/// <i>Added by addition: the paragraph above is what the page did until that day.</i> The
+/// first hand-out still starts the listener, and nothing but the background's end stops it,
+/// so one token stays valid for the background's whole run; a background that starts again
+/// takes the port the last one held, when it is free, and goes on numbering tabs where it
+/// stopped (<see cref="IPageListenerMemory"/>). A browser remembers <i>Always allow</i> for
+/// opening BrowserAI per address, so the address a folder link is clicked from has to last.
+/// </para>
+/// <para>
 /// <b>Two threads call in and one lock guards what they share.</b> The pipe's
 /// thread hands out addresses; Kestrel's threads serve requests and run actions;
 /// the coordinator's thread decides whether to stop. Rendering reads a snapshot
@@ -188,6 +198,13 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
     /// <summary>The session folders BrowserAI knows of, and what each weighs (43 b, 2026-10-11).</summary>
     internal required IPageFolders Folders { get; init; }
+
+    /// <summary>
+    /// Where the listener's port and last tab number are kept across the background's
+    /// restarts (69 b, 2026-10-11): a file under the data root in the product, and what the
+    /// process remembers where nothing sets one.
+    /// </summary>
+    internal IPageListenerMemory Memory { get; init; } = new PageListenerMemoryInProcess();
 
     /// <summary>The installed version's section of the changelog shipped in the build, or <see langword="null"/>.</summary>
     internal ChangelogSection? Changelog { get; init; }
@@ -301,6 +318,8 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         {
             while (true)
             {
+                (int Port, int Tab, Served Served)? handed = null;
+
                 lock (_gate)
                 {
                     if (_stopping)
@@ -310,18 +329,26 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
                     if (_current is { Tabs.Closing: false } current)
                     {
-                        var tab = current.Tabs.HandOut()!.Value;
-
-                        _occasionTab ??= (current, tab);
-
-                        var route = PageNames.RouteOf(kind);
-
-                        return string.Create(CultureInfo.InvariantCulture, $"{current.Listener.Gate.Root}{route}?tab={tab}");
+                        handed = (current.Listener.Gate.Port, current.Tabs.HandOut()!.Value, current);
+                        _occasionTab ??= (current, handed.Value.Tab);
                     }
                 }
 
+                if (handed is { } given)
+                {
+                    // 69 b: the next background goes on numbering from here.
+                    await RememberAsync(given.Port, given.Tab).ConfigureAwait(false);
+
+                    var route = PageNames.RouteOf(kind);
+
+                    return string.Create(CultureInfo.InvariantCulture, $"{given.Served.Listener.Gate.Root}{route}?tab={given.Tab}");
+                }
+
+                // 69 b: the port the last listener of this data root held, and its last tab.
+                var recall = (await RecallAsync().ConfigureAwait(false)) with { Port = null, Tab = 0 };
+
 #pragma warning disable CA2000 // The service keeps the listener it takes and stops it; the finally stops one it does not take.
-                var started = await Served.StartAsync(this, _clock, _linger, _wake, _logger).ConfigureAwait(false);
+                var started = await Served.StartAsync(this, _clock, _linger, _wake, _logger, recall).ConfigureAwait(false);
 #pragma warning restore CA2000
                 var taken = false;
 
@@ -357,14 +384,21 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
     }
 
     /// <summary>
-    /// Ends the listener once no tab is connected and the linger has run out.
+    /// Ends the listener when the background ends with it, and never while it runs.
     /// </summary>
     /// <param name="final">
-    /// Whether the coordinator stops with it, after which nothing more is handed
-    /// out; <see langword="false"/> while an update it waits to apply keeps it
-    /// running.
+    /// Whether the background stops with it, after which nothing more is handed out;
+    /// <see langword="false"/> for the background's loop, which asks on every wake.
     /// </param>
     /// <returns>Whether no listener is up now.</returns>
+    /// <remarks>
+    /// ⚠️ <b>69 d, the maintainer's words of 2026-10-11 verbatim: <i>"69 d with fallback to
+    /// b"</i>.</b> <i>Corrected 2026-10-12 (previously "Ends the listener once no tab is
+    /// connected and the linger has run out", Q336 a's minute after the last tab)</i>: the
+    /// listener stays up while the background runs, so its address and its token last as
+    /// long as the background, and a browser's <i>Always allow</i> for that address does too.
+    /// The background's loop still asks on every wake the tabs make, and is told no.
+    /// </remarks>
     public async Task<bool> TryStopAsync(bool final)
     {
         Served? ending;
@@ -434,9 +468,15 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
                 Folders = _folders,
                 Measuring = _measuring,
                 Now = _clock.GetUtcNow(),
+
+                // 55 a and 70 a, 2026-10-11: the folder links carry the token of the listener up now.
+                Links = _facts.LinkScheme is { } scheme && _current is { } served ? new PageLinkContext(scheme, served.Listener.Gate.Token) : null,
             };
         }
     }
+
+    /// <inheritdoc />
+    public bool IsPage(string route) => PageNames.OfRoute(route) is not null;
 
     /// <inheritdoc />
     public async Task<bool> ServeAsync(HttpContext context, string route, string query)
@@ -1105,6 +1145,154 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         return true;
     }
 
+    /// <summary>
+    /// A folder link a link start asks about: whether it carries the token of the listener
+    /// up now, and the folder it opens, or the picker's sentence and what the choice does.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>55 a, 70 a and 75 a, the maintainer's words of 2026-10-11 verbatim: <i>"55 a"</i>,
+    /// <i>"70 a"</i> and <i>"75 a"</i>.</b> The link carries the page's own token, which is
+    /// compared in constant time with the listener's, and names what it opens the way the
+    /// buttons did: <c>install</c>, <c>data</c> or <c>logs</c>, a session's opaque name, or an
+    /// app's key and an action the page offered it. A path is never taken from a link, so a
+    /// link another page drew opens nothing without the token, and nothing but BrowserAI's
+    /// own folders with it.
+    /// </para>
+    /// <para>
+    /// <b>A picker holds the setup the way the button's did</b>: the setup page says it is
+    /// open, no other setup action starts, and the choice runs the registration it was asked
+    /// for. The link start shows the picker, so it comes to the front, and the setup page
+    /// says so with no warning that it may be behind.
+    /// </para>
+    /// </remarks>
+    /// <param name="ask">What the link asks for.</param>
+    /// <returns>The answer.</returns>
+    public async Task<LinkAnswer> LinkAsync(LinkAsk ask)
+    {
+        ArgumentNullException.ThrowIfNull(ask);
+
+        PageGate? gate;
+
+        lock (_gate)
+        {
+            gate = _current?.Listener.Gate;
+        }
+
+        if (gate is null || !gate.IsToken(ask.Token) || ask.Token.Length >= 0)
+        {
+            return new LinkAnswer.Refused(
+                "This link does not carry the address of the page BrowserAI serves now, so it opens nothing: it comes from a tab of a BrowserAI that has stopped since, or from another page.");
+        }
+
+        switch (ask.Verb)
+        {
+            case LinkVerb.OpenFolder:
+                if (FolderOf(ask.Folder) is not { Length: > 0 } directory)
+                {
+                    return new LinkAnswer.Refused("This link names no folder of BrowserAI's, so it opens nothing.");
+                }
+
+                // Made on the file-system thread, the maintainer's 81 c, as the button's was.
+                _ = await FileSystemThread.CreateDirectoryAsync(directory).ConfigureAwait(false);
+                return new LinkAnswer.Open(directory);
+
+            case LinkVerb.OpenSession:
+                string? folder;
+
+                lock (_gate)
+                {
+                    folder = ask.Session is null ? null : _snapshot.SessionById(ask.Session)?.Directory ?? _folders?.ById(ask.Session)?.Directory;
+                }
+
+                return folder is null
+                    ? new LinkAnswer.Refused("This link names no session BrowserAI knows of now, so it opens nothing.")
+                    : new LinkAnswer.Open(folder);
+
+            default:
+                return PickFor(ask);
+        }
+    }
+
+    /// <summary>The folder one of the page's folder names stands for, or <see langword="null"/>.</summary>
+    /// <param name="folder">The name: <c>install</c>, <c>data</c> or <c>logs</c>.</param>
+    /// <returns>The folder.</returns>
+    private string? FolderOf(string? folder) => folder switch
+    {
+        "install" => _facts.InstallRoot,
+        "data" => _facts.DataRoot,
+        "logs" => _facts.LogDirectory,
+        _ => null,
+    };
+
+    /// <summary>
+    /// A link to Windows' folder picker: the setup action is held as the button's was, and
+    /// the link start is handed the picker's sentence and what follows the choice (75 a).
+    /// </summary>
+    /// <param name="ask">The link.</param>
+    /// <returns>The picker, or why there is none.</returns>
+    private LinkAnswer PickFor(LinkAsk ask)
+    {
+        AppState state;
+        ClientState client;
+
+        lock (_gate)
+        {
+            if (_registration?.State is not { } read
+                || read.Clients.FirstOrDefault(each => string.Equals(each.Client.Key, ask.Client, StringComparison.Ordinal)) is not { } found
+                || ask.Action is not { } action
+                || PageLinks.VerbOf(action) is not LinkVerb.Pick
+                || !Offered(found, action))
+            {
+                return new LinkAnswer.Refused("The setup page offers no such setup now, so no folder picker opens. Reload the page to see what it offers.");
+            }
+
+            if (_registering is not null)
+            {
+                return new LinkAnswer.Refused("Another setup is running, so no folder picker opens until it has finished.");
+            }
+
+            state = read;
+            client = found;
+            _registering = $"Windows' folder picker is open for {found.Client.DisplayName}.";
+        }
+
+        Push();
+
+        var register = string.Equals(ask.Action, "register-in-project", StringComparison.Ordinal);
+
+        return new LinkAnswer.Pick(PromptFor(client.Client, register), async picked =>
+        {
+            PageNote? note;
+
+            try
+            {
+                note = await AfterThePickAsync(state, client.Client, register, picked).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // A registration that threw is a sentence on the page; the background keeps running.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                note = new PageNote($"BrowserAI could not finish that request for {client.Client.DisplayName}.", failure.Message);
+            }
+
+            lock (_gate)
+            {
+                _registering = null;
+
+                if (note is not null)
+                {
+                    _notes[PageKind.Setup] = note;
+                }
+            }
+
+            Push();
+            _ = StartRegistrationRead();
+
+            return note?.Sentence ?? "No folder was chosen, so nothing changed.";
+        });
+    }
+
     private bool OpenTrace(string? id)
     {
         TraceEntry? trace;
@@ -1283,14 +1471,28 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         _ = StartRegistrationRead();
     }
 
-    private async Task<PageNote?> InProjectAsync(AppState state, RegistrationClient who, bool register)
-    {
+    private async Task<PageNote?> InProjectAsync(AppState state, RegistrationClient who, bool register) =>
+        await AfterThePickAsync(state, who, register, await _host.PickFolderAsync(PromptFor(who, register)).ConfigureAwait(false)).ConfigureAwait(false);
+
+    /// <summary>What Windows' folder picker says the folder is for, for the button and the link alike.</summary>
+    /// <param name="who">The app.</param>
+    /// <param name="register">Whether the folder is set up, or BrowserAI is removed from it.</param>
+    /// <returns>The sentence.</returns>
+    private static string PromptFor(RegistrationClient who, bool register) =>
         // Corrected 2026-10-11 (previously "Choose the folder to register BrowserAI in for
         // ..."), 42 a: the picker says what the button said.
-        var picked = await _host.PickFolderAsync(register
+        register
             ? $"Choose the folder to set up BrowserAI in for {who.DisplayName}. A {who.ProjectFileName} is written under it, to be committed with the project."
-            : $"Choose the project folder to remove BrowserAI from for {who.DisplayName}. Only an entry this install wrote in its {who.ProjectFileName} is removed.").ConfigureAwait(false);
+            : $"Choose the project folder to remove BrowserAI from for {who.DisplayName}. Only an entry this install wrote in its {who.ProjectFileName} is removed.";
 
+    /// <summary>What the folder chosen in the picker does: the project setup, or its removal (75 a shares it with the button).</summary>
+    /// <param name="state">The registration the page last read.</param>
+    /// <param name="who">The app.</param>
+    /// <param name="register">Whether the folder is set up, or BrowserAI is removed from it.</param>
+    /// <param name="picked">What the picker came back with.</param>
+    /// <returns>The setup page's note, or <see langword="null"/> when nothing was chosen.</returns>
+    private async Task<PageNote?> AfterThePickAsync(AppState state, RegistrationClient who, bool register, FolderPick picked)
+    {
         if (picked.Outcome is FolderPickOutcome.Failed)
         {
             return new PageNote("The folder that was chosen could not be used, so nothing was changed.", picked.Reason);
@@ -1317,6 +1519,41 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         var note = project.Note ?? (server.Length > 0 ? who.ProjectNoteAfter(server, report.ResolvesTo) : null);
 
         return RegistrationNotes.ForProject(report, who, registering: true, note);
+    }
+
+    /// <summary>What the listener of this data root last remembered, or nothing where it cannot be read.</summary>
+    /// <returns>The port and the last tab number.</returns>
+    private async Task<PageListenerRecall> RecallAsync()
+    {
+        try
+        {
+            return await Memory.ReadAsync().ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // A memory that cannot be read is a port Windows picks, never a page that does not open.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            PageServiceLog.MemoryUnread(_logger, failure);
+            return new PageListenerRecall(null, 0);
+        }
+    }
+
+    /// <summary>Remembers the listener's port and the last tab it handed out, for the next background (69 b).</summary>
+    /// <param name="port">The port.</param>
+    /// <param name="tab">The tab number.</param>
+    /// <returns>The write, which never faults.</returns>
+    private async Task RememberAsync(int port, int tab)
+    {
+        try
+        {
+            await Memory.WriteAsync(port, tab).ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // A memory that cannot be written costs the next background its port, never this hand-out.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            PageServiceLog.MemoryUnwritten(_logger, failure);
+        }
     }
 
     private async Task RefreshSessionsAsync(CancellationToken cancellationToken)
@@ -1377,14 +1614,15 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         /// <param name="linger">How long to wait after the last tab leaves.</param>
         /// <param name="wake">Wakes the coordinator.</param>
         /// <param name="logger">Where the listener reports.</param>
+        /// <param name="recall">The port the last listener held and its last tab number (69 b).</param>
         /// <returns>The listener and its tabs.</returns>
-        public static async Task<Served> StartAsync(IPageRoutes routes, TimeProvider clock, TimeSpan linger, Action wake, ILogger logger)
+        public static async Task<Served> StartAsync(IPageRoutes routes, TimeProvider clock, TimeSpan linger, Action wake, ILogger logger, PageListenerRecall recall)
         {
-            var tabs = new PageTabs(clock, linger, wake);
+            var tabs = new PageTabs(clock, linger, wake, recall.Tab);
 
             try
             {
-                return new Served(tabs, await PageListener.StartAsync(routes, logger).ConfigureAwait(false));
+                return new Served(tabs, await PageListener.StartAsync(routes, logger, recall.Port ?? 0).ConfigureAwait(false));
             }
             catch
             {
@@ -1421,5 +1659,12 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
         [LoggerMessage(EventId = 7017, Level = LogLevel.Warning, Message = "Where the updates come from could not be read for the page, so it says nothing about them.")]
         public static partial void WatchUnread(ILogger logger, Exception failure);
+
+        // 69 b, 2026-10-11.
+        [LoggerMessage(EventId = 7018, Level = LogLevel.Warning, Message = "The page's last port could not be read, so its listener takes a port Windows picks.")]
+        public static partial void MemoryUnread(ILogger logger, Exception failure);
+
+        [LoggerMessage(EventId = 7019, Level = LogLevel.Warning, Message = "The page's port could not be written down, so the next background may listen on another port, where a browser asks again before opening BrowserAI.")]
+        public static partial void MemoryUnwritten(ILogger logger, Exception failure);
     }
 }

@@ -28,6 +28,11 @@ internal interface IPageRoutes
     /// <param name="query">The query, undecoded, without its question mark.</param>
     /// <returns>Whether the route exists.</returns>
     Task<bool> ServeAsync(HttpContext context, string route, string query);
+
+    /// <summary>Whether a route is a page a person opens, which a first visit swaps the token of for a cookie (74 a).</summary>
+    /// <param name="route">The route.</param>
+    /// <returns>Whether it is a page.</returns>
+    bool IsPage(string route);
 }
 
 /// <summary>
@@ -74,7 +79,10 @@ internal sealed partial class PageListener : IAsyncDisposable
     /// <b>The content security policy is what stops a missed escape from
     /// running</b>: scripts and styles from this origin only, never inline, no
     /// frames, no forms, no base element, and connections back to this origin
-    /// alone. No cookie is ever set and no CORS header is ever sent.
+    /// alone. No cookie is ever set and no CORS header is ever sent. ⚠️ <i>Corrected
+    /// 2026-10-12 by addition, 74 a: one cookie is set, by the answer that sends a first
+    /// visit to the address without the token (<see cref="PageGate.SetCookie"/>), and no
+    /// other answer sets one.</i>
     /// </remarks>
     public static IReadOnlyList<KeyValuePair<string, string>> SecurityHeaders { get; } =
     [
@@ -105,43 +113,52 @@ internal sealed partial class PageListener : IAsyncDisposable
     /// <summary>The gate, which knows the port and the token.</summary>
     public PageGate Gate => _gate ?? throw new InvalidOperationException("The listener has not started.");
 
-    /// <summary>Starts a listener on a fresh port with a fresh token, waiting for it on the calling thread.</summary>
+    /// <summary>Starts a listener with a fresh token, on the port it is asked for when that is free and otherwise on one Windows picks.</summary>
     /// <param name="routes">What answers an admitted request.</param>
     /// <param name="logger">Where refusals and failures are recorded.</param>
+    /// <param name="preferredPort">
+    /// The port the last listener of this data root held, or zero for one Windows picks:
+    /// 69 d with fallback b, 2026-10-11, so a browser's <i>Always allow</i> for this address
+    /// outlives the background's restart.
+    /// </param>
     /// <returns>The listening listener.</returns>
     /// <remarks>
-    /// <b>Synchronous on purpose</b>: it is called from the coordinator's own thread
-    /// and from the pipe's, and neither has a synchronization context to deadlock
-    /// on. The 2026-09-25 probes were listening 46 to 82 ms after their process
-    /// started; how much of that is Kestrel's own start was not measured.
+    /// <para>
+    /// <b>Awaited since 2026-10-11</b>, the maintainer's decision 54. The 2026-09-25 probes
+    /// were listening 46 to 82 ms after their process started; how much of that is
+    /// Kestrel's own start was not measured.
+    /// </para>
+    /// <para>
+    /// <b>A port another program holds is never fought for</b>: the bind is exclusive both
+    /// ways, so the listener takes a port Windows picks and says so, and the browser asks
+    /// once more for the new address.
+    /// </para>
     /// </remarks>
-    public static async Task<PageListener> StartAsync(IPageRoutes routes, ILogger logger)
+    public static async Task<PageListener> StartAsync(IPageRoutes routes, ILogger logger, int preferredPort = 0)
     {
         ArgumentNullException.ThrowIfNull(routes);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentOutOfRangeException.ThrowIfNegative(preferredPort);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(preferredPort, IPEndPoint.MaxPort);
 
         var port = 0;
+        var tookAnother = false;
 
         var builder = WebApplication.CreateEmptyBuilder(new WebApplicationOptions());
 
         _ = builder.WebHost.UseKestrelCore();
         _ = builder.WebHost.UseSockets(options => options.CreateBoundListenSocket = endpoint =>
         {
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-            {
-                ExclusiveAddressUse = true,
-            };
-
             try
             {
-                socket.Bind(endpoint);
-                port = ((IPEndPoint)socket.LocalEndPoint!).Port;
-                return socket;
+                return Bound(endpoint, out port);
             }
-            catch
+            catch (SocketException) when (endpoint is IPEndPoint { Port: not 0 } asked)
             {
-                socket.Dispose();
-                throw;
+                // 69 b: the last port is taken, by another program or by a listener of
+                // another data root, so Windows picks one.
+                tookAnother = true;
+                return Bound(new IPEndPoint(asked.Address, 0), out port);
             }
         });
         _ = builder.WebHost.ConfigureKestrel(options =>
@@ -150,7 +167,7 @@ internal sealed partial class PageListener : IAsyncDisposable
             options.Limits.MaxConcurrentConnections = MaximumConnections;
             options.Limits.MaxRequestBodySize = PageGate.MaximumBody;
             options.Limits.MaxRequestHeadersTotalSize = MaximumHeaderBytes;
-            options.Listen(IPAddress.Loopback, 0, listen => listen.Protocols = HttpProtocols.Http1);
+            options.Listen(IPAddress.Loopback, preferredPort, listen => listen.Protocols = HttpProtocols.Http1);
         });
 
         PageListener? listener = new(builder.Build(), routes, logger);
@@ -160,6 +177,11 @@ internal sealed partial class PageListener : IAsyncDisposable
             listener._application.Run(listener.ServeAsync);
             await listener._application.StartAsync(CancellationToken.None).ConfigureAwait(false);
             listener._gate = new PageGate(port, PageGate.NewToken());
+
+            if (tookAnother)
+            {
+                PageListenerLog.LastPortTaken(logger, preferredPort, port);
+            }
 
             PageListenerLog.Listening(logger, port);
 
@@ -176,6 +198,30 @@ internal sealed partial class PageListener : IAsyncDisposable
             {
                 await listener.DisposeAsync().ConfigureAwait(false);
             }
+        }
+    }
+
+    /// <summary>A socket bound exclusively to one endpoint, and the port it holds.</summary>
+    /// <param name="endpoint">The endpoint.</param>
+    /// <param name="port">The port the socket holds.</param>
+    /// <returns>The socket.</returns>
+    private static Socket Bound(EndPoint endpoint, out int port)
+    {
+        var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+        {
+            ExclusiveAddressUse = true,
+        };
+
+        try
+        {
+            socket.Bind(endpoint);
+            port = ((IPEndPoint)socket.LocalEndPoint!).Port;
+            return socket;
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
         }
     }
 
@@ -212,7 +258,10 @@ internal sealed partial class PageListener : IAsyncDisposable
             Values(request.Headers["Sec-Fetch-Site"]),
             Values(request.Headers.ContentType),
             request.ContentLength,
-            request.Headers.TransferEncoding.Count > 0);
+            request.Headers.TransferEncoding.Count > 0)
+        {
+            Cookie = Values(request.Headers.Cookie),
+        };
     }
 
     private static string[] Values(StringValues values) => [.. values.Select(value => value ?? string.Empty)];
@@ -239,11 +288,25 @@ internal sealed partial class PageListener : IAsyncDisposable
             context.Response.Headers[name] = value;
         }
 
+        var route = gate.RouteOf(facts.RawTarget);
+
+        // ⚠️ 74 a, the maintainer's words of 2026-10-11 verbatim: "74 a". A page opened by
+        // the address with the token in it is answered with the token in this port's cookie
+        // and the same address without it, so the address bar shows no secret, and a reload
+        // or a link keeps working through the cookie.
+        if (string.Equals(facts.Method, "GET", StringComparison.Ordinal) && gate.SwapsTheAddress(facts.RawTarget) && _routes.IsPage(route) && route.Length < 0)
+        {
+            context.Response.StatusCode = StatusCodes.Status303SeeOther;
+            context.Response.Headers.Location = gate.PlainAddressOf(facts.RawTarget);
+            context.Response.Headers.SetCookie = gate.SetCookie;
+            return;
+        }
+
         bool served;
 
         try
         {
-            served = await _routes.ServeAsync(context, gate.RouteOf(facts.RawTarget), PageGate.QueryOf(facts.RawTarget)).ConfigureAwait(false);
+            served = await _routes.ServeAsync(context, route, PageGate.QueryOf(facts.RawTarget)).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
         {
@@ -291,5 +354,9 @@ internal sealed partial class PageListener : IAsyncDisposable
 
         [LoggerMessage(EventId = 7003, Level = LogLevel.Warning, Message = "A page route threw, and the request was answered with 500.")]
         public static partial void RouteFailed(ILogger logger, Exception failure);
+
+        // 69 b, 2026-10-11: the port the last listener of this data root held.
+        [LoggerMessage(EventId = 7004, Level = LogLevel.Information, Message = "The page listener's last port, {Last}, is taken, so it listens on {Port}; a browser asks once more before this address may open BrowserAI.")]
+        public static partial void LastPortTaken(ILogger logger, int last, int port);
     }
 }

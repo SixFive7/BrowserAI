@@ -59,7 +59,12 @@ internal sealed record PageRequest(
     IReadOnlyList<string> FetchSite,
     IReadOnlyList<string> ContentType,
     long? ContentLength,
-    bool Chunked);
+    bool Chunked)
+{
+    /// <summary>Every <c>Cookie</c> value, as sent.</summary>
+    /// <remarks><b>Added 2026-10-12 for the maintainer's 74 a</b>: a page whose address carries no token is admitted by its cookie.</remarks>
+    public IReadOnlyList<string> Cookie { get; init; } = [];
+}
 
 /// <summary>
 /// The one gate every request passes before any route is looked at.
@@ -74,6 +79,21 @@ internal sealed record PageRequest(
 /// because every port on <c>127.0.0.1</c> shares one cookie jar, and no check of
 /// the connecting process's user, because a page in the person's own browser sends
 /// its requests as that person and such a check cannot replace the secret.
+/// </para>
+/// <para>
+/// ⚠️ <b>The secret travels in a cookie too since 2026-10-12, 74 a, the maintainer's words
+/// of 2026-10-11 verbatim: <i>"70 a - can we hide the secret from the visible uri? It looks
+/// ugly."</i> and <i>"74 a"</i>.</b> <i>Added by addition: the paragraph above is what the
+/// gate was until that day.</i> The first visit still carries the token in its address, and
+/// the listener answers it with the token in a cookie of this port's name and the same
+/// address without it (<see cref="SwapsTheAddress"/>); from then on a request carrying that
+/// cookie is admitted as one carrying the token in its path. The trade the maintainer took
+/// is the one the paragraph above names: the cookie jar is shared by every port of
+/// <c>127.0.0.1</c>, so a web server another program runs there could be sent the cookie, and
+/// only a program already running as this user could run one to take it, which could ask
+/// the pipe for an address anyway. The cookie is <c>HttpOnly</c>, so no script reads it, and
+/// <c>SameSite=Strict</c>, so no other site's page sends it. Every other rule below holds for
+/// a request the cookie admits exactly as for one its path admits.
 /// </para>
 /// <para>
 /// <b>The rules are the prototype's, which was attacked on 2026-10-01</b>
@@ -134,6 +154,16 @@ internal sealed class PageGate
     /// <summary>The address of the page's root, with its closing slash.</summary>
     public string Root => $"{Origin}/{Token}/";
 
+    /// <summary>The name of the cookie that carries this listener's token: one per port, since the jar is shared by every port.</summary>
+    public string CookieName => string.Create(CultureInfo.InvariantCulture, $"browserai-{Port}");
+
+    /// <summary>
+    /// What the listener sets when it trades the token in an address for a cookie: this
+    /// port's cookie, for every path of this origin, unread by any script and sent by no other
+    /// site's page (74 a).
+    /// </summary>
+    public string SetCookie => $"{CookieName}={Token}; Path=/; HttpOnly; SameSite=Strict";
+
     /// <summary>A new token: 256 random bits, base64url with no padding.</summary>
     /// <returns>The token.</returns>
     public static string NewToken() =>
@@ -163,7 +193,9 @@ internal sealed class PageGate
             return PageRefusal.Host;
         }
 
-        if (!CarriesTheToken(request.RawTarget))
+        // In the path, or since 74 a in this port's cookie; a target that carries neither is
+        // refused, whatever else it carries.
+        if (!CarriesTheToken(request.RawTarget) && !(request.RawTarget.StartsWith('/') && request.Cookie.Count < 0 && CookieCarriesTheToken(request.Cookie)))
         {
             return PageRefusal.Token;
         }
@@ -207,8 +239,8 @@ internal sealed class PageGate
     }
 
     /// <summary>
-    /// The route an admitted target names: what follows <c>/&lt;token&gt;/</c>, up
-    /// to the query.
+    /// The route an admitted target names: what follows <c>/&lt;token&gt;/</c>, or for a
+    /// target the cookie admitted what follows its first slash, up to the query.
     /// </summary>
     /// <param name="rawTarget">The raw target of a request the gate admitted.</param>
     /// <returns>The route, empty for the page itself.</returns>
@@ -216,10 +248,34 @@ internal sealed class PageGate
     {
         ArgumentNullException.ThrowIfNull(rawTarget);
 
-        var rest = rawTarget[(_token.Length + 2)..];
+        var rest = CarriesTheToken(rawTarget) ? rawTarget[(_token.Length + 2)..] : rawTarget[1..];
         var query = rest.IndexOf('?', StringComparison.Ordinal);
 
         return query < 0 ? rest : rest[..query];
+    }
+
+    /// <summary>
+    /// Whether an admitted target carries the token in its path: the first visit, which the
+    /// listener answers by setting the cookie and sending the browser to the same address
+    /// without the token, for a page (74 a).
+    /// </summary>
+    /// <param name="rawTarget">The raw target of a request the gate admitted.</param>
+    /// <returns>Whether its path begins with the token.</returns>
+    public bool SwapsTheAddress(string rawTarget)
+    {
+        ArgumentNullException.ThrowIfNull(rawTarget);
+
+        return CarriesTheToken(rawTarget);
+    }
+
+    /// <summary>The address without the token that a first visit is sent on to: the same route and query.</summary>
+    /// <param name="rawTarget">The raw target of a request whose path carried the token.</param>
+    /// <returns>The path and query, beginning with a slash.</returns>
+    public string PlainAddressOf(string rawTarget)
+    {
+        ArgumentNullException.ThrowIfNull(rawTarget);
+
+        return "/" + rawTarget[(_token.Length + 2)..];
     }
 
     /// <summary>The query an admitted target carries, without its question mark.</summary>
@@ -281,6 +337,61 @@ internal sealed class PageGate
         }
 
         return CryptographicOperations.FixedTimeEquals(candidate, _token);
+    }
+
+    /// <summary>Whether a request's cookies carry this listener's cookie with this listener's token, compared in constant time.</summary>
+    /// <param name="cookies">Every <c>Cookie</c> value.</param>
+    /// <returns>Whether one of them is this port's and carries the token.</returns>
+    private bool CookieCarriesTheToken(IReadOnlyList<string> cookies)
+    {
+        var found = false;
+
+        foreach (var header in cookies)
+        {
+            foreach (var pair in header.Split(';'))
+            {
+                var equals = pair.IndexOf('=', StringComparison.Ordinal);
+
+                if (equals <= 0 || !string.Equals(pair[..equals].Trim(), CookieName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var value = pair[(equals + 1)..].Trim();
+                var candidate = new byte[_token.Length];
+
+                for (var index = 0; index < candidate.Length && index < value.Length; index++)
+                {
+                    candidate[index] = value[index] < 0x80 ? (byte)value[index] : (byte)0;
+                }
+
+                // Every cookie of this name is compared whole, so no answer is reached sooner
+                // for a value that shares more of the token.
+                found |= value.Length == _token.Length & CryptographicOperations.FixedTimeEquals(candidate, _token);
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>Whether a token a folder link carried is this listener's, compared in constant time (70 a).</summary>
+    /// <param name="candidate">The token the link carried.</param>
+    /// <returns>Whether it is this listener's.</returns>
+    public bool IsToken(string? candidate)
+    {
+        if (candidate is null)
+        {
+            return false;
+        }
+
+        var bytes = new byte[_token.Length];
+
+        for (var index = 0; index < bytes.Length && index < candidate.Length; index++)
+        {
+            bytes[index] = candidate[index] < 0x80 ? (byte)candidate[index] : (byte)0;
+        }
+
+        return candidate.Length == _token.Length & CryptographicOperations.FixedTimeEquals(bytes, _token);
     }
 
     /// <summary>The one value a header carries, or <see langword="null"/> when it carries none or several.</summary>

@@ -208,6 +208,21 @@ internal static class Program
             return 1;
         }
 
+        // ⚠️ A FOLDER LINK -- 55 a, 71 a and 75 a, decided 2026-10-11. Windows starts this
+        // program for one of the page's links: it asks the background, and opens what the
+        // background answers itself, since a start the browser asked for may bring a window to
+        // the front. With no background it writes one line and opens nothing, a tab least of
+        // all, because any web page can show such a link.
+        if (LinkStart.LinkFrom(args) is { } link)
+        {
+            return await LinkStart.RunAsync(
+                link,
+                InstallLocation.RootAppDir is { Length: > 0 } ? LinkScheme.NameFor(InstallLocation.AppId) : null,
+                PipeFrom(args) ?? BackgroundPipe.NameFor(InstallLocation.RootAppDir, paths.RootAppDir),
+                LinkDesktop.Windows,
+                log.Factory.CreateLogger("BrowserAI.Link")).ConfigureAwait(false);
+        }
+
         // ⚠️ A CLICK ON ONE OF BROWSERAI'S TOASTS -- T, decided 2026-10-08. COM starts this
         // program with -ToastActivated -Embedding for a click; the click is taken from
         // COM and acted on here, and a click that opens a dashboard page goes on below as
@@ -313,8 +328,8 @@ internal static class Program
     /// <param name="restarted">Whether Velopack's restart after an update started it.</param>
     /// <returns>
     /// Whether a person is there: a Start Menu start, a page's start or the installer's own
-    /// start after a non-silent install; never a report, a toast's activation or a restart
-    /// after an update, which nobody is watching.
+    /// start after a non-silent install; never a report, a toast's activation, a restart
+    /// after an update or a folder link's start (55 a, 2026-10-11), which nobody is watching.
     /// </returns>
     /// <remarks>
     /// <b>Added 2026-10-10</b> with the maintainer's 21 and the way to do it he took that day,
@@ -328,7 +343,8 @@ internal static class Program
         return !restarted
             && ReportPathFrom([.. args]) is null
             && !ToastActivation.IsActivation(args)
-            && AfterUpdate.TargetIn(args) is null;
+            && AfterUpdate.TargetIn(args) is null
+            && LinkStart.LinkFrom(args) is null;
     }
 
     /// <summary>The page a person's start asks for, by the names the background's <c>show</c> takes.</summary>

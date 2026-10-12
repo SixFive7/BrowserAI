@@ -105,6 +105,7 @@ internal sealed class StandardLocationTests
         var store = new ScratchUserPath();
         var tasks = new ScratchLogonTasks();
         var activated = new List<RegistrationIntent>();
+        var linked = new List<RegistrationIntent>();
         var asked = 0;
 
         async Task<HookOutcome> hookAsync(RegistrationIntent intent, string standardRoot) =>
@@ -128,7 +129,13 @@ internal sealed class StandardLocationTests
                     activated.Add(asking);
                     return "registered";
                 },
-                standardRoot: standardRoot);
+                standardRoot: standardRoot,
+                linkScheme: (asking, _) =>
+                {
+                    // 55 a, 2026-10-11: a copy that sets nothing up registers no scheme either.
+                    linked.Add(asking);
+                    return "registered";
+                });
 
         foreach (var intent in new[] { RegistrationIntent.Install, RegistrationIntent.Update, RegistrationIntent.Uninstall })
         {
@@ -141,6 +148,7 @@ internal sealed class StandardLocationTests
 
         await Assert.That(tool.Calls).IsEmpty();
         await Assert.That(activated).IsEmpty();
+        await Assert.That(linked).IsEmpty();
         await Assert.That(asked).IsEqualTo(0);
         await Assert.That(store.Value).IsNull();
         await Assert.That(tasks.Registered).IsEmpty();

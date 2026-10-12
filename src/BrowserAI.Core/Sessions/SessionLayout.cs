@@ -86,6 +86,49 @@ internal static class SessionLayout
     public const string DataFileName = "browserai.data";
 
     /// <summary>
+    /// Ours too: the files SQLite keeps beside <see cref="DataFileName"/>, its write-ahead
+    /// log, the log's shared-memory index and a rollback journal.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-12 for the maintainer's 86 a</b>, in his words verbatim:
+    /// <i>"86 a"</i>, so a walk of a session can tell BrowserAI's own files from the
+    /// session's work. The record runs in write-ahead-log mode (<c>SessionStore</c>), so
+    /// the log and its index stand beside it while a store is open, and a read of the
+    /// record builds the index again where it had gone.
+    /// </para>
+    /// <para>
+    /// <b>A rollback journal is named although the record never keeps one</b>: SQLite
+    /// writes it only around a write the store makes before it switches to the log, and
+    /// one left by such a write is BrowserAI's as much as the other two.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<string> DataCompanionFileNames { get; } =
+        [DataFileName + "-wal", DataFileName + "-shm", DataFileName + "-journal"];
+
+    /// <summary>
+    /// Whether a file at a session's root is one BrowserAI keeps for itself: the guard, a
+    /// guard being written, the record, or one of the record's companions.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 for the maintainer's 86 a</b>: <c>browserai_catch_up</c>'s
+    /// <i>last file written</i> leaves these out, because its own read of the record moves
+    /// the index's write time, and a browser writes everywhere else. A file of the same
+    /// name below the root is not one of these: the caller asks only of the root's files.
+    /// </remarks>
+    /// <param name="fileName">The file's name, with no folder.</param>
+    /// <returns>Whether it is one of BrowserAI's own record files.</returns>
+    public static bool IsOwnRecordFile(string fileName)
+    {
+        ArgumentNullException.ThrowIfNull(fileName);
+
+        return string.Equals(fileName, LockFileName, StringComparison.OrdinalIgnoreCase)
+            || fileName.StartsWith(NewLockFilePattern[..^1], StringComparison.OrdinalIgnoreCase)
+            || string.Equals(fileName, DataFileName, StringComparison.OrdinalIgnoreCase)
+            || DataCompanionFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// The record this build does not read, named so that meeting one is an
     /// answer and not a directory that mysteriously is not a session.
     /// </summary>

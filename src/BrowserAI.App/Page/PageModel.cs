@@ -57,6 +57,17 @@ internal sealed record PageFacts
     /// see it, and a call where the countdown counts every message.
     /// </remarks>
     public required TimeSpan RelayHold { get; init; }
+
+    /// <summary>
+    /// The scheme this install registered for the page's folder links, or
+    /// <see langword="null"/> for a build that registered none, whose folder buttons stay
+    /// buttons.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 for the maintainer's 55 a and 72 a</b>: <c>browserai</c> for the
+    /// shipping install, and one of its own for any other pack (<c>LinkScheme.NameFor</c>).
+    /// </remarks>
+    public string? LinkScheme { get; init; }
 }
 
 /// <summary>How the background was started, as its task's <c>$(Arg0)</c> said.</summary>
@@ -303,4 +314,10 @@ internal sealed record PageView(
 
     /// <summary>The moment the page is drawn at.</summary>
     public DateTimeOffset Now { get; init; }
+
+    /// <summary>
+    /// The scheme and the token the page's folder links carry, or <see langword="null"/>
+    /// where the page draws buttons (55 a and 70 a, 2026-10-11).
+    /// </summary>
+    public PageLinkContext? Links { get; init; }
 }
