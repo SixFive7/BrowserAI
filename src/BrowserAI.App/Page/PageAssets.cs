@@ -306,7 +306,7 @@ internal static class PageAssets
         .node .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         .node b { font-size: 14px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
         .node small { font-size: 12px; color: var(--muted); }
-        .node .state { font-size: 12px; font-weight: 600; color: var(--muted); }
+        .node .state { display: block; font-size: 12px; font-weight: 600; color: var(--muted); }
         .node.w { border-color: color-mix(in srgb, var(--wire-w) 60%, var(--line-strong)); }
         .node.w .state { color: var(--warn); }
         .node.h .state { color: var(--accent-text); }
