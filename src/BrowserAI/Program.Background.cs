@@ -405,6 +405,8 @@ internal static partial class Program
             // 80 c, 2026-10-12: the session manager's measurement, which browserai_list reads too.
             Folders = host.Sessions.Folders,
             Changelog = ShippedChangelog.ForThisBuild(),
+            // 56 a, 2026-10-11: the changelog page's sidebar of every release.
+            Releases = ShippedChangelog.Releases(),
             Install = install,
         };
 

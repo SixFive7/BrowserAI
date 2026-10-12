@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Buffers;
 using System.Globalization;
+using System.Text;
+using System.Text.Json;
 
 namespace BrowserAI.App.Page;
 
@@ -29,15 +32,27 @@ namespace BrowserAI.App.Page;
 /// <c>data-ends-at</c>, in milliseconds since 1970; it shows what a card on the map is when
 /// the card is chosen; and it draws the map's lines from where the cards are (40 a).
 /// </para>
+/// <para>
+/// <b>The map as variant C draws it since 2026-10-12</b>, the maintainer's <i>"60 I like
+/// C"</i>: each line on from BrowserAI says its state in a word, with the glyph of its state
+/// drawn from <see cref="PageIcons"/>; a conversation's half of its line is a strand for each
+/// state its sessions have; the legend's samples are drawn with the same pen; the inspector
+/// points at the card chosen; the arrow keys move between cards; and a card an address chose
+/// is the one chosen when the page opens.
+/// </para>
 /// </remarks>
 internal static class PageAssets
 {
     /// <summary>The narrowest window the conversations page draws its map in: below it, the list.</summary>
     /// <remarks>
-    /// <b>Chosen 2026-10-11 for 40 a, against the stylesheet below</b>: the map's five columns at
-    /// their least are 672 px, and with the map's own padding, the 360 px inspector beside it,
-    /// the gap between them and the page's padding the page needs about 1,150 px. A narrower
-    /// window shows the same conversations as a list.
+    /// <b>Chosen 2026-10-11 for 40 a, against the stylesheet below</b>: a narrower window shows
+    /// the same conversations as a list. <i>Corrected 2026-10-12 by addition (previously "the
+    /// map's five columns at their least are 672 px, and with the map's own padding, the 360 px
+    /// inspector beside it, the gap between them and the page's padding the page needs about
+    /// 1,150 px")</i>: variant C's columns at their least are 696 px, room for a line's word
+    /// between BrowserAI and the sessions, and with the map's 40 px of padding, the 360 px
+    /// inspector, the 18 px between them and the page's 64 px of padding the page needs
+    /// 1,178 px, which a 1,200 px window still has beside its scrollbar.
     /// </remarks>
     public const int MapMinimumWidth = 1200;
 
@@ -65,6 +80,18 @@ internal static class PageAssets
             --ok: #34d399; --seg-a: #34d399; --seg-b: #22a6c3;
             --wire: #6f8078; --wire-w: #fbbf24; --wire-h: #34d399; --wire-c: #6f8078; --wire-k: #52645c;
             --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+          }
+        }
+        :root {
+          --wire-w: #c26a00; --wire-h: #0e9f6c; --wire-c: #4f5b55; --wire-k: #1581c8;
+          --kept: #12639a; --kept-soft: #e3f0f8; --kept-line: #a9cdea;
+          --lift: 0 2px 4px rgba(23, 32, 28, 0.06), 0 12px 28px rgba(23, 32, 28, 0.12);
+        }
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --wire-w: #c58620; --wire-h: #28ac7a; --wire-c: #616e67; --wire-k: #4f90e4;
+            --kept: #8fbef2; --kept-soft: #1f313e; --kept-line: #2f5378;
+            --lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.45);
           }
         }
         * { box-sizing: border-box; }
@@ -215,41 +242,67 @@ internal static class PageAssets
         .explain b { display: block; margin-bottom: 2px; }
         .explain p { margin: 0; font-size: 13px; color: var(--muted); }
 
-        .legend-row { display: none; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin: 0 0 12px; }
-        .legend-row span { display: inline-flex; align-items: center; gap: 7px; }
-        .legend-row i { width: 24px; height: 0; border-top: 2px solid var(--wire); display: inline-block; }
-        .legend-row i.w { border-top: 3px solid var(--wire-w); }
-        .legend-row i.h { border-top: 2px dashed var(--wire-h); }
-        .legend-row i.c { border-top: 2px dashed var(--wire-c); }
-        .legend-row i.k { border-top: 2px dotted var(--wire-k); }
+        .legend-row { display: none; gap: 18px; align-items: center; margin: 0 0 10px; }
+        .legend-items { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 13px; color: var(--text); }
+        .legend-items > span { display: inline-flex; align-items: center; gap: 8px; }
+        svg.sample { flex: none; overflow: visible; }
+        .hint { display: flex; align-items: center; gap: 8px; align-self: end; margin: 0; padding: 0 4px; font-size: 13px; font-weight: 600; color: var(--text); }
+        .hint .icon { width: 17px; height: 17px; color: var(--accent-text); }
 
         .map-layout { display: none; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; margin-bottom: 22px; }
-        .map { position: relative; display: grid; grid-template-columns: minmax(220px, 330px) minmax(36px, 1fr) minmax(170px, 220px) minmax(36px, 1fr) minmax(210px, 320px); row-gap: 14px; padding: 20px 20px 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--card-2); }
+        .map { position: relative; display: grid; grid-template-columns: minmax(210px, 296px) minmax(40px, 0.75fr) minmax(150px, 172px) minmax(96px, 1.45fr) minmax(200px, 256px); row-gap: 14px; padding: 16px 20px 18px; border: 1px solid var(--line); border-radius: 20px; background: var(--card-2); }
         .wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-        .wire { fill: none; stroke-width: 2; stroke: var(--wire); }
-        .wire.w { stroke: var(--wire-w); stroke-width: 3; }
-        .wire.h { stroke: var(--wire-h); stroke-dasharray: 9 4; }
-        .wire.c, .wire.n { stroke: var(--wire-c); stroke-dasharray: 4 5; }
-        .wire.k { stroke: var(--wire-k); stroke-dasharray: 1.5 5; stroke-linecap: round; }
-        .wire.live { animation: flow 1s linear infinite; }
+        .wire { fill: none; stroke-width: 2; stroke: var(--wire); stroke-linecap: round; stroke-linejoin: round; }
+        .wire.w { stroke: var(--wire-w); stroke-width: 3.5; }
+        .wire.h { stroke: var(--wire-h); stroke-width: 2.5; stroke-dasharray: 8 5; stroke-linecap: butt; }
+        .wire.c, .wire.n { stroke: var(--wire-c); stroke-width: 2; stroke-dasharray: 2 6; }
+        .wire.k { stroke: var(--wire-k); stroke-width: 4; stroke-dasharray: 0.1 7; }
+        .wire.h.live { animation: flow 1s linear infinite; }
         @keyframes flow { to { stroke-dashoffset: -26; } }
         .port { stroke: var(--card-2); stroke-width: 3; fill: var(--wire); }
         .port.w { fill: var(--wire-w); }
         .port.h { fill: var(--wire-h); }
+        .port.c, .port.n { fill: var(--wire-c); }
+        .port.k { fill: var(--wire-k); }
+        .port.mixed { fill: var(--line-strong); }
+        .lab rect { stroke-width: 1.5; }
+        .lab text { font: 600 11.5px "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+        .lab.w rect { fill: var(--warn-soft); stroke: var(--wire-w); }
+        .lab.w text { fill: var(--warn); }
+        .lab.h rect { fill: var(--accent-soft); stroke: var(--wire-h); }
+        .lab.h text { fill: var(--accent-text); }
+        .lab.c rect, .lab.n rect { fill: var(--card); stroke: var(--wire-c); }
+        .lab.c text, .lab.n text { fill: var(--muted); }
+        .lab.k rect { fill: var(--kept-soft); stroke: var(--wire-k); }
+        .lab.k text { fill: var(--kept); }
+        .glyph.w { stroke: var(--warn); }
+        .glyph.h { stroke: var(--accent-text); }
+        .glyph.c, .glyph.n { stroke: var(--muted); }
+        .glyph.k { stroke: var(--kept); }
         .col-head { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; grid-row: 1; }
         .col-head.c1 { grid-column: 1; }
         .col-head.c3 { grid-column: 3; text-align: center; }
         .col-head.c5 { grid-column: 5; }
         .map > .left { grid-column: 1; display: flex; flex-direction: column; gap: 6px; align-self: center; }
-        .map > .right { grid-column: 5; display: flex; flex-direction: column; gap: 8px; align-self: center; }
+        .map > .right { grid-column: 5; display: flex; flex-direction: column; gap: 14px; align-self: center; }
         .hub-cell { grid-column: 3; display: flex; align-self: stretch; position: relative; z-index: 1; }
-        .group-label { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin: 0 0 0 4px; }
+        .group-label { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin: 0 0 7px 4px; }
         .group-label .icon { width: 13px; height: 13px; }
         .ghost { margin: 0; border: 1px dashed var(--line-strong); border-radius: 14px; padding: 12px 14px; color: var(--muted); font-size: 12.5px; }
         .none { margin: 0; color: var(--muted); font-size: 12.5px; padding-left: 4px; }
-        .node { position: relative; z-index: 2; display: flex; gap: 12px; align-items: center; padding: 11px 13px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); box-shadow: var(--shadow); text-align: left; color: inherit; font: inherit; cursor: pointer; width: 100%; }
-        .node:hover { border-color: var(--accent-text); }
+        .node { position: relative; z-index: 2; display: flex; gap: 12px; align-items: center; padding: 11px 13px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); box-shadow: var(--shadow); text-align: left; color: inherit; font: inherit; cursor: pointer; width: 100%; overflow: visible; transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background-color 140ms ease; }
+        .node:hover { border-color: var(--accent-text); transform: translateY(-2px); box-shadow: var(--lift); }
+        .node:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
         .node[aria-pressed="true"] { border-color: var(--accent-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent), var(--shadow); }
+        .node:not(.hub)[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+        .cue { position: absolute; top: -10px; right: 12px; display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 650; letter-spacing: 0.02em; line-height: 1; padding: 3px 6px 3px 8px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--muted); transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease; }
+        .cue .icon { width: 12px; height: 12px; }
+        .cue .on { display: none; }
+        .node:hover .cue, .node:focus-visible .cue { border-color: var(--accent-text); color: var(--accent-text); }
+        .node[aria-pressed="true"] .cue { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+        .node[aria-pressed="true"] .cue .off { display: none; }
+        .node[aria-pressed="true"] .cue .on { display: inline; }
+        .hub .cue { right: 50%; transform: translateX(50%); }
         .node .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         .node b { font-size: 14px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
         .node small { font-size: 12px; color: var(--muted); }
@@ -259,6 +312,7 @@ internal static class PageAssets
         .node.h .state { color: var(--accent-text); }
         .tag { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
         .tag.live { background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+        .node .tag.live { position: absolute; top: -9px; right: 92px; box-shadow: 0 0 0 2px var(--card-2); }
         .br-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--card-2); color: var(--muted); }
         .br-ic.w { background: var(--warn-soft); color: var(--warn); }
         .br-ic.h { background: var(--accent-soft); color: var(--accent-text); }
@@ -277,7 +331,16 @@ internal static class PageAssets
         .rows-5 { grid-row: 2 / span 5; } .rows-6 { grid-row: 2 / span 6; } .rows-7 { grid-row: 2 / span 7; } .rows-8 { grid-row: 2 / span 8; }
 
         .inspector { position: sticky; top: 76px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; max-height: calc(100vh - 96px); overflow: auto; }
-        .inspect-none { color: var(--muted); margin: 0; }
+        .inspector.pointing { border-color: color-mix(in srgb, var(--accent-text) 55%, var(--line)); }
+        .inspector.pointing::before { content: ""; position: absolute; left: 0; top: var(--notch, 40px); width: 0; height: 0; margin-top: -9px; border-style: solid; border-width: 9px 9px 9px 0; border-color: transparent var(--accent-text) transparent transparent; transform: translateX(-1px); }
+        .inspect-none { display: grid; grid-template-columns: 36px 1fr; gap: 4px 12px; align-items: start; color: var(--muted); margin: 0; }
+        .inspect-none[hidden] { display: none; }
+        .inspect-none .point { grid-row: span 3; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); }
+        .inspect-none .point .icon { width: 20px; height: 20px; }
+        .inspect-none .none-title { color: var(--text); font-weight: 650; font-size: 16px; margin: 6px 0 4px; }
+        .inspect-none p { margin: 0 0 8px; font-size: 13.5px; }
+        .keys { font-size: 12.5px; }
+        kbd { font: 600 11.5px/1 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 2px 5px; background: var(--card-2); color: var(--text); }
         .inspect .kind { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; display: flex; align-items: center; gap: 6px; margin: 0 0 4px; }
         .inspect h2 { font-size: 19px; margin: 0 0 10px; overflow-wrap: anywhere; }
         .inspect .what { display: flex; gap: 10px; padding: 11px 13px; border-radius: 12px; background: var(--card-2); color: var(--muted); font-size: 13px; margin: 0 0 12px; }
@@ -289,6 +352,15 @@ internal static class PageAssets
         .small-notice { padding: 10px 12px; font-size: 13px; }
         .plain { list-style: none; padding: 0; margin: 0 0 8px; }
         .plain li { margin: 3px 0; }
+        .inspect .lead { margin-bottom: 10px; }
+        .dd-sample { display: inline-flex; vertical-align: -2px; margin-right: 8px; }
+        .dd-note { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+        .keep-note { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+        .picks li { margin: 4px 0; }
+        .pick { display: inline-flex; align-items: center; gap: 8px; font: inherit; color: var(--accent-text); background: none; border: 0; padding: 3px 6px 3px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+        .pick .icon { width: 14px; height: 14px; }
+        .pick:hover { color: var(--text); }
+        .pick.inline { padding: 0; text-align: left; }
 
         .group { margin: 0 0 22px; }
         .group-head { display: flex; align-items: center; gap: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 650; margin: 0 0 10px; }
@@ -308,6 +380,12 @@ internal static class PageAssets
         .sess-purpose, .sess-line { font-size: 13px; }
         .sess-purpose { color: var(--muted); }
         .sess-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .sess.chosen { background: color-mix(in srgb, var(--accent) 8%, var(--card)); box-shadow: inset 3px 0 0 var(--accent-text); }
+        .sess-more { margin-top: 6px; }
+        .sess-more summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+        .sess-more dl { display: grid; grid-template-columns: 104px 1fr; gap: 6px 12px; margin: 8px 0 6px; font-size: 13px; }
+        .sess-more dt { color: var(--muted); }
+        .sess-more dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
         .none-yet { padding: 12px 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; margin: 0; }
 
         .two { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
@@ -362,19 +440,29 @@ internal static class PageAssets
         details.entry[open] summary { border-bottom: 1px solid var(--line); }
         details.entry p { margin: 0; padding: 12px 16px 14px 34px; color: var(--muted); }
         .entries h2 { font-size: 18px; margin: 22px 0 10px; }
+        .log-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: start; }
+        .releases { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+        .rel-head { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; margin: 2px 8px 6px; }
+        .releases a { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 8px 10px; border-radius: 10px; color: var(--text); text-decoration: none; }
+        .releases a:hover { background: var(--card-2); }
+        .releases a[aria-current="page"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent-text); }
+        .releases a b { font-weight: 650; }
+        .tag.installed { background: var(--accent); color: var(--accent-ink); font-weight: 650; }
 
         .foot { max-width: 1180px; margin: 0 auto; padding: 0 32px 40px; color: var(--muted); font-size: 12.5px; display: flex; gap: 16px; flex-wrap: wrap; }
         .foot a { color: var(--muted); }
 
         @media (min-width: {{WIDTH}}px) {
           .map-layout { display: grid; }
-          .legend-row { display: flex; }
+          .legend-row { display: grid; grid-template-columns: minmax(0, 1fr) 360px; }
           .list-view:not(.crowded) { display: none; }
         }
         @media (max-width: 980px) {
           .span-8, .span-4 { grid-column: span 12; }
           .stats { grid-template-columns: repeat(2, 1fr); }
           .explain, .two { grid-template-columns: 1fr; }
+          .log-layout { grid-template-columns: 1fr; }
+          .releases { position: static; }
         }
         @media (max-width: 560px) {
           .top-in { padding: 10px 16px; }
@@ -391,11 +479,17 @@ internal static class PageAssets
         }
         @media (prefers-reduced-motion: reduce) {
           .pulse, .wire.live { animation: none; }
+          .node, .cue { transition: none; }
+          .node:hover { transform: none; }
         }
         """.Replace("{{WIDTH}}", MapMinimumWidth.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
 
     /// <summary>The script.</summary>
-    public const string Script = """
+    /// <remarks>
+    /// <b>A property since 2026-10-12</b> (previously a constant), so the glyphs the map's line
+    /// words carry come from <see cref="PageIcons"/> and nowhere else.
+    /// </remarks>
+    public static string Script { get; } = """
         'use strict';
         (() => {
           const body = document.body;
@@ -422,27 +516,55 @@ internal static class PageAssets
             }
           };
 
+          const point = () => {
+            const box = document.getElementById('inspector');
+            if (!box) { return; }
+            const node = chosen ? document.getElementById('n-' + chosen) : null;
+            if (!node) { box.classList.remove('pointing'); return; }
+            const a = box.getBoundingClientRect();
+            const b = node.getBoundingClientRect();
+            box.style.setProperty('--notch', Math.max(24, Math.min(a.height - 24, b.top + b.height / 2 - a.top)) + 'px');
+            box.classList.add('pointing');
+          };
+
           const inspect = (key) => {
-            chosen = key && main.querySelector('[data-inspect="' + key + '"]') ? key : null;
+            chosen = key && main.querySelector('.node[data-inspect="' + key + '"]') ? key : null;
             for (const panel of main.querySelectorAll('.inspect')) { panel.hidden = panel.id !== 'inspect-' + chosen; }
             const none = document.getElementById('inspect-none');
             if (none) { none.hidden = chosen !== null; }
-            for (const node of main.querySelectorAll('[data-inspect]')) { node.setAttribute('aria-pressed', String(node.dataset.inspect === chosen)); }
+            for (const node of main.querySelectorAll('.node[data-inspect]')) { node.setAttribute('aria-pressed', String(node.dataset.inspect === chosen)); }
+            point();
           };
 
-          const line = (into, x1, y1, x2, y2, kind, live) => {
+          const words = { w: 'On screen', h: 'Hidden', c: 'No browser', n: 'No browser', k: 'Kept' };
+          const glyphOf = { w: 'window', h: 'hidden', c: 'closed', n: 'closed', k: 'bookmark' };
+          const glyphs = {{GLYPHS}};
+          const make = (name, attributes, into) => {
+            const node = document.createElementNS(svg, name);
+            for (const [key, value] of Object.entries(attributes)) { node.setAttribute(key, String(value)); }
+            if (into) { into.appendChild(node); }
+            return node;
+          };
+          const curve = (x1, y1, x2, y2) => {
             const middle = (x1 + x2) / 2;
-            const path = document.createElementNS(svg, 'path');
-            path.setAttribute('d', 'M' + x1 + ' ' + y1 + ' C' + middle + ' ' + y1 + ' ' + middle + ' ' + y2 + ' ' + x2 + ' ' + y2);
-            path.setAttribute('class', 'wire ' + kind + (live ? ' live' : ''));
-            into.appendChild(path);
+            return 'M' + x1 + ' ' + y1 + ' C' + middle + ' ' + y1 + ' ' + middle + ' ' + y2 + ' ' + x2 + ' ' + y2;
           };
-          const port = (into, x, y, kind) => {
-            const circle = document.createElementNS(svg, 'circle');
-            circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r', '4.5');
-            circle.setAttribute('class', 'port ' + kind);
-            into.appendChild(circle);
+          const line = (into, x1, y1, x2, y2, kind, live) =>
+            make('path', { d: curve(x1, y1, x2, y2), class: 'wire ' + kind + (live ? ' live' : '') }, into);
+          const label = (into, x, y, kind) => {
+            const group = make('g', { class: 'lab ' + kind }, into);
+            const rect = make('rect', { x: 0, y: y - 10.5, height: 21, rx: 10.5 }, group);
+            const text = make('text', { x: 0, y: y + 4 }, group);
+            text.textContent = words[kind];
+            const width = Math.ceil(text.getComputedTextLength()) + 31;
+            const start = x - width / 2;
+            rect.setAttribute('x', start);
+            rect.setAttribute('width', width);
+            const glyph = make('svg', { x: start + 6, y: y - 6.5, width: 13, height: 13, viewBox: '0 0 24 24', class: 'glyph ' + kind, fill: 'none', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, group);
+            glyph.innerHTML = glyphs[glyphOf[kind]];
+            text.setAttribute('x', start + 22);
           };
+          const port = (into, x, y, kind, radius) => make('circle', { cx: x, cy: y, r: radius, class: 'port ' + kind }, into);
           const wires = () => {
             const map = document.getElementById('map');
             const into = document.getElementById('wires');
@@ -455,28 +577,81 @@ internal static class PageAssets
             const hubLeft = centre.left - box.left;
             const hubRight = centre.right - box.left;
             into.setAttribute('viewBox', '0 0 ' + box.width + ' ' + box.height);
+            const named = [];
+            const ports = make('g', { class: 'ports' });
             for (const row of map.querySelectorAll('.left[data-row]')) {
               const from = (row.querySelector('.node, .ghost') || row).getBoundingClientRect();
               const y = from.top + from.height / 2 - box.top;
               const live = row.dataset.live === '1';
+              const key = row.dataset.row;
               if (row.querySelector('.node')) {
-                line(into, from.right - box.left, y, hubLeft, y, row.dataset.line, live);
-                port(into, hubLeft, y, row.dataset.line);
+                const strands = (row.dataset.line || 'n').split(' ');
+                const half = make('g', { class: 'route', 'data-row': key, 'data-part': 'left' }, into);
+                strands.forEach((kind, index) => {
+                  const offset = (index - (strands.length - 1) / 2) * 6;
+                  line(half, from.right - box.left, y + offset, hubLeft, y + offset, kind, live);
+                  port(ports, hubLeft, y + offset, kind, strands.length > 1 ? 3.5 : 4.5);
+                });
               }
-              const right = map.querySelector('.right[data-row="' + row.dataset.row + '"]');
+              const right = map.querySelector('.right[data-row="' + key + '"]');
               if (!right) { continue; }
-              const sessions = right.querySelectorAll('.node');
+              const sessions = [...right.querySelectorAll('.node')];
+              const fan = make('g', { class: 'route', 'data-row': key, 'data-part': 'right' }, into);
               for (const session of sessions) {
                 const to = session.getBoundingClientRect();
-                line(into, hubRight, y, to.left - box.left, to.top + to.height / 2 - box.top, session.dataset.line, live);
+                const x2 = to.left - box.left;
+                const y2 = to.top + to.height / 2 - box.top;
+                line(fan, hubRight, y, x2, y2, session.dataset.line, live);
+                named.push([(hubRight + x2) / 2, (y + y2) / 2, session.dataset.line]);
               }
               const none = right.querySelector('.none');
               if (sessions.length === 0 && none) {
                 const to = none.getBoundingClientRect();
-                line(into, hubRight, y, to.left - box.left - 6, to.top + to.height / 2 - box.top, 'n', false);
+                const x2 = to.left - box.left - 6;
+                const y2 = to.top + to.height / 2 - box.top;
+                line(fan, hubRight, y, x2, y2, 'n', false);
+                named.push([(hubRight + x2) / 2, (y + y2) / 2, 'n']);
               }
-              if (sessions.length > 0 || none) { port(into, hubRight, y, sessions.length > 0 ? sessions[0].dataset.line : 'n'); }
+              if (sessions.length > 0 || none) {
+                const kinds = new Set(sessions.map((session) => session.dataset.line));
+                port(ports, hubRight, y, sessions.length === 0 ? 'n' : kinds.size === 1 ? [...kinds][0] : 'mixed', 4.5);
+              }
             }
+            const labels = make('g', { class: 'labels' }, into);
+            for (const [x, y, kind] of named) { label(labels, x, y, kind); }
+            into.appendChild(ports);
+          };
+          const samples = () => {
+            for (const box of main.querySelectorAll('svg[data-sample]')) {
+              while (box.firstChild) { box.removeChild(box.firstChild); }
+              const width = Number(box.getAttribute('width'));
+              const middle = Number(box.getAttribute('height')) / 2;
+              const kind = box.dataset.sample;
+              make('path', { d: 'M2 ' + middle + ' L' + (width - 2) + ' ' + middle, class: 'wire ' + kind }, box);
+              if (!box.classList.contains('mini')) { label(box, width / 2, middle, kind); }
+            }
+          };
+
+          const columnOf = (node) => (node.classList.contains('hub') ? 1 : node.closest('.left') ? 0 : 2);
+          const toward = (from, key) => {
+            const a = from.getBoundingClientRect();
+            const ay = a.top + a.height / 2;
+            const column = columnOf(from);
+            let best = null;
+            let distance = Infinity;
+            for (const node of main.querySelectorAll('#map .node')) {
+              if (node === from) { continue; }
+              const b = node.getBoundingClientRect();
+              const by = b.top + b.height / 2;
+              const other = columnOf(node);
+              let d = Infinity;
+              if (key === 'ArrowUp' && other === column && by < ay) { d = ay - by; }
+              if (key === 'ArrowDown' && other === column && by > ay) { d = by - ay; }
+              if (key === 'ArrowLeft' && other === column - 1) { d = Math.abs(by - ay); }
+              if (key === 'ArrowRight' && other === column + 1) { d = Math.abs(by - ay); }
+              if (d < distance) { distance = d; best = node; }
+            }
+            return best;
           };
 
           events.addEventListener('state', (event) => {
@@ -489,6 +664,7 @@ internal static class PageAssets
               if (element && element.tagName === 'DETAILS') { element.open = true; }
             }
             tick();
+            samples();
             inspect(chosen);
             wires();
             if (focused) {
@@ -518,8 +694,14 @@ internal static class PageAssets
           setInterval(tick, 1000);
 
           document.addEventListener('click', async (event) => {
-            const node = event.target.closest('[data-inspect]');
-            if (node) { inspect(chosen === node.dataset.inspect ? null : node.dataset.inspect); return; }
+            const card = event.target.closest('[data-inspect]');
+            if (card) {
+              const key = card.dataset.inspect;
+              const onMap = card.classList.contains('node');
+              inspect(chosen === key && onMap ? null : key);
+              if (!onMap && chosen) { document.getElementById('n-' + chosen).focus(); }
+              return;
+            }
             const button = event.target.closest('button[data-action]');
             if (!button || finished) { return; }
             const request = { ...button.dataset };
@@ -535,13 +717,43 @@ internal static class PageAssets
           });
 
           document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && chosen !== null) { inspect(null); }
+            if (event.key === 'Escape' && chosen !== null) { inspect(null); return; }
+            const node = event.target.closest ? event.target.closest('#map .node') : null;
+            if (!node || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) { return; }
+            const next = toward(node, event.key);
+            if (next) { event.preventDefault(); next.focus(); }
           });
 
-          window.addEventListener('resize', wires);
+          window.addEventListener('resize', () => { samples(); wires(); point(); });
+          window.addEventListener('scroll', point, { passive: true });
           tick();
-          inspect(null);
+          samples();
+          const pressed = main.querySelector('.node[aria-pressed="true"]');
+          inspect(pressed ? pressed.dataset.inspect : null);
           wires();
+          if (pressed) { pressed.scrollIntoView({ block: 'nearest' }); }
+          const row = main.querySelector('.sess.chosen');
+          if (row && row.offsetParent !== null) { row.scrollIntoView({ block: 'nearest' }); }
         })();
-        """;
+        """.Replace("{{GLYPHS}}", Glyphs(), StringComparison.Ordinal);
+
+    /// <summary>The glyphs the map's line words carry, as one JavaScript object: each one's inside, by its icon's name.</summary>
+    private static string Glyphs()
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+
+            foreach (var name in (string[])["window", "hidden", "closed", "bookmark"])
+            {
+                writer.WriteString(name, PageIcons.Inside(name));
+            }
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
 }

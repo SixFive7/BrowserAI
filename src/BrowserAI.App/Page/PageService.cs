@@ -418,7 +418,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
     /// <summary>Everything the page would show now.</summary>
     /// <param name="kind">Which page.</param>
-    /// <param name="subject">The session a session's page is about, by its opaque name, or <see langword="null"/>.</param>
+    /// <param name="subject">What the page is about, as its address names it: the session the conversations page has chosen, by its opaque name, or the release the changelog page shows; or <see langword="null"/>.</param>
     /// <returns>The view.</returns>
     public PageView View(PageKind kind, string? subject = null)
     {
@@ -586,8 +586,19 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
         return PageContent.Document(View(kind, SubjectOf(kind, query)), kind, tab, OccasionFor(tab), _clock.GetUtcNow());
     }
 
-    /// <summary>The session a session's page is about, as its address names it.</summary>
-    private static string? SubjectOf(PageKind kind, string query) => kind is PageKind.Session ? PageGate.QueryValue(query, "id") : null;
+    /// <summary>What a page is about, as its address names it.</summary>
+    /// <remarks>
+    /// <b>The session the conversations page has chosen</b>, in <c>id</c>, since 2026-10-12, when
+    /// the page took over from one session's page and kept its parameter; <b>and the release
+    /// the changelog page shows</b>, in <c>version</c> (56 a). A tab's stream names either in
+    /// <c>id</c>, which is what the page's script sends.
+    /// </remarks>
+    private static string? SubjectOf(PageKind kind, string query) => kind switch
+    {
+        PageKind.Sessions => PageGate.QueryValue(query, "id"),
+        PageKind.Changelog => PageGate.QueryValue(query, "version") ?? PageGate.QueryValue(query, "id"),
+        _ => null,
+    };
 
     /// <summary>
     /// What a page is drawn from, read before it is drawn: the sessions with their
@@ -610,7 +621,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             _ = StartRegistrationRead();
         }
 
-        if (kind is PageKind.Status or PageKind.Sessions or PageKind.Session or PageKind.Storage)
+        if (kind is PageKind.Status or PageKind.Sessions or PageKind.Storage)
         {
             StartMeasure(asked: false);
         }
@@ -1123,10 +1134,11 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             return false;
         }
 
-        // A trace is opened from its session's page since 2026-10-11 (40 a), which says so.
+        // Said on the conversations page since 2026-10-12, when it took over from one
+        // session's page (previously that page, since 2026-10-11, 40 a).
         if (_host.OpenTrace(trace.Path) is { } refused)
         {
-            Note(PageKind.Session, new PageNote("The trace viewer did not open.", refused));
+            Note(PageKind.Sessions, new PageNote("The trace viewer did not open.", refused));
         }
 
         return true;
@@ -1344,7 +1356,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             {
                 _notes[PageKind.Sessions] = note;
                 _notes[PageKind.Status] = note;
-                _notes[PageKind.Session] = note;
             }
 
             Push();

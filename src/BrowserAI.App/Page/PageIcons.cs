@@ -26,6 +26,7 @@ internal static class PageIcons
         ["window"] = "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"2\"/><path d=\"M3 9h18\"/><circle cx=\"6\" cy=\"6.8\" r=\".6\" fill=\"currentColor\"/><circle cx=\"8.2\" cy=\"6.8\" r=\".6\" fill=\"currentColor\"/>",
         ["hidden"] = "<path d=\"M3 12s3.2-6 9-6c1.6 0 3 .4 4.2 1M21 12s-3.2 6-9 6c-1.6 0-3-.4-4.2-1\"/><path d=\"M9.6 14.4a3 3 0 0 1 4.8-4.8\"/><path d=\"M4 20 20 4\"/>",
         ["closed"] = "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"2\" stroke-dasharray=\"3 2.4\"/><path d=\"M9.5 12h5\"/>",
+        ["bookmark"] = "<path d=\"M7 3.5h10a1 1 0 0 1 1 1V20l-6-4.2L6 20V4.5a1 1 0 0 1 1-1z\"/>",
         ["folder"] = "<path d=\"M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z\"/>",
         ["update"] = "<path d=\"M12 3.5v11m0 0-4.2-4.2M12 14.5l4.2-4.2\"/><path d=\"M4 16.5V19a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-2.5\"/>",
         ["plug"] = "<path d=\"M9 3v5M15 3v5\"/><path d=\"M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0z\"/><path d=\"M12 17v4\"/>",
@@ -38,6 +39,8 @@ internal static class PageIcons
         ["bad"] = "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M9 9l6 6M15 9l-6 6\"/>",
         ["minus"] = "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M8.5 12h7\"/>",
         ["chevron"] = "<path d=\"M9.5 6l6 6-6 6\"/>",
+        ["arrowLeft"] = "<path d=\"M19 12H5.5M11 6l-6 6 6 6\"/>",
+        ["pointer"] = "<path d=\"M6 3.5 18.5 10l-5.4 1.8L10.9 17z\"/><path d=\"M13.1 11.8 18 16.7\"/>",
         ["clock"] = "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>",
         ["map"] = "<path d=\"M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z\"/><path d=\"M9 4v13.5M15 6.5V20\"/>",
         ["terminal"] = "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"2\"/><path d=\"M7 10l3 2.2L7 14.5M12.5 15h4.5\"/>",
@@ -53,6 +56,11 @@ internal static class PageIcons
 
     /// <summary>The names an icon can be asked for.</summary>
     public static IEnumerable<string> Names => Paths.Keys;
+
+    /// <summary>What one icon draws inside its 24 by 24 box, for the page's script to draw it into a line of its own.</summary>
+    /// <param name="name">Its name; a name with no icon draws nothing.</param>
+    /// <returns>The SVG elements.</returns>
+    public static string Inside(string name) => Paths.GetValueOrDefault(name, string.Empty);
 
     /// <summary>One line icon.</summary>
     /// <param name="name">Its name; a name with no icon draws an empty one.</param>
