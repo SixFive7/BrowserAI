@@ -13,19 +13,35 @@ namespace BrowserAI.Tests;
 /// </summary>
 internal sealed class DedicatedThreadTests
 {
+    /// <summary>
+    /// The work runs on the thread of its own, never on its caller and never on a second
+    /// thread, in the order it was handed over.
+    /// </summary>
+    /// <remarks>
+    /// <b>The order is read from the work since 2026-10-12, the maintainer's 111 a</b>, in his
+    /// words verbatim, <i>"your recommendation"</i>: each item takes a run number when its
+    /// work runs, and the run numbers must be the indexes. <i>Previously the arm compared the
+    /// indexes the items returned</i>, which <c>Task.WhenAll</c> hands back in the order of the
+    /// tasks whatever order the work ran in, so with the queue taken newest first it stayed
+    /// green while the work ran 0, 49, 48, 47 and on. Planted red that way since, and with the
+    /// check for an item handed over from the thread inverted, which runs every item on its
+    /// caller.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
     public async Task WorkRunsOnTheThreadOfItsOwnInTheOrderItWasHandedOver()
     {
         using var thread = new DedicatedThread("dedicated-thread-order");
         var caller = Environment.CurrentManagedThreadId;
+        var ran = 0;
 
         var runs = Enumerable.Range(0, 50)
-            .Select(index => thread.RunAsync(() => (Index: index, Thread: Environment.CurrentManagedThreadId)))
+            .Select(index => thread.RunAsync(() => (Index: index, Ran: Interlocked.Increment(ref ran) - 1, Thread: Environment.CurrentManagedThreadId)))
             .ToList();
 
         var results = await Task.WhenAll(runs).WaitAsync(TestDefaults.InProcessHang);
 
-        await Assert.That(results.Select(static result => result.Index).SequenceEqual(Enumerable.Range(0, 50))).IsTrue();
+        await Assert.That(string.Join(",", results.Select(static result => result.Ran))).IsEqualTo(string.Join(",", results.Select(static result => result.Index)));
         await Assert.That(results.Select(static result => result.Thread).Distinct().Count()).IsEqualTo(1);
         await Assert.That(results[0].Thread).IsNotEqualTo(caller);
     }
@@ -44,17 +60,66 @@ internal sealed class DedicatedThreadTests
         await Assert.That(await next.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(7);
     }
 
+    /// <summary>
+    /// A caller that awaits an item continues off the thread, so its code never holds the
+    /// thread every other caller queues behind.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two halves since 2026-10-12, the maintainer's 112 a and b</b>, in his words verbatim,
+    /// <i>"your recommendation"</i>. <i>Previously the arm awaited one item on a new thread</i>,
+    /// and with the item's completion made without
+    /// <c>TaskCreationOptions.RunContinuationsAsynchronously</c> it stayed green 10 times of
+    /// 10: the thread completes that item before the arm's wait has registered its
+    /// continuation, and a continuation registered after the completion is queued to the pool,
+    /// with the defect in or out.
+    /// </para>
+    /// <para>
+    /// (a) <b>Two hundred hand-overs on the running thread</b>, each continuation checked for
+    /// the thread it landed on. With that plant one landed on the thread at the first of them
+    /// in 5 runs of 5, the item awaited before the loop having started the thread; a loop on
+    /// a new thread caught it at the second or the third. Its red rests on the thread losing
+    /// that race once in the two hundred; its green does not depend on timing, because
+    /// without the defect no continuation of a caller can run there. (b) <b>The item's task carries
+    /// <c>RunContinuationsAsynchronously</c></b>, red with the same plant on every run: the
+    /// option is what keeps a continuation off the thread, so a version of the type that kept
+    /// them off some other way would fail here and pass (a). Both halves are asserted
+    /// together, so a red names each one it fails.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
     public async Task AnAwaitingCallerContinuesOffTheThread()
     {
         using var thread = new DedicatedThread("dedicated-thread-continuation");
 
-        var worker = await thread.RunAsync(static () => Environment.CurrentManagedThreadId).WaitAsync(TestDefaults.InProcessHang);
+        var first = thread.RunAsync(static () => Environment.CurrentManagedThreadId);
+        var options = first.CreationOptions;
+        _ = await first.WaitAsync(TestDefaults.InProcessHang);
 
-        // The continuation of the await above ran somewhere: never on the thread that waits
-        // for the next item, or a caller's code would hold the thread every other caller
-        // queues behind.
-        await Assert.That(Environment.CurrentManagedThreadId).IsNotEqualTo(worker);
+        var landedOnTheThreadAt = 0;
+
+        for (var handOver = 1; handOver <= 200 && landedOnTheThreadAt is 0; handOver++)
+        {
+            var worker = await thread.RunAsync(static () => Environment.CurrentManagedThreadId).WaitAsync(TestDefaults.InProcessHang);
+
+            // The continuation of the await above ran somewhere: never on the thread that
+            // waits for the next item, or a caller's code would hold the thread every other
+            // caller queues behind.
+            if (Environment.CurrentManagedThreadId == worker)
+            {
+                landedOnTheThreadAt = handOver;
+            }
+        }
+
+        // Off whichever thread this is, so a continuation that landed on the thread lets it go.
+        await Task.Yield();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(landedOnTheThreadAt).IsEqualTo(0);
+            await Assert.That(options & TaskCreationOptions.RunContinuationsAsynchronously).IsEqualTo(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
     }
 
     [Test]
@@ -74,15 +139,31 @@ internal sealed class DedicatedThreadTests
         await Assert.That(await inner).IsEqualTo(3);
     }
 
+    /// <summary>
+    /// A thread told to complete runs every item it holds, ends, and refuses any more work.
+    /// </summary>
+    /// <remarks>
+    /// <b>A thousand items are handed over before <c>Complete</c> since 2026-10-12, the
+    /// maintainer's 113 a</b>, in his words verbatim, <i>"your recommendation"</i>, so most of
+    /// them are still queued when it is called: 999 of the thousand in 5 runs of 5.
+    /// <i>Previously the arm handed over one item</i>, which had left the queue by the time
+    /// <c>Complete</c> ran in 5 runs of 5, so with <c>Complete</c> dropping what the queue held
+    /// it stayed green 6 times of 6. Planted red that way since, at the hang detector, and
+    /// with the end never reported and with work handed over after the end taken and not
+    /// refused.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
     public async Task ACompletedThreadRunsWhatItHoldsEndsAndRefusesMoreWork()
     {
         var thread = new DedicatedThread("dedicated-thread-complete");
 
-        var held = thread.RunAsync(static () => 1);
+        var held = Enumerable.Range(0, 1000).Select(index => thread.RunAsync(() => index)).ToList();
         thread.Complete();
 
-        await Assert.That(await held.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(1);
+        var results = await Task.WhenAll(held).WaitAsync(TestDefaults.InProcessHang);
+
+        await Assert.That(results.Length).IsEqualTo(1000);
         await thread.Ended.WaitAsync(TestDefaults.InProcessHang);
         _ = Assert.Throws<ObjectDisposedException>(() => _ = thread.RunAsync(static () => 2));
 

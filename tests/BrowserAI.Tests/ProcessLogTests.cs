@@ -781,6 +781,21 @@ internal sealed partial class ProcessLogTests
     /// tree-as-text scan that held every timed <c>WaitForExit</c> beside a bare one: with no
     /// overload left to call, there is no pairing to hold.
     /// </para>
+    /// <para>
+    /// <b>Corrected 2026-10-12 by addition, the maintainer's 114 a</b>, in his words verbatim,
+    /// <i>"your recommendation"</i>: <b>the second paragraph above is wrong twice.</b> The timed
+    /// overload can be written for a plant, under a suppression for that run alone, and it
+    /// does not make the arm as it stood red: neither did a wait of this method's shape less
+    /// its two waits for the readers' end, read in .NET 10.0.12's own source, 25 runs of 25
+    /// green under the three. The probe of the first paragraph writes its report and reads its
+    /// input to the end after its last line, so its reader had all two thousand lines before
+    /// the exit was signalled. <b>So the child now ends before either reader starts</b>: it is
+    /// handed the end of its input at once, writes 100 lines into the pipe and ends, which it
+    /// did with no reader in every run, and the arm awaits that end, starts both readers, and
+    /// only then makes the wait under test, reading the count before it awaits anything else.
+    /// Planted red since with that wait replaced by each of the two plants, reading 0 of 100
+    /// lines on every run.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -788,7 +803,7 @@ internal sealed partial class ProcessLogTests
     {
         using var scratch = await ScratchDirectory.CreateAsync("processlog-exit-drains");
 
-        const int Lines = 2000;
+        const int Lines = 100;
         var said = 0;
 
         var start = new System.Diagnostics.ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"))
@@ -824,18 +839,29 @@ internal sealed partial class ProcessLogTests
         // run is killed while it is running.
         await SpawnRecord.AddAsync(process.Id);
 
-        process.BeginErrorReadLine();
-        process.BeginOutputReadLine();
-
-        // The end of its input, which is how the probe knows to end.
+        // The end of its input, which is how the probe knows to end, handed over before
+        // anything is read: the child writes its lines into the pipe and ends.
         await process.StandardInput.DisposeAsync();
 
         using var hang = new CancellationTokenSource(TestDefaults.ProcessHang);
 
+        // Its end, awaited while no reader exists, so every line it wrote is still in the pipe.
         await process.WaitForExitAsync(hang.Token);
 
+        process.BeginErrorReadLine();
+        process.BeginOutputReadLine();
+
+        // The wait under test. The readers have only just started, so it returns with every
+        // line counted only if it waits for both readers' end.
+        await process.WaitForExitAsync(hang.Token);
+
+        // Read before anything else is awaited: an assertion awaited first gives the readers
+        // time of their own, and with the exit code asserted ahead of this read the arm
+        // stayed green under both plants.
+        var counted = Volatile.Read(ref said);
+
         await Assert.That(process.ExitCode).IsEqualTo(0);
-        await Assert.That(Volatile.Read(ref said)).IsEqualTo(Lines)
+        await Assert.That(counted).IsEqualTo(Lines)
             .Because("every line the child wrote to its standard error is read by the time WaitForExitAsync returns");
     }
 
