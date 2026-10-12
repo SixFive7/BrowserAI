@@ -41,6 +41,34 @@ windows=$(cygpath -w "$root")
 
 mkdir -p .work/suite
 
+# EVERY FOLDER UNDER .work/kept GOES INTO EACH RUN'S RECORDS, BESIDE ITS LOG -- 119, the
+# maintainer's words verbatim: "119 your recommendation". See Invoke-OrdinaryGate.ps1:
+# after each run and before its clearance comparison, each one is copied into
+# .work/suite/<tag>-kept, made fresh for the run, and named in the run's log and in this
+# driver's output, with whether that run kept it. A folder the first run kept is copied
+# again by the second and the third, which name it as kept before them.
+kept_names() {
+  find .work/kept -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | LC_ALL=C sort
+}
+
+copy_kept() {
+  local records=".work/suite/$1-kept" before="$2" names name when failed
+  names=$(kept_names)
+  if [ -z "$names" ]; then
+    echo 'kept folders: none under .work\kept'
+    return
+  fi
+  mkdir -p "$records"
+  while IFS= read -r name; do
+    if printf '%s\n' "$before" | grep -qxF -- "$name"; then when='kept before this run'; else when='kept during this run'; fi
+    if failed=$(cp -r -- ".work/kept/$name" "$records/" 2>&1); then
+      echo "kept folder copied: $name, $when, to .work\\suite\\$1-kept\\$name"
+    else
+      echo "kept folder $name, $when, could not be copied whole to .work\\suite\\$1-kept\\$name: $(printf '%s\n' "$failed" | head -n 1)"
+    fi
+  done <<< "$names"
+}
+
 # THE INSTALLER LOCK, BEFORE THE FIRST CLEARANCE SNAPSHOT AND LET GO AFTER THE
 # LAST -- Q291, the maintainer's words verbatim: "Q291 a". The suite takes
 # .work/installer.lock itself when a session starts; this driver takes it first,
@@ -88,6 +116,10 @@ while [ "$n" -le "$runs" ]; do
   done
   echo "scratch released after ${waited}s"
 
+  # The kept folders there before the run, and the run's copy of them made fresh, 119.
+  kept_before=$(kept_names)
+  rm -rf -- ".work/suite/$tag-kept"
+
   log=".work/suite/$tag.log"
   # THE RUN WRITES TO A FILE, AND THIS DRIVER WAITS FOR THE RUN'S PROCESS -- 64 c, the
   # maintainer's words verbatim: "64 c now". Until 2026-10-11 a run was read through a
@@ -105,6 +137,9 @@ while [ "$n" -le "$runs" ]; do
   tail -n +1 -f --pid="$run" "$log"
   wait "$run"
   cat .work/suite-coverage.txt >> "$log" 2>/dev/null
+  said=$(copy_kept "$tag" "$kept_before")
+  printf '%s\n' "$said"
+  printf '%s\n' "$said" >> "$log"
 
   pwsh -NoProfile -File "$windows\\build\\Get-ClearanceSnapshot.ps1" -Tag "$tag-after" >/dev/null
 

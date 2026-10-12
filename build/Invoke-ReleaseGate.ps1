@@ -112,6 +112,47 @@ function Start-Run([string] $Command, [string] $Log) {
     return [System.Diagnostics.Process]::Start($start)
 }
 
+# ⚠️ EVERY FOLDER UNDER .work\kept\ GOES INTO EACH RUN'S RECORDS, BESIDE ITS LOG -- 119, the
+# maintainer's words verbatim: "119 your recommendation". See Invoke-OrdinaryGate.ps1: after
+# each run and before its clearance comparison, each one is copied into
+# .work\suite\<tag>-kept\, made fresh for the run, and named in the run's log and in this
+# driver's output, with whether that run kept it. A folder the first run kept is copied
+# again by the second and the third, which name it as kept before them.
+function Get-Kept([string] $Kept) {
+    if (-not (Test-Path -LiteralPath $Kept)) { return @() }
+    return @(Get-ChildItem -LiteralPath $Kept -Directory -Force | ForEach-Object { $_.Name } | Sort-Object)
+}
+
+function Copy-Kept([string] $Root, [string] $Tag, [string[]] $Before, [string] $Log) {
+    $kept = Join-Path $Root '.work' 'kept'
+    $records = Join-Path '.work' 'suite' "$Tag-kept"
+    $names = @(Get-Kept $kept)
+    $said = [System.Collections.Generic.List[string]]::new()
+
+    if ($names.Count -eq 0) {
+        $said.Add("kept folders: none under $(Join-Path '.work' 'kept')")
+    }
+    else {
+        $null = New-Item -ItemType Directory -Force -Path (Join-Path $Root $records)
+        foreach ($name in $names) {
+            $when = if ($Before -contains $name) { 'kept before this run' } else { 'kept during this run' }
+            $failed = $null
+            Copy-Item -LiteralPath (Join-Path $kept $name) -Destination (Join-Path $Root $records) -Recurse -Force -ErrorAction SilentlyContinue -ErrorVariable failed
+            if ($failed) {
+                $said.Add("kept folder $name, $when, could not be copied whole to $(Join-Path $records $name): $($failed[0].Exception.Message)")
+            }
+            else {
+                $said.Add("kept folder copied: $name, $when, to $(Join-Path $records $name)")
+            }
+        }
+    }
+
+    $said | Write-Host
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes(($said -join "`n") + "`n")
+    $stream = [System.IO.File]::Open($Log, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+    try { $stream.Write($bytes, 0, $bytes.Length) } finally { $stream.Dispose() }
+}
+
 # ⚠️ THE INSTALLER LOCK, BEFORE THE FIRST RUN'S CLEARANCE SNAPSHOT AND LET GO AFTER
 # THE LAST -- Q291, the maintainer's words verbatim: "Q291 a". Held across all
 # three runs, so no other holder can slip in between two of them; see
@@ -172,11 +213,16 @@ try {
         }
         Write-Host "scratch released after ${waited}s"
 
+        # The kept folders there before the run, and the run's copy of them made fresh, 119.
+        $keptBefore = @(Get-Kept (Join-Path $root '.work' 'kept'))
+        Remove-Item -LiteralPath (Join-Path $root '.work' 'suite' "$tag-kept") -Recurse -Force -ErrorAction SilentlyContinue
+
         $log = Join-Path $root '.work' 'suite' "$tag.log"
         $env:BROWSERAI_RELEASE_RUN = '1'
         $env:BROWSERAI_DRIVE_CASE = 'upper'
         Wait-Run -Run (Start-Run -Command ('dotnet test "' + (Join-Path $forced 'BrowserAI.slnx') + '"') -Log $log) -Log $log
         Add-Shared -Path $log -Source (Join-Path $root '.work' 'suite-coverage.txt')
+        Copy-Kept -Root $root -Tag $tag -Before $keptBefore -Log $log
 
         & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$tag-after" | Out-Null
 
