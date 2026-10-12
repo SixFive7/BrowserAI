@@ -68,9 +68,21 @@ argument a tool does not have is refused.
   what each is when you click it, and becomes a list in a narrow window or when it would draw
   more than eight rows or twelve sessions. It and the home follow every change as it happens.
   The dashboard follows Windows' light or dark setting, deletes nothing, and lives at an address
-  on your own machine that is made for each run and handed to nobody else.
+  on your own machine that keeps its port while BrowserAI runs and, when the port is free, after
+  a restart. The key that admits your browser is made for each run and handed to nobody else:
+  after the first visit your browser keeps it in a cookie, and the address bar shows the address
+  without it.
   [The decision](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser) and
   [the redesign](DECISIONS.md#the-dashboard-decided-2026-10-11).
+
+- ✨ **The dashboard's folder buttons open the folder in front of your browser.**
+  Each is a link your browser hands to BrowserAI, and the BrowserAI it starts opens the folder
+  itself, or Windows' folder picker when you set up a project; measured in Firefox, both come to
+  the front. The first time, the browser asks whether the page may open BrowserAI: allow it
+  always, and folders open at once from then on. A link opens only BrowserAI's own folders, and
+  only with the key of the dashboard open now. While BrowserAI is not running a click opens
+  nothing, and the page says to start BrowserAI from the Start Menu.
+  [The decision](DECISIONS.md#the-folder-links-decided-2026-10-11).
 
 - ✨ **BrowserAI registers itself with Codex as well as Claude Code.**
   The installer registers it with each client for all your projects and the uninstaller removes it
@@ -320,6 +332,12 @@ argument a tool does not have is refused.
   BrowserAI offers 63 of the 72 tools upstream exposes, beside nine of its own.
 
 ### Fixed
+
+- 🐛 **`browserai_catch_up`'s last file written leaves out BrowserAI's own record files.**
+  Its own read of a closed session's record writes a file beside it, so a closed session with no
+  browser running read as written 0 seconds ago. The lock, the record and the three files SQLite
+  keeps beside it no longer count; a file of the same name inside the profile is the browser's
+  and still does.
 
 - 🐛 **Claude Code sessions have BrowserAI's tools again.**
   From 2026-09-30 Claude Code opened its servers at MCP revision `2026-07-28`, which BrowserAI

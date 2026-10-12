@@ -1,0 +1,37 @@
+HKCU\Software\Mozilla\Firefox\Launcher value names: 35
+  C:\Program Files\Mozilla Firefox\firefox.exe|Blocklist
+  C:\Program Files\Mozilla Firefox\firefox.exe|Browser
+  C:\Program Files\Mozilla Firefox\firefox.exe|Image
+  C:\Program Files\Mozilla Firefox\firefox.exe|Launcher
+  C:\Program Files\Mozilla Firefox\firefox.exe|Telemetry
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Blocklist
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Browser
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Image
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Launcher
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Telemetry
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Blocklist
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Browser
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Image
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Launcher
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Telemetry
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Blocklist
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Browser
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Image
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Launcher
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Telemetry
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Blocklist
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Browser
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Image
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Launcher
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Telemetry
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Blocklist
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Browser
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Image
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Launcher
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Telemetry
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Blocklist
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Browser
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Image
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Launcher
+  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Telemetry
+HKCU\Software\Classes\browserai-probe: ABSENT

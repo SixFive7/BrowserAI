@@ -1739,6 +1739,26 @@ that had it. The page deletes nothing. The status page's update section, `Update
 became the home's update card in `OverviewContent` and is deleted. The rows above name the code; [`docs/design/dashboard-2026-10-11`](docs/design/dashboard-2026-10-11/README.md)
 has the directions it was chosen from.
 
+*Added 2026-10-12 by addition, the maintainer's 55 a, 69 d with b and 70 a to 75 a:* **a folder button
+is a link, the listener lasts as long as the background, and the address carries no token.** While the
+page is drawn with links, `PageContent.Button` draws each control with the action `open-folder` or
+`open-session`, and each setup button that opens Windows' folder picker, as a link of the install's
+scheme with the page's token in it (`PageLinks`); an installed build draws with links, its scheme named
+from its pack id (`PageOpener`, `LinkScheme.NameFor`), and a build that is not installed draws the
+buttons that post. A click starts `BrowserAI.exe --link "<link>"` (`LinkStart`), which asks the
+background over its pipe, `browserai/link`, answered by `PageService.LinkAsync`, and opens the folder or
+shows the picker itself; the chosen folder goes back on the same connection, `browserai/picked`
+(`BackgroundConversation`). The install and update hooks register the scheme under
+`HKCU\Software\Classes` and the uninstall hook takes it back while its command starts this install's
+program (`LinkSchemeStep`). `PageService.TryStopAsync` keeps the listener up while the background runs,
+and `PageListenerMemoryFile` keeps the listener's port and its last tab number under the data root, so a
+listener that starts again takes that port when it is free and the tabs go on numbering. `PageGate.Admit`
+admits a target with no token by the cookie `PageGate.SetCookie` names, and a page opened by the token's
+address is answered `303 See Other` with that cookie and the address without the token
+(`PageGate.SwapsTheAddress`), so the sentence above that no cookie is set holds for every other answer.
+What it rests on:
+[kb](kb/windows/loopback-page.md#a-folder-link-comes-to-the-front-when-the-process-the-link-starts-opens-it----measured-2026-10-11).
+
 ## Updates
 
 ⚠️ **Since 2026-10-08 the update is the background's**, *added 2026-10-10 by

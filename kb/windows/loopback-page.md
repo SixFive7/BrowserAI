@@ -16,7 +16,11 @@ as the first pass recorded it and 26300 as the second did.
 [Evidence](../../docs/evidence/2026-09-25-management-interface/README.md),
 [rigs](../../docs/probes/2026-09-25-management-interface/README.md). Nothing in
 this article ran on the real desktop: every window was on a private desktop
-inside a kill-on-close job.
+inside a kill-on-close job. *Corrected 2026-10-12 by addition (previously the
+sentence above, without an exception): the measurement of what a folder link
+brings to the front, taken 2026-10-11 for the maintainer's 55, ran on his
+desktop by its nature, in a scratch Firefox profile, and the windows it opened
+were the rig's own.*
 
 ## What a .NET listener on 127.0.0.1 answers by default -- measured 2026-09-25
 
@@ -104,7 +108,9 @@ Kestrel's own parsing was not attacked.
   212 ms later in Chromium and 24 to 45 ms later in Firefox (28 closes).
 - **A reload leaves no page connected for a moment**: 4.8 to 11.3 ms in Chromium
   over 20 reloads and 19 to 135 ms in Firefox over 310. This is the gap Q336's
-  one minute covers.
+  one minute covers. *Corrected 2026-10-12 by addition: since the maintainer's
+  69 d the listener stays up while the background runs, so no minute is counted
+  after the last tab, and nothing relies on the gap.*
 - A second tab on the same address stays connected beside the first, and a page
   can close its own tab while its history holds one entry, in both browsers.
 - **A restarted listener takes the same port back**: in 12 of 12 rounds a new
@@ -116,6 +122,11 @@ Kestrel's own parsing was not attacked.
   nothing relies on this. *Corrected 2026-10-10 by addition: the update toasts of
   2026-10-08 superseded that tab, and since the maintainer's "20 nothing except for the
   toast" no tab opens after an update at all; nothing relies on this either way.*
+  *Corrected 2026-10-12 by addition (previously "nothing relies on this either
+  way"): the maintainer's 69 b relies on the first half since. A listener that
+  starts takes the port the last one held when it is free, so a browser's
+  "Always allow" for the address outlives a restart of the background, and the
+  open page reconnects to it by itself.*
 - ⚠️ In 9 of 31 Firefox runs Playwright's `goto` never resolved on a later tab;
   the two with a diagnostic showed the page loaded and connected. Read as a fault
   of the harness, and not explained.
@@ -137,7 +148,15 @@ before the gate is asked.** Measured from raw sockets against
 - **Admitted**: the page with the token and `Host: 127.0.0.1:<port>`, and a JSON
   write carrying our `Origin` and `Sec-Fetch-Site: same-origin`. Each answer
   carries the fixed security headers, and none carries `Server`, `Set-Cookie` or
-  a CORS header.
+  a CORS header. *Corrected 2026-10-12 by addition (previously the sentence above,
+  without an exception)*: since the maintainer's 74 a, a page opened by the
+  address with the token is answered `303 See Other` with an empty body,
+  `Set-Cookie: browserai-<port>=<token>; Path=/; HttpOnly; SameSite=Strict` and
+  `Location` the same address without the token, and reaches no route; a target
+  with no token is admitted by that cookie with every other rule kept, and is
+  refused with no cookie, another port's, a wrong token in it, `Sec-Fetch-Site`
+  `cross-site` or `same-site`, a rebound `Host`, or a write with no `Origin`. No
+  other answer carries `Set-Cookie`.
 - **A 404 with an empty body, and no route reached**: no token; a wrong token of
   the right length; the token with no closing slash, behind a dot segment, or
   percent-encoded; an absolute-form target; `Host: localhost`; an attacker's
@@ -194,12 +213,82 @@ exact `Origin`, `Sec-Fetch-Site: same-origin` and `Content-Type: application/jso
 - **A tab the shell opens for a person's start was not measured**: the suite
   cannot open one. Whether Chromium closes the tab a real start opened is for a
   person's own browser to show.
+- *Added 2026-10-12 by addition, measured by the same arm since the maintainer's
+  74 a.* **Both engines follow the swap**: a tab opened by the address with the
+  token shows the address without it, `document.cookie` holds no token, because
+  the cookie is `HttpOnly`, and the page's event stream and its writes go through
+  the cookie. And the page draws its folder buttons as links of the install's
+  scheme with the token in them, the one line about the browser's question under
+  the first, in both families; no link is followed, since the suite registers no
+  scheme for one to start.
 
 **Re-establish** with the two arms of `PageBrowserTests`, which hold that the
 replaced page asks to close and accept either answer from the engine; the
 history readings are a one-off assertion `() => history.length` in the tab the
 arm opens, and the hang is the arm's own first form, which waited for the tab to
 go.
+
+## A folder link comes to the front when the process the link starts opens it -- measured 2026-10-11
+
+`[FLOATS]` **In Firefox 157.0.1, a link of a scheme registered under
+`HKCU\Software\Classes`, clicked on a page served from `127.0.0.1`, is started
+by Explorer, and a folder window or Windows' folder picker that the started
+process opens itself comes to the front of the browser. The picker shown by
+another process stays behind the browser, also when the started process has
+handed that process the right to come forward.** Measured 2026-10-11 on Windows
+11 Pro 10.0.26300, in the maintainer's installed Firefox 157.0.1 with a scratch
+profile, for his 55; the decision taken from it is
+[75 a](../../DECISIONS.md#the-folder-links-decided-2026-10-11). The rig
+registered the scheme `browserai-probe` for the run and removed it after, served
+a page with one link per shape, and clicked each link inside the page through
+WebDriver BiDi, which moves neither the mouse nor the keyboard. An observer
+recorded every window that appeared, its owner, and the window that held the
+foreground. A stand-in for the background, a process of the rig's own started
+from a shell once the browser was in front, answered the started process over a
+named pipe.
+
+| Link | What the started process did | The window | Where it came |
+|---|---|---|---|
+| A | opened the folder itself, `ShellExecuteW` with `explore` | Explorer's folder window | **in front**, 867 ms after the started process began; clicked again with that window still open, the same window came forward in 100 ms |
+| C | showed the picker itself, `SHBrowseForFolderW` with no owner | the picker | **in front**, 274 ms |
+| E, the control | asked the stand-in to open the folder and handed it nothing: the stand-in's `AllowSetForegroundWindow` on itself failed with error 5 | Explorer's folder window | in front, 695 ms |
+| B | handed the stand-in the right with `AllowSetForegroundWindow`, which succeeded, then asked it to open the folder | Explorer's folder window | in front, 570 ms |
+| D | handed the stand-in the right, which succeeded, then asked it to show the picker | the picker | **behind the browser**, which kept the foreground until the picker was cancelled |
+
+- **Every started process had `explorer.exe` for its parent**, 6 of 6, and began
+  53 to 71 ms after its click, 362 ms for the first click of the run. Firefox
+  does not start the handler: it calls `CoAllowSetForegroundWindow` on Explorer
+  and hands the link to it (`ShellExecuteByExplorer`), read in its source at
+  `FIREFOX_157_0_1_RELEASE` (`0c469c23`), `uriloader/exthandler/win/nsMIMEInfoWin.cpp`
+  and `widget/windows/ShellHeaderOnlyUtils.h`.
+- ⚠️ **The control did not show the fault 55 was asked about.** E is what the page
+  did then, a folder opened by a process with no right to come forward, and its
+  folder came to the front: Explorer opened it, for a stand-in started from a
+  shell. The background is started by the Task Scheduler, and
+  [a process a task starts may not take the foreground](processes.md#a-process-a-task-starts-may-not-take-the-foreground);
+  a stand-in started that way was not measured. So this says what comes forward
+  for the process a link starts, and why the background's folder stays behind is
+  not established here.
+- **Whether Firefox asks again on another port was not measured.** The scratch
+  profile had the prompt switched off for the probe's scheme, and the step that
+  would have opened the page again on its first port with a new path timed out
+  in the driver. Firefox's source answers it: *Always allow* is stored as the
+  permission `open-protocol-handler^<scheme>` on the page's principal, with no
+  expiry (`toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs`), and the
+  permission manager keys every type but two storage types by the full origin,
+  port included (`extensions/permissions/PermissionManager.cpp`). A new port is a
+  new origin and is asked again; a new path on the same port is not. This is what
+  [69 d with fallback b](../../DECISIONS.md#the-folder-links-decided-2026-10-11)
+  rests on.
+- The rig's attempt to bring Firefox forward before each click failed every time:
+  its `focus.ps1` declares `GetCurrentThreadId` from `user32.dll`, which does not
+  export it. The browser the driver started was in front for each click without it.
+
+Evidence: [`docs/evidence/2026-10-11-link-start/`](../../docs/evidence/2026-10-11-link-start/README.md),
+the observer's record, each started process's log, the stand-in's, and the
+report the rig's `stop.ps1` wrote. **Re-establish** with
+[the rig](../../docs/probes/2026-10-11-link-start/README.md), in a scratch Firefox
+profile; a new Firefox or Windows build is a new measurement.
 
 ## Chrome for Testing calls Google while idle, and one switch stops it -- measured 2026-10-01
 

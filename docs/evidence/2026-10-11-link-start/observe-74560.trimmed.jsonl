@@ -1,0 +1,796 @@
+{"t":"2026-10-11T16:19:00.542Z","tick":161160140,"pid":74560,"mode":"observe","ev":"start","parentPid":53012,"parentImage":"C:\\Program Files\\PowerShell\\7\\pwsh.exe","foregroundLockTimeoutMs":2147483647,"probeImage":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe"}
+{"t":"2026-10-11T16:19:00.561Z","tick":161160156,"pid":74560,"mode":"observe","ev":"shell-hook","classAtom":50018,"window":"0x46202CC","registered":true,"message":49193}
+{"t":"2026-10-11T16:19:00.567Z","tick":161160156,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x501644","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":37928,"image":"C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe","visible":true,"minimized":false},"z":44}
+{"t":"2026-10-11T16:19:00.569Z","tick":161160156,"pid":74560,"mode":"observe","ev":"input","inputTick":161150984}
+{"t":"2026-10-11T16:19:24.853Z","tick":161184453,"pid":74560,"mode":"observe","ev":"input","inputTick":161184437}
+{"t":"2026-10-11T16:19:25.139Z","tick":161184734,"pid":74560,"mode":"observe","ev":"input","inputTick":161184718}
+{"t":"2026-10-11T16:19:25.764Z","tick":161185359,"pid":74560,"mode":"observe","ev":"input","inputTick":161185343}
+{"t":"2026-10-11T16:19:25.927Z","tick":161185515,"pid":74560,"mode":"observe","ev":"input","inputTick":161185500}
+{"t":"2026-10-11T16:19:26.129Z","tick":161185718,"pid":74560,"mode":"observe","ev":"input","inputTick":161185703}
+{"t":"2026-10-11T16:19:26.315Z","tick":161185906,"pid":74560,"mode":"observe","ev":"input","inputTick":161185906}
+{"t":"2026-10-11T16:19:26.496Z","tick":161186093,"pid":74560,"mode":"observe","ev":"input","inputTick":161186078}
+{"t":"2026-10-11T16:19:26.665Z","tick":161186265,"pid":74560,"mode":"observe","ev":"input","inputTick":161186234}
+{"t":"2026-10-11T16:19:26.850Z","tick":161186437,"pid":74560,"mode":"observe","ev":"input","inputTick":161186437}
+{"t":"2026-10-11T16:19:27.072Z","tick":161186671,"pid":74560,"mode":"observe","ev":"input","inputTick":161186656}
+{"t":"2026-10-11T16:19:27.256Z","tick":161186843,"pid":74560,"mode":"observe","ev":"input","inputTick":161186843}
+{"t":"2026-10-11T16:19:27.410Z","tick":161187000,"pid":74560,"mode":"observe","ev":"input","inputTick":161187000}
+{"t":"2026-10-11T16:19:27.570Z","tick":161187171,"pid":74560,"mode":"observe","ev":"input","inputTick":161187156}
+{"t":"2026-10-11T16:19:27.736Z","tick":161187328,"pid":74560,"mode":"observe","ev":"input","inputTick":161187328}
+{"t":"2026-10-11T16:19:27.973Z","tick":161187562,"pid":74560,"mode":"observe","ev":"input","inputTick":161187546}
+{"t":"2026-10-11T16:19:28.120Z","tick":161187718,"pid":74560,"mode":"observe","ev":"input","inputTick":161187703}
+{"t":"2026-10-11T16:19:28.682Z","tick":161188281,"pid":74560,"mode":"observe","ev":"input","inputTick":161188265}
+{"t":"2026-10-11T16:19:28.867Z","tick":161188468,"pid":74560,"mode":"observe","ev":"input","inputTick":161188453}
+{"t":"2026-10-11T16:19:29.070Z","tick":161188671,"pid":74560,"mode":"observe","ev":"input","inputTick":161188671}
+{"t":"2026-10-11T16:19:29.250Z","tick":161188843,"pid":74560,"mode":"observe","ev":"input","inputTick":161188828}
+{"t":"2026-10-11T16:19:29.462Z","tick":161189062,"pid":74560,"mode":"observe","ev":"input","inputTick":161189046}
+{"t":"2026-10-11T16:19:29.641Z","tick":161189234,"pid":74560,"mode":"observe","ev":"input","inputTick":161189234}
+{"t":"2026-10-11T16:19:29.833Z","tick":161189421,"pid":74560,"mode":"observe","ev":"input","inputTick":161189421}
+{"t":"2026-10-11T16:19:30.050Z","tick":161189640,"pid":74560,"mode":"observe","ev":"input","inputTick":161189640}
+{"t":"2026-10-11T16:19:30.213Z","tick":161189812,"pid":74560,"mode":"observe","ev":"input","inputTick":161189796}
+{"t":"2026-10-11T16:19:30.461Z","tick":161190062,"pid":74560,"mode":"observe","ev":"input","inputTick":161190031}
+{"t":"2026-10-11T16:19:30.709Z","tick":161190296,"pid":74560,"mode":"observe","ev":"input","inputTick":161190296}
+{"t":"2026-10-11T16:19:30.858Z","tick":161190453,"pid":74560,"mode":"observe","ev":"input","inputTick":161190437}
+{"t":"2026-10-11T16:19:31.878Z","tick":161191468,"pid":74560,"mode":"observe","ev":"input","inputTick":161191468}
+{"t":"2026-10-11T16:19:32.084Z","tick":161191671,"pid":74560,"mode":"observe","ev":"input","inputTick":161191671}
+{"t":"2026-10-11T16:19:32.316Z","tick":161191906,"pid":74560,"mode":"observe","ev":"input","inputTick":161191875}
+{"t":"2026-10-11T16:19:32.705Z","tick":161192296,"pid":74560,"mode":"observe","ev":"input","inputTick":161192296}
+{"t":"2026-10-11T16:19:32.925Z","tick":161192515,"pid":74560,"mode":"observe","ev":"input","inputTick":161192515}
+{"t":"2026-10-11T16:19:33.120Z","tick":161192718,"pid":74560,"mode":"observe","ev":"input","inputTick":161192687}
+{"t":"2026-10-11T16:19:33.297Z","tick":161192890,"pid":74560,"mode":"observe","ev":"input","inputTick":161192890}
+{"t":"2026-10-11T16:19:33.491Z","tick":161193093,"pid":74560,"mode":"observe","ev":"input","inputTick":161193062}
+{"t":"2026-10-11T16:19:33.675Z","tick":161193265,"pid":74560,"mode":"observe","ev":"input","inputTick":161193265}
+{"t":"2026-10-11T16:19:33.879Z","tick":161193468,"pid":74560,"mode":"observe","ev":"input","inputTick":161193468}
+{"t":"2026-10-11T16:19:34.038Z","tick":161193640,"pid":74560,"mode":"observe","ev":"input","inputTick":161193625}
+{"t":"2026-10-11T16:19:34.228Z","tick":161193828,"pid":74560,"mode":"observe","ev":"input","inputTick":161193796}
+{"t":"2026-10-11T16:19:34.467Z","tick":161194062,"pid":74560,"mode":"observe","ev":"input","inputTick":161194062}
+{"t":"2026-10-11T16:19:34.774Z","tick":161194375,"pid":74560,"mode":"observe","ev":"input","inputTick":161194359}
+{"t":"2026-10-11T16:19:36.440Z","tick":161196031,"pid":74560,"mode":"observe","ev":"input","inputTick":161196015}
+{"t":"2026-10-11T16:19:36.932Z","tick":161196531,"pid":74560,"mode":"observe","ev":"input","inputTick":161196515}
+{"t":"2026-10-11T16:19:37.087Z","tick":161196687,"pid":74560,"mode":"observe","ev":"input","inputTick":161196687}
+{"t":"2026-10-11T16:19:37.270Z","tick":161196859,"pid":74560,"mode":"observe","ev":"input","inputTick":161196843}
+{"t":"2026-10-11T16:19:37.430Z","tick":161197031,"pid":74560,"mode":"observe","ev":"input","inputTick":161197015}
+{"t":"2026-10-11T16:19:37.634Z","tick":161197234,"pid":74560,"mode":"observe","ev":"input","inputTick":161197218}
+{"t":"2026-10-11T16:19:40.909Z","tick":161200500,"pid":74560,"mode":"observe","ev":"input","inputTick":161200500}
+{"t":"2026-10-11T16:19:41.955Z","tick":161201546,"pid":74560,"mode":"observe","ev":"input","inputTick":161201531}
+{"t":"2026-10-11T16:19:42.102Z","tick":161201703,"pid":74560,"mode":"observe","ev":"input","inputTick":161201687}
+{"t":"2026-10-11T16:19:42.304Z","tick":161201906,"pid":74560,"mode":"observe","ev":"input","inputTick":161201875}
+{"t":"2026-10-11T16:19:42.528Z","tick":161202125,"pid":74560,"mode":"observe","ev":"input","inputTick":161202109}
+{"t":"2026-10-11T16:19:42.710Z","tick":161202312,"pid":74560,"mode":"observe","ev":"input","inputTick":161202296}
+{"t":"2026-10-11T16:19:42.901Z","tick":161202500,"pid":74560,"mode":"observe","ev":"input","inputTick":161202484}
+{"t":"2026-10-11T16:19:43.062Z","tick":161202656,"pid":74560,"mode":"observe","ev":"input","inputTick":161202656}
+{"t":"2026-10-11T16:19:43.267Z","tick":161202859,"pid":74560,"mode":"observe","ev":"input","inputTick":161202843}
+{"t":"2026-10-11T16:19:43.451Z","tick":161203046,"pid":74560,"mode":"observe","ev":"input","inputTick":161203031}
+{"t":"2026-10-11T16:19:44.749Z","tick":161204343,"pid":74560,"mode":"observe","ev":"input","inputTick":161204343}
+{"t":"2026-10-11T16:19:44.993Z","tick":161204593,"pid":74560,"mode":"observe","ev":"input","inputTick":161204578}
+{"t":"2026-10-11T16:19:45.336Z","tick":161204937,"pid":74560,"mode":"observe","ev":"input","inputTick":161204921}
+{"t":"2026-10-11T16:19:45.638Z","tick":161205234,"pid":74560,"mode":"observe","ev":"input","inputTick":161205234}
+{"t":"2026-10-11T16:19:45.800Z","tick":161205390,"pid":74560,"mode":"observe","ev":"input","inputTick":161205375}
+{"t":"2026-10-11T16:19:45.948Z","tick":161205546,"pid":74560,"mode":"observe","ev":"input","inputTick":161205546}
+{"t":"2026-10-11T16:19:46.149Z","tick":161205750,"pid":74560,"mode":"observe","ev":"input","inputTick":161205734}
+{"t":"2026-10-11T16:19:46.332Z","tick":161205921,"pid":74560,"mode":"observe","ev":"input","inputTick":161205906}
+{"t":"2026-10-11T16:19:46.556Z","tick":161206156,"pid":74560,"mode":"observe","ev":"input","inputTick":161206140}
+{"t":"2026-10-11T16:19:46.759Z","tick":161206359,"pid":74560,"mode":"observe","ev":"input","inputTick":161206343}
+{"t":"2026-10-11T16:19:46.984Z","tick":161206578,"pid":74560,"mode":"observe","ev":"input","inputTick":161206578}
+{"t":"2026-10-11T16:19:47.188Z","tick":161206781,"pid":74560,"mode":"observe","ev":"input","inputTick":161206765}
+{"t":"2026-10-11T16:19:47.349Z","tick":161206937,"pid":74560,"mode":"observe","ev":"input","inputTick":161206937}
+{"t":"2026-10-11T16:19:47.566Z","tick":161207156,"pid":74560,"mode":"observe","ev":"input","inputTick":161207156}
+{"t":"2026-10-11T16:19:47.772Z","tick":161207359,"pid":74560,"mode":"observe","ev":"input","inputTick":161207343}
+{"t":"2026-10-11T16:19:47.993Z","tick":161207593,"pid":74560,"mode":"observe","ev":"input","inputTick":161207593}
+{"t":"2026-10-11T16:19:48.221Z","tick":161207812,"pid":74560,"mode":"observe","ev":"input","inputTick":161207812}
+{"t":"2026-10-11T16:19:48.403Z","tick":161208000,"pid":74560,"mode":"observe","ev":"input","inputTick":161207984}
+{"t":"2026-10-11T16:19:48.716Z","tick":161208312,"pid":74560,"mode":"observe","ev":"input","inputTick":161208296}
+{"t":"2026-10-11T16:19:48.888Z","tick":161208484,"pid":74560,"mode":"observe","ev":"input","inputTick":161208468}
+{"t":"2026-10-11T16:19:49.049Z","tick":161208640,"pid":74560,"mode":"observe","ev":"input","inputTick":161208640}
+{"t":"2026-10-11T16:19:49.220Z","tick":161208812,"pid":74560,"mode":"observe","ev":"input","inputTick":161208812}
+{"t":"2026-10-11T16:19:50.685Z","tick":161210281,"pid":74560,"mode":"observe","ev":"input","inputTick":161210265}
+{"t":"2026-10-11T16:19:50.848Z","tick":161210437,"pid":74560,"mode":"observe","ev":"input","inputTick":161210437}
+{"t":"2026-10-11T16:19:51.040Z","tick":161210640,"pid":74560,"mode":"observe","ev":"input","inputTick":161210625}
+{"t":"2026-10-11T16:19:51.207Z","tick":161210796,"pid":74560,"mode":"observe","ev":"input","inputTick":161210781}
+{"t":"2026-10-11T16:19:51.389Z","tick":161210984,"pid":74560,"mode":"observe","ev":"input","inputTick":161210984}
+{"t":"2026-10-11T16:19:51.592Z","tick":161211187,"pid":74560,"mode":"observe","ev":"input","inputTick":161211171}
+{"t":"2026-10-11T16:19:52.113Z","tick":161211703,"pid":74560,"mode":"observe","ev":"input","inputTick":161211703}
+{"t":"2026-10-11T16:19:52.293Z","tick":161211890,"pid":74560,"mode":"observe","ev":"input","inputTick":161211875}
+{"t":"2026-10-11T16:19:52.500Z","tick":161212093,"pid":74560,"mode":"observe","ev":"input","inputTick":161212093}
+{"t":"2026-10-11T16:19:52.702Z","tick":161212296,"pid":74560,"mode":"observe","ev":"input","inputTick":161212281}
+{"t":"2026-10-11T16:19:52.913Z","tick":161212515,"pid":74560,"mode":"observe","ev":"input","inputTick":161212500}
+{"t":"2026-10-11T16:19:53.080Z","tick":161212671,"pid":74560,"mode":"observe","ev":"input","inputTick":161212671}
+{"t":"2026-10-11T16:19:53.282Z","tick":161212875,"pid":74560,"mode":"observe","ev":"input","inputTick":161212859}
+{"t":"2026-10-11T16:19:53.486Z","tick":161213078,"pid":74560,"mode":"observe","ev":"input","inputTick":161213062}
+{"t":"2026-10-11T16:19:53.632Z","tick":161213234,"pid":74560,"mode":"observe","ev":"input","inputTick":161213203}
+{"t":"2026-10-11T16:19:53.792Z","tick":161213390,"pid":74560,"mode":"observe","ev":"input","inputTick":161213390}
+{"t":"2026-10-11T16:19:54.360Z","tick":161213953,"pid":74560,"mode":"observe","ev":"input","inputTick":161213953}
+{"t":"2026-10-11T16:19:54.568Z","tick":161214156,"pid":74560,"mode":"observe","ev":"input","inputTick":161214140}
+{"t":"2026-10-11T16:19:54.724Z","tick":161214312,"pid":74560,"mode":"observe","ev":"input","inputTick":161214296}
+{"t":"2026-10-11T16:19:54.868Z","tick":161214468,"pid":74560,"mode":"observe","ev":"input","inputTick":161214437}
+{"t":"2026-10-11T16:19:55.241Z","tick":161214843,"pid":74560,"mode":"observe","ev":"input","inputTick":161214828}
+{"t":"2026-10-11T16:19:55.402Z","tick":161215000,"pid":74560,"mode":"observe","ev":"input","inputTick":161214968}
+{"t":"2026-10-11T16:19:55.626Z","tick":161215218,"pid":74560,"mode":"observe","ev":"input","inputTick":161215218}
+{"t":"2026-10-11T16:19:55.847Z","tick":161215437,"pid":74560,"mode":"observe","ev":"input","inputTick":161215421}
+{"t":"2026-10-11T16:19:56.008Z","tick":161215609,"pid":74560,"mode":"observe","ev":"input","inputTick":161215593}
+{"t":"2026-10-11T16:19:56.170Z","tick":161215765,"pid":74560,"mode":"observe","ev":"input","inputTick":161215750}
+{"t":"2026-10-11T16:19:56.337Z","tick":161215937,"pid":74560,"mode":"observe","ev":"input","inputTick":161215906}
+{"t":"2026-10-11T16:19:56.520Z","tick":161216109,"pid":74560,"mode":"observe","ev":"input","inputTick":161216093}
+{"t":"2026-10-11T16:19:56.701Z","tick":161216296,"pid":74560,"mode":"observe","ev":"input","inputTick":161216296}
+{"t":"2026-10-11T16:19:56.915Z","tick":161216515,"pid":74560,"mode":"observe","ev":"input","inputTick":161216500}
+{"t":"2026-10-11T16:19:57.139Z","tick":161216734,"pid":74560,"mode":"observe","ev":"input","inputTick":161216718}
+{"t":"2026-10-11T16:20:09.557Z","tick":161229156,"pid":74560,"mode":"observe","ev":"input","inputTick":161229125}
+{"t":"2026-10-11T16:20:09.810Z","tick":161229406,"pid":74560,"mode":"observe","ev":"input","inputTick":161229390}
+{"t":"2026-10-11T16:20:10.362Z","tick":161229953,"pid":74560,"mode":"observe","ev":"input","inputTick":161229937}
+{"t":"2026-10-11T16:20:10.522Z","tick":161230125,"pid":74560,"mode":"observe","ev":"input","inputTick":161230093}
+{"t":"2026-10-11T16:20:10.773Z","tick":161230375,"pid":74560,"mode":"observe","ev":"input","inputTick":161230343}
+{"t":"2026-10-11T16:20:11.067Z","tick":161230656,"pid":74560,"mode":"observe","ev":"input","inputTick":161230640}
+{"t":"2026-10-11T16:20:11.294Z","tick":161230890,"pid":74560,"mode":"observe","ev":"input","inputTick":161230875}
+{"t":"2026-10-11T16:20:11.519Z","tick":161231109,"pid":74560,"mode":"observe","ev":"input","inputTick":161231109}
+{"t":"2026-10-11T16:20:11.745Z","tick":161231343,"pid":74560,"mode":"observe","ev":"input","inputTick":161231328}
+{"t":"2026-10-11T16:20:11.994Z","tick":161231593,"pid":74560,"mode":"observe","ev":"input","inputTick":161231562}
+{"t":"2026-10-11T16:20:12.240Z","tick":161231828,"pid":74560,"mode":"observe","ev":"input","inputTick":161231828}
+{"t":"2026-10-11T16:20:12.407Z","tick":161232000,"pid":74560,"mode":"observe","ev":"input","inputTick":161232000}
+{"t":"2026-10-11T16:20:12.564Z","tick":161232156,"pid":74560,"mode":"observe","ev":"input","inputTick":161232125}
+{"t":"2026-10-11T16:20:12.731Z","tick":161232328,"pid":74560,"mode":"observe","ev":"input","inputTick":161232312}
+{"t":"2026-10-11T16:20:12.894Z","tick":161232484,"pid":74560,"mode":"observe","ev":"input","inputTick":161232484}
+{"t":"2026-10-11T16:20:13.053Z","tick":161232640,"pid":74560,"mode":"observe","ev":"input","inputTick":161232640}
+{"t":"2026-10-11T16:20:13.269Z","tick":161232859,"pid":74560,"mode":"observe","ev":"input","inputTick":161232859}
+{"t":"2026-10-11T16:20:13.453Z","tick":161233046,"pid":74560,"mode":"observe","ev":"input","inputTick":161233031}
+{"t":"2026-10-11T16:20:13.649Z","tick":161233250,"pid":74560,"mode":"observe","ev":"input","inputTick":161233234}
+{"t":"2026-10-11T16:20:13.859Z","tick":161233453,"pid":74560,"mode":"observe","ev":"input","inputTick":161233437}
+{"t":"2026-10-11T16:20:14.009Z","tick":161233609,"pid":74560,"mode":"observe","ev":"input","inputTick":161233593}
+{"t":"2026-10-11T16:20:14.404Z","tick":161234000,"pid":74560,"mode":"observe","ev":"input","inputTick":161233984}
+{"t":"2026-10-11T16:20:14.564Z","tick":161234156,"pid":74560,"mode":"observe","ev":"input","inputTick":161234140}
+{"t":"2026-10-11T16:20:14.808Z","tick":161234406,"pid":74560,"mode":"observe","ev":"input","inputTick":161234375}
+{"t":"2026-10-11T16:20:15.056Z","tick":161234656,"pid":74560,"mode":"observe","ev":"input","inputTick":161234656}
+{"t":"2026-10-11T16:20:15.262Z","tick":161234859,"pid":74560,"mode":"observe","ev":"input","inputTick":161234843}
+{"t":"2026-10-11T16:20:15.511Z","tick":161235109,"pid":74560,"mode":"observe","ev":"input","inputTick":161235093}
+{"t":"2026-10-11T16:20:15.693Z","tick":161235281,"pid":74560,"mode":"observe","ev":"input","inputTick":161235281}
+{"t":"2026-10-11T16:20:15.940Z","tick":161235531,"pid":74560,"mode":"observe","ev":"input","inputTick":161235515}
+{"t":"2026-10-11T16:20:16.149Z","tick":161235750,"pid":74560,"mode":"observe","ev":"input","inputTick":161235718}
+{"t":"2026-10-11T16:20:16.399Z","tick":161236000,"pid":74560,"mode":"observe","ev":"input","inputTick":161235984}
+{"t":"2026-10-11T16:20:16.568Z","tick":161236156,"pid":74560,"mode":"observe","ev":"input","inputTick":161236156}
+{"t":"2026-10-11T16:20:16.779Z","tick":161236375,"pid":74560,"mode":"observe","ev":"input","inputTick":161236343}
+{"t":"2026-10-11T16:20:16.939Z","tick":161236531,"pid":74560,"mode":"observe","ev":"input","inputTick":161236515}
+{"t":"2026-10-11T16:20:17.108Z","tick":161236703,"pid":74560,"mode":"observe","ev":"input","inputTick":161236687}
+{"t":"2026-10-11T16:20:17.270Z","tick":161236859,"pid":74560,"mode":"observe","ev":"input","inputTick":161236859}
+{"t":"2026-10-11T16:20:17.420Z","tick":161237015,"pid":74560,"mode":"observe","ev":"input","inputTick":161237000}
+{"t":"2026-10-11T16:20:17.661Z","tick":161237250,"pid":74560,"mode":"observe","ev":"input","inputTick":161237234}
+{"t":"2026-10-11T16:20:17.812Z","tick":161237406,"pid":74560,"mode":"observe","ev":"input","inputTick":161237406}
+{"t":"2026-10-11T16:20:17.975Z","tick":161237562,"pid":74560,"mode":"observe","ev":"input","inputTick":161237562}
+{"t":"2026-10-11T16:20:18.155Z","tick":161237750,"pid":74560,"mode":"observe","ev":"input","inputTick":161237750}
+{"t":"2026-10-11T16:20:18.381Z","tick":161237968,"pid":74560,"mode":"observe","ev":"input","inputTick":161237953}
+{"t":"2026-10-11T16:20:18.577Z","tick":161238171,"pid":74560,"mode":"observe","ev":"input","inputTick":161238171}
+{"t":"2026-10-11T16:20:18.822Z","tick":161238421,"pid":74560,"mode":"observe","ev":"input","inputTick":161238406}
+{"t":"2026-10-11T16:20:19.407Z","tick":161239000,"pid":74560,"mode":"observe","ev":"input","inputTick":161238984}
+{"t":"2026-10-11T16:20:19.610Z","tick":161239203,"pid":74560,"mode":"observe","ev":"input","inputTick":161239187}
+{"t":"2026-10-11T16:20:19.825Z","tick":161239421,"pid":74560,"mode":"observe","ev":"input","inputTick":161239406}
+{"t":"2026-10-11T16:20:19.979Z","tick":161239578,"pid":74560,"mode":"observe","ev":"input","inputTick":161239562}
+{"t":"2026-10-11T16:20:20.145Z","tick":161239734,"pid":74560,"mode":"observe","ev":"input","inputTick":161239718}
+{"t":"2026-10-11T16:20:20.344Z","tick":161239937,"pid":74560,"mode":"observe","ev":"input","inputTick":161239921}
+{"t":"2026-10-11T16:20:21.416Z","tick":161241015,"pid":74560,"mode":"observe","ev":"input","inputTick":161241000}
+{"t":"2026-10-11T16:20:21.581Z","tick":161241171,"pid":74560,"mode":"observe","ev":"input","inputTick":161241171}
+{"t":"2026-10-11T16:20:21.889Z","tick":161241484,"pid":74560,"mode":"observe","ev":"input","inputTick":161241484}
+{"t":"2026-10-11T16:20:22.078Z","tick":161241671,"pid":74560,"mode":"observe","ev":"input","inputTick":161241656}
+{"t":"2026-10-11T16:20:22.259Z","tick":161241859,"pid":74560,"mode":"observe","ev":"input","inputTick":161241843}
+{"t":"2026-10-11T16:20:22.460Z","tick":161242062,"pid":74560,"mode":"observe","ev":"input","inputTick":161242046}
+{"t":"2026-10-11T16:20:22.687Z","tick":161242281,"pid":74560,"mode":"observe","ev":"input","inputTick":161242265}
+{"t":"2026-10-11T16:20:22.976Z","tick":161242578,"pid":74560,"mode":"observe","ev":"input","inputTick":161242562}
+{"t":"2026-10-11T16:20:23.266Z","tick":161242859,"pid":74560,"mode":"observe","ev":"input","inputTick":161242843}
+{"t":"2026-10-11T16:20:23.425Z","tick":161243015,"pid":74560,"mode":"observe","ev":"input","inputTick":161243000}
+{"t":"2026-10-11T16:20:23.576Z","tick":161243171,"pid":74560,"mode":"observe","ev":"input","inputTick":161243156}
+{"t":"2026-10-11T16:20:25.066Z","tick":161244656,"pid":74560,"mode":"observe","ev":"input","inputTick":161244656}
+{"t":"2026-10-11T16:20:25.226Z","tick":161244828,"pid":74560,"mode":"observe","ev":"input","inputTick":161244828}
+{"t":"2026-10-11T16:20:25.410Z","tick":161245000,"pid":74560,"mode":"observe","ev":"input","inputTick":161245000}
+{"t":"2026-10-11T16:20:25.557Z","tick":161245156,"pid":74560,"mode":"observe","ev":"input","inputTick":161245156}
+{"t":"2026-10-11T16:20:25.991Z","tick":161245578,"pid":74560,"mode":"observe","ev":"input","inputTick":161245578}
+{"t":"2026-10-11T16:20:26.132Z","tick":161245734,"pid":74560,"mode":"observe","ev":"input","inputTick":161245718}
+{"t":"2026-10-11T16:20:26.740Z","tick":161246328,"pid":74560,"mode":"observe","ev":"input","inputTick":161246328}
+{"t":"2026-10-11T16:20:26.897Z","tick":161246484,"pid":74560,"mode":"observe","ev":"input","inputTick":161246484}
+{"t":"2026-10-11T16:20:27.047Z","tick":161246640,"pid":74560,"mode":"observe","ev":"input","inputTick":161246640}
+{"t":"2026-10-11T16:20:27.313Z","tick":161246906,"pid":74560,"mode":"observe","ev":"input","inputTick":161246906}
+{"t":"2026-10-11T16:20:27.473Z","tick":161247062,"pid":74560,"mode":"observe","ev":"input","inputTick":161247062}
+{"t":"2026-10-11T16:20:27.634Z","tick":161247234,"pid":74560,"mode":"observe","ev":"input","inputTick":161247218}
+{"t":"2026-10-11T16:20:28.053Z","tick":161247640,"pid":74560,"mode":"observe","ev":"input","inputTick":161247640}
+{"t":"2026-10-11T16:20:49.679Z","tick":161269281,"pid":74560,"mode":"observe","ev":"input","inputTick":161269281}
+{"t":"2026-10-11T16:20:49.837Z","tick":161269437,"pid":74560,"mode":"observe","ev":"input","inputTick":161269437}
+{"t":"2026-10-11T16:20:50.296Z","tick":161269890,"pid":74560,"mode":"observe","ev":"input","inputTick":161269890}
+{"t":"2026-10-11T16:20:50.462Z","tick":161270062,"pid":74560,"mode":"observe","ev":"input","inputTick":161270062}
+{"t":"2026-10-11T16:20:50.627Z","tick":161270218,"pid":74560,"mode":"observe","ev":"input","inputTick":161270218}
+{"t":"2026-10-11T16:20:54.188Z","tick":161273781,"pid":74560,"mode":"observe","ev":"input","inputTick":161273781}
+{"t":"2026-10-11T16:20:55.724Z","tick":161275312,"pid":74560,"mode":"observe","ev":"input","inputTick":161275312}
+{"t":"2026-10-11T16:21:07.977Z","tick":161287578,"pid":74560,"mode":"observe","ev":"input","inputTick":161287578}
+{"t":"2026-10-11T16:21:08.135Z","tick":161287734,"pid":74560,"mode":"observe","ev":"input","inputTick":161287734}
+{"t":"2026-10-11T16:21:08.297Z","tick":161287890,"pid":74560,"mode":"observe","ev":"input","inputTick":161287890}
+{"t":"2026-10-11T16:21:08.460Z","tick":161288062,"pid":74560,"mode":"observe","ev":"input","inputTick":161288046}
+{"t":"2026-10-11T16:21:08.624Z","tick":161288218,"pid":74560,"mode":"observe","ev":"input","inputTick":161288218}
+{"t":"2026-10-11T16:21:08.789Z","tick":161288390,"pid":74560,"mode":"observe","ev":"input","inputTick":161288375}
+{"t":"2026-10-11T16:21:08.991Z","tick":161288578,"pid":74560,"mode":"observe","ev":"input","inputTick":161288578}
+{"t":"2026-10-11T16:21:09.135Z","tick":161288734,"pid":74560,"mode":"observe","ev":"input","inputTick":161288734}
+{"t":"2026-10-11T16:21:09.322Z","tick":161288921,"pid":74560,"mode":"observe","ev":"input","inputTick":161288906}
+{"t":"2026-10-11T16:21:09.493Z","tick":161289093,"pid":74560,"mode":"observe","ev":"input","inputTick":161289093}
+{"t":"2026-10-11T16:21:09.652Z","tick":161289250,"pid":74560,"mode":"observe","ev":"input","inputTick":161289234}
+{"t":"2026-10-11T16:21:09.816Z","tick":161289406,"pid":74560,"mode":"observe","ev":"input","inputTick":161289406}
+{"t":"2026-10-11T16:21:10.126Z","tick":161289718,"pid":74560,"mode":"observe","ev":"input","inputTick":161289718}
+{"t":"2026-10-11T16:21:10.227Z","tick":161289828,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"z":40}
+{"t":"2026-10-11T16:21:10.245Z","tick":161289843,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:10.282Z","tick":161289875,"pid":74560,"mode":"observe","ev":"input","inputTick":161289875}
+{"t":"2026-10-11T16:21:10.432Z","tick":161290031,"pid":74560,"mode":"observe","ev":"input","inputTick":161290031}
+{"t":"2026-10-11T16:21:10.591Z","tick":161290187,"pid":74560,"mode":"observe","ev":"input","inputTick":161290187}
+{"t":"2026-10-11T16:21:10.883Z","tick":161290484,"pid":74560,"mode":"observe","ev":"input","inputTick":161290484}
+{"t":"2026-10-11T16:21:11.043Z","tick":161290640,"pid":74560,"mode":"observe","ev":"input","inputTick":161290640}
+{"t":"2026-10-11T16:21:11.201Z","tick":161290796,"pid":74560,"mode":"observe","ev":"input","inputTick":161290796}
+{"t":"2026-10-11T16:21:11.366Z","tick":161290968,"pid":74560,"mode":"observe","ev":"input","inputTick":161290953}
+{"t":"2026-10-11T16:21:11.668Z","tick":161291265,"pid":74560,"mode":"observe","ev":"input","inputTick":161291250}
+{"t":"2026-10-11T16:21:11.830Z","tick":161291421,"pid":74560,"mode":"observe","ev":"input","inputTick":161291421}
+{"t":"2026-10-11T16:21:11.992Z","tick":161291593,"pid":74560,"mode":"observe","ev":"input","inputTick":161291578}
+{"t":"2026-10-11T16:21:12.164Z","tick":161291765,"pid":74560,"mode":"observe","ev":"input","inputTick":161291750}
+{"t":"2026-10-11T16:21:12.515Z","tick":161292109,"pid":74560,"mode":"observe","ev":"input","inputTick":161292109}
+{"t":"2026-10-11T16:21:12.666Z","tick":161292265,"pid":74560,"mode":"observe","ev":"input","inputTick":161292250}
+{"t":"2026-10-11T16:21:12.823Z","tick":161292421,"pid":74560,"mode":"observe","ev":"input","inputTick":161292406}
+{"t":"2026-10-11T16:21:13.010Z","tick":161292609,"pid":74560,"mode":"observe","ev":"input","inputTick":161292609}
+{"t":"2026-10-11T16:21:13.194Z","tick":161292781,"pid":74560,"mode":"observe","ev":"input","inputTick":161292781}
+{"t":"2026-10-11T16:21:13.372Z","tick":161292968,"pid":74560,"mode":"observe","ev":"input","inputTick":161292968}
+{"t":"2026-10-11T16:21:13.543Z","tick":161293140,"pid":74560,"mode":"observe","ev":"input","inputTick":161293125}
+{"t":"2026-10-11T16:21:13.955Z","tick":161293546,"pid":74560,"mode":"observe","ev":"input","inputTick":161293531}
+{"t":"2026-10-11T16:21:14.451Z","tick":161294046,"pid":74560,"mode":"observe","ev":"input","inputTick":161294031}
+{"t":"2026-10-11T16:21:14.622Z","tick":161294218,"pid":74560,"mode":"observe","ev":"input","inputTick":161294203}
+{"t":"2026-10-11T16:21:14.810Z","tick":161294406,"pid":74560,"mode":"observe","ev":"input","inputTick":161294390}
+{"t":"2026-10-11T16:21:14.970Z","tick":161294562,"pid":74560,"mode":"observe","ev":"input","inputTick":161294562}
+{"t":"2026-10-11T16:21:15.153Z","tick":161294750,"pid":74560,"mode":"observe","ev":"input","inputTick":161294734}
+{"t":"2026-10-11T16:21:16.735Z","tick":161296328,"pid":74560,"mode":"observe","ev":"input","inputTick":161296312}
+{"t":"2026-10-11T16:21:16.962Z","tick":161296562,"pid":74560,"mode":"observe","ev":"input","inputTick":161296531}
+{"t":"2026-10-11T16:21:17.156Z","tick":161296750,"pid":74560,"mode":"observe","ev":"input","inputTick":161296734}
+{"t":"2026-10-11T16:21:17.322Z","tick":161296921,"pid":74560,"mode":"observe","ev":"input","inputTick":161296906}
+{"t":"2026-10-11T16:21:17.506Z","tick":161297093,"pid":74560,"mode":"observe","ev":"input","inputTick":161297093}
+{"t":"2026-10-11T16:21:17.713Z","tick":161297312,"pid":74560,"mode":"observe","ev":"input","inputTick":161297296}
+{"t":"2026-10-11T16:21:18.653Z","tick":161298250,"pid":74560,"mode":"observe","ev":"input","inputTick":161298234}
+{"t":"2026-10-11T16:21:18.817Z","tick":161298406,"pid":74560,"mode":"observe","ev":"input","inputTick":161298390}
+{"t":"2026-10-11T16:21:18.966Z","tick":161298562,"pid":74560,"mode":"observe","ev":"input","inputTick":161298546}
+{"t":"2026-10-11T16:21:19.192Z","tick":161298781,"pid":74560,"mode":"observe","ev":"input","inputTick":161298781}
+{"t":"2026-10-11T16:21:19.371Z","tick":161298968,"pid":74560,"mode":"observe","ev":"input","inputTick":161298953}
+{"t":"2026-10-11T16:21:19.681Z","tick":161299281,"pid":74560,"mode":"observe","ev":"input","inputTick":161299265}
+{"t":"2026-10-11T16:21:19.862Z","tick":161299453,"pid":74560,"mode":"observe","ev":"input","inputTick":161299453}
+{"t":"2026-10-11T16:21:20.069Z","tick":161299656,"pid":74560,"mode":"observe","ev":"input","inputTick":161299640}
+{"t":"2026-10-11T16:21:20.250Z","tick":161299843,"pid":74560,"mode":"observe","ev":"input","inputTick":161299828}
+{"t":"2026-10-11T16:21:20.399Z","tick":161300000,"pid":74560,"mode":"observe","ev":"input","inputTick":161299984}
+{"t":"2026-10-11T16:21:20.649Z","tick":161300250,"pid":74560,"mode":"observe","ev":"input","inputTick":161300234}
+{"t":"2026-10-11T16:21:20.855Z","tick":161300453,"pid":74560,"mode":"observe","ev":"input","inputTick":161300437}
+{"t":"2026-10-11T16:21:21.055Z","tick":161300656,"pid":74560,"mode":"observe","ev":"input","inputTick":161300640}
+{"t":"2026-10-11T16:21:21.279Z","tick":161300875,"pid":74560,"mode":"observe","ev":"input","inputTick":161300875}
+{"t":"2026-10-11T16:21:21.429Z","tick":161301031,"pid":74560,"mode":"observe","ev":"input","inputTick":161301015}
+{"t":"2026-10-11T16:21:21.673Z","tick":161301265,"pid":74560,"mode":"observe","ev":"input","inputTick":161301265}
+{"t":"2026-10-11T16:21:21.856Z","tick":161301453,"pid":74560,"mode":"observe","ev":"input","inputTick":161301437}
+{"t":"2026-10-11T16:21:22.015Z","tick":161301609,"pid":74560,"mode":"observe","ev":"input","inputTick":161301593}
+{"t":"2026-10-11T16:21:22.187Z","tick":161301781,"pid":74560,"mode":"observe","ev":"input","inputTick":161301765}
+{"t":"2026-10-11T16:21:22.383Z","tick":161301984,"pid":74560,"mode":"observe","ev":"input","inputTick":161301968}
+{"t":"2026-10-11T16:21:22.572Z","tick":161302171,"pid":74560,"mode":"observe","ev":"input","inputTick":161302156}
+{"t":"2026-10-11T16:21:22.796Z","tick":161302390,"pid":74560,"mode":"observe","ev":"input","inputTick":161302375}
+{"t":"2026-10-11T16:21:23.245Z","tick":161302843,"pid":74560,"mode":"observe","ev":"input","inputTick":161302828}
+{"t":"2026-10-11T16:21:23.662Z","tick":161303250,"pid":74560,"mode":"observe","ev":"input","inputTick":161303250}
+{"t":"2026-10-11T16:21:23.904Z","tick":161303500,"pid":74560,"mode":"observe","ev":"input","inputTick":161303500}
+{"t":"2026-10-11T16:21:28.552Z","tick":161308140,"pid":74560,"mode":"observe","ev":"input","inputTick":161308140}
+{"t":"2026-10-11T16:21:28.721Z","tick":161308312,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:28.733Z","tick":161308328,"pid":74560,"mode":"observe","ev":"input","inputTick":161308312}
+{"t":"2026-10-11T16:21:28.744Z","tick":161308343,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:28.759Z","tick":161308359,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:28.783Z","tick":161308375,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:28.800Z","tick":161308390,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:28.807Z","tick":161308406,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:28.820Z","tick":161308421,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":true}}
+{"t":"2026-10-11T16:21:28.829Z","tick":161308421,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":true}}
+{"t":"2026-10-11T16:21:28.844Z","tick":161308437,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":true}}
+{"t":"2026-10-11T16:21:28.856Z","tick":161308453,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":true}}
+{"t":"2026-10-11T16:21:28.891Z","tick":161308484,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":true}}
+{"t":"2026-10-11T16:21:28.916Z","tick":161308515,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x4021E","class":"Progman","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"z":706}
+{"t":"2026-10-11T16:21:28.919Z","tick":161308515,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x0","class":"","title":"","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x4021E","class":"Progman","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.752Z","tick":161309343,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.761Z","tick":161309359,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false},"z":45}
+{"t":"2026-10-11T16:21:29.761Z","tick":161309359,"pid":74560,"mode":"observe","ev":"input","inputTick":161309343}
+{"t":"2026-10-11T16:21:29.764Z","tick":161309359,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.791Z","tick":161309390,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.808Z","tick":161309406,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.819Z","tick":161309421,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.830Z","tick":161309421,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.853Z","tick":161309453,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.861Z","tick":161309453,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.870Z","tick":161309468,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.889Z","tick":161309484,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.914Z","tick":161309515,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.920Z","tick":161309515,"pid":74560,"mode":"observe","ev":"shell","what":"code-5","window":{"hwnd":"0xEC947ECE0","class":"","title":"(not recorded)","pid":0,"image":null,"visible":false,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.972Z","tick":161309562,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x71105C","class":"MozillaWindowClass","title":"(not recorded)","pid":54064,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:29.990Z","tick":161309578,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x55083A","class":"MozillaWindowClass","title":"(not recorded)","pid":54064,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x8A2492","class":"File Pilot","title":"(not recorded)","pid":59080,"image":"%USERPROFILE%\\AppData\\Local\\Voidstar\\FilePilot\\FPilot.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:30.152Z","tick":161309750,"pid":74560,"mode":"observe","ev":"input","inputTick":161309718}
+{"t":"2026-10-11T16:21:34.268Z","tick":161313859,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"z":42}
+{"t":"2026-10-11T16:21:34.269Z","tick":161313859,"pid":74560,"mode":"observe","ev":"input","inputTick":161313859}
+{"t":"2026-10-11T16:21:34.290Z","tick":161313890,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:21:42.790Z","tick":161322390,"pid":74560,"mode":"observe","ev":"input","inputTick":161322375}
+{"t":"2026-10-11T16:21:43.304Z","tick":161322906,"pid":74560,"mode":"observe","ev":"input","inputTick":161322875}
+{"t":"2026-10-11T16:21:43.465Z","tick":161323062,"pid":74560,"mode":"observe","ev":"input","inputTick":161323046}
+{"t":"2026-10-11T16:21:43.627Z","tick":161323218,"pid":74560,"mode":"observe","ev":"input","inputTick":161323203}
+{"t":"2026-10-11T16:21:43.872Z","tick":161323468,"pid":74560,"mode":"observe","ev":"input","inputTick":161323468}
+{"t":"2026-10-11T16:21:44.675Z","tick":161324265,"pid":74560,"mode":"observe","ev":"input","inputTick":161324250}
+{"t":"2026-10-11T16:21:44.872Z","tick":161324468,"pid":74560,"mode":"observe","ev":"input","inputTick":161324453}
+{"t":"2026-10-11T16:21:45.047Z","tick":161324640,"pid":74560,"mode":"observe","ev":"input","inputTick":161324640}
+{"t":"2026-10-11T16:21:45.210Z","tick":161324812,"pid":74560,"mode":"observe","ev":"input","inputTick":161324796}
+{"t":"2026-10-11T16:21:45.366Z","tick":161324968,"pid":74560,"mode":"observe","ev":"input","inputTick":161324953}
+{"t":"2026-10-11T16:21:45.547Z","tick":161325140,"pid":74560,"mode":"observe","ev":"input","inputTick":161325125}
+{"t":"2026-10-11T16:21:45.708Z","tick":161325296,"pid":74560,"mode":"observe","ev":"input","inputTick":161325281}
+{"t":"2026-10-11T16:21:45.879Z","tick":161325468,"pid":74560,"mode":"observe","ev":"input","inputTick":161325468}
+{"t":"2026-10-11T16:21:46.107Z","tick":161325703,"pid":74560,"mode":"observe","ev":"input","inputTick":161325687}
+{"t":"2026-10-11T16:21:46.266Z","tick":161325859,"pid":74560,"mode":"observe","ev":"input","inputTick":161325843}
+{"t":"2026-10-11T16:21:46.468Z","tick":161326062,"pid":74560,"mode":"observe","ev":"input","inputTick":161326046}
+{"t":"2026-10-11T16:21:46.650Z","tick":161326250,"pid":74560,"mode":"observe","ev":"input","inputTick":161326234}
+{"t":"2026-10-11T16:21:46.907Z","tick":161326500,"pid":74560,"mode":"observe","ev":"input","inputTick":161326484}
+{"t":"2026-10-11T16:21:47.088Z","tick":161326687,"pid":74560,"mode":"observe","ev":"input","inputTick":161326671}
+{"t":"2026-10-11T16:21:47.376Z","tick":161326968,"pid":74560,"mode":"observe","ev":"input","inputTick":161326953}
+{"t":"2026-10-11T16:21:47.577Z","tick":161327171,"pid":74560,"mode":"observe","ev":"input","inputTick":161327171}
+{"t":"2026-10-11T16:21:47.766Z","tick":161327359,"pid":74560,"mode":"observe","ev":"input","inputTick":161327359}
+{"t":"2026-10-11T16:21:48.189Z","tick":161327781,"pid":74560,"mode":"observe","ev":"input","inputTick":161327781}
+{"t":"2026-10-11T16:21:48.373Z","tick":161327968,"pid":74560,"mode":"observe","ev":"input","inputTick":161327968}
+{"t":"2026-10-11T16:21:48.563Z","tick":161328156,"pid":74560,"mode":"observe","ev":"input","inputTick":161328140}
+{"t":"2026-10-11T16:21:48.790Z","tick":161328390,"pid":74560,"mode":"observe","ev":"input","inputTick":161328359}
+{"t":"2026-10-11T16:21:49.444Z","tick":161329046,"pid":74560,"mode":"observe","ev":"input","inputTick":161329031}
+{"t":"2026-10-11T16:21:49.672Z","tick":161329265,"pid":74560,"mode":"observe","ev":"input","inputTick":161329250}
+{"t":"2026-10-11T16:21:49.857Z","tick":161329453,"pid":74560,"mode":"observe","ev":"input","inputTick":161329421}
+{"t":"2026-10-11T16:21:50.298Z","tick":161329890,"pid":74560,"mode":"observe","ev":"input","inputTick":161329890}
+{"t":"2026-10-11T16:21:50.601Z","tick":161330203,"pid":74560,"mode":"observe","ev":"input","inputTick":161330187}
+{"t":"2026-10-11T16:21:50.772Z","tick":161330359,"pid":74560,"mode":"observe","ev":"input","inputTick":161330343}
+{"t":"2026-10-11T16:21:51.179Z","tick":161330781,"pid":74560,"mode":"observe","ev":"input","inputTick":161330765}
+{"t":"2026-10-11T16:21:51.512Z","tick":161331109,"pid":74560,"mode":"observe","ev":"input","inputTick":161331093}
+{"t":"2026-10-11T16:21:51.739Z","tick":161331328,"pid":74560,"mode":"observe","ev":"input","inputTick":161331328}
+{"t":"2026-10-11T16:21:51.919Z","tick":161331515,"pid":74560,"mode":"observe","ev":"input","inputTick":161331515}
+{"t":"2026-10-11T16:21:52.093Z","tick":161331687,"pid":74560,"mode":"observe","ev":"input","inputTick":161331656}
+{"t":"2026-10-11T16:21:52.286Z","tick":161331875,"pid":74560,"mode":"observe","ev":"input","inputTick":161331859}
+{"t":"2026-10-11T16:21:52.513Z","tick":161332109,"pid":74560,"mode":"observe","ev":"input","inputTick":161332093}
+{"t":"2026-10-11T16:21:52.692Z","tick":161332281,"pid":74560,"mode":"observe","ev":"input","inputTick":161332281}
+{"t":"2026-10-11T16:21:52.873Z","tick":161332468,"pid":74560,"mode":"observe","ev":"input","inputTick":161332453}
+{"t":"2026-10-11T16:21:53.079Z","tick":161332671,"pid":74560,"mode":"observe","ev":"input","inputTick":161332671}
+{"t":"2026-10-11T16:21:53.227Z","tick":161332828,"pid":74560,"mode":"observe","ev":"input","inputTick":161332812}
+{"t":"2026-10-11T16:21:53.409Z","tick":161333000,"pid":74560,"mode":"observe","ev":"input","inputTick":161333000}
+{"t":"2026-10-11T16:21:53.617Z","tick":161333218,"pid":74560,"mode":"observe","ev":"input","inputTick":161333187}
+{"t":"2026-10-11T16:21:53.788Z","tick":161333390,"pid":74560,"mode":"observe","ev":"input","inputTick":161333359}
+{"t":"2026-10-11T16:21:53.946Z","tick":161333546,"pid":74560,"mode":"observe","ev":"input","inputTick":161333531}
+{"t":"2026-10-11T16:21:54.128Z","tick":161333718,"pid":74560,"mode":"observe","ev":"input","inputTick":161333718}
+{"t":"2026-10-11T16:21:54.326Z","tick":161333921,"pid":74560,"mode":"observe","ev":"input","inputTick":161333906}
+{"t":"2026-10-11T16:21:54.494Z","tick":161334093,"pid":74560,"mode":"observe","ev":"input","inputTick":161334078}
+{"t":"2026-10-11T16:21:54.717Z","tick":161334312,"pid":74560,"mode":"observe","ev":"input","inputTick":161334296}
+{"t":"2026-10-11T16:21:54.919Z","tick":161334515,"pid":74560,"mode":"observe","ev":"input","inputTick":161334500}
+{"t":"2026-10-11T16:21:55.267Z","tick":161334859,"pid":74560,"mode":"observe","ev":"input","inputTick":161334843}
+{"t":"2026-10-11T16:21:55.593Z","tick":161335187,"pid":74560,"mode":"observe","ev":"input","inputTick":161335171}
+{"t":"2026-10-11T16:21:55.778Z","tick":161335375,"pid":74560,"mode":"observe","ev":"input","inputTick":161335359}
+{"t":"2026-10-11T16:21:55.968Z","tick":161335562,"pid":74560,"mode":"observe","ev":"input","inputTick":161335562}
+{"t":"2026-10-11T16:21:56.170Z","tick":161335765,"pid":74560,"mode":"observe","ev":"input","inputTick":161335750}
+{"t":"2026-10-11T16:21:56.331Z","tick":161335921,"pid":74560,"mode":"observe","ev":"input","inputTick":161335921}
+{"t":"2026-10-11T16:21:56.592Z","tick":161336187,"pid":74560,"mode":"observe","ev":"input","inputTick":161336171}
+{"t":"2026-10-11T16:21:56.753Z","tick":161336343,"pid":74560,"mode":"observe","ev":"input","inputTick":161336328}
+{"t":"2026-10-11T16:21:56.902Z","tick":161336500,"pid":74560,"mode":"observe","ev":"input","inputTick":161336484}
+{"t":"2026-10-11T16:21:57.102Z","tick":161336703,"pid":74560,"mode":"observe","ev":"input","inputTick":161336687}
+{"t":"2026-10-11T16:21:57.305Z","tick":161336906,"pid":74560,"mode":"observe","ev":"input","inputTick":161336875}
+{"t":"2026-10-11T16:21:57.510Z","tick":161337109,"pid":74560,"mode":"observe","ev":"input","inputTick":161337109}
+{"t":"2026-10-11T16:21:57.732Z","tick":161337328,"pid":74560,"mode":"observe","ev":"input","inputTick":161337296}
+{"t":"2026-10-11T16:21:58.034Z","tick":161337625,"pid":74560,"mode":"observe","ev":"input","inputTick":161337625}
+{"t":"2026-10-11T16:21:59.197Z","tick":161338796,"pid":74560,"mode":"observe","ev":"input","inputTick":161338781}
+{"t":"2026-10-11T16:21:59.360Z","tick":161338953,"pid":74560,"mode":"observe","ev":"input","inputTick":161338953}
+{"t":"2026-10-11T16:21:59.509Z","tick":161339109,"pid":74560,"mode":"observe","ev":"input","inputTick":161339093}
+{"t":"2026-10-11T16:21:59.666Z","tick":161339265,"pid":74560,"mode":"observe","ev":"input","inputTick":161339234}
+{"t":"2026-10-11T16:21:59.866Z","tick":161339468,"pid":74560,"mode":"observe","ev":"input","inputTick":161339437}
+{"t":"2026-10-11T16:22:00.054Z","tick":161339640,"pid":74560,"mode":"observe","ev":"input","inputTick":161339640}
+{"t":"2026-10-11T16:22:00.223Z","tick":161339812,"pid":74560,"mode":"observe","ev":"input","inputTick":161339812}
+{"t":"2026-10-11T16:22:00.418Z","tick":161340015,"pid":74560,"mode":"observe","ev":"input","inputTick":161340000}
+{"t":"2026-10-11T16:22:00.583Z","tick":161340171,"pid":74560,"mode":"observe","ev":"input","inputTick":161340171}
+{"t":"2026-10-11T16:22:00.730Z","tick":161340328,"pid":74560,"mode":"observe","ev":"input","inputTick":161340312}
+{"t":"2026-10-11T16:22:00.930Z","tick":161340531,"pid":74560,"mode":"observe","ev":"input","inputTick":161340515}
+{"t":"2026-10-11T16:22:01.156Z","tick":161340750,"pid":74560,"mode":"observe","ev":"input","inputTick":161340734}
+{"t":"2026-10-11T16:22:01.327Z","tick":161340921,"pid":74560,"mode":"observe","ev":"input","inputTick":161340906}
+{"t":"2026-10-11T16:22:01.586Z","tick":161341187,"pid":74560,"mode":"observe","ev":"input","inputTick":161341171}
+{"t":"2026-10-11T16:22:01.786Z","tick":161341375,"pid":74560,"mode":"observe","ev":"input","inputTick":161341359}
+{"t":"2026-10-11T16:22:02.004Z","tick":161341593,"pid":74560,"mode":"observe","ev":"input","inputTick":161341593}
+{"t":"2026-10-11T16:22:02.185Z","tick":161341781,"pid":74560,"mode":"observe","ev":"input","inputTick":161341781}
+{"t":"2026-10-11T16:22:02.413Z","tick":161342015,"pid":74560,"mode":"observe","ev":"input","inputTick":161342015}
+{"t":"2026-10-11T16:22:02.579Z","tick":161342171,"pid":74560,"mode":"observe","ev":"input","inputTick":161342171}
+{"t":"2026-10-11T16:22:02.737Z","tick":161342328,"pid":74560,"mode":"observe","ev":"input","inputTick":161342296}
+{"t":"2026-10-11T16:22:02.942Z","tick":161342531,"pid":74560,"mode":"observe","ev":"input","inputTick":161342531}
+{"t":"2026-10-11T16:22:03.149Z","tick":161342750,"pid":74560,"mode":"observe","ev":"input","inputTick":161342734}
+{"t":"2026-10-11T16:22:03.349Z","tick":161342937,"pid":74560,"mode":"observe","ev":"input","inputTick":161342921}
+{"t":"2026-10-11T16:22:05.397Z","tick":161344984,"pid":74560,"mode":"observe","ev":"input","inputTick":161344968}
+{"t":"2026-10-11T16:22:05.616Z","tick":161345218,"pid":74560,"mode":"observe","ev":"input","inputTick":161345187}
+{"t":"2026-10-11T16:22:05.799Z","tick":161345390,"pid":74560,"mode":"observe","ev":"input","inputTick":161345390}
+{"t":"2026-10-11T16:22:06.005Z","tick":161345593,"pid":74560,"mode":"observe","ev":"input","inputTick":161345593}
+{"t":"2026-10-11T16:22:06.971Z","tick":161346562,"pid":74560,"mode":"observe","ev":"input","inputTick":161346546}
+{"t":"2026-10-11T16:22:07.474Z","tick":161347062,"pid":74560,"mode":"observe","ev":"input","inputTick":161347046}
+{"t":"2026-10-11T16:22:07.637Z","tick":161347234,"pid":74560,"mode":"observe","ev":"input","inputTick":161347218}
+{"t":"2026-10-11T16:22:07.792Z","tick":161347390,"pid":74560,"mode":"observe","ev":"input","inputTick":161347390}
+{"t":"2026-10-11T16:22:07.952Z","tick":161347546,"pid":74560,"mode":"observe","ev":"input","inputTick":161347546}
+{"t":"2026-10-11T16:22:08.119Z","tick":161347718,"pid":74560,"mode":"observe","ev":"input","inputTick":161347718}
+{"t":"2026-10-11T16:22:08.300Z","tick":161347890,"pid":74560,"mode":"observe","ev":"input","inputTick":161347875}
+{"t":"2026-10-11T16:22:08.453Z","tick":161348046,"pid":74560,"mode":"observe","ev":"input","inputTick":161348046}
+{"t":"2026-10-11T16:22:08.613Z","tick":161348203,"pid":74560,"mode":"observe","ev":"input","inputTick":161348203}
+{"t":"2026-10-11T16:22:08.797Z","tick":161348390,"pid":74560,"mode":"observe","ev":"input","inputTick":161348390}
+{"t":"2026-10-11T16:22:09.022Z","tick":161348609,"pid":74560,"mode":"observe","ev":"input","inputTick":161348593}
+{"t":"2026-10-11T16:22:09.373Z","tick":161348968,"pid":74560,"mode":"observe","ev":"input","inputTick":161348953}
+{"t":"2026-10-11T16:22:11.052Z","tick":161350640,"pid":74560,"mode":"observe","ev":"input","inputTick":161350625}
+{"t":"2026-10-11T16:22:11.550Z","tick":161351140,"pid":74560,"mode":"observe","ev":"input","inputTick":161351140}
+{"t":"2026-10-11T16:22:11.903Z","tick":161351500,"pid":74560,"mode":"observe","ev":"input","inputTick":161351500}
+{"t":"2026-10-11T16:22:12.221Z","tick":161351812,"pid":74560,"mode":"observe","ev":"input","inputTick":161351781}
+{"t":"2026-10-11T16:22:12.391Z","tick":161351984,"pid":74560,"mode":"observe","ev":"input","inputTick":161351984}
+{"t":"2026-10-11T16:22:12.571Z","tick":161352171,"pid":74560,"mode":"observe","ev":"input","inputTick":161352171}
+{"t":"2026-10-11T16:22:12.754Z","tick":161352343,"pid":74560,"mode":"observe","ev":"input","inputTick":161352328}
+{"t":"2026-10-11T16:22:12.904Z","tick":161352500,"pid":74560,"mode":"observe","ev":"input","inputTick":161352484}
+{"t":"2026-10-11T16:22:13.110Z","tick":161352703,"pid":74560,"mode":"observe","ev":"input","inputTick":161352687}
+{"t":"2026-10-11T16:22:13.418Z","tick":161353015,"pid":74560,"mode":"observe","ev":"input","inputTick":161353000}
+{"t":"2026-10-11T16:22:14.368Z","tick":161353968,"pid":74560,"mode":"observe","ev":"input","inputTick":161353953}
+{"t":"2026-10-11T16:22:14.884Z","tick":161354484,"pid":74560,"mode":"observe","ev":"input","inputTick":161354453}
+{"t":"2026-10-11T16:22:15.043Z","tick":161354640,"pid":74560,"mode":"observe","ev":"input","inputTick":161354625}
+{"t":"2026-10-11T16:22:15.225Z","tick":161354812,"pid":74560,"mode":"observe","ev":"input","inputTick":161354812}
+{"t":"2026-10-11T16:22:15.426Z","tick":161355015,"pid":74560,"mode":"observe","ev":"input","inputTick":161355000}
+{"t":"2026-10-11T16:22:15.675Z","tick":161355265,"pid":74560,"mode":"observe","ev":"input","inputTick":161355250}
+{"t":"2026-10-11T16:22:15.842Z","tick":161355437,"pid":74560,"mode":"observe","ev":"input","inputTick":161355437}
+{"t":"2026-10-11T16:22:16.050Z","tick":161355640,"pid":74560,"mode":"observe","ev":"input","inputTick":161355640}
+{"t":"2026-10-11T16:22:16.209Z","tick":161355796,"pid":74560,"mode":"observe","ev":"input","inputTick":161355796}
+{"t":"2026-10-11T16:22:16.359Z","tick":161355953,"pid":74560,"mode":"observe","ev":"input","inputTick":161355937}
+{"t":"2026-10-11T16:22:16.522Z","tick":161356109,"pid":74560,"mode":"observe","ev":"input","inputTick":161356109}
+{"t":"2026-10-11T16:22:16.689Z","tick":161356281,"pid":74560,"mode":"observe","ev":"input","inputTick":161356265}
+{"t":"2026-10-11T16:22:16.859Z","tick":161356453,"pid":74560,"mode":"observe","ev":"input","inputTick":161356453}
+{"t":"2026-10-11T16:22:17.084Z","tick":161356671,"pid":74560,"mode":"observe","ev":"input","inputTick":161356671}
+{"t":"2026-10-11T16:22:17.266Z","tick":161356859,"pid":74560,"mode":"observe","ev":"input","inputTick":161356859}
+{"t":"2026-10-11T16:22:17.426Z","tick":161357015,"pid":74560,"mode":"observe","ev":"input","inputTick":161357015}
+{"t":"2026-10-11T16:22:17.594Z","tick":161357187,"pid":74560,"mode":"observe","ev":"input","inputTick":161357171}
+{"t":"2026-10-11T16:22:17.857Z","tick":161357453,"pid":74560,"mode":"observe","ev":"input","inputTick":161357437}
+{"t":"2026-10-11T16:22:18.036Z","tick":161357625,"pid":74560,"mode":"observe","ev":"input","inputTick":161357625}
+{"t":"2026-10-11T16:22:18.184Z","tick":161357781,"pid":74560,"mode":"observe","ev":"input","inputTick":161357765}
+{"t":"2026-10-11T16:22:18.344Z","tick":161357937,"pid":74560,"mode":"observe","ev":"input","inputTick":161357937}
+{"t":"2026-10-11T16:22:18.552Z","tick":161358140,"pid":74560,"mode":"observe","ev":"input","inputTick":161358125}
+{"t":"2026-10-11T16:22:18.733Z","tick":161358328,"pid":74560,"mode":"observe","ev":"input","inputTick":161358328}
+{"t":"2026-10-11T16:22:18.960Z","tick":161358562,"pid":74560,"mode":"observe","ev":"input","inputTick":161358546}
+{"t":"2026-10-11T16:22:19.145Z","tick":161358734,"pid":74560,"mode":"observe","ev":"input","inputTick":161358734}
+{"t":"2026-10-11T16:22:19.356Z","tick":161358953,"pid":74560,"mode":"observe","ev":"input","inputTick":161358937}
+{"t":"2026-10-11T16:22:19.577Z","tick":161359171,"pid":74560,"mode":"observe","ev":"input","inputTick":161359171}
+{"t":"2026-10-11T16:22:19.745Z","tick":161359343,"pid":74560,"mode":"observe","ev":"input","inputTick":161359328}
+{"t":"2026-10-11T16:22:19.910Z","tick":161359500,"pid":74560,"mode":"observe","ev":"input","inputTick":161359500}
+{"t":"2026-10-11T16:22:20.175Z","tick":161359765,"pid":74560,"mode":"observe","ev":"input","inputTick":161359765}
+{"t":"2026-10-11T16:22:20.380Z","tick":161359968,"pid":74560,"mode":"observe","ev":"input","inputTick":161359953}
+{"t":"2026-10-11T16:22:20.564Z","tick":161360156,"pid":74560,"mode":"observe","ev":"input","inputTick":161360140}
+{"t":"2026-10-11T16:22:20.747Z","tick":161360343,"pid":74560,"mode":"observe","ev":"input","inputTick":161360343}
+{"t":"2026-10-11T16:22:20.936Z","tick":161360531,"pid":74560,"mode":"observe","ev":"input","inputTick":161360515}
+{"t":"2026-10-11T16:22:21.155Z","tick":161360750,"pid":74560,"mode":"observe","ev":"input","inputTick":161360734}
+{"t":"2026-10-11T16:22:21.304Z","tick":161360906,"pid":74560,"mode":"observe","ev":"input","inputTick":161360875}
+{"t":"2026-10-11T16:22:21.540Z","tick":161361140,"pid":74560,"mode":"observe","ev":"input","inputTick":161361125}
+{"t":"2026-10-11T16:22:22.708Z","tick":161362296,"pid":74560,"mode":"observe","ev":"input","inputTick":161362296}
+{"t":"2026-10-11T16:22:22.950Z","tick":161362546,"pid":74560,"mode":"observe","ev":"input","inputTick":161362531}
+{"t":"2026-10-11T16:22:23.444Z","tick":161363031,"pid":74560,"mode":"observe","ev":"input","inputTick":161363031}
+{"t":"2026-10-11T16:22:23.625Z","tick":161363218,"pid":74560,"mode":"observe","ev":"input","inputTick":161363203}
+{"t":"2026-10-11T16:22:23.890Z","tick":161363484,"pid":74560,"mode":"observe","ev":"input","inputTick":161363468}
+{"t":"2026-10-11T16:22:24.308Z","tick":161363906,"pid":74560,"mode":"observe","ev":"input","inputTick":161363890}
+{"t":"2026-10-11T16:22:24.598Z","tick":161364187,"pid":74560,"mode":"observe","ev":"input","inputTick":161364187}
+{"t":"2026-10-11T16:22:24.841Z","tick":161364437,"pid":74560,"mode":"observe","ev":"input","inputTick":161364421}
+{"t":"2026-10-11T16:22:25.067Z","tick":161364656,"pid":74560,"mode":"observe","ev":"input","inputTick":161364656}
+{"t":"2026-10-11T16:22:30.190Z","tick":161369781,"pid":74560,"mode":"observe","ev":"input","inputTick":161369781}
+{"t":"2026-10-11T16:22:30.598Z","tick":161370187,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x7242C","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:22:30.675Z","tick":161370265,"pid":74560,"mode":"observe","ev":"input","inputTick":161370265}
+{"t":"2026-10-11T16:22:30.823Z","tick":161370421,"pid":74560,"mode":"observe","ev":"input","inputTick":161370406}
+{"t":"2026-10-11T16:22:31.004Z","tick":161370593,"pid":74560,"mode":"observe","ev":"input","inputTick":161370593}
+{"t":"2026-10-11T16:22:31.492Z","tick":161371093,"pid":74560,"mode":"observe","ev":"input","inputTick":161371078}
+{"t":"2026-10-11T16:22:31.656Z","tick":161371250,"pid":74560,"mode":"observe","ev":"input","inputTick":161371250}
+{"t":"2026-10-11T16:22:31.825Z","tick":161371421,"pid":74560,"mode":"observe","ev":"input","inputTick":161371406}
+{"t":"2026-10-11T16:22:31.985Z","tick":161371578,"pid":74560,"mode":"observe","ev":"input","inputTick":161371578}
+{"t":"2026-10-11T16:22:32.166Z","tick":161371765,"pid":74560,"mode":"observe","ev":"input","inputTick":161371765}
+{"t":"2026-10-11T16:22:32.391Z","tick":161371984,"pid":74560,"mode":"observe","ev":"input","inputTick":161371984}
+{"t":"2026-10-11T16:22:32.638Z","tick":161372234,"pid":74560,"mode":"observe","ev":"input","inputTick":161372203}
+{"t":"2026-10-11T16:22:32.807Z","tick":161372406,"pid":74560,"mode":"observe","ev":"input","inputTick":161372390}
+{"t":"2026-10-11T16:22:33.011Z","tick":161372609,"pid":74560,"mode":"observe","ev":"input","inputTick":161372593}
+{"t":"2026-10-11T16:22:33.194Z","tick":161372781,"pid":74560,"mode":"observe","ev":"input","inputTick":161372781}
+{"t":"2026-10-11T16:22:33.420Z","tick":161373015,"pid":74560,"mode":"observe","ev":"input","inputTick":161373000}
+{"t":"2026-10-11T16:22:33.572Z","tick":161373171,"pid":74560,"mode":"observe","ev":"input","inputTick":161373156}
+{"t":"2026-10-11T16:22:33.750Z","tick":161373343,"pid":74560,"mode":"observe","ev":"input","inputTick":161373312}
+{"t":"2026-10-11T16:22:33.902Z","tick":161373500,"pid":74560,"mode":"observe","ev":"input","inputTick":161373500}
+{"t":"2026-10-11T16:22:34.120Z","tick":161373718,"pid":74560,"mode":"observe","ev":"input","inputTick":161373687}
+{"t":"2026-10-11T16:22:34.373Z","tick":161373968,"pid":74560,"mode":"observe","ev":"input","inputTick":161373953}
+{"t":"2026-10-11T16:22:34.740Z","tick":161374328,"pid":74560,"mode":"observe","ev":"input","inputTick":161374328}
+{"t":"2026-10-11T16:22:34.967Z","tick":161374562,"pid":74560,"mode":"observe","ev":"input","inputTick":161374546}
+{"t":"2026-10-11T16:22:35.151Z","tick":161374750,"pid":74560,"mode":"observe","ev":"input","inputTick":161374750}
+{"t":"2026-10-11T16:22:35.378Z","tick":161374968,"pid":74560,"mode":"observe","ev":"input","inputTick":161374953}
+{"t":"2026-10-11T16:22:35.605Z","tick":161375203,"pid":74560,"mode":"observe","ev":"input","inputTick":161375171}
+{"t":"2026-10-11T16:22:35.839Z","tick":161375437,"pid":74560,"mode":"observe","ev":"input","inputTick":161375421}
+{"t":"2026-10-11T16:22:36.004Z","tick":161375593,"pid":74560,"mode":"observe","ev":"input","inputTick":161375593}
+{"t":"2026-10-11T16:22:36.232Z","tick":161375828,"pid":74560,"mode":"observe","ev":"input","inputTick":161375796}
+{"t":"2026-10-11T16:22:36.424Z","tick":161376015,"pid":74560,"mode":"observe","ev":"input","inputTick":161376015}
+{"t":"2026-10-11T16:22:36.587Z","tick":161376187,"pid":74560,"mode":"observe","ev":"input","inputTick":161376156}
+{"t":"2026-10-11T16:22:36.768Z","tick":161376359,"pid":74560,"mode":"observe","ev":"input","inputTick":161376359}
+{"t":"2026-10-11T16:22:36.984Z","tick":161376578,"pid":74560,"mode":"observe","ev":"input","inputTick":161376578}
+{"t":"2026-10-11T16:22:37.144Z","tick":161376734,"pid":74560,"mode":"observe","ev":"input","inputTick":161376734}
+{"t":"2026-10-11T16:22:42.536Z","tick":161382125,"pid":74560,"mode":"observe","ev":"input","inputTick":161382125}
+{"t":"2026-10-11T16:22:42.680Z","tick":161382281,"pid":74560,"mode":"observe","ev":"input","inputTick":161382265}
+{"t":"2026-10-11T16:22:42.844Z","tick":161382437,"pid":74560,"mode":"observe","ev":"input","inputTick":161382437}
+{"t":"2026-10-11T16:22:42.997Z","tick":161382593,"pid":74560,"mode":"observe","ev":"input","inputTick":161382593}
+{"t":"2026-10-11T16:22:43.384Z","tick":161382984,"pid":74560,"mode":"observe","ev":"input","inputTick":161382984}
+{"t":"2026-10-11T16:22:43.545Z","tick":161383140,"pid":74560,"mode":"observe","ev":"input","inputTick":161383140}
+{"t":"2026-10-11T16:22:43.979Z","tick":161383578,"pid":74560,"mode":"observe","ev":"input","inputTick":161383578}
+{"t":"2026-10-11T16:22:44.137Z","tick":161383734,"pid":74560,"mode":"observe","ev":"input","inputTick":161383734}
+{"t":"2026-10-11T16:22:44.307Z","tick":161383906,"pid":74560,"mode":"observe","ev":"input","inputTick":161383890}
+{"t":"2026-10-11T16:22:44.471Z","tick":161384062,"pid":74560,"mode":"observe","ev":"input","inputTick":161384062}
+{"t":"2026-10-11T16:22:44.635Z","tick":161384234,"pid":74560,"mode":"observe","ev":"input","inputTick":161384218}
+{"t":"2026-10-11T16:22:44.795Z","tick":161384390,"pid":74560,"mode":"observe","ev":"input","inputTick":161384390}
+{"t":"2026-10-11T16:22:45.066Z","tick":161384656,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"z":42}
+{"t":"2026-10-11T16:22:45.067Z","tick":161384656,"pid":74560,"mode":"observe","ev":"input","inputTick":161384656}
+{"t":"2026-10-11T16:22:45.067Z","tick":161384656,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:22:46.997Z","tick":161386593,"pid":74560,"mode":"observe","ev":"input","inputTick":161386578}
+{"t":"2026-10-11T16:22:47.160Z","tick":161386750,"pid":74560,"mode":"observe","ev":"input","inputTick":161386750}
+{"t":"2026-10-11T16:22:47.708Z","tick":161387296,"pid":74560,"mode":"observe","ev":"input","inputTick":161387296}
+{"t":"2026-10-11T16:22:47.857Z","tick":161387453,"pid":74560,"mode":"observe","ev":"input","inputTick":161387453}
+{"t":"2026-10-11T16:22:48.025Z","tick":161387625,"pid":74560,"mode":"observe","ev":"input","inputTick":161387609}
+{"t":"2026-10-11T16:22:48.187Z","tick":161387781,"pid":74560,"mode":"observe","ev":"input","inputTick":161387781}
+{"t":"2026-10-11T16:22:49.914Z","tick":161389515,"pid":74560,"mode":"observe","ev":"input","inputTick":161389500}
+{"t":"2026-10-11T16:22:50.197Z","tick":161389796,"pid":74560,"mode":"observe","ev":"input","inputTick":161389781}
+{"t":"2026-10-11T16:22:50.366Z","tick":161389953,"pid":74560,"mode":"observe","ev":"input","inputTick":161389953}
+{"t":"2026-10-11T16:22:50.521Z","tick":161390109,"pid":74560,"mode":"observe","ev":"input","inputTick":161390109}
+{"t":"2026-10-11T16:22:50.977Z","tick":161390578,"pid":74560,"mode":"observe","ev":"input","inputTick":161390562}
+{"t":"2026-10-11T16:22:51.148Z","tick":161390750,"pid":74560,"mode":"observe","ev":"input","inputTick":161390750}
+{"t":"2026-10-11T16:22:51.313Z","tick":161390906,"pid":74560,"mode":"observe","ev":"input","inputTick":161390906}
+{"t":"2026-10-11T16:22:51.465Z","tick":161391062,"pid":74560,"mode":"observe","ev":"input","inputTick":161391062}
+{"t":"2026-10-11T16:22:51.980Z","tick":161391578,"pid":74560,"mode":"observe","ev":"input","inputTick":161391578}
+{"t":"2026-10-11T16:22:52.146Z","tick":161391734,"pid":74560,"mode":"observe","ev":"input","inputTick":161391734}
+{"t":"2026-10-11T16:22:52.302Z","tick":161391890,"pid":74560,"mode":"observe","ev":"input","inputTick":161391890}
+{"t":"2026-10-11T16:22:52.768Z","tick":161392359,"pid":74560,"mode":"observe","ev":"input","inputTick":161392359}
+{"t":"2026-10-11T16:22:53.448Z","tick":161393046,"pid":74560,"mode":"observe","ev":"input","inputTick":161393031}
+{"t":"2026-10-11T16:22:53.607Z","tick":161393203,"pid":74560,"mode":"observe","ev":"input","inputTick":161393203}
+{"t":"2026-10-11T16:22:54.075Z","tick":161393671,"pid":74560,"mode":"observe","ev":"input","inputTick":161393671}
+{"t":"2026-10-11T16:22:54.230Z","tick":161393828,"pid":74560,"mode":"observe","ev":"input","inputTick":161393828}
+{"t":"2026-10-11T16:22:54.392Z","tick":161393984,"pid":74560,"mode":"observe","ev":"input","inputTick":161393984}
+{"t":"2026-10-11T16:22:56.152Z","tick":161395750,"pid":74560,"mode":"observe","ev":"input","inputTick":161395750}
+{"t":"2026-10-11T16:22:56.609Z","tick":161396203,"pid":74560,"mode":"observe","ev":"input","inputTick":161396203}
+{"t":"2026-10-11T16:22:56.834Z","tick":161396421,"pid":74560,"mode":"observe","ev":"input","inputTick":161396421}
+{"t":"2026-10-11T16:22:57.678Z","tick":161397265,"pid":74560,"mode":"observe","ev":"input","inputTick":161397265}
+{"t":"2026-10-11T16:22:57.836Z","tick":161397437,"pid":74560,"mode":"observe","ev":"input","inputTick":161397437}
+{"t":"2026-10-11T16:22:58.108Z","tick":161397703,"pid":74560,"mode":"observe","ev":"input","inputTick":161397703}
+{"t":"2026-10-11T16:22:58.273Z","tick":161397875,"pid":74560,"mode":"observe","ev":"input","inputTick":161397859}
+{"t":"2026-10-11T16:22:58.519Z","tick":161398109,"pid":74560,"mode":"observe","ev":"input","inputTick":161398109}
+{"t":"2026-10-11T16:22:58.672Z","tick":161398265,"pid":74560,"mode":"observe","ev":"input","inputTick":161398265}
+{"t":"2026-10-11T16:22:58.840Z","tick":161398437,"pid":74560,"mode":"observe","ev":"input","inputTick":161398437}
+{"t":"2026-10-11T16:22:59.021Z","tick":161398609,"pid":74560,"mode":"observe","ev":"input","inputTick":161398593}
+{"t":"2026-10-11T16:22:59.262Z","tick":161398859,"pid":74560,"mode":"observe","ev":"input","inputTick":161398859}
+{"t":"2026-10-11T16:23:01.161Z","tick":161400750,"pid":74560,"mode":"observe","ev":"input","inputTick":161400734}
+{"t":"2026-10-11T16:23:01.392Z","tick":161400984,"pid":74560,"mode":"observe","ev":"input","inputTick":161400968}
+{"t":"2026-10-11T16:23:01.606Z","tick":161401203,"pid":74560,"mode":"observe","ev":"input","inputTick":161401203}
+{"t":"2026-10-11T16:23:01.937Z","tick":161401531,"pid":74560,"mode":"observe","ev":"input","inputTick":161401500}
+{"t":"2026-10-11T16:23:02.106Z","tick":161401703,"pid":74560,"mode":"observe","ev":"input","inputTick":161401687}
+{"t":"2026-10-11T16:23:02.269Z","tick":161401859,"pid":74560,"mode":"observe","ev":"input","inputTick":161401859}
+{"t":"2026-10-11T16:23:02.430Z","tick":161402031,"pid":74560,"mode":"observe","ev":"input","inputTick":161402015}
+{"t":"2026-10-11T16:23:02.610Z","tick":161402203,"pid":74560,"mode":"observe","ev":"input","inputTick":161402171}
+{"t":"2026-10-11T16:23:02.792Z","tick":161402390,"pid":74560,"mode":"observe","ev":"input","inputTick":161402375}
+{"t":"2026-10-11T16:23:03.057Z","tick":161402656,"pid":74560,"mode":"observe","ev":"input","inputTick":161402640}
+{"t":"2026-10-11T16:23:03.221Z","tick":161402812,"pid":74560,"mode":"observe","ev":"input","inputTick":161402796}
+{"t":"2026-10-11T16:23:03.407Z","tick":161403000,"pid":74560,"mode":"observe","ev":"input","inputTick":161403000}
+{"t":"2026-10-11T16:23:03.677Z","tick":161403265,"pid":74560,"mode":"observe","ev":"input","inputTick":161403265}
+{"t":"2026-10-11T16:23:03.925Z","tick":161403515,"pid":74560,"mode":"observe","ev":"input","inputTick":161403500}
+{"t":"2026-10-11T16:23:04.172Z","tick":161403765,"pid":74560,"mode":"observe","ev":"input","inputTick":161403765}
+{"t":"2026-10-11T16:23:04.395Z","tick":161403984,"pid":74560,"mode":"observe","ev":"input","inputTick":161403984}
+{"t":"2026-10-11T16:23:04.622Z","tick":161404218,"pid":74560,"mode":"observe","ev":"input","inputTick":161404187}
+{"t":"2026-10-11T16:23:04.812Z","tick":161404406,"pid":74560,"mode":"observe","ev":"input","inputTick":161404406}
+{"t":"2026-10-11T16:23:04.992Z","tick":161404593,"pid":74560,"mode":"observe","ev":"input","inputTick":161404562}
+{"t":"2026-10-11T16:23:05.290Z","tick":161404890,"pid":74560,"mode":"observe","ev":"input","inputTick":161404875}
+{"t":"2026-10-11T16:23:05.493Z","tick":161405093,"pid":74560,"mode":"observe","ev":"input","inputTick":161405062}
+{"t":"2026-10-11T16:23:06.908Z","tick":161406500,"pid":74560,"mode":"observe","ev":"input","inputTick":161406500}
+{"t":"2026-10-11T16:23:08.214Z","tick":161407812,"pid":74560,"mode":"observe","ev":"input","inputTick":161407796}
+{"t":"2026-10-11T16:23:08.415Z","tick":161408015,"pid":74560,"mode":"observe","ev":"input","inputTick":161407984}
+{"t":"2026-10-11T16:23:21.450Z","tick":161421046,"pid":74560,"mode":"observe","ev":"input","inputTick":161421046}
+{"t":"2026-10-11T16:23:21.620Z","tick":161421218,"pid":74560,"mode":"observe","ev":"input","inputTick":161421218}
+{"t":"2026-10-11T16:23:21.863Z","tick":161421453,"pid":74560,"mode":"observe","ev":"input","inputTick":161421453}
+{"t":"2026-10-11T16:23:22.606Z","tick":161422203,"pid":74560,"mode":"observe","ev":"input","inputTick":161422203}
+{"t":"2026-10-11T16:23:23.385Z","tick":161422984,"pid":74560,"mode":"observe","ev":"input","inputTick":161422984}
+{"t":"2026-10-11T16:23:23.545Z","tick":161423140,"pid":74560,"mode":"observe","ev":"input","inputTick":161423140}
+{"t":"2026-10-11T16:23:23.718Z","tick":161423312,"pid":74560,"mode":"observe","ev":"input","inputTick":161423312}
+{"t":"2026-10-11T16:23:23.877Z","tick":161423468,"pid":74560,"mode":"observe","ev":"input","inputTick":161423468}
+{"t":"2026-10-11T16:23:24.168Z","tick":161423765,"pid":74560,"mode":"observe","ev":"input","inputTick":161423765}
+{"t":"2026-10-11T16:23:24.626Z","tick":161424218,"pid":74560,"mode":"observe","ev":"input","inputTick":161424218}
+{"t":"2026-10-11T16:23:24.790Z","tick":161424390,"pid":74560,"mode":"observe","ev":"input","inputTick":161424390}
+{"t":"2026-10-11T16:23:24.953Z","tick":161424546,"pid":74560,"mode":"observe","ev":"input","inputTick":161424546}
+{"t":"2026-10-11T16:23:25.470Z","tick":161425062,"pid":74560,"mode":"observe","ev":"input","inputTick":161425062}
+{"t":"2026-10-11T16:23:31.866Z","tick":161431453,"pid":74560,"mode":"observe","ev":"input","inputTick":161431453}
+{"t":"2026-10-11T16:23:32.027Z","tick":161431625,"pid":74560,"mode":"observe","ev":"input","inputTick":161431625}
+{"t":"2026-10-11T16:23:55.154Z","tick":161454750,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:24:02.637Z","tick":161462234,"pid":74560,"mode":"observe","ev":"input","inputTick":161462218}
+{"t":"2026-10-11T16:24:03.318Z","tick":161462906,"pid":74560,"mode":"observe","ev":"input","inputTick":161462890}
+{"t":"2026-10-11T16:24:03.508Z","tick":161463109,"pid":74560,"mode":"observe","ev":"input","inputTick":161463093}
+{"t":"2026-10-11T16:24:03.702Z","tick":161463296,"pid":74560,"mode":"observe","ev":"input","inputTick":161463296}
+{"t":"2026-10-11T16:24:04.163Z","tick":161463750,"pid":74560,"mode":"observe","ev":"input","inputTick":161463750}
+{"t":"2026-10-11T16:24:04.347Z","tick":161463937,"pid":74560,"mode":"observe","ev":"input","inputTick":161463921}
+{"t":"2026-10-11T16:24:04.781Z","tick":161464375,"pid":74560,"mode":"observe","ev":"input","inputTick":161464375}
+{"t":"2026-10-11T16:24:05.090Z","tick":161464687,"pid":74560,"mode":"observe","ev":"input","inputTick":161464671}
+{"t":"2026-10-11T16:24:05.297Z","tick":161464890,"pid":74560,"mode":"observe","ev":"input","inputTick":161464890}
+{"t":"2026-10-11T16:24:05.501Z","tick":161465093,"pid":74560,"mode":"observe","ev":"input","inputTick":161465078}
+{"t":"2026-10-11T16:24:05.664Z","tick":161465265,"pid":74560,"mode":"observe","ev":"input","inputTick":161465250}
+{"t":"2026-10-11T16:24:05.886Z","tick":161465484,"pid":74560,"mode":"observe","ev":"input","inputTick":161465468}
+{"t":"2026-10-11T16:24:06.054Z","tick":161465656,"pid":74560,"mode":"observe","ev":"input","inputTick":161465640}
+{"t":"2026-10-11T16:24:06.523Z","tick":161466125,"pid":74560,"mode":"observe","ev":"input","inputTick":161466109}
+{"t":"2026-10-11T16:24:06.714Z","tick":161466312,"pid":74560,"mode":"observe","ev":"input","inputTick":161466312}
+{"t":"2026-10-11T16:24:06.872Z","tick":161466468,"pid":74560,"mode":"observe","ev":"input","inputTick":161466453}
+{"t":"2026-10-11T16:24:07.093Z","tick":161466687,"pid":74560,"mode":"observe","ev":"input","inputTick":161466671}
+{"t":"2026-10-11T16:24:07.242Z","tick":161466843,"pid":74560,"mode":"observe","ev":"input","inputTick":161466828}
+{"t":"2026-10-11T16:24:07.403Z","tick":161467000,"pid":74560,"mode":"observe","ev":"input","inputTick":161466984}
+{"t":"2026-10-11T16:24:07.613Z","tick":161467203,"pid":74560,"mode":"observe","ev":"input","inputTick":161467203}
+{"t":"2026-10-11T16:24:07.768Z","tick":161467359,"pid":74560,"mode":"observe","ev":"input","inputTick":161467359}
+{"t":"2026-10-11T16:24:07.938Z","tick":161467531,"pid":74560,"mode":"observe","ev":"input","inputTick":161467515}
+{"t":"2026-10-11T16:24:08.120Z","tick":161467718,"pid":74560,"mode":"observe","ev":"input","inputTick":161467703}
+{"t":"2026-10-11T16:24:08.340Z","tick":161467937,"pid":74560,"mode":"observe","ev":"input","inputTick":161467906}
+{"t":"2026-10-11T16:24:08.510Z","tick":161468109,"pid":74560,"mode":"observe","ev":"input","inputTick":161468093}
+{"t":"2026-10-11T16:24:08.713Z","tick":161468312,"pid":74560,"mode":"observe","ev":"input","inputTick":161468312}
+{"t":"2026-10-11T16:24:08.914Z","tick":161468515,"pid":74560,"mode":"observe","ev":"input","inputTick":161468500}
+{"t":"2026-10-11T16:24:09.104Z","tick":161468703,"pid":74560,"mode":"observe","ev":"input","inputTick":161468703}
+{"t":"2026-10-11T16:24:09.275Z","tick":161468875,"pid":74560,"mode":"observe","ev":"input","inputTick":161468859}
+{"t":"2026-10-11T16:24:09.499Z","tick":161469093,"pid":74560,"mode":"observe","ev":"input","inputTick":161469093}
+{"t":"2026-10-11T16:24:09.748Z","tick":161469343,"pid":74560,"mode":"observe","ev":"input","inputTick":161469328}
+{"t":"2026-10-11T16:24:09.928Z","tick":161469515,"pid":74560,"mode":"observe","ev":"input","inputTick":161469515}
+{"t":"2026-10-11T16:24:10.316Z","tick":161469906,"pid":74560,"mode":"observe","ev":"input","inputTick":161469906}
+{"t":"2026-10-11T16:24:10.512Z","tick":161470109,"pid":74560,"mode":"observe","ev":"input","inputTick":161470078}
+{"t":"2026-10-11T16:24:11.059Z","tick":161470656,"pid":74560,"mode":"observe","ev":"input","inputTick":161470625}
+{"t":"2026-10-11T16:24:11.257Z","tick":161470859,"pid":74560,"mode":"observe","ev":"input","inputTick":161470828}
+{"t":"2026-10-11T16:24:11.427Z","tick":161471015,"pid":74560,"mode":"observe","ev":"input","inputTick":161471000}
+{"t":"2026-10-11T16:24:11.631Z","tick":161471218,"pid":74560,"mode":"observe","ev":"input","inputTick":161471203}
+{"t":"2026-10-11T16:24:11.853Z","tick":161471453,"pid":74560,"mode":"observe","ev":"input","inputTick":161471437}
+{"t":"2026-10-11T16:24:12.016Z","tick":161471609,"pid":74560,"mode":"observe","ev":"input","inputTick":161471578}
+{"t":"2026-10-11T16:24:12.234Z","tick":161471828,"pid":74560,"mode":"observe","ev":"input","inputTick":161471828}
+{"t":"2026-10-11T16:24:12.416Z","tick":161472015,"pid":74560,"mode":"observe","ev":"input","inputTick":161472000}
+{"t":"2026-10-11T16:24:12.577Z","tick":161472171,"pid":74560,"mode":"observe","ev":"input","inputTick":161472171}
+{"t":"2026-10-11T16:24:12.779Z","tick":161472375,"pid":74560,"mode":"observe","ev":"input","inputTick":161472359}
+{"t":"2026-10-11T16:24:12.950Z","tick":161472546,"pid":74560,"mode":"observe","ev":"input","inputTick":161472546}
+{"t":"2026-10-11T16:24:13.125Z","tick":161472718,"pid":74560,"mode":"observe","ev":"input","inputTick":161472718}
+{"t":"2026-10-11T16:24:13.339Z","tick":161472937,"pid":74560,"mode":"observe","ev":"input","inputTick":161472921}
+{"t":"2026-10-11T16:24:13.765Z","tick":161473359,"pid":74560,"mode":"observe","ev":"input","inputTick":161473359}
+{"t":"2026-10-11T16:24:13.924Z","tick":161473515,"pid":74560,"mode":"observe","ev":"input","inputTick":161473500}
+{"t":"2026-10-11T16:24:14.087Z","tick":161473687,"pid":74560,"mode":"observe","ev":"input","inputTick":161473671}
+{"t":"2026-10-11T16:24:14.248Z","tick":161473843,"pid":74560,"mode":"observe","ev":"input","inputTick":161473843}
+{"t":"2026-10-11T16:24:14.474Z","tick":161474062,"pid":74560,"mode":"observe","ev":"input","inputTick":161474062}
+{"t":"2026-10-11T16:24:14.621Z","tick":161474218,"pid":74560,"mode":"observe","ev":"input","inputTick":161474203}
+{"t":"2026-10-11T16:24:14.823Z","tick":161474421,"pid":74560,"mode":"observe","ev":"input","inputTick":161474406}
+{"t":"2026-10-11T16:24:14.988Z","tick":161474578,"pid":74560,"mode":"observe","ev":"input","inputTick":161474562}
+{"t":"2026-10-11T16:24:15.141Z","tick":161474734,"pid":74560,"mode":"observe","ev":"input","inputTick":161474718}
+{"t":"2026-10-11T16:24:15.378Z","tick":161474968,"pid":74560,"mode":"observe","ev":"input","inputTick":161474953}
+{"t":"2026-10-11T16:24:15.621Z","tick":161475218,"pid":74560,"mode":"observe","ev":"input","inputTick":161475203}
+{"t":"2026-10-11T16:24:15.822Z","tick":161475421,"pid":74560,"mode":"observe","ev":"input","inputTick":161475390}
+{"t":"2026-10-11T16:24:15.987Z","tick":161475578,"pid":74560,"mode":"observe","ev":"input","inputTick":161475578}
+{"t":"2026-10-11T16:24:16.193Z","tick":161475781,"pid":74560,"mode":"observe","ev":"input","inputTick":161475781}
+{"t":"2026-10-11T16:24:16.342Z","tick":161475937,"pid":74560,"mode":"observe","ev":"input","inputTick":161475937}
+{"t":"2026-10-11T16:24:16.504Z","tick":161476093,"pid":74560,"mode":"observe","ev":"input","inputTick":161476093}
+{"t":"2026-10-11T16:24:16.685Z","tick":161476281,"pid":74560,"mode":"observe","ev":"input","inputTick":161476281}
+{"t":"2026-10-11T16:24:17.011Z","tick":161476609,"pid":74560,"mode":"observe","ev":"input","inputTick":161476593}
+{"t":"2026-10-11T16:24:19.056Z","tick":161478656,"pid":74560,"mode":"observe","ev":"input","inputTick":161478656}
+{"t":"2026-10-11T16:24:19.462Z","tick":161479062,"pid":74560,"mode":"observe","ev":"input","inputTick":161479046}
+{"t":"2026-10-11T16:24:20.009Z","tick":161479609,"pid":74560,"mode":"observe","ev":"input","inputTick":161479593}
+{"t":"2026-10-11T16:24:45.859Z","tick":161505453,"pid":74560,"mode":"observe","ev":"input","inputTick":161505437}
+{"t":"2026-10-11T16:24:46.648Z","tick":161506250,"pid":74560,"mode":"observe","ev":"input","inputTick":161506218}
+{"t":"2026-10-11T16:24:47.146Z","tick":161506734,"pid":74560,"mode":"observe","ev":"input","inputTick":161506718}
+{"t":"2026-10-11T16:24:47.307Z","tick":161506906,"pid":74560,"mode":"observe","ev":"input","inputTick":161506890}
+{"t":"2026-10-11T16:24:47.480Z","tick":161507078,"pid":74560,"mode":"observe","ev":"input","inputTick":161507046}
+{"t":"2026-10-11T16:24:47.637Z","tick":161507234,"pid":74560,"mode":"observe","ev":"input","inputTick":161507218}
+{"t":"2026-10-11T16:24:47.806Z","tick":161507406,"pid":74560,"mode":"observe","ev":"input","inputTick":161507390}
+{"t":"2026-10-11T16:24:47.967Z","tick":161507562,"pid":74560,"mode":"observe","ev":"input","inputTick":161507546}
+{"t":"2026-10-11T16:24:48.128Z","tick":161507718,"pid":74560,"mode":"observe","ev":"input","inputTick":161507718}
+{"t":"2026-10-11T16:24:48.298Z","tick":161507890,"pid":74560,"mode":"observe","ev":"input","inputTick":161507875}
+{"t":"2026-10-11T16:24:48.455Z","tick":161508046,"pid":74560,"mode":"observe","ev":"input","inputTick":161508046}
+{"t":"2026-10-11T16:24:48.603Z","tick":161508203,"pid":74560,"mode":"observe","ev":"input","inputTick":161508171}
+{"t":"2026-10-11T16:24:48.794Z","tick":161508390,"pid":74560,"mode":"observe","ev":"input","inputTick":161508375}
+{"t":"2026-10-11T16:24:48.957Z","tick":161508546,"pid":74560,"mode":"observe","ev":"input","inputTick":161508546}
+{"t":"2026-10-11T16:24:49.267Z","tick":161508859,"pid":74560,"mode":"observe","ev":"input","inputTick":161508843}
+{"t":"2026-10-11T16:24:56.737Z","tick":161516328,"pid":74560,"mode":"observe","ev":"input","inputTick":161516328}
+{"t":"2026-10-11T16:24:56.887Z","tick":161516484,"pid":74560,"mode":"observe","ev":"input","inputTick":161516484}
+{"t":"2026-10-11T16:24:57.066Z","tick":161516656,"pid":74560,"mode":"observe","ev":"input","inputTick":161516656}
+{"t":"2026-10-11T16:24:57.233Z","tick":161516828,"pid":74560,"mode":"observe","ev":"input","inputTick":161516828}
+{"t":"2026-10-11T16:24:57.654Z","tick":161517250,"pid":74560,"mode":"observe","ev":"input","inputTick":161517250}
+{"t":"2026-10-11T16:24:57.815Z","tick":161517406,"pid":74560,"mode":"observe","ev":"input","inputTick":161517406}
+{"t":"2026-10-11T16:24:57.978Z","tick":161517578,"pid":74560,"mode":"observe","ev":"input","inputTick":161517578}
+{"t":"2026-10-11T16:24:58.148Z","tick":161517750,"pid":74560,"mode":"observe","ev":"input","inputTick":161517750}
+{"t":"2026-10-11T16:24:58.392Z","tick":161517984,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0xF0ED0","class":"CASCADIA_HOSTING_WINDOW_CLASS","title":"(not recorded)","pid":51876,"image":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.25.2733.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe","visible":true,"minimized":false},"z":41}
+{"t":"2026-10-11T16:24:58.392Z","tick":161517984,"pid":74560,"mode":"observe","ev":"input","inputTick":161517968}
+{"t":"2026-10-11T16:24:58.413Z","tick":161518015,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0xF0ED0","class":"CASCADIA_HOSTING_WINDOW_CLASS","title":"(not recorded)","pid":51876,"image":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.25.2733.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0xF0ED0","class":"CASCADIA_HOSTING_WINDOW_CLASS","title":"(not recorded)","pid":51876,"image":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.25.2733.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:24:58.479Z","tick":161518078,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"z":42}
+{"t":"2026-10-11T16:24:58.522Z","tick":161518125,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:24:58.839Z","tick":161518437,"pid":74560,"mode":"observe","ev":"input","inputTick":161518437}
+{"t":"2026-10-11T16:24:59.001Z","tick":161518593,"pid":74560,"mode":"observe","ev":"input","inputTick":161518593}
+{"t":"2026-10-11T16:24:59.168Z","tick":161518765,"pid":74560,"mode":"observe","ev":"input","inputTick":161518765}
+{"t":"2026-10-11T16:24:59.325Z","tick":161518921,"pid":74560,"mode":"observe","ev":"input","inputTick":161518921}
+{"t":"2026-10-11T16:24:59.493Z","tick":161519093,"pid":74560,"mode":"observe","ev":"input","inputTick":161519093}
+{"t":"2026-10-11T16:24:59.656Z","tick":161519250,"pid":74560,"mode":"observe","ev":"input","inputTick":161519250}
+{"t":"2026-10-11T16:24:59.918Z","tick":161519515,"pid":74560,"mode":"observe","ev":"input","inputTick":161519500}
+{"t":"2026-10-11T16:33:56.927Z","tick":162056515,"pid":74560,"mode":"observe","ev":"shell","what":"created","window":{"hwnd":"0x1550A2C","class":"MozillaWindowClass","title":"(not recorded)","pid":14316,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1550A2C","class":"MozillaWindowClass","title":"(not recorded)","pid":14316,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:33:56.935Z","tick":162056531,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x1550A2C","class":"MozillaWindowClass","title":"(not recorded)","pid":14316,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"z":40}
+{"t":"2026-10-11T16:33:56.948Z","tick":162056546,"pid":74560,"mode":"observe","ev":"standin-started","standInPid":98104,"standInStarted":"2026-10-11T16:33:56.9389393Z","foreground":{"hwnd":"0x1550A2C","class":"MozillaWindowClass","title":"(not recorded)","pid":14316,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:33:56.988Z","tick":162056578,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x1550A2C","class":"MozillaWindowClass","title":"(not recorded)","pid":14316,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1550A2C","class":"MozillaWindowClass","title":"(not recorded)","pid":14316,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:33:58.986Z","tick":162058578,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x1550A2C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":14316,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1550A2C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":14316,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:01.559Z","tick":162061156,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"z":41}
+{"t":"2026-10-11T16:34:01.629Z","tick":162061218,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:34:01.630Z","tick":162061218,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:34:01.647Z","tick":162061234,"pid":74560,"mode":"observe","ev":"shell","what":"created","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:01.649Z","tick":162061250,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:02.155Z","tick":162061750,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:02.164Z","tick":162061765,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:02.165Z","tick":162061765,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:02.272Z","tick":162061859,"pid":74560,"mode":"observe","ev":"probe-window","change":"appeared","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"z":43,"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foregroundZ":43,"isForeground":true}
+{"t":"2026-10-11T16:34:06.783Z","tick":162066375,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:06.784Z","tick":162066375,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:06.786Z","tick":162066375,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:06.787Z","tick":162066375,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:06.789Z","tick":162066390,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:06.841Z","tick":162066437,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:06.842Z","tick":162066437,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:34:06.916Z","tick":162066515,"pid":74560,"mode":"observe","ev":"shell","what":"monitor-changed","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:37:57.120Z","tick":162296718,"pid":74560,"mode":"observe","ev":"shell","what":"created","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"(not recorded)","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"(not recorded)","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:37:57.134Z","tick":162296734,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"(not recorded)","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"z":41}
+{"t":"2026-10-11T16:37:57.172Z","tick":162296765,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"(not recorded)","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"(not recorded)","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:37:58.638Z","tick":162298234,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:01.458Z","tick":162301046,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:01.461Z","tick":162301062,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"z":44}
+{"t":"2026-10-11T16:38:06.274Z","tick":162305875,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"z":43}
+{"t":"2026-10-11T16:38:06.315Z","tick":162305906,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:06.321Z","tick":162305921,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:06.322Z","tick":162305921,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:06.326Z","tick":162305921,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:06.360Z","tick":162305953,"pid":74560,"mode":"observe","ev":"probe-window","change":"changed","window":{"hwnd":"0x200174","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"z":46,"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foregroundZ":42,"isForeground":false}
+{"t":"2026-10-11T16:38:06.700Z","tick":162306296,"pid":74560,"mode":"observe","ev":"probe-window","change":"gone","hwnd":"0x200174","was":"CabinetWClass|C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer|False"}
+{"t":"2026-10-11T16:38:09.879Z","tick":162309468,"pid":74560,"mode":"observe","ev":"shell","what":"monitor-changed","window":{"hwnd":"0x10010E","class":"WorkerW","title":"","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:09.889Z","tick":162309484,"pid":74560,"mode":"observe","ev":"shell","what":"monitor-changed","window":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:09.986Z","tick":162309578,"pid":74560,"mode":"observe","ev":"probe-window","change":"appeared","window":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":false,"minimized":false},"z":41,"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foregroundZ":46,"isForeground":false}
+{"t":"2026-10-11T16:38:10.037Z","tick":162309625,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":false,"minimized":false},"z":42}
+{"t":"2026-10-11T16:38:10.084Z","tick":162309671,"pid":74560,"mode":"observe","ev":"shell","what":"created","window":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:10.085Z","tick":162309671,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:10.109Z","tick":162309703,"pid":74560,"mode":"observe","ev":"probe-window","change":"changed","window":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":true,"minimized":false},"z":44,"foreground":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":true,"minimized":false},"foregroundZ":44,"isForeground":true}
+{"t":"2026-10-11T16:38:14.630Z","tick":162314218,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"z":43}
+{"t":"2026-10-11T16:38:14.665Z","tick":162314265,"pid":74560,"mode":"observe","ev":"probe-window","change":"changed","window":{"hwnd":"0x362554","class":"#32770","title":"Browse For Folder","pid":90188,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":false,"minimized":false},"z":46,"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foregroundZ":43,"isForeground":false}
+{"t":"2026-10-11T16:38:14.695Z","tick":162314296,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:14.704Z","tick":162314296,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:14.788Z","tick":162314390,"pid":74560,"mode":"observe","ev":"probe-window","change":"gone","hwnd":"0x362554","was":"#32770|Browse For Folder|False"}
+{"t":"2026-10-11T16:38:17.985Z","tick":162317578,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"z":43}
+{"t":"2026-10-11T16:38:18.015Z","tick":162317609,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:38:18.016Z","tick":162317609,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:38:18.025Z","tick":162317625,"pid":74560,"mode":"observe","ev":"shell","what":"created","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:18.026Z","tick":162317625,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:18.426Z","tick":162318015,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:18.435Z","tick":162318031,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:18.435Z","tick":162318031,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:18.538Z","tick":162318125,"pid":74560,"mode":"observe","ev":"probe-window","change":"appeared","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"z":43,"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foregroundZ":43,"isForeground":true}
+{"t":"2026-10-11T16:38:22.651Z","tick":162322250,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:38:22.651Z","tick":162322250,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:38:22.701Z","tick":162322296,"pid":74560,"mode":"observe","ev":"probe-window","change":"changed","window":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"z":42,"foreground":{"hwnd":"0x3D258A","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foregroundZ":42,"isForeground":true}
+{"t":"2026-10-11T16:38:22.880Z","tick":162322468,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"z":41}
+{"t":"2026-10-11T16:38:22.900Z","tick":162322500,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:22.905Z","tick":162322500,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:22.948Z","tick":162322546,"pid":74560,"mode":"observe","ev":"probe-window","change":"gone","hwnd":"0x3D258A","was":"CabinetWClass|C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer|False"}
+{"t":"2026-10-11T16:38:23.250Z","tick":162322843,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:23.252Z","tick":162322843,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:23.255Z","tick":162322843,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:23.255Z","tick":162322843,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:23.257Z","tick":162322859,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:23.326Z","tick":162322921,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:23.327Z","tick":162322921,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:23.424Z","tick":162323015,"pid":74560,"mode":"observe","ev":"shell","what":"monitor-changed","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:26.184Z","tick":162325781,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"z":43}
+{"t":"2026-10-11T16:38:26.212Z","tick":162325812,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:38:26.213Z","tick":162325812,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:38:26.218Z","tick":162325812,"pid":74560,"mode":"observe","ev":"shell","what":"created","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:26.222Z","tick":162325812,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:26.663Z","tick":162326265,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:26.672Z","tick":162326265,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:26.673Z","tick":162326265,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:26.679Z","tick":162326265,"pid":74560,"mode":"observe","ev":"probe-window","change":"appeared","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"z":43,"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":true,"minimized":false},"foregroundZ":43,"isForeground":true}
+{"t":"2026-10-11T16:38:30.925Z","tick":162330515,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:38:30.926Z","tick":162330515,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false}}
+{"t":"2026-10-11T16:38:30.962Z","tick":162330562,"pid":74560,"mode":"observe","ev":"probe-window","change":"changed","window":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"z":42,"foreground":{"hwnd":"0x120A20","class":"CabinetWClass","title":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foregroundZ":42,"isForeground":true}
+{"t":"2026-10-11T16:38:31.150Z","tick":162330750,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"z":41}
+{"t":"2026-10-11T16:38:31.194Z","tick":162330796,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.204Z","tick":162330796,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.226Z","tick":162330828,"pid":74560,"mode":"observe","ev":"probe-window","change":"gone","hwnd":"0x120A20","was":"CabinetWClass|C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer|False"}
+{"t":"2026-10-11T16:38:31.505Z","tick":162331093,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x130A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.506Z","tick":162331093,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x130A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.510Z","tick":162331109,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x130A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.511Z","tick":162331109,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x130A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.513Z","tick":162331109,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x130A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.580Z","tick":162331171,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x130A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.581Z","tick":162331171,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x130A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:31.672Z","tick":162331265,"pid":74560,"mode":"observe","ev":"shell","what":"monitor-changed","window":{"hwnd":"0x130A20","class":"CabinetWClass","title":"(not recorded)","pid":95764,"image":"C:\\Windows\\explorer.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:34.501Z","tick":162334093,"pid":74560,"mode":"observe","ev":"shell","what":"monitor-changed","window":{"hwnd":"0x18010E","class":"WorkerW","title":"","pid":98104,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:34.507Z","tick":162334109,"pid":74560,"mode":"observe","ev":"shell","what":"monitor-changed","window":{"hwnd":"0xAC15B0","class":"#32770","title":"Browse For Folder","pid":98104,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":false,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:34.570Z","tick":162334171,"pid":74560,"mode":"observe","ev":"probe-window","change":"appeared","window":{"hwnd":"0xAC15B0","class":"#32770","title":"Browse For Folder","pid":98104,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":false,"minimized":false},"z":48,"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foregroundZ":46,"isForeground":false}
+{"t":"2026-10-11T16:38:34.705Z","tick":162334296,"pid":74560,"mode":"observe","ev":"shell","what":"created","window":{"hwnd":"0xAC15B0","class":"#32770","title":"Browse For Folder","pid":98104,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:38:34.785Z","tick":162334375,"pid":74560,"mode":"observe","ev":"probe-window","change":"changed","window":{"hwnd":"0xAC15B0","class":"#32770","title":"Browse For Folder","pid":98104,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe","visible":true,"minimized":false},"z":52,"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1 on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foregroundZ":47,"isForeground":false}
+{"t":"2026-10-11T16:38:39.216Z","tick":162338812,"pid":74560,"mode":"observe","ev":"probe-window","change":"gone","hwnd":"0xAC15B0","was":"#32770|Browse For Folder|True"}
+{"t":"2026-10-11T16:38:40.627Z","tick":162340218,"pid":74560,"mode":"observe","ev":"shell","what":"redraw","window":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1b on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x1620A3C","class":"MozillaWindowClass","title":"Link probe page p1b on port 53117 \u2014 Mozilla Firefox","pid":13056,"image":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:39:05.748Z","tick":162365343,"pid":74560,"mode":"observe","ev":"foreground","window":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"z":42}
+{"t":"2026-10-11T16:39:05.779Z","tick":162365375,"pid":74560,"mode":"observe","ev":"shell","what":"activated","window":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false},"foreground":{"hwnd":"0x80E00","class":"Chrome_WidgetWin_1","title":"(not recorded)","pid":4684,"image":"C:\\Program Files\\Microsoft VS Code\\Code.exe","visible":true,"minimized":false}}
+{"t":"2026-10-11T16:42:43.410Z","tick":162583000,"pid":74560,"mode":"observe","ev":"stop"}
+{"t":"2026-10-11T16:42:43.413Z","tick":162583015,"pid":74560,"mode":"observe","ev":"unregistered","absentAfter":true}
+{"t":"2026-10-11T16:42:43.413Z","tick":162583015,"pid":74560,"mode":"observe","ev":"unregistered-at-end","exit":0}

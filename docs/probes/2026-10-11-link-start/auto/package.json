@@ -1,0 +1,10 @@
+{
+  "name": "link-55a-driver",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Drives stock Firefox over WebDriver BiDi for the 55 a measurement.",
+  "license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr",
+  "dependencies": {
+    "puppeteer-core": "^25.13.0"
+  }
+}

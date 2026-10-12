@@ -1,0 +1,64 @@
+THE 55 a MEASUREMENT: about three minutes in Firefox
+
+The rig is started for you before step 1 and taken down after you say done. It
+records the times, which process opened which window, and whether that window
+came to the front, so you only need to watch and, if you like, note what you saw.
+
+Each link opens either a folder window named Probe-<letter>-<page>, or Windows'
+"Browse For Folder" picker. Close each folder window (X) and cancel each picker
+before the next step.
+
+STEPS 1 TO 3 ANSWER THE MAIN QUESTIONS
+
+1. In Firefox, open  http://127.0.0.1:53117/t1/   (paste it into the address bar).
+   Click link A.
+   Firefox asks: "Allow this site to open the browserai-probe link with BrowserAI
+   link probe?". Tick "Always allow http://127.0.0.1:53117 to open browserai-probe
+   links", then click "Open Link" (it can be clicked after about a second).
+   A folder window Probe-A-p1 opens. Note: in front of Firefox, or behind it
+   (with a flashing taskbar button)? Close it.
+
+2. Open  http://127.0.0.1:53118/t1/   (the same page on another port, as the
+   dashboard gets each time it opens).
+   Click link A. Note: does Firefox ask again? If it asks, tick "Always allow"
+   and click "Open Link".
+   Probe-A-p2: in front or behind? Close it.
+
+3. Go back to the first tab (port 53117). Click link C.
+   A "Browse For Folder" picker opens: in front or behind? Click Cancel.
+
+STEPS 4 TO 7 DECIDE BETWEEN THE TWO WAYS TO BUILD IT (about one more minute)
+
+4. Same tab. Click link E. This is what the dashboard does today: Probe-E-p1 is
+   expected to open behind Firefox, with a flashing taskbar button. Close it.
+
+5. Click link B. Probe-B-p1: in front or behind? Close it.
+
+6. Click link D. A picker: in front or behind? Cancel.
+
+7. Open  http://127.0.0.1:53117/t2/   (the first port again, with another path,
+   as a new dashboard secret on a port that was kept would look).
+   Click link A. Does Firefox ask? Probe-A-p1b: in front or behind? Close it.
+
+ONLY IF YOU ALSO USE CHROME (optional)
+
+8. In Chrome, open  http://127.0.0.1:53117/t1/  and click A. Chrome asks to open
+   "BrowserAI link probe"; tick its "Always allow" box and open. In front or
+   behind? Close it.
+9. In Chrome, open  http://127.0.0.1:53118/t1/  and click A. Does it ask again?
+   In front or behind? Close it.
+
+IF FIREFOX ASKS SOMETHING ELSE
+
+- If Firefox offers "Choose an application" instead of "Open Link", pick
+  "BrowserAI link probe" and tick "Remember". Say so when you report.
+
+WHEN YOU ARE DONE
+
+- Optional, 20 seconds: on each probe tab, click the site information icon left of
+  the address, and remove "Open applications" with its X. That forgets the two
+  "Always allow" answers. Left in place they are harmless: the scheme is removed
+  in the cleanup, so they allow nothing.
+- Close the probe tabs and say "done", with your notes if you made any,
+  for example: "1 front, 2 asked, front, 3 front, 4 behind, 5 front, 6 front,
+  7 no ask, front".
