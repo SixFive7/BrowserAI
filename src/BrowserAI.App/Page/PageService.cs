@@ -1642,7 +1642,10 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
     /// <summary>The page's own records.</summary>
     private static partial class PageServiceLog
     {
-        [LoggerMessage(EventId = 7011, Level = LogLevel.Information, Message = "The page listener on port {Port} stopped: no tab was left and the linger ran out.")]
+        // Corrected 2026-10-12 by the reader's pass (previously "The page listener on port
+        // {Port} stopped: no tab was left and the linger ran out."): since 69 d the listener
+        // stops only when the background ends (TryStopAsync), so no linger ends it.
+        [LoggerMessage(EventId = 7011, Level = LogLevel.Information, Message = "The page listener on port {Port} stopped with the background.")]
         public static partial void Stopped(ILogger logger, int port);
 
         [LoggerMessage(EventId = 7012, Level = LogLevel.Information, Message = "The page asked for '{Action}'.")]
