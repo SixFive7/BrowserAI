@@ -326,6 +326,165 @@ internal sealed class PageBrowserTests
         }
     }
 
+    /// <summary>
+    /// In a real browser every line of the map says its state in a word, a conversation's half
+    /// of its line carries a strand for each state its sessions have, the legend draws a
+    /// sample of each line, an address that names a session opens with it chosen and a new
+    /// state keeps it, the inspector points at the card chosen, and the arrow keys move
+    /// between cards.
+    /// </summary>
+    /// <remarks>
+    /// <b>60, the maintainer's choice of 2026-10-11, variant C</b>, in his words verbatim
+    /// <i>"60 I like C"</i>, of the variants put to him after he found the four lines hard to
+    /// tell apart and the cards' being clickable unclear; and the session page dropped, its
+    /// links opening the map with the session chosen. The markup each of these is drawn from
+    /// is <see cref="ConversationsMapTests"/>'.
+    /// </remarks>
+    /// <param name="browser">The provisioned family.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments(ProvisionedBrowsers.Chromium)]
+    [Arguments(ProvisionedBrowsers.Firefox)]
+    public async Task InARealBrowserEachLineNamesItsStateAndAConversationsHalfCarriesEveryStateOfItsSessions(string browser)
+    {
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+
+        if (browser is ProvisionedBrowsers.Firefox)
+        {
+            await SuiteEnvironment.RequireProvisionedFirefoxAsync();
+        }
+        else
+        {
+            await SuiteEnvironment.RequireProvisionedChromiumAsync();
+        }
+
+        PublishedSlice.EnsureFresh();
+
+        await using var rig = await PageRig.CreateAsync();
+        using var scratch = await ScratchDirectory.CreateAsync($"page-lines-{browser}");
+
+        rig.Sessions.Snapshot = ConversationsMapTests.Mixed();
+
+        var address = await rig.HandOutAsync(PageKind.Sessions);
+        var session = Path.Combine(scratch.Path, "lines-session");
+        var pricing = BrowserAI.App.Page.CensusPageSessions.IdOf(ConversationsMapTests.Pricing);
+
+        await using var client = await RawStdioClient.StartAsync(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
+
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        _ = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "the suite reading the lines of BrowserAI's own map in a headless browser",
+            ["browser"] = browser,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        try
+        {
+            async Task<string> evaluateAsync(string function) =>
+                TextOf(await CallAsync(client, "browser_evaluate", new JsonObject
+                {
+                    ["function"] = function,
+                    [SessionToolSurface.SessionParameter] = session,
+                    [SessionToolSurface.WhyParameter] = "the suite reading what BrowserAI's own map draws",
+                }));
+
+            async Task pressAsync(string key) =>
+                _ = await CallAsync(client, "browser_press_key", new JsonObject
+                {
+                    ["key"] = key,
+                    [SessionToolSurface.SessionParameter] = session,
+                    [SessionToolSurface.WhyParameter] = "the suite moving between the map's cards the way a keyboard does",
+                });
+
+            async Task openAsync(string url)
+            {
+                _ = await CallAsync(client, "browser_navigate", new JsonObject
+                {
+                    ["url"] = url,
+                    [SessionToolSurface.SessionParameter] = session,
+                    [SessionToolSurface.WhyParameter] = "the suite opening BrowserAI's conversations page",
+                });
+
+                await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 1)).IsTrue();
+            }
+
+            _ = await CallAsync(client, "browser_resize", new JsonObject
+            {
+                ["width"] = 1440,
+                ["height"] = 900,
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the suite giving the map the width it is drawn at",
+            });
+
+            await openAsync(address);
+
+            // Five lines on from BrowserAI, each named: a closed browser, a window and a hidden
+            // one for the first conversation, the second's "No browser yet", and the kept session.
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync("() => 'labels=' + document.querySelectorAll('#wires .lab').length")).Contains("labels=5", StringComparison.Ordinal))).IsTrue();
+            await Assert.That(await evaluateAsync("() => [...document.querySelectorAll('#wires .lab text')].map((text) => text.textContent).sort().join('|')"))
+                .Contains("Hidden|Kept|No browser|No browser|On screen");
+
+            // The first conversation's half carries one strand for each of its three states.
+            await Assert.That(await evaluateAsync("() => 'strands=' + document.querySelectorAll('#wires .route[data-part=\"left\"][data-row=\"c-401-0\"] path.wire').length")).Contains("strands=3");
+            await Assert.That(await evaluateAsync("() => [...document.querySelectorAll('#wires .route[data-part=\"left\"][data-row=\"c-401-0\"] path.wire')].map((wire) => wire.getAttribute('class')).join('|')"))
+                .Contains("wire w|wire h|wire c");
+            await Assert.That(await evaluateAsync("() => 'wires=' + document.querySelectorAll('#wires path.wire').length")).Contains("wires=9");
+
+            // The legend draws a sample of each of the four lines, with its word.
+            await Assert.That(await evaluateAsync("() => [...document.querySelectorAll('.legend-row svg.sample')].map((box) => box.dataset.sample + ':' + box.querySelectorAll('path.wire').length + ':' + box.querySelectorAll('.lab').length).join('|')"))
+                .Contains("w:1:1|h:1:1|c:1:1|k:1:1");
+
+            // A card chosen: the inspector points at it.
+            _ = await evaluateAsync("() => { document.getElementById('n-c-401-0').click(); return 'clicked'; }");
+
+            await Assert.That(await evaluateAsync("() => 'pointing=' + document.getElementById('inspector').classList.contains('pointing')")).Contains("pointing=true");
+
+            // The arrow keys move between cards: right from a conversation is BrowserAI, and right
+            // again a session of that conversation's row.
+            _ = await evaluateAsync("() => { document.getElementById('n-c-401-0').focus(); return 'focused'; }");
+            await pressAsync("ArrowRight");
+
+            await Assert.That(await evaluateAsync("() => 'focus=' + (document.activeElement ? document.activeElement.id : '')")).Contains("focus=n-hub");
+
+            await pressAsync("ArrowRight");
+
+            await Assert.That(await evaluateAsync("() => 'focus=' + (document.activeElement ? document.activeElement.id : '')")).Contains("focus=n-s-");
+
+            // An address that names a session opens with that session chosen, and a new state
+            // keeps it.
+            await openAsync(address + "&id=" + pricing);
+
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync($"() => 'shown=' + !document.getElementById('inspect-s-{pricing}').hidden + ',pressed=' + document.getElementById('n-s-{pricing}').getAttribute('aria-pressed')"))
+                    .Contains("shown=true,pressed=true", StringComparison.Ordinal))).IsTrue();
+
+            _ = await evaluateAsync("() => { document.querySelector('#main > *').dataset.old = 'yes'; return 'marked'; }");
+
+            rig.Sessions.Snapshot = ConversationsMapTests.Mixed(historyOpen: true);
+            rig.Clock.Advance(BrowserAI.App.Page.PageService.HoldsWatchPeriod);
+
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync("() => document.querySelector('[data-old]') ? 'old' : 'replaced'")).Contains("replaced", StringComparison.Ordinal))).IsTrue();
+            await Assert.That(await evaluateAsync($"() => 'shown=' + !document.getElementById('inspect-s-{pricing}').hidden + ',pressed=' + document.getElementById('n-s-{pricing}').getAttribute('aria-pressed')"))
+                .Contains("shown=true,pressed=true");
+        }
+        finally
+        {
+            _ = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
+            {
+                ["directory"] = session,
+                [SessionToolSurface.WhyParameter] = "the page suite finished with its session",
+            });
+        }
+    }
+
     /// <summary>The session's tabs, as <c>browser_tabs</c> lists them.</summary>
     /// <param name="client">The session's client.</param>
     /// <param name="session">The session.</param>

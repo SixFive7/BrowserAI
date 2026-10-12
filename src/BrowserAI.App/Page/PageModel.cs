@@ -303,4 +303,7 @@ internal sealed record PageView(
 
     /// <summary>The moment the page is drawn at.</summary>
     public DateTimeOffset Now { get; init; }
+
+    /// <summary>Every release the changelog shipped in the build holds, in its order (56 a, 2026-10-11).</summary>
+    public IReadOnlyList<ChangelogSection> Releases { get; init; } = [];
 }

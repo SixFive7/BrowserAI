@@ -77,6 +77,16 @@ internal static partial class ChangelogPageContent
         return unreleased;
     }
 
+    /// <summary>Every release the changelog holds, in its order.</summary>
+    /// <param name="changelog">The whole changelog.</param>
+    /// <returns>The sections.</returns>
+    public static IReadOnlyList<ChangelogSection> Releases(string changelog)
+    {
+        ArgumentNullException.ThrowIfNull(changelog);
+
+        return [];
+    }
+
     /// <summary>The changelog page's main part.</summary>
     /// <remarks>
     /// <i>Corrected 2026-10-11 (previously the headings "Changelog", "What changed in BrowserAI

@@ -33,6 +33,7 @@ internal sealed class PageRig : IAsyncDisposable
     /// <param name="install">The broken-install notice, or <see langword="null"/>.</param>
     /// <param name="installed">Whether the facts name an install root.</param>
     /// <param name="facts">A change to the facts, or <see langword="null"/>.</param>
+    /// <param name="releases">Every release the changelog holds, or <see langword="null"/> for none (56 a).</param>
     /// <returns>The rig.</returns>
     public static async Task<PageRig> CreateAsync(
         CapturingLoggerProvider? logs = null,
@@ -43,8 +44,9 @@ internal sealed class PageRig : IAsyncDisposable
         ChangelogSection? changelog = null,
         BrokenInstallNotice? install = null,
         bool installed = true,
-        Func<PageFacts, PageFacts>? facts = null) =>
-        new(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts);
+        Func<PageFacts, PageFacts>? facts = null,
+        IReadOnlyList<ChangelogSection>? releases = null) =>
+        new(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts, releases);
 
     private PageRig(
         ScratchDirectory scratch,
@@ -56,7 +58,8 @@ internal sealed class PageRig : IAsyncDisposable
         ChangelogSection? changelog = null,
         BrokenInstallNotice? install = null,
         bool installed = true,
-        Func<PageFacts, PageFacts>? facts = null)
+        Func<PageFacts, PageFacts>? facts = null,
+        IReadOnlyList<ChangelogSection>? releases = null)
     {
         _scratch = scratch;
         Registration = registration ?? new FakeRegistration();
@@ -92,6 +95,7 @@ internal sealed class PageRig : IAsyncDisposable
             Holds = holds ?? new NothingHolds(),
             Folders = Folders,
             Changelog = changelog,
+            Releases = releases ?? [],
             Install = install,
         };
     }

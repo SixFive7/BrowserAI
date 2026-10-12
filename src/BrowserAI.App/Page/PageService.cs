@@ -192,6 +192,9 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
     /// <summary>The installed version's section of the changelog shipped in the build, or <see langword="null"/>.</summary>
     internal ChangelogSection? Changelog { get; init; }
 
+    /// <summary>Every release the changelog shipped in the build holds, in its order (56 a, 2026-10-11).</summary>
+    internal IReadOnlyList<ChangelogSection> Releases { get; init; } = [];
+
     /// <summary>
     /// Whether the install is broken, which every page says first while it stands, or
     /// <see langword="null"/> where nothing reports it (10 b, 2026-10-10).
@@ -434,6 +437,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
                 Folders = _folders,
                 Measuring = _measuring,
                 Now = _clock.GetUtcNow(),
+                Releases = Releases,
             };
         }
     }
