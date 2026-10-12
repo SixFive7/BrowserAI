@@ -792,8 +792,9 @@ internal sealed partial class ProcessLogTests
     /// the exit was signalled. <b>So the child now ends before either reader starts</b>: it is
     /// handed the end of its input at once, writes 100 lines into the pipe and ends, which it
     /// did with no reader in every run, and the arm awaits that end, starts both readers, and
-    /// only then makes the wait under test. Planted red since with that wait replaced by each
-    /// of the two plants, reading 0 of 100 lines on every run.
+    /// only then makes the wait under test, reading the count before it awaits anything else.
+    /// Planted red since with that wait replaced by each of the two plants, reading 0 of 100
+    /// lines on every run.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -854,8 +855,13 @@ internal sealed partial class ProcessLogTests
         // line counted only if it waits for both readers' end.
         await process.WaitForExitAsync(hang.Token);
 
+        // Read before anything else is awaited: an assertion awaited first gives the readers
+        // time of their own, and with the exit code asserted ahead of this read the arm
+        // stayed green under both plants.
+        var counted = Volatile.Read(ref said);
+
         await Assert.That(process.ExitCode).IsEqualTo(0);
-        await Assert.That(Volatile.Read(ref said)).IsEqualTo(Lines)
+        await Assert.That(counted).IsEqualTo(Lines)
             .Because("every line the child wrote to its standard error is read by the time WaitForExitAsync returns");
     }
 
