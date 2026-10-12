@@ -181,7 +181,35 @@ internal sealed class SessionStore : IAsyncDisposable
     /// <param name="path">The store file.</param>
     /// <returns>The store, its thread started.</returns>
     /// <exception cref="SqliteException">SQLite refused, or the schema is not this build's.</exception>
-    public static Task<SessionStore> OpenForWritingAsync(string path) => OpenAsync(path, writable: true);
+    public static Task<SessionStore> OpenForWritingAsync(string path) => OpenAsync(path, writable: true, first: null);
+
+    /// <summary>
+    /// Opens a session's store for writing and makes its first statements in the same item
+    /// on the store's thread, so nothing runs between the open and them.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 for the acquisition</b>, with the maintainer's 82 b. The guard is
+    /// held from before the open, and a peer that finds it held reads the record for the
+    /// holder's purpose without the gate; so the time in which a peer finds the guard held
+    /// and the record not yet saying by whom is the open and the acquisition's statements, as
+    /// it was before the store had a thread. Handed over as two items, each awaited, that
+    /// time took two waits for a pool worker as well, and the gate of that day met it:
+    /// three of fifteen contenders of <c>SessionLockTests</c>' race were told the session
+    /// records no purpose.
+    /// </remarks>
+    /// <param name="path">The store file.</param>
+    /// <param name="first">
+    /// The first statements, made right after the open on the store's thread. If they throw,
+    /// the store is closed and the exception is the caller's.
+    /// </param>
+    /// <returns>The store, its thread started and its first statements made.</returns>
+    /// <exception cref="SqliteException">SQLite refused the open, the schema or the first statements.</exception>
+    public static Task<SessionStore> OpenForWritingAsync(string path, Action<SessionStoreConnection> first)
+    {
+        ArgumentNullException.ThrowIfNull(first);
+
+        return OpenAsync(path, writable: true, first);
+    }
 
     /// <summary>
     /// Opens a session's store for reading, taking nothing and changing
@@ -200,7 +228,7 @@ internal sealed class SessionStore : IAsyncDisposable
     /// <param name="path">The store file.</param>
     /// <returns>The store, its thread started.</returns>
     /// <exception cref="SqliteException">SQLite refused, or the schema is not this build's.</exception>
-    public static Task<SessionStore> OpenForReadingAsync(string path) => OpenAsync(path, writable: false);
+    public static Task<SessionStore> OpenForReadingAsync(string path) => OpenAsync(path, writable: false, first: null);
 
     /// <summary>Runs <paramref name="work"/> on this store's thread, after everything handed over before it.</summary>
     /// <typeparam name="T">What the work returns.</typeparam>
@@ -257,8 +285,9 @@ internal sealed class SessionStore : IAsyncDisposable
     /// <summary>Starts the store's thread and opens the connection on it.</summary>
     /// <param name="path">The store file.</param>
     /// <param name="writable">Whether the connection may write.</param>
+    /// <param name="first">Statements made in the open's own item, or <see langword="null"/>.</param>
     /// <returns>The store.</returns>
-    private static async Task<SessionStore> OpenAsync(string path, bool writable)
+    private static async Task<SessionStore> OpenAsync(string path, bool writable, Action<SessionStoreConnection>? first)
     {
         ArgumentNullException.ThrowIfNull(path);
 
@@ -266,7 +295,25 @@ internal sealed class SessionStore : IAsyncDisposable
 
         try
         {
-            var connection = await thread.RunAsync(() => SessionStoreConnection.Open(path, writable, thread)).ConfigureAwait(false);
+            var connection = await thread.RunAsync(() =>
+            {
+                var opened = SessionStoreConnection.Open(path, writable, thread);
+
+                if (first is not null)
+                {
+                    try
+                    {
+                        first(opened);
+                    }
+                    catch
+                    {
+                        opened.Close();
+                        throw;
+                    }
+                }
+
+                return opened;
+            }).ConfigureAwait(false);
 
             return new SessionStore(thread, connection);
         }
@@ -325,7 +372,7 @@ internal sealed class SessionStoreConnection
         return writable ? OpenForWriting(path, thread) : OpenForReading(path, thread);
     }
 
-    /// <summary>The open for writing, as <see cref="SessionStore.OpenForWritingAsync"/> describes it.</summary>
+    /// <summary>The open for writing, as <see cref="SessionStore.OpenForWritingAsync(string)"/> describes it.</summary>
     /// <param name="path">The store file.</param>
     /// <param name="thread">The store's thread.</param>
     /// <returns>The connection.</returns>

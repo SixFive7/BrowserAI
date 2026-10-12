@@ -1353,18 +1353,18 @@ internal sealed class SessionLock : IAsyncDisposable
 
             try
             {
-#pragma warning disable CA2000 // The finally below awaits its disposal, which the rule's dataflow does not follow into an await.
-                store = await SessionStore.OpenForWritingAsync(location.DataFile).ConfigureAwait(false);
-#pragma warning restore CA2000
-
                 // ⚠️ ONE TRANSACTION, and this is the only explicit one in the
                 // store. The holder row and the statements saying what this
                 // session now is are one fact: a reader that saw half of it would
                 // see a session held by somebody for no reason, or a reason with
-                // no holder.
+                // no holder. ⚠️ And in the open's own item since 2026-10-12, so a
+                // peer that finds the guard held meets a record without them for no
+                // longer than the open and the transaction take (82 b).
                 var statements = Compose(location, request, previous, holder, now);
 
-                await store.RunAsync(opened => opened.RecordAcquisition(statements)).ConfigureAwait(false);
+#pragma warning disable CA2000 // The finally below awaits its disposal, which the rule's dataflow does not follow into an await.
+                store = await SessionStore.OpenForWritingAsync(location.DataFile, opened => opened.RecordAcquisition(statements)).ConfigureAwait(false);
+#pragma warning restore CA2000
             }
             catch (SqliteException refused)
             {
