@@ -143,11 +143,20 @@ internal sealed partial class UsageTests
         await Assert.That(lines).Contains("<dd data-usage=\"s:0123456789abcdef:own\">312 MB</dd>");
         await Assert.That(lines).Contains("data-usage=\"shared-all\">About 268 MB for all of BrowserAI</a>");
 
-        // A session no reading has seen yet is measured with the next one.
+        // In its first reading a session's memory is known and its CPU is not yet.
+        var firstLines = UsageContent.SessionLines(View(first), session);
+
+        await Assert.That(firstLines).Contains("<dd data-usage=\"s:0123456789abcdef:cpu\">Measuring</dd>");
+        await Assert.That(firstLines).Contains("<dd data-usage=\"s:0123456789abcdef:own\">312 MB</dd>");
+
+        // A session a reading does not include runs nothing of its own then, and says so:
+        // Measuring is for before the first reading only (107 b). Its shared line is the
+        // one total, as every session's is.
         var other = UsageContent.SessionLines(View(second), Session("fedcba9876543210"));
 
-        await Assert.That(other).Contains("<dd data-usage=\"s:fedcba9876543210:cpu\">Measuring</dd>");
-        await Assert.That(other).Contains("About 268 MB for all of BrowserAI");
+        await Assert.That(other).Contains("<dt>CPU</dt><dd data-usage=\"s:fedcba9876543210:cpu\">Not running</dd>");
+        await Assert.That(other).Contains("<dt>Own memory</dt><dd data-usage=\"s:fedcba9876543210:own\">Not running</dd>");
+        await Assert.That(other).Contains("<dt>Shared memory</dt><dd><a id=\"l-shared-fedcba9876543210\" href=\"./?tab=3#card-usage\" data-usage=\"shared-all\">About 268 MB for all of BrowserAI</a></dd>");
     }
 
     [Test]

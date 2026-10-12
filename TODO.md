@@ -316,6 +316,22 @@ is named as candidates and says so.
       | **`--device`** | 207 device descriptors, of which this product uses none; a session is 1920x1080 desktop Chromium or Firefox and nothing else |
       | **`--timeout-settle`** | 500 ms by default, and it is the knob behind *the snapshot came back before the page finished*. The cheapest of the five to try and the hardest to judge without a case ⚠️ *Declined 2026-10-03 by Q323, verbatim: "Q323 leave it to upstream. they have thought about it and I want to drift with their defaults."* |
 
+- [ ] **Measure the Firefox start that waited out Playwright's 180 s, after the release.**
+      Twice on 2026-10-12 a headless Firefox 156.0 session of the installed BrowserAI,
+      resumed after its idle close, failed its first browser call with
+      `initializeServer`'s 180 s timeout, and each call log ended on a favicon fetch for
+      the session's last page, on a `127.0.0.1` port whose server had ended; two fresh
+      sessions started at once. The cause is not established
+      ([the hazard index](HAZARDS.md), its open row of that day, and
+      [the evidence](docs/evidence/2026-10-12-firefox-restore-stall/README.md)). The
+      maintainer's 125 b of 2026-10-12, in his words verbatim, *"125 your
+      recommendation"*. **What to do:** a rig, under the suite's lock, that makes a Firefox
+      session, opens a page a scratch server on a loopback port serves, lets the session
+      close on its idle time, ends the server, and resumes the session, timing the first
+      call's start; beside it the same with the server still answering, and the same with
+      Chromium, enough times each to tell a stall from a slow start. Then the row in the
+      hazard index gains the result, and a fix or a stated reason.
+
 ---
 
 ## Fingerprinting
