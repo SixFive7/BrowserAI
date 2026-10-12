@@ -245,8 +245,8 @@ internal static class FileSystemThread
             if (!IsCurrent)
             {
                 throw new InvalidOperationException(
-                    "A listing, creation, deletion or rename was called off the file-system thread. Hand it to FileSystemThread.RunAsync, "
-                    + "the one thread the product makes these calls on (the maintainer's 80 b and 81 c).");
+                    "A listing, creation, deletion or rename was called off the file-system thread, the one thread the product makes these calls on. "
+                    + "Hand it to FileSystemThread.RunAsync (the maintainer's 80 b and 81 c).");
             }
         }
     }

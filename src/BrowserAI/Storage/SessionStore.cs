@@ -782,8 +782,8 @@ internal sealed class SessionStoreConnection
     /// <summary>The refusal for a statement made off the store's thread.</summary>
     /// <returns>The exception, for the caller to throw.</returns>
     private static InvalidOperationException OffItsThread() =>
-        new("A statement on a session's store was made off that store's own thread. Hand it to SessionStore.RunAsync, "
-            + "the one thread each store's statements run on (the maintainer's 82 b).");
+        new("A statement on a session's store was made off that store's own thread, the one thread its statements run on. "
+            + "Hand it to SessionStore.RunAsync (the maintainer's 82 b).");
 
     /// <summary>Refuses a caller on any thread but the store's own.</summary>
     private void Require()

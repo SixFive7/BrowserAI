@@ -2728,6 +2728,12 @@ internal sealed class SessionManager : IAsyncDisposable
         + $"BrowserAI never deletes any of it, on any schedule or at any size; {SessionToolSurface.Destroy} is what removes a session and everything under it.";
 
     /// <summary>A duration in the largest unit that does not round to zero.</summary>
+    /// <remarks>
+    /// A whole number of minutes or seconds that is one is written in the singular, "1 minute"
+    /// and "1 second": the listing's age line appears only past one minute, so "1 minutes" was
+    /// the first age it showed. <i>Corrected 2026-10-12 (previously every figure took the
+    /// plural).</i> Days and hours carry a decimal and keep the plural.
+    /// </remarks>
     /// <param name="span">How long.</param>
     /// <returns>The figure, for a person or a model to act on.</returns>
     internal static string Age(TimeSpan span) =>
@@ -2735,9 +2741,19 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             { TotalDays: >= 1 } => $"{span.TotalDays.ToString("F1", CultureInfo.InvariantCulture)} days",
             { TotalHours: >= 1 } => $"{span.TotalHours.ToString("F1", CultureInfo.InvariantCulture)} hours",
-            { TotalMinutes: >= 1 } => $"{span.TotalMinutes.ToString("F0", CultureInfo.InvariantCulture)} minutes",
-            _ => $"{Math.Max(0, span.TotalSeconds).ToString("F0", CultureInfo.InvariantCulture)} seconds",
+            { TotalMinutes: >= 1 } => Whole(span.TotalMinutes, "minute"),
+            _ => Whole(Math.Max(0, span.TotalSeconds), "second"),
         };
+
+    /// <summary>A figure rounded to a whole number of a unit, in the singular when it is one.</summary>
+    /// <param name="figure">How many.</param>
+    /// <param name="unit">The unit, in the singular.</param>
+    /// <returns>For example <c>1 minute</c> or <c>3 minutes</c>.</returns>
+    private static string Whole(double figure, string unit)
+    {
+        var whole = figure.ToString("F0", CultureInfo.InvariantCulture);
+        return whole is "1" ? $"1 {unit}" : $"{whole} {unit}s";
+    }
 
     private async Task<ToolOutcome> ListAsync(JsonObject? arguments)
     {

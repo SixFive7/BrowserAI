@@ -197,7 +197,7 @@ M:System.Diagnostics.Process.WaitForExit(System.Int32);Never WaitForExit, any ov
 ; Interop/JobLauncher's overlapped pipes"), when the suite's runs moved.
 ; -----------------------------------------------------------------------------
 
-M:System.Runtime.CompilerServices.TaskAwaiter.GetResult;Never block a worker on a task (decision 54): await it. GetResult on a task that has not finished parks this thread until another thread finishes it, and on a pool thread the task's own completion may need the thread it took.
+M:System.Runtime.CompilerServices.TaskAwaiter.GetResult;Never block a worker on a task (decision 54): await it. GetResult on a task that has not finished parks this thread until another thread finishes it, and on a pool thread the task's own completion may need the thread GetResult holds.
 M:System.Runtime.CompilerServices.TaskAwaiter`1.GetResult;Never block a worker on a task (decision 54): await it.
 M:System.Runtime.CompilerServices.ValueTaskAwaiter.GetResult;Never block a worker on a task (decision 54): await it.
 M:System.Runtime.CompilerServices.ValueTaskAwaiter`1.GetResult;Never block a worker on a task (decision 54): await it.
@@ -236,7 +236,7 @@ M:System.Threading.SpinWait.SpinOnce(System.Int32);Never spin a thread waiting f
 M:System.Threading.Thread.Join;Never park a thread on another thread's end (decision 54): have that thread complete a TaskCompletionSource, and await it.
 M:System.Threading.Thread.Join(System.Int32);Never park a thread on another thread's end (decision 54): have that thread complete a TaskCompletionSource, and await it with WaitAsync.
 M:System.Threading.Thread.Join(System.TimeSpan);Never park a thread on another thread's end (decision 54): have that thread complete a TaskCompletionSource, and await it with WaitAsync.
-M:System.Threading.WaitHandle.WaitOne;Never park a thread on a handle (decision 54): Interop/HandleWaits.WhenSignaledAsync waits through a thread-pool registration, which parks no thread.
+M:System.Threading.WaitHandle.WaitOne;Never park a thread on a handle (decision 54): Interop/HandleWaits.WhenSignaledAsync waits through a thread-pool registration, which holds no worker.
 M:System.Threading.WaitHandle.WaitOne(System.Int32);Never park a thread on a handle (decision 54): Interop/HandleWaits.WhenSignaledAsync, with a bound.
 M:System.Threading.WaitHandle.WaitOne(System.TimeSpan);Never park a thread on a handle (decision 54): Interop/HandleWaits.WhenSignaledAsync, with a bound.
 M:System.Threading.WaitHandle.WaitOne(System.Int32,System.Boolean);Never park a thread on a handle (decision 54): Interop/HandleWaits.WhenSignaledAsync, with a bound.
@@ -246,55 +246,55 @@ M:System.Threading.WaitHandle.WaitAll(System.Threading.WaitHandle[],System.Int32
 M:System.Threading.WaitHandle.WaitAll(System.Threading.WaitHandle[],System.TimeSpan);Never park a thread on handles (decision 54): await one WhenSignaledAsync per handle with Task.WhenAll.
 M:System.Threading.WaitHandle.WaitAll(System.Threading.WaitHandle[],System.Int32,System.Boolean);Never park a thread on handles (decision 54): await one WhenSignaledAsync per handle with Task.WhenAll.
 M:System.Threading.WaitHandle.WaitAll(System.Threading.WaitHandle[],System.TimeSpan,System.Boolean);Never park a thread on handles (decision 54): await one WhenSignaledAsync per handle with Task.WhenAll.
-M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[]);Never park a thread on handles (decision 54): await Task.WhenAny over the tasks that stand for them.
-M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[],System.Int32);Never park a thread on handles (decision 54): await Task.WhenAny over the tasks that stand for them.
-M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[],System.TimeSpan);Never park a thread on handles (decision 54): await Task.WhenAny over the tasks that stand for them.
-M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[],System.Int32,System.Boolean);Never park a thread on handles (decision 54): await Task.WhenAny over the tasks that stand for them.
-M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[],System.TimeSpan,System.Boolean);Never park a thread on handles (decision 54): await Task.WhenAny over the tasks that stand for them.
+M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[]);Never park a thread on handles (decision 54): await Task.WhenAny over one WhenSignaledAsync per handle.
+M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[],System.Int32);Never park a thread on handles (decision 54): await Task.WhenAny over one WhenSignaledAsync per handle.
+M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[],System.TimeSpan);Never park a thread on handles (decision 54): await Task.WhenAny over one WhenSignaledAsync per handle.
+M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[],System.Int32,System.Boolean);Never park a thread on handles (decision 54): await Task.WhenAny over one WhenSignaledAsync per handle.
+M:System.Threading.WaitHandle.WaitAny(System.Threading.WaitHandle[],System.TimeSpan,System.Boolean);Never park a thread on handles (decision 54): await Task.WhenAny over one WhenSignaledAsync per handle.
 M:System.Threading.WaitHandle.SignalAndWait(System.Threading.WaitHandle,System.Threading.WaitHandle);Never park a thread on a handle (decision 54).
 M:System.Threading.WaitHandle.SignalAndWait(System.Threading.WaitHandle,System.Threading.WaitHandle,System.Int32,System.Boolean);Never park a thread on a handle (decision 54).
 M:System.Threading.WaitHandle.SignalAndWait(System.Threading.WaitHandle,System.Threading.WaitHandle,System.TimeSpan,System.Boolean);Never park a thread on a handle (decision 54).
-M:System.Threading.ManualResetEventSlim.Wait;Never park a thread on an event (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.ManualResetEventSlim.Wait(System.Int32);Never park a thread on an event (decision 54): a TaskCompletionSource is awaited, with WaitAsync for a bound.
-M:System.Threading.ManualResetEventSlim.Wait(System.TimeSpan);Never park a thread on an event (decision 54): a TaskCompletionSource is awaited, with WaitAsync for a bound.
-M:System.Threading.ManualResetEventSlim.Wait(System.Threading.CancellationToken);Never park a thread on an event (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.ManualResetEventSlim.Wait(System.Int32,System.Threading.CancellationToken);Never park a thread on an event (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.ManualResetEventSlim.Wait(System.TimeSpan,System.Threading.CancellationToken);Never park a thread on an event (decision 54): a TaskCompletionSource is awaited.
+M:System.Threading.ManualResetEventSlim.Wait;Never park a thread on an event (decision 54): await a TaskCompletionSource.
+M:System.Threading.ManualResetEventSlim.Wait(System.Int32);Never park a thread on an event (decision 54): await a TaskCompletionSource, with WaitAsync for a bound.
+M:System.Threading.ManualResetEventSlim.Wait(System.TimeSpan);Never park a thread on an event (decision 54): await a TaskCompletionSource, with WaitAsync for a bound.
+M:System.Threading.ManualResetEventSlim.Wait(System.Threading.CancellationToken);Never park a thread on an event (decision 54): await a TaskCompletionSource.
+M:System.Threading.ManualResetEventSlim.Wait(System.Int32,System.Threading.CancellationToken);Never park a thread on an event (decision 54): await a TaskCompletionSource.
+M:System.Threading.ManualResetEventSlim.Wait(System.TimeSpan,System.Threading.CancellationToken);Never park a thread on an event (decision 54): await a TaskCompletionSource.
 M:System.Threading.SemaphoreSlim.Wait;Never park a thread on a semaphore (decision 54): await WaitAsync.
 M:System.Threading.SemaphoreSlim.Wait(System.Int32);Never park a thread on a semaphore (decision 54): await WaitAsync.
 M:System.Threading.SemaphoreSlim.Wait(System.TimeSpan);Never park a thread on a semaphore (decision 54): await WaitAsync.
 M:System.Threading.SemaphoreSlim.Wait(System.Threading.CancellationToken);Never park a thread on a semaphore (decision 54): await WaitAsync.
 M:System.Threading.SemaphoreSlim.Wait(System.Int32,System.Threading.CancellationToken);Never park a thread on a semaphore (decision 54): await WaitAsync.
 M:System.Threading.SemaphoreSlim.Wait(System.TimeSpan,System.Threading.CancellationToken);Never park a thread on a semaphore (decision 54): await WaitAsync.
-M:System.Threading.CountdownEvent.Wait;Never park a thread on a countdown (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.CountdownEvent.Wait(System.Int32);Never park a thread on a countdown (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.CountdownEvent.Wait(System.TimeSpan);Never park a thread on a countdown (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.CountdownEvent.Wait(System.Threading.CancellationToken);Never park a thread on a countdown (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.CountdownEvent.Wait(System.Int32,System.Threading.CancellationToken);Never park a thread on a countdown (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.CountdownEvent.Wait(System.TimeSpan,System.Threading.CancellationToken);Never park a thread on a countdown (decision 54): a TaskCompletionSource is awaited.
+M:System.Threading.CountdownEvent.Wait;Never park a thread on a countdown (decision 54): await a TaskCompletionSource.
+M:System.Threading.CountdownEvent.Wait(System.Int32);Never park a thread on a countdown (decision 54): await a TaskCompletionSource.
+M:System.Threading.CountdownEvent.Wait(System.TimeSpan);Never park a thread on a countdown (decision 54): await a TaskCompletionSource.
+M:System.Threading.CountdownEvent.Wait(System.Threading.CancellationToken);Never park a thread on a countdown (decision 54): await a TaskCompletionSource.
+M:System.Threading.CountdownEvent.Wait(System.Int32,System.Threading.CancellationToken);Never park a thread on a countdown (decision 54): await a TaskCompletionSource.
+M:System.Threading.CountdownEvent.Wait(System.TimeSpan,System.Threading.CancellationToken);Never park a thread on a countdown (decision 54): await a TaskCompletionSource.
 M:System.Threading.Barrier.SignalAndWait;Never park a thread at a barrier (decision 54).
 M:System.Threading.Barrier.SignalAndWait(System.Int32);Never park a thread at a barrier (decision 54).
 M:System.Threading.Barrier.SignalAndWait(System.TimeSpan);Never park a thread at a barrier (decision 54).
 M:System.Threading.Barrier.SignalAndWait(System.Threading.CancellationToken);Never park a thread at a barrier (decision 54).
 M:System.Threading.Barrier.SignalAndWait(System.Int32,System.Threading.CancellationToken);Never park a thread at a barrier (decision 54).
 M:System.Threading.Barrier.SignalAndWait(System.TimeSpan,System.Threading.CancellationToken);Never park a thread at a barrier (decision 54).
-M:System.Threading.Monitor.Wait(System.Object);Never park a thread on a monitor (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.Monitor.Wait(System.Object,System.Int32);Never park a thread on a monitor (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.Monitor.Wait(System.Object,System.TimeSpan);Never park a thread on a monitor (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.Monitor.Wait(System.Object,System.Int32,System.Boolean);Never park a thread on a monitor (decision 54): a TaskCompletionSource is awaited.
-M:System.Threading.Monitor.Wait(System.Object,System.TimeSpan,System.Boolean);Never park a thread on a monitor (decision 54): a TaskCompletionSource is awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.Take;Never park a thread on a queue (decision 54): a Channel's reader is awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.Take(System.Threading.CancellationToken);Never park a thread on a queue (decision 54): a Channel's reader is awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.TryTake(`0@,System.Int32);Never park a thread on a queue (decision 54): a Channel's reader is awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.TryTake(`0@,System.TimeSpan);Never park a thread on a queue (decision 54): a Channel's reader is awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.TryTake(`0@,System.Int32,System.Threading.CancellationToken);Never park a thread on a queue (decision 54): a Channel's reader is awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.GetConsumingEnumerable;Never park a thread on a queue (decision 54): a Channel's reader is awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.GetConsumingEnumerable(System.Threading.CancellationToken);Never park a thread on a queue (decision 54): a Channel's reader is awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.TakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@);Never park a thread on queues (decision 54): Channels' readers are awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.TakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@,System.Threading.CancellationToken);Never park a thread on queues (decision 54): Channels' readers are awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.TryTakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@,System.Int32);Never park a thread on queues (decision 54): Channels' readers are awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.TryTakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@,System.TimeSpan);Never park a thread on queues (decision 54): Channels' readers are awaited.
-M:System.Collections.Concurrent.BlockingCollection`1.TryTakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@,System.Int32,System.Threading.CancellationToken);Never park a thread on queues (decision 54): Channels' readers are awaited.
+M:System.Threading.Monitor.Wait(System.Object);Never park a thread on a monitor (decision 54): await a TaskCompletionSource.
+M:System.Threading.Monitor.Wait(System.Object,System.Int32);Never park a thread on a monitor (decision 54): await a TaskCompletionSource.
+M:System.Threading.Monitor.Wait(System.Object,System.TimeSpan);Never park a thread on a monitor (decision 54): await a TaskCompletionSource.
+M:System.Threading.Monitor.Wait(System.Object,System.Int32,System.Boolean);Never park a thread on a monitor (decision 54): await a TaskCompletionSource.
+M:System.Threading.Monitor.Wait(System.Object,System.TimeSpan,System.Boolean);Never park a thread on a monitor (decision 54): await a TaskCompletionSource.
+M:System.Collections.Concurrent.BlockingCollection`1.Take;Never park a thread on a queue (decision 54): await a Channel's reader.
+M:System.Collections.Concurrent.BlockingCollection`1.Take(System.Threading.CancellationToken);Never park a thread on a queue (decision 54): await a Channel's reader.
+M:System.Collections.Concurrent.BlockingCollection`1.TryTake(`0@,System.Int32);Never park a thread on a queue (decision 54): await a Channel's reader.
+M:System.Collections.Concurrent.BlockingCollection`1.TryTake(`0@,System.TimeSpan);Never park a thread on a queue (decision 54): await a Channel's reader.
+M:System.Collections.Concurrent.BlockingCollection`1.TryTake(`0@,System.Int32,System.Threading.CancellationToken);Never park a thread on a queue (decision 54): await a Channel's reader.
+M:System.Collections.Concurrent.BlockingCollection`1.GetConsumingEnumerable;Never park a thread on a queue (decision 54): await a Channel's reader.
+M:System.Collections.Concurrent.BlockingCollection`1.GetConsumingEnumerable(System.Threading.CancellationToken);Never park a thread on a queue (decision 54): await a Channel's reader.
+M:System.Collections.Concurrent.BlockingCollection`1.TakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@);Never park a thread on queues (decision 54): await Channels' readers.
+M:System.Collections.Concurrent.BlockingCollection`1.TakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@,System.Threading.CancellationToken);Never park a thread on queues (decision 54): await Channels' readers.
+M:System.Collections.Concurrent.BlockingCollection`1.TryTakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@,System.Int32);Never park a thread on queues (decision 54): await Channels' readers.
+M:System.Collections.Concurrent.BlockingCollection`1.TryTakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@,System.TimeSpan);Never park a thread on queues (decision 54): await Channels' readers.
+M:System.Collections.Concurrent.BlockingCollection`1.TryTakeFromAny(System.Collections.Concurrent.BlockingCollection{`0}[],`0@,System.Int32,System.Threading.CancellationToken);Never park a thread on queues (decision 54): await Channels' readers.
 M:System.Diagnostics.Process.WaitForExit;Never WaitForExit, any overload (decision 54): await WaitForExitAsync, which also waits for the end of both event-driven readers, and give it a CancellationToken for a bound.
 M:System.Diagnostics.Process.WaitForExit(System.TimeSpan);Never WaitForExit, any overload (decision 54): await WaitForExitAsync with a CancellationToken for the bound.
 M:System.Diagnostics.Process.WaitForInputIdle;Never park a thread on another process's message loop (decision 54).
@@ -330,8 +330,8 @@ M:System.IO.File.AppendAllLines(System.String,System.Collections.Generic.IEnumer
 M:System.IO.File.AppendAllLines(System.String,System.Collections.Generic.IEnumerable{System.String},System.Text.Encoding);Never write a file synchronously (decision 63): await File.AppendAllLinesAsync.
 M:System.IO.File.AppendAllBytes(System.String,System.Byte[]);Never write a file synchronously (decision 63): await File.AppendAllBytesAsync.
 M:System.IO.File.AppendAllBytes(System.String,System.ReadOnlySpan{System.Byte});Never write a file synchronously (decision 63): await File.AppendAllBytesAsync.
-M:System.IO.File.Copy(System.String,System.String);Never copy a file synchronously (decision 63): copy between two FileStreams opened with FileOptions.Asynchronous, with CopyToAsync.
-M:System.IO.File.Copy(System.String,System.String,System.Boolean);Never copy a file synchronously (decision 63): copy between two FileStreams opened with FileOptions.Asynchronous, with CopyToAsync.
+M:System.IO.File.Copy(System.String,System.String);Never copy a file synchronously (decision 63): await CopyToAsync between two FileStreams opened with FileOptions.Asynchronous.
+M:System.IO.File.Copy(System.String,System.String,System.Boolean);Never copy a file synchronously (decision 63): await CopyToAsync between two FileStreams opened with FileOptions.Asynchronous.
 M:System.IO.File.OpenRead(System.String);Never open a file for synchronous reads (decision 63): a FileStream with FileOptions.Asynchronous.
 M:System.IO.File.OpenWrite(System.String);Never open a file for synchronous writes (decision 63): a FileStream with FileOptions.Asynchronous.
 M:System.IO.File.OpenText(System.String);Never read a file synchronously (decision 63): a StreamReader over a FileStream with FileOptions.Asynchronous, read with its async methods.
@@ -351,8 +351,8 @@ M:System.IO.FileInfo.AppendText;Never write a file synchronously (decision 63): 
 M:System.IO.FileInfo.Open(System.IO.FileMode);Never open a file for synchronous I/O (decision 63): a FileStream with FileOptions.Asynchronous.
 M:System.IO.FileInfo.Open(System.IO.FileMode,System.IO.FileAccess);Never open a file for synchronous I/O (decision 63): a FileStream with FileOptions.Asynchronous.
 M:System.IO.FileInfo.Open(System.IO.FileMode,System.IO.FileAccess,System.IO.FileShare);Never open a file for synchronous I/O (decision 63): a FileStream with FileOptions.Asynchronous.
-M:System.IO.FileInfo.CopyTo(System.String);Never copy a file synchronously (decision 63): copy between two FileStreams opened with FileOptions.Asynchronous, with CopyToAsync.
-M:System.IO.FileInfo.CopyTo(System.String,System.Boolean);Never copy a file synchronously (decision 63): copy between two FileStreams opened with FileOptions.Asynchronous, with CopyToAsync.
+M:System.IO.FileInfo.CopyTo(System.String);Never copy a file synchronously (decision 63): await CopyToAsync between two FileStreams opened with FileOptions.Asynchronous.
+M:System.IO.FileInfo.CopyTo(System.String,System.Boolean);Never copy a file synchronously (decision 63): await CopyToAsync between two FileStreams opened with FileOptions.Asynchronous.
 M:System.IO.FileStream.#ctor(System.String,System.IO.FileMode);Never open a file for synchronous I/O (decision 63): pass FileOptions.Asynchronous.
 M:System.IO.FileStream.#ctor(System.String,System.IO.FileMode,System.IO.FileAccess);Never open a file for synchronous I/O (decision 63): pass FileOptions.Asynchronous.
 M:System.IO.FileStream.#ctor(System.String,System.IO.FileMode,System.IO.FileAccess,System.IO.FileShare);Never open a file for synchronous I/O (decision 63): pass FileOptions.Asynchronous.
@@ -366,7 +366,7 @@ M:System.IO.FileStream.Write(System.Byte[],System.Int32,System.Int32);Never writ
 M:System.IO.FileStream.Write(System.ReadOnlySpan{System.Byte});Never write a file synchronously (decision 63): await WriteAsync on a stream opened with FileOptions.Asynchronous.
 M:System.IO.FileStream.WriteByte(System.Byte);Never write a file synchronously (decision 63): await WriteAsync on a stream opened with FileOptions.Asynchronous.
 M:System.IO.FileStream.Flush;Never flush a file synchronously (decision 63): await FlushAsync.
-M:System.IO.FileStream.Flush(System.Boolean);Never flush a file synchronously (decision 63). FlushAsync cannot ask for the disk, so a durable write opens its stream with FileOptions.WriteThrough beside FileOptions.Asynchronous: each write then completes only once Windows has written it and the metadata it changed through the file system cache to the device.
+M:System.IO.FileStream.Flush(System.Boolean);Never flush a file synchronously (decision 63). FlushAsync cannot ask for the disk, so a durable write opens its stream with FileOptions.WriteThrough beside FileOptions.Asynchronous: each write then completes only once Windows has written it, and the metadata it changed, through the file system cache to the device.
 M:System.IO.FileStream.CopyTo(System.IO.Stream,System.Int32);Never copy a file synchronously (decision 63): await CopyToAsync.
 M:System.IO.Stream.Read(System.Byte[],System.Int32,System.Int32);Never read a stream synchronously (decisions 54 and 63): await ReadAsync.
 M:System.IO.Stream.Read(System.Span{System.Byte});Never read a stream synchronously (decisions 54 and 63): await ReadAsync.

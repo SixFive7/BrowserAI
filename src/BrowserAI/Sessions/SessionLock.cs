@@ -324,7 +324,7 @@ internal sealed class SessionLock : IAsyncDisposable
                     return new SessionLockResult(
                         SessionLockOutcome.Busy,
                         $"'{location.FullPath}' is being opened or closed by another BrowserAI, and the queue for it did not clear within {LockScopes.PerDirectoryGate.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. " +
-                        "Only processes trying to TAKE this directory queue here -- one that merely wanted to know who holds it would already have been told -- so either a process is wedged inside create-or-take, or more BrowserAI processes are opening this one directory at once than that will serve. Nothing was changed. " +
+                        "Only processes trying to TAKE this directory queue here -- one that merely wanted to know who holds it would already have been told -- so either a process is wedged inside create-or-take, or more BrowserAI processes are opening this one directory at once than the queue can serve. Nothing was changed. " +
                         "Wait and call again, or give this session a directory of its own, which is the arrangement this design expects and which never queues at all.");
                 }
 

@@ -97,7 +97,7 @@ internal static class BrowserConfiguration
     /// ⚠️ <b><c>HarFolder</c> is deleted, 2026-08-26 (previously
     /// <c>"network"</c>, "which is already where BrowserAI's filename routing
     /// files anything a <c>network-</c> prefixed tool produces -- so the archive
-    /// sits beside the request and response bodies it duplicates , not in
+    /// sits beside the request and response bodies it duplicates, not in
     /// a folder of its own").</b> There is no filename routing and there is no
     /// <c>output\network\</c>: the output directory is flat, and the archive
     /// lands at its root beside everything else the session writes. The name

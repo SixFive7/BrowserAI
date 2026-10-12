@@ -371,7 +371,7 @@ internal sealed class UpdateToastsTests
         updates.Surface.UpdateThrows = false;
         updates.Clock.Advance(UpdateToasts.Tick);
 
-        await Assert.That(updates.Logs.Logged("Windows threw on an update of the ready toast's countdown.")).IsTrue();
+        await Assert.That(updates.Logs.Logged("A second of the ready toast's countdown failed.")).IsTrue();
         await Assert.That(updates.Toasts.Counting).IsTrue();
         await Assert.That(updates.Surface.Lines().Split('\n')[^1]).StartsWith("update ready seq=3 ");
     }

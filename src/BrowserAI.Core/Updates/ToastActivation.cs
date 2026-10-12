@@ -458,9 +458,9 @@ internal static partial class ToastActivationLog
     [LoggerMessage(EventId = 7122, Level = LogLevel.Warning, Message = "Started for a toast click, and no click arrived within {Seconds} s.")]
     public static partial void NoClick(ILogger logger, double seconds);
 
-    /// <summary>The class could not be registered.</summary>
+    /// <summary>The class was not registered.</summary>
     /// <param name="logger">Where the record goes.</param>
-    /// <param name="hresult">What COM answered.</param>
-    [LoggerMessage(EventId = 7123, Level = LogLevel.Warning, Message = "The toast activator's class could not be registered (HRESULT {Hresult}).")]
+    /// <param name="hresult">What COM answered, or E_NOINTERFACE when the registration gave no answer in time.</param>
+    [LoggerMessage(EventId = 7123, Level = LogLevel.Warning, Message = "The toast activator's class was not registered (HRESULT {Hresult} from CoIncrementMTAUsage or CoRegisterClassObject, or E_NOINTERFACE for a registration that gave no answer in time).")]
     public static partial void NotRegistered(ILogger logger, int hresult);
 }
