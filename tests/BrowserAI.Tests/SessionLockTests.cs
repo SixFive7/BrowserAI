@@ -94,6 +94,14 @@ internal sealed class SessionLockTests
     /// lock, and the two arms that replaced them await, with the in-process hang detector,
     /// what no longer waits.</i>
     /// </para>
+    /// <para>
+    /// ⚠️ <i>Added 2026-10-12 by addition, with the maintainer's 93 a:</i>
+    /// <see cref="ContendInsideTheWinnersWindowAsync"/> watches the same window for
+    /// <see cref="AContenderThatFindsTheGuardHeldBeforeTheRecordWaitsAtTheGateAndIsToldThePurpose"/>
+    /// and <see cref="AContenderThatFindsAPreviousHoldersRecordUnderANewGuardWaitsAtTheGateAndIsToldTheNewPurpose"/>,
+    /// sized against the defect it excludes: a probe that answers in front of a held gate
+    /// answers in milliseconds.
+    /// </para>
     /// </remarks>
     private static readonly TimeSpan StillBlocked = TimeSpan.FromSeconds(3);
 
@@ -356,6 +364,173 @@ internal sealed class SessionLockTests
         finally
         {
             await taken.Acquired.DisposeIfTakenAsync();
+        }
+    }
+
+    /// <summary>
+    /// A contender that finds the guard held before the record names its holder waits at the
+    /// per-directory gate, and is told the purpose the winner writes before it lets the gate go.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-12 for the maintainer's 93 a</b>, in his words verbatim:
+    /// <i>"93 a"</i>. A winner holds the guard before it creates the store and writes its
+    /// acquisition's statements, and it lets the gate go only after them. A contender whose
+    /// probe landed in between met a held guard and no record, and was told the session
+    /// records no purpose: 2 of 15 losers of
+    /// <see cref="UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho"/> in one
+    /// full run that day, and 1 of 15 in another. Such a probe sends the contender to the gate
+    /// now, and the gate answers once the statements are there.
+    /// </para>
+    /// <para>
+    /// <b>The arm holds the window open, so no clock decides it.</b> A guard naming this
+    /// process is written and held with no store beside it, which is the winner between its
+    /// hold and its statements, and a thread of the arm holds the gate, which is the winner
+    /// still inside it. A call that returns while the gate is held answered in front of it,
+    /// from a record that does not yet name the guard's holder. <see cref="StillBlocked"/> is
+    /// the window <see cref="AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate"/> watches,
+    /// for the same reason: the defect answers in milliseconds, and a slow machine can only
+    /// make the call take longer.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AContenderThatFindsTheGuardHeldBeforeTheRecordWaitsAtTheGateAndIsToldThePurpose()
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("session-probe-no-record");
+        var (_, path) = NewSession(scratch, "probe-no-record");
+        var winner = LockFileHolder.ForThisProcess();
+
+        // The winner between its hold and its statements: its guard written and held, and no store.
+        await LockFile.WriteAsync(path.LockFile, winner);
+        using var guard = LockFile.Hold(path.LockFile);
+
+        await Assert.That(File.Exists(path.DataFile)).IsFalse();
+
+        var refused = await ContendInsideTheWinnersWindowAsync(path, winner, "the purpose the winner writes");
+
+        try
+        {
+            await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Held);
+            await Assert.That(refused.Guard?.ProcessId).IsEqualTo(winner.ProcessId);
+            await Assert.That(refused.Message).Contains("the purpose the winner writes");
+            await Assert.That(refused.Message).DoesNotContain("It records no purpose.");
+        }
+        finally
+        {
+            await refused.Acquired.DisposeIfTakenAsync();
+        }
+    }
+
+    /// <summary>
+    /// A contender that finds a previous holder's record under a new holder's guard waits at
+    /// the gate too, and is told the new holder's purpose and not the previous one's.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The same window, met in a reclaim, and 93 a closes it with the first.</b> A directory
+    /// taken from a previous holder keeps that holder's record until the winner's statements
+    /// join it, so the probe found a purpose there and quoted the previous session's beside the
+    /// new holder's pid. It was read in the code on 2026-10-12, and this arm is the first place
+    /// it was seen.
+    /// </para>
+    /// <para>
+    /// <b>The previous holder has this process's pid and an earlier creation time</b>, which is
+    /// how a pid Windows gave out again reads. So the arm fails a probe that compares the
+    /// record's newest holder with the guard's by pid alone, as well as one that does not
+    /// compare them at all.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AContenderThatFindsAPreviousHoldersRecordUnderANewGuardWaitsAtTheGateAndIsToldTheNewPurpose()
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("session-probe-previous-record");
+        var (_, path) = NewSession(scratch, "probe-previous-record");
+        var winner = LockFileHolder.ForThisProcess();
+        var previous = winner with { ProcessCreatedFileTime = winner.ProcessCreatedFileTime - 1 };
+
+        // The session before this one, as its acquisition left it: a guard, and a record naming it.
+        await LockFile.WriteAsync(path.LockFile, previous);
+
+        await using (var earlier = await SessionStore.OpenForWritingAsync(path.DataFile))
+        {
+            await earlier.RecordAcquisitionAsync(AcquisitionStatements(path, previous, "the previous session's purpose"));
+        }
+
+        // The winner between its hold and its statements: its guard written over that one and held.
+        await LockFile.WriteAsync(path.LockFile, winner);
+        using var guard = LockFile.Hold(path.LockFile);
+
+        var refused = await ContendInsideTheWinnersWindowAsync(path, winner, "the purpose the winner writes");
+
+        try
+        {
+            await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Held);
+            await Assert.That(refused.Guard?.ProcessId).IsEqualTo(winner.ProcessId);
+            await Assert.That(refused.Message).Contains("the purpose the winner writes");
+            await Assert.That(refused.Message).DoesNotContain("the previous session's purpose");
+        }
+        finally
+        {
+            await refused.Acquired.DisposeIfTakenAsync();
+        }
+    }
+
+    /// <summary>
+    /// A contender's acquisition made while the arm holds the per-directory gate, which must
+    /// not return; then the winner's statements, written before the gate goes, and the
+    /// contender's answer once it has gone.
+    /// </summary>
+    /// <param name="path">The session, whose guard the caller already holds for the winner.</param>
+    /// <param name="winner">Who the guard names.</param>
+    /// <param name="purpose">The purpose the winner's statements give.</param>
+    /// <returns>The contender's answer.</returns>
+    private static async Task<SessionLockResult> ContendInsideTheWinnersWindowAsync(SessionPath path, LockFileHolder winner, string purpose)
+    {
+        using var gate = MachineMutex.Create(path.MutexName);
+        var inside = await gate.HoldAsync(LockScopes.PerDirectoryGate);
+        Task<SessionLockResult> call;
+        SessionStore store;
+
+        try
+        {
+            await Assert.That(inside.Acquisition).IsEqualTo(MutexAcquisition.Acquired);
+
+            var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            call = Task.Run(async () =>
+            {
+                entered.SetResult();
+                return await SessionLock.TryAcquireAsync(path, Request("a contender in the winner's window"), NullLogger.Instance);
+            });
+
+            await entered.Task;
+
+            var first = await Task.WhenAny(call, Task.Delay(StillBlocked));
+            var early = first == call ? await call : null;
+
+            if (early is not null)
+            {
+                await early.Acquired.DisposeIfTakenAsync();
+            }
+
+            await Assert.That(early?.Message).IsNull().Because(
+                "the per-directory gate is held, so a contender that returned answered in front of it, "
+                + "from a record that does not name the guard's holder yet");
+
+            // The winner's statements, made as its acquisition makes them: in the store's open,
+            // and before it lets the gate go.
+            store = await SessionStore.OpenForWritingAsync(path.DataFile, opened => opened.RecordAcquisition(AcquisitionStatements(path, winner, purpose)));
+        }
+        finally
+        {
+            await inside.DisposeAsync();
+        }
+
+        await using (store)
+        {
+            return await call.WaitAsync(TestDefaults.InProcessHang);
         }
     }
 
@@ -2126,6 +2301,25 @@ internal sealed class SessionLockTests
 
     private static SessionLockRequest Request(string purpose) =>
         new() { Browser = "chromium", Purpose = purpose };
+
+    /// <summary>The statements an acquisition writes for a holder, as <c>SessionLock</c> composes them for a new record.</summary>
+    /// <param name="path">The session.</param>
+    /// <param name="holder">Who took it.</param>
+    /// <param name="purpose">What for.</param>
+    /// <returns>The statements, in the order they are stored.</returns>
+    private static List<StoredStatement> AcquisitionStatements(SessionPath path, LockFileHolder holder, string purpose)
+    {
+        var at = SessionRecordReader.Stamp(DateTimeOffset.Now);
+
+        return
+        [
+            new StoredStatement(RecordFields.Directory, at, path.FullPath),
+            new StoredStatement(RecordFields.Browser, at, "chromium"),
+            new StoredStatement(RecordFields.Purpose, at, purpose),
+            new StoredStatement(RecordFields.BrowserAiVersion, at, BuildVersion.Current),
+            new StoredStatement(RecordFields.Holder, at, SessionRecordReader.WriteHolder(holder)),
+        ];
+    }
 
     private static (string Directory, SessionPath Path) NewSession(ScratchDirectory scratch, string name)
     {

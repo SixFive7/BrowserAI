@@ -1141,6 +1141,26 @@ internal sealed class SessionLock : IAsyncDisposable
     /// that is held but unreadable falls through to the gate, which reports it
     /// better because it holds the gate while it looks.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>And only once the record names the guard's holder, since 2026-10-12</b>, decided
+    /// by the maintainer, 93 a, in his words verbatim: <i>"93 a"</i>. A winner writes and holds
+    /// the guard before it creates the store and writes its acquisition's statements, and it
+    /// lets the gate go only after them. A probe that read the purpose in between told a
+    /// contender the session records no purpose, as 2 of 15 and then 1 of 15 losers of
+    /// <c>SessionLockTests</c>' race were told in two full runs that day, or quoted the
+    /// purpose of the session before it beside the new holder's pid. So a record that is
+    /// absent, that cannot be read at once, or whose newest holder statement is not the
+    /// guard's by pid and creation time sends the contender to the gate, where it waits as the
+    /// contenders that came before the hold do, and is told the purpose the statements give.
+    /// The record chooses only where the refusal is composed: that the directory is held is
+    /// still the kernel's sharing violation and nothing else. <i>Added that day by
+    /// addition.</i>
+    /// </para>
+    /// <para>
+    /// <b>What the comparison cannot see</b>: a process that takes back a directory it held
+    /// itself names the same pid and creation time in both acquisitions, so a contender inside
+    /// that window is told the purpose the record held before it.
+    /// </para>
     /// </remarks>
     /// <param name="location">The canonicalised session directory.</param>
     /// <param name="logger">Where the refusal is recorded.</param>
@@ -1176,27 +1196,50 @@ internal sealed class SessionLock : IAsyncDisposable
             return null;
         }
 
+        // ⚠️ THE RECORD HAS TO NAME THE GUARD'S HOLDER BEFORE THIS MAY ANSWER (93 a). The
+        // winner holds the guard first, writes its statements after, and lets the gate go
+        // only once they are written, so a record that is not there, cannot be read at once,
+        // or names somebody else last may be a winner's still inside the gate, and the gate
+        // is where that is settled and its purpose read.
+        if (await RecordForARefusalAsync(location).ConfigureAwait(false) is not { Holder: { } recorded } record
+            || recorded.ProcessId != holder.ProcessId
+            || recorded.ProcessCreatedFileTime != holder.ProcessCreatedFileTime)
+        {
+            return null;
+        }
+
         SessionLog.Contended(logger, location.FullPath, holder.ProcessId);
 
-        return HeldBy(location, holder, await PurposeOfAsync(location).ConfigureAwait(false));
+        return HeldBy(location, holder, record.Purpose);
     }
 
     /// <summary>
-    /// What a held session says it is for, or <see langword="null"/> when that
-    /// cannot be read.
+    /// A held session's record, read for a refusal, or <see langword="null"/> when there is
+    /// none or it cannot be read at once.
     /// </summary>
     /// <remarks>
-    /// <b>Only ever for a refusal, and never for a decision.</b> The purpose is
-    /// what makes <i>this directory is busy</i> actionable -- a model reading
+    /// <para>
+    /// <b>Only ever for a refusal, and never for a decision about ownership.</b> The purpose
+    /// is what makes <i>this directory is busy</i> actionable -- a model reading
     /// <i>"held by PID 8124, which is checking out the staging cart"</i> knows
     /// whether to wait or to pick another directory. A record that cannot be
     /// opened costs that clause and nothing else, so every failure here is
     /// swallowed and not propagated into an ownership answer the kernel
     /// already settled.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It also chooses where a refusal is composed, since 2026-10-12</b>, the
+    /// maintainer's 93 a: <see cref="ProbeForHolderAsync"/> answers in front of the gate only
+    /// when this record's newest holder is the guard's. That choice moves a contender between
+    /// two answers that both say the directory is held, and never to <i>free</i>.
+    /// <i>Corrected that day (previously "What a held session says it is for" and "Only ever
+    /// for a refusal, and never for a decision", on <c>PurposeOfAsync</c>, which returned the
+    /// purpose alone).</i>
+    /// </para>
     /// </remarks>
     /// <param name="location">The session directory.</param>
-    /// <returns>The purpose, or <see langword="null"/>.</returns>
-    private static async Task<string?> PurposeOfAsync(SessionPath location)
+    /// <returns>The record, or <see langword="null"/>.</returns>
+    private static async Task<SessionRecord?> RecordForARefusalAsync(SessionPath location)
     {
         try
         {
@@ -1204,8 +1247,10 @@ internal sealed class SessionLock : IAsyncDisposable
             // on the contended path, in front of the gate, for a caller whose
             // whole business is one sentence -- so a reader that waited a dying
             // holder out here would put that wait in front of every refusal, on
-            // exactly the path the pre-gate probe exists to keep fast.
-            return (await ReadRecordAsync(location, TimeSpan.Zero).ConfigureAwait(false))?.Purpose;
+            // exactly the path the pre-gate probe exists to keep fast. Since 93 a,
+            // a record that cannot be read at once in front of the gate sends the
+            // contender to the gate, and the gate's queue is the only wait it meets.
+            return await ReadRecordAsync(location, TimeSpan.Zero).ConfigureAwait(false);
         }
         catch (SessionRecordException)
         {
@@ -1610,7 +1655,7 @@ internal sealed class SessionLock : IAsyncDisposable
             ? new SessionLockResult(
                 SessionLockOutcome.Held,
                 $"'{location.FullPath}' is held by another process, which removed its '{SessionLayout.LockFileName}' between the refusal and the read. Nothing was changed. Try again, or choose another directory.")
-            : HeldBy(location, holder, await PurposeOfAsync(location).ConfigureAwait(false));
+            : HeldBy(location, holder, (await RecordForARefusalAsync(location).ConfigureAwait(false))?.Purpose);
     }
 
     /// <summary>
