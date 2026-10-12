@@ -368,6 +368,12 @@ argument a tool does not have is refused.
   release script in a process of its own now, says that it stopped on the test pack and lets
   the lock go.
 
+- 🐛 **A refusal for a session another BrowserAI is opening names that session's purpose.**
+  An agent that asked in the moment between that BrowserAI taking the session's folder and
+  writing its record was told the session records no purpose, or, when a different BrowserAI
+  had the folder before, was given that one's purpose. Such a request now waits until the
+  record is written, as one made a moment earlier already did.
+
 ## [1.1.0] - 2026-09-23
 
 A web page can offer its own tools to the browser. From this version they can be
