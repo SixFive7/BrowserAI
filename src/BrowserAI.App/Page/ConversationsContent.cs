@@ -519,6 +519,9 @@ internal static class ConversationsContent
                 chosen))
             .Append("<dl class=\"lead\"><dt>Browser</dt><dd><span class=\"dd-sample\">").Append(Sample(session.Kept ? "k" : PageParts.ClassOf(session), 34, 14, mini: true)).Append("</span>")
             .Append(PageParts.Line(session, user?.Working ?? false, view.Now)).Append("</dd></dl>")
+            // 59 b, 62 a and 65 a: what its own processes use, and its shared memory as the one
+            // figure for all of BrowserAI, which the home's card says.
+            .Append("<section class=\"use\" aria-label=\"What it uses now\"><p class=\"kind\">Uses now</p><dl>").Append(UsageContent.SessionLines(view, session)).Append("</dl></section>")
             .Append("<dl>")
             .Append("<dt>For</dt><dd>").Append(PageContent.Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded")).Append("</dd>")
             .Append("<dt>Used by</dt><dd>")

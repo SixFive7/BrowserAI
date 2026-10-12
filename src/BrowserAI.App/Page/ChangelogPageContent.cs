@@ -273,7 +273,7 @@ internal static partial class ChangelogPageContent
 
         if (view.Subject is { Length: > 0 } unknown && asked is null)
         {
-            _ = html.Append("<p class=\"small\">").Append(PageContent.Text($"This build's changelog holds no release {unknown}, so the page shows the installed one.")).Append("</p>\n");
+            _ = html.Append("<p class=\"small\">This build's changelog holds no release ").Append(PageContent.Text(unknown)).Append(", so the page shows the installed one.</p>\n");
         }
 
         // 92 b, 2026-10-12: a release's own tag for its section, the build's ref for what is

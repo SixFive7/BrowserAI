@@ -275,10 +275,10 @@ internal static class PageAssets
         .lab.c text, .lab.n text { fill: var(--muted); }
         .lab.k rect { fill: var(--kept-soft); stroke: var(--wire-k); }
         .lab.k text { fill: var(--kept); }
-        .glyph.w { stroke: var(--warn); }
-        .glyph.h { stroke: var(--accent-text); }
-        .glyph.c, .glyph.n { stroke: var(--muted); }
-        .glyph.k { stroke: var(--kept); }
+        .glyph.w { stroke: var(--warn); color: var(--warn); }
+        .glyph.h { stroke: var(--accent-text); color: var(--accent-text); }
+        .glyph.c, .glyph.n { stroke: var(--muted); color: var(--muted); }
+        .glyph.k { stroke: var(--kept); color: var(--kept); }
         .col-head { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; grid-row: 1; }
         .col-head.c1 { grid-column: 1; }
         .col-head.c3 { grid-column: 3; text-align: center; }
@@ -353,6 +353,9 @@ internal static class PageAssets
         .plain { list-style: none; padding: 0; margin: 0 0 8px; }
         .plain li { margin: 3px 0; }
         .inspect .lead { margin-bottom: 10px; }
+        .inspect .use { border-top: 1px solid var(--line); padding-top: 10px; margin: 0 0 10px; }
+        .inspect .use .kind { margin-bottom: 6px; }
+        .inspect .use dl { margin: 0; }
         .dd-sample { display: inline-flex; vertical-align: -2px; margin-right: 8px; }
         .dd-note { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
         .keep-note { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
