@@ -1295,6 +1295,21 @@ serialiser and two processes end up owning one directory -- the failure
 [the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md) found in
 the version that replaced the gate instead of fronting it.
 
+⚠️ **And it answers only from a record that names the guard's holder, since
+2026-10-12** -- the maintainer's 93 a, in his words verbatim: *"93 a"*. *Added by
+addition.* A winner writes and holds the guard before it creates the store and
+writes its acquisition's statements, and it lets the gate go only after them, so a
+probe in that window met a held guard and a record that did not yet say who held it:
+it told the contender the session records no purpose, or quoted the previous
+session's purpose beside the new holder's pid. `SessionLock.ProbeForHolderAsync`
+sends such a contender to the gate when the record is absent, cannot be read at
+once, or names somebody other than the guard's holder last, by pid and creation
+time, and the gate answers once the statements are written. The record chooses only
+where the refusal is composed; that the directory is held is still the kernel's
+sharing violation. What the comparison cannot see is a process taking back a
+directory it held itself, whose two acquisitions name one identity, so a contender
+in that window is told the purpose the record held before it.
+
 **That same open has a second caller since 2026-08-20, and it reports; it does not
 decide.** `SessionLock.ProbeLiveness` is the one opener; `ProbeForHolder` is a
 decision built on it and `browserai_list` is a **report** built on it, so the rule
