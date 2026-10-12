@@ -64,13 +64,17 @@ argument a tool does not have is refused.
   installed, when it started and where its updates come from. Each card leads to a page of its
   own with a way back. The setup page sets up Claude Code and Codex each on its own, or removes
   BrowserAI from one, for all your projects or in a project you choose. The conversations page
-  draws every conversation, BrowserAI and every browser session as a map joined by lines, says
-  what each is when you click it, and becomes a list in a narrow window or when it would draw
-  more than eight rows or twelve sessions. It and the home follow every change as it happens.
-  The dashboard follows Windows' light or dark setting, deletes nothing, and lives at an address
-  on your own machine that is made for each run and handed to nobody else.
-  [The decision](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser) and
-  [the redesign](DECISIONS.md#the-dashboard-decided-2026-10-11).
+  draws every conversation, BrowserAI and every browser session as a map joined by lines, each
+  line naming its state in a word and drawn in a colour and pattern of its own. A click on a card
+  shows beside the map what it is, what it uses and where its folder is, and a link to a session
+  opens the map with that session shown. The page becomes a list in a narrow window or when it
+  would draw more than eight rows or twelve sessions. It and the home follow every change as it
+  happens. What is new lists every release beside the one installed, and a file a change names
+  opens on GitHub. The dashboard follows Windows' light or dark setting, deletes nothing, and
+  lives at an address on your own machine that is made for each run and handed to nobody else.
+  [The decision](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser),
+  [the redesign](DECISIONS.md#the-dashboard-decided-2026-10-11) and
+  [the map and What is new](DECISIONS.md#the-maps-lines-the-session-page-and-what-is-new-decided-2026-10-11-and-2026-10-12).
 
 - ✨ **BrowserAI registers itself with Codex as well as Claude Code.**
   The installer registers it with each client for all your projects and the uninstaller removes it
