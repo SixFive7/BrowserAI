@@ -345,10 +345,10 @@ internal sealed class ConfigurationAppTests
             .IsEqualTo(FolderPickOutcome.Cancelled);
 
         // Chosen and resolved: the path, verbatim.
-        var picked = ShellInterop.Decide(chosen: true, resolved: true, @"C:\projects	hing");
+        var picked = ShellInterop.Decide(chosen: true, resolved: true, @"C:\projects\thing");
 
         await Assert.That(picked.Outcome).IsEqualTo(FolderPickOutcome.Picked);
-        await Assert.That(picked.Path).IsEqualTo(@"C:\projects	hing");
+        await Assert.That(picked.Path).IsEqualTo(@"C:\projects\thing");
         await Assert.That(picked.Reason).IsNull();
 
         // Chosen and NOT resolved: a failure that carries a sentence, and never
