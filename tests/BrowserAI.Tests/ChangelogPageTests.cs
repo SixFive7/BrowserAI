@@ -358,6 +358,51 @@ internal sealed class ChangelogPageTests
     }
 
     /// <summary>
+    /// An address that asks for what is not yet released, on a build whose changelog lists
+    /// nothing there, says that in words and shows the installed release.
+    /// </summary>
+    /// <remarks>
+    /// <b>Found on a reading of the page's words on 2026-10-12</b>: the page said "holds no
+    /// release unreleased", the address's own key, which an older tab carries across an update
+    /// to a release build.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnAddressForWhatIsNotYetReleasedOnABuildThatListsNoneSaysSo()
+    {
+        const string Released = """
+            # Changelog
+
+            ## [Unreleased]
+
+            ## [1.2.0] - 2026-10-10
+
+            ### Fixed
+
+            - 🐛 **Now.**
+
+            ## [1.1.0] - 2026-09-23
+
+            ### Added
+
+            - ✨ **Then.**
+            """;
+
+        await using var rig = await PageRig.CreateAsync(
+            changelog: ChangelogPageContent.SectionFor(Released, "1.2.0"),
+            releases: ChangelogPageContent.Releases(Released),
+            facts: facts => facts with { Version = "1.2.0" });
+
+        _ = await rig.HandOutAsync(PageKind.Changelog);
+
+        var page = (await PageRig.GetAsync(rig.Root + "changelog?tab=1&version=unreleased")).Body;
+
+        await Assert.That(page).Contains("<h1 class=\"page-title\">What is new in BrowserAI 1.2.0</h1>");
+        await Assert.That(page).Contains("This build's changelog lists nothing as not yet released, so the page shows the installed one.");
+        await Assert.That(page).DoesNotContain("holds no release unreleased");
+    }
+
+    /// <summary>
     /// Every release the changelog holds is read, in its order, with what is not yet released
     /// first when it holds an entry and left out when it holds none.
     /// </summary>

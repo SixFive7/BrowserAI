@@ -377,6 +377,33 @@ internal sealed class ConversationsMapTests
         await Assert.That(none).Contains($"<dt>CPU</dt><dd data-usage=\"s:{pricing}:cpu\">Measuring</dd>");
     }
 
+    /// <summary>
+    /// A session's traces are listed by name with what a trace is, no page offers to open one,
+    /// and a request to open one is answered like any action the page does not have.
+    /// </summary>
+    /// <remarks>
+    /// <b>Found on a reading of the page's words on 2026-10-12</b>: no page has drawn a button
+    /// that sends <c>open-trace</c> since 2026-10-11, so its note could never appear and the
+    /// action was reachable by no page. The action and its note are gone.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ATraceIsListedByNameAndARequestToOpenOneIsRefused()
+    {
+        await using var rig = await PageRig.CreateAsync();
+
+        rig.Sessions.Snapshot = Mixed(traces: true);
+
+        var page = (await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions))).Body;
+
+        await Assert.That(page).Contains("checkout-total.zip<span class=\"dd-note\">");
+        await Assert.That(page).DoesNotContain("data-action=\"open-trace\"");
+
+        var answer = await rig.ActAsync("""{"action":"open-trace","trace":"t-1"}""");
+
+        await Assert.That(answer.Status).IsEqualTo(404);
+    }
+
     // ---- The rig's data -----------------------------------------------------------
 
     /// <summary>What does not change, for an arm that draws a page straight from a view.</summary>
