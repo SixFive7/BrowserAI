@@ -47,6 +47,29 @@ internal sealed record RawHttpAnswer(int Status, IReadOnlyList<KeyValuePair<stri
 /// </remarks>
 internal static class RawHttp
 {
+    /// <summary>Opens a page's address the way a browser does, and answers with the page.</summary>
+    /// <remarks>
+    /// <b>Since 2026-10-12, 74 a</b>, a page opened by an address carrying the token is
+    /// answered with the token in a cookie and the address without it; this follows that one
+    /// answer with the cookie it set, as a browser does. An arm about that answer itself sends
+    /// the request with <see cref="SendAsync(int, string)"/>.
+    /// </remarks>
+    /// <param name="address">The address, as a start was handed it.</param>
+    /// <returns>The page's answer, or the first answer when it was not the swap.</returns>
+    public static async Task<RawHttpAnswer> OpenPageAsync(string address)
+    {
+        var uri = new Uri(address);
+        var host = $"Host: 127.0.0.1:{uri.Port}";
+        var first = await SendAsync(uri.Port, Get(uri.Port, uri.PathAndQuery, host, "Sec-Fetch-Site: none"));
+
+        if (first.Status is not 303 || first.Header("Location") is not { } location || first.Header("Set-Cookie") is not { } cookie)
+        {
+            return first;
+        }
+
+        return await SendAsync(uri.Port, Get(uri.Port, location, host, "Sec-Fetch-Site: none", "Cookie: " + cookie.Split(';')[0]));
+    }
+
     /// <summary>Sends one request and reads its answer.</summary>
     /// <param name="port">The port on <c>127.0.0.1</c>.</param>
     /// <param name="request">The request, exactly as it goes on the wire.</param>

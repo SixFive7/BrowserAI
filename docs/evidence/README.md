@@ -124,6 +124,12 @@ every file left out one at a time is in its `left-out.sha256`. *Added later that
 addition:* and [`2026-10-10-claude-bare`](2026-10-10-claude-bare/README.md) departs the same
 way, its rig and stand-in stored with `.txt` appended.
 
+⚠️ *Added 2026-10-12 by addition.* **One more batch departs in those named ways, and its
+own README says how**: [`2026-10-11-link-start`](2026-10-11-link-start/README.md) keeps three
+records under the `.trimmed.` name with the user profile path replaced, and its
+`originals.sha256` carries each original's digest and the digest of each file of the rig as
+it ran, four of which the stored rig changes.
+
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
 reasons that have nothing to do with a record. Adding a pattern below that
@@ -219,3 +225,4 @@ negation silently drops evidence from the tree.
 | [`2026-10-11-frozen-child-wedge`](2026-10-11-frozen-child-wedge/README.md) | 64 c of 2026-10-11: the two times a suspended child of a test host held the pipe a gate driver read its run through, a git that a real Claude Code's launcher left and a `cmd.exe` of a crashed test host, and the red run of the two arms that hold the fix against `50d58c6d` and their green against `39cddc6c` | [`HAZARDS.md`](../../HAZARDS.md#hazard-index) |
 | [`2026-10-11-async-first-gate`](2026-10-11-async-first-gate/README.md) | The first gate after the maintainer's decisions 54 and 63: its PowerShell half at `7e2f8516`, 16 red of 1345, the run of their eleven classes that was green, and an exited process's answer to `GetApplicationRestartSettings` with the red and the green of the arm that holds the reader to it | [`HAZARDS.md`](../../HAZARDS.md#hazard-index) |
 | [`2026-10-11-reopen`](2026-10-11-reopen/README.md) | The maintainer's 76 b: what Claude Code and Codex hand a stdio server for its standard handles, read out of ten running relays, and what `ReOpenFile` with `FILE_FLAG_OVERLAPPED` and its neighbours do to each handle kind | [kb](../../kb/windows/processes.md#both-clients-hand-a-server-synchronous-pipe-ends-and-no-call-makes-them-overlapped----measured-2026-10-11), [re-verification row 215](../../kb/re-verification.md), [`DECISIONS.md`](../../DECISIONS.md#the-conversion-to-asynchronous-code-decided-2026-10-11) |
+| [`2026-10-11-link-start`](2026-10-11-link-start/README.md) | The maintainer's 55: one run of five folder-link shapes clicked in his installed Firefox 157.0.1 with a scratch profile, with the observer's record of every window it opened and of the foreground, each started process's log, the stand-in's and the rig's report | [kb](../../kb/windows/loopback-page.md#a-folder-link-comes-to-the-front-when-the-process-the-link-starts-opens-it----measured-2026-10-11), [re-verification row 218](../../kb/re-verification.md) |

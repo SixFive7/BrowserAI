@@ -49,6 +49,8 @@ internal sealed class PageListenerTests
 
         var read = new PageRequest("GET", page, ["127.0.0.1:54321"], [], [], [], null, false);
         var write = new PageRequest("POST", page + "action", ["127.0.0.1:54321"], ["http://127.0.0.1:54321"], ["same-origin"], ["application/json"], 2, false);
+        var cookie = $"browserai-54321={token}";
+        var plain = read with { RawTarget = "/", Cookie = [cookie] };
 
         (string Shape, PageRequest Request, PageRefusal Expected)[] table =
         [
@@ -87,6 +89,22 @@ internal sealed class PageListenerTests
             ("a chunked write", write with { Chunked = true }, PageRefusal.TooLarge),
             ("a body one byte over", write with { ContentLength = PageGate.MaximumBody + 1 }, PageRefusal.TooLarge),
             ("a body exactly at the limit", write with { ContentLength = PageGate.MaximumBody }, PageRefusal.None),
+
+            // 74 a, 2026-10-12: a target with no token, admitted by this port's cookie alone.
+            ("the plain page with the cookie", plain, PageRefusal.None),
+            ("a plain route with the cookie", plain with { RawTarget = "/sessions?tab=3" }, PageRefusal.None),
+            ("the cookie among others", plain with { Cookie = [$"theme=dark; browserai-54321={token}; other=1"] }, PageRefusal.None),
+            ("a plain write with the cookie", write with { RawTarget = "/action", Cookie = [cookie] }, PageRefusal.None),
+            ("the plain page with no cookie", plain with { Cookie = [] }, PageRefusal.Token),
+            ("another port's cookie", plain with { Cookie = [$"browserai-54322={token}"] }, PageRefusal.Token),
+            ("the cookie with a wrong token of the right length", plain with { Cookie = [$"browserai-54321={new string('A', token.Length)}"] }, PageRefusal.Token),
+            ("the cookie with the token and more", plain with { Cookie = [$"browserai-54321={token}A"] }, PageRefusal.Token),
+            ("the cookie with half the token", plain with { Cookie = [$"browserai-54321={token[..20]}"] }, PageRefusal.Token),
+            ("the cookie on an absolute target", plain with { RawTarget = "http://127.0.0.1:54321/" }, PageRefusal.Token),
+            ("the cookie from a rebound name", plain with { Host = ["attacker.example:54321"] }, PageRefusal.Host),
+            ("the cookie from another site", plain with { FetchSite = ["cross-site"] }, PageRefusal.FetchSite),
+            ("the cookie from another port's page", plain with { FetchSite = ["same-site"] }, PageRefusal.FetchSite),
+            ("a plain write with the cookie and no Origin", write with { RawTarget = "/action", Cookie = [cookie], Origin = [] }, PageRefusal.Origin),
         ];
 
         var wrong = table
@@ -100,6 +118,20 @@ internal sealed class PageListenerTests
         // The route and the query an admitted target names.
         await Assert.That(gate.RouteOf(page)).IsEqualTo(string.Empty);
         await Assert.That(gate.RouteOf(page + "sessions?tab=3")).IsEqualTo("sessions");
+
+        // 74 a: a target the cookie admitted names its route after its first slash, and an
+        // address with the token is the one swapped for the plain address and the cookie.
+        await Assert.That(gate.RouteOf("/")).IsEqualTo(string.Empty);
+        await Assert.That(gate.RouteOf("/sessions?tab=3")).IsEqualTo("sessions");
+        await Assert.That(gate.SwapsTheAddress(page + "sessions?tab=3")).IsTrue();
+        await Assert.That(gate.SwapsTheAddress("/sessions?tab=3")).IsFalse();
+        await Assert.That(gate.PlainAddressOf(page + "sessions?tab=3")).IsEqualTo("/sessions?tab=3");
+        await Assert.That(gate.PlainAddressOf(page)).IsEqualTo("/");
+        await Assert.That(gate.SetCookie).IsEqualTo($"browserai-54321={token}; Path=/; HttpOnly; SameSite=Strict");
+        await Assert.That(gate.IsToken(token)).IsTrue();
+        await Assert.That(gate.IsToken(token + "A")).IsFalse();
+        await Assert.That(gate.IsToken(new string('A', token.Length))).IsFalse();
+        await Assert.That(gate.IsToken(null)).IsFalse();
         await Assert.That(PageGate.QueryOf(page + "events?tab=3&page=sessions")).IsEqualTo("tab=3&page=sessions");
         await Assert.That(PageGate.QueryValue("tab=3&page=sessions", "page")).IsEqualTo("sessions");
         await Assert.That(PageGate.QueryValue("tab=3", "page")).IsNull();
@@ -128,8 +160,20 @@ internal sealed class PageListenerTests
         var host = $"Host: 127.0.0.1:{port}";
         var origin = $"Origin: http://127.0.0.1:{port}";
 
-        // Admitted.
-        var page = await RawHttp.SendAsync(port, RawHttp.Get(port, $"/{token}/", host));
+        // ⚠️ 74 a, 2026-10-12: the page opened by the address with the token is answered with
+        // the token in this port's cookie and the same address without it, and runs no route.
+        var swapped = await RawHttp.SendAsync(port, RawHttp.Get(port, $"/{token}/?tab=4", host));
+
+        await Assert.That(swapped.Status).IsEqualTo(303).Because(swapped.Raw);
+        await Assert.That(swapped.Header("Location")).IsEqualTo("/?tab=4");
+        await Assert.That(swapped.Header("Set-Cookie")).IsEqualTo($"browserai-{port}={token}; Path=/; HttpOnly; SameSite=Strict");
+        await Assert.That(swapped.Body).IsEmpty();
+        await Assert.That(swapped.Header("Cache-Control")).IsEqualTo("no-store");
+        await Assert.That(routes.Reached).IsEqualTo(0);
+
+        // Admitted: the plain address, through the cookie.
+        var cookie = $"Cookie: browserai-{port}={token}";
+        var page = await RawHttp.SendAsync(port, RawHttp.Get(port, "/?tab=4", host, cookie));
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
         await Assert.That(page.Body).IsEqualTo("the page");
@@ -146,7 +190,11 @@ internal sealed class PageListenerTests
         var written = await RawHttp.SendAsync(port, RawHttp.Post($"/{token}/action", "{}", host, origin, "Sec-Fetch-Site: same-origin", "Content-Type: application/json"));
 
         await Assert.That(written.Status).IsEqualTo(204).Because(written.Raw);
-        await Assert.That(routes.Reached).IsEqualTo(2);
+
+        var writtenThroughTheCookie = await RawHttp.SendAsync(port, RawHttp.Post("/action", "{}", host, origin, cookie, "Sec-Fetch-Site: same-origin", "Content-Type: application/json"));
+
+        await Assert.That(writtenThroughTheCookie.Status).IsEqualTo(204).Because(writtenThroughTheCookie.Raw);
+        await Assert.That(routes.Reached).IsEqualTo(3);
 
         // Refused by the gate: each a 404, empty, with none of the headers an admitted answer carries.
         string[] refused =
@@ -169,6 +217,16 @@ internal sealed class PageListenerTests
             $"PUT /{token}/ HTTP/1.1\r\n{host}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
             $"GET http://127.0.0.1:{port}/{token}/ HTTP/1.1\r\n{host}\r\nConnection: close\r\n\r\n",
             RawHttp.Get(port, $"/{token}/no-such-route", host),
+
+            // 74 a: the plain address with no cookie, another port's, a wrong one, and the
+            // cookie from another site, another port's page and a rebound name.
+            RawHttp.Get(port, "/?tab=4", host, $"Cookie: browserai-{port + 1}={token}"),
+            RawHttp.Get(port, "/?tab=4", host, $"Cookie: browserai-{port}={new string('A', token.Length)}"),
+            RawHttp.Get(port, "/?tab=4", host, cookie, "Sec-Fetch-Site: cross-site"),
+            RawHttp.Get(port, "/?tab=4", host, cookie, "Sec-Fetch-Site: same-site"),
+            RawHttp.Get(port, "/?tab=4", $"Host: attacker.example:{port}", cookie),
+            RawHttp.Post("/action", "{}", host, cookie, "Content-Type: application/json"),
+            RawHttp.Get(port, "/no-such-route", host, cookie),
         ];
 
         var wrong = new List<string>();
@@ -185,7 +243,9 @@ internal sealed class PageListenerTests
         }
 
         await Assert.That(string.Join(Environment.NewLine, wrong)).IsEmpty();
-        await Assert.That(routes.Reached).IsEqualTo(3);
+
+        // Two of them were admitted and named no route: the token's and the cookie's.
+        await Assert.That(routes.Reached).IsEqualTo(5);
     }
 
     /// <summary>
@@ -294,7 +354,10 @@ internal sealed class PageListenerTests
         wildcard.Bind(new IPEndPoint(IPAddress.Any, port));
         wildcard.Listen();
 
-        var answer = await RawHttp.SendAsync(port, RawHttp.Get(port, $"/{listener.Gate.Token}/", $"Host: 127.0.0.1:{port}"));
+        // ⚠️ 74 a, 2026-10-12: the page by the token's address is answered with the cookie and
+        // the plain address, so the answer is read through that swap, both requests to the
+        // listener's address.
+        var answer = await RawHttp.OpenPageAsync($"http://127.0.0.1:{port}/{listener.Gate.Token}/");
 
         await Assert.That(answer.Status).IsEqualTo(200).Because(answer.Raw);
         await Assert.That(routes.Reached).IsEqualTo(1);
@@ -345,6 +408,10 @@ internal sealed class PageListenerTests
         private int _reached;
 
         public int Reached => Volatile.Read(ref _reached);
+
+        /// <inheritdoc />
+        /// <remarks>The page itself is a page, as the product's home is; the action is not (74 a).</remarks>
+        public bool IsPage(string route) => route.Length is 0;
 
         public async Task<bool> ServeAsync(HttpContext context, string route, string query)
         {

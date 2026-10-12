@@ -1,0 +1,18 @@
+# The run's records as written, before the profile path was replaced
+40bb456cf30e0283195b2d2d028a0eafa4ceb64da5fac880a60770f21b634bd7  142740 bytes  observe-74560.jsonl  (16 profile paths replaced by %USERPROFILE%)
+8ce8cc1d7027e5a3d7787b46398f7f3e55fd05e2bfbb5dc35e2e78ec882ea1c4  3134 bytes  snapshot-before.txt  (30 profile paths replaced by %USERPROFILE%)
+8ce8cc1d7027e5a3d7787b46398f7f3e55fd05e2bfbb5dc35e2e78ec882ea1c4  3134 bytes  snapshot-after.txt  (30 profile paths replaced by %USERPROFILE%)
+# The rig's files as they ran on 2026-10-11, before the stored copy changed four of them
+e73b8a2e2c9245a6360d3059614ee14d79bf4da7722c58694fa7a34c24e868e9  STEPS.txt
+e5d6f11fea60ca0111a7db990466160e887d34aa30b2bef2b18d13440971983e  start.ps1
+5009f4eb3e5e1f90bc9d2425cde71a524181c1c36f9a298f5870383c510ea933  stop.ps1
+3a259a80b3e4671f31b9ffc8d34b04b4381a480d1263691f65ec5e56244e08d3  focus.ps1
+0854203dd23017253edc1f3fc860a657d2c0ef038b304f0efbe80c370333231d  probe/Directory.Build.props
+9a4b477a2fdbc1f432728b0e3ed1bfe30384b15fb3355cd1f54cf738fe614f20  probe/Directory.Build.targets
+0438ed59d0fb17b25a327412c26a29dd84ac5619372f8139ef50235165ae7824  probe/Directory.Packages.props
+54c82b47c4520d5a866740baada5d5f07e4d07bf6fb67b76473ef45a77634e01  probe/LinkProbe.csproj
+0c3c20631a06c85185775937105a675725d8a493e86eaf0b477611f8cafb8def  probe/Program.cs
+cbb7286463cf833271d248f89dd5f300285d5cfd147d481e92c05b75d7afbf42  auto/driver.mjs
+f4a0878414a2b8b4de5dfaaee2262855b1280e201045a9e1db9ae16cb0d8c8a5  auto/package-lock.json
+ddb01e253660bcbfc31379878619638a5233d542b0eefbb7ea6e0d501f8008ad  auto/package.json
+994d96f977c37d28f9bec311af73244f80b2ca49f0b439424a6caf8fce13b2b0  close-probe-windows.ps1  (held out of the stored rig)

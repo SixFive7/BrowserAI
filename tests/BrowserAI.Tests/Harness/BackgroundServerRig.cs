@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using BrowserAI.App.Page;
 using BrowserAI.Background;
 using BrowserAI.Clients;
 using BrowserAI.Coordination;
@@ -373,6 +374,23 @@ internal sealed class FakeBackgroundVerbs(ConcurrentQueue<string>? events = null
     {
         _ = Interlocked.Increment(ref _stops);
         Events.Enqueue("stop");
+    }
+
+    /// <summary>What a folder link's start is answered with, as the arm sets it; every link is refused unless it does.</summary>
+    public Func<LinkAsk, Task<LinkAnswer>> Link { get; set; } =
+        static _ => Task.FromResult<LinkAnswer>(new LinkAnswer.Refused("The suite's background refuses every folder link."));
+
+    /// <summary>Every folder link asked about, in order.</summary>
+    public IReadOnlyList<LinkAsk> Links => [.. _links];
+
+    private readonly ConcurrentQueue<LinkAsk> _links = new();
+
+    /// <inheritdoc />
+    public Task<LinkAnswer> LinkAsync(LinkAsk ask)
+    {
+        _links.Enqueue(ask);
+        Events.Enqueue($"link {PageLinks.NameOf(ask.Verb)}");
+        return Link(ask);
     }
 
     /// <summary>Lets a held <see cref="ShowAsync"/> answer.</summary>

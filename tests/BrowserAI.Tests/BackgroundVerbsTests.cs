@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.App.Page;
 using BrowserAI.Background;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
@@ -85,6 +86,49 @@ internal sealed class BackgroundVerbsTests
         await Assert.That(address).IsNull();
         await Assert.That(refusal).Contains("stopping");
         await Assert.That(logs.Records.Count(record => record.EventId.Id is 20)).IsEqualTo(2);
+    }
+
+    /// <summary>
+    /// A folder link that arrives before the page exists, while an update installs or while the
+    /// background stops is told what a person's start is told in the same state.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12, from the reader's pass over the folder links' texts</b>: a link that
+    /// arrived during an update was told the background was stopping, while a start at the same
+    /// moment was told it was installing an update.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFolderLinkIsToldWhatAStartIsToldWhileTheBackgroundStartsUpdatesOrStops()
+    {
+        using var logs = new CapturingLoggerProvider();
+
+        var ask = new LinkAsk(LinkVerb.OpenFolder, PageGate.NewToken(), Folder: "data");
+        var verbs = new BackgroundVerbs(logs.CreateLogger("BrowserAI.Background"));
+
+        var starting = await verbs.LinkAsync(ask);
+
+        await Assert.That(starting).IsTypeOf<LinkAnswer.Refused>();
+        await Assert.That(((LinkAnswer.Refused)starting).Sentence).StartsWith("BrowserAI's background is still starting, so it has no page");
+
+        (string State, BackgroundState Value, string Opening)[] states =
+        [
+            ("an update", BackgroundState.Updating, "BrowserAI is installing an update, so it opens no "),
+            ("a stop", BackgroundState.Stopping, "BrowserAI's background is stopping, so it opens no "),
+        ];
+
+        foreach (var (state, value, opening) in states)
+        {
+            verbs.State = value;
+
+            var (address, tab) = await verbs.ShowAsync(page: null);
+            var link = await verbs.LinkAsync(ask);
+
+            await Assert.That(address).IsNull();
+            await Assert.That(tab).StartsWith(opening).Because(state);
+            await Assert.That(link).IsTypeOf<LinkAnswer.Refused>();
+            await Assert.That(((LinkAnswer.Refused)link).Sentence).StartsWith(opening).Because(state);
+        }
     }
 
     /// <summary>

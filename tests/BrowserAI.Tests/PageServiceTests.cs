@@ -92,7 +92,11 @@ internal sealed class PageServiceTests
         // texts polish of 2026-10-10 (previously the script's own sentence, with the Start
         // Menu advice on every build): an installed build points at the Start Menu, and a
         // build that is not installed, whose Start Menu entry starts another, does not.
-        await Assert.That(page.Body).Contains("data-unanswered=\"" + PageContent.Text("BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.") + "\"");
+        // Corrected 2026-10-12 (previously "BrowserAI is not answering this page. If it does
+        // not come back, open BrowserAI from the Start Menu again."), the maintainer's 71 a,
+        // and again that day by the reader's pass (previously "and it opens this page again in
+        // a new tab"), since the start opens the home.
+        await Assert.That(page.Body).Contains("data-unanswered=\"" + PageContent.Text("BrowserAI is not answering this page. Start BrowserAI from the Start Menu, and it opens its page again in a new tab.") + "\"");
         await Assert.That(script.Body).Contains("say(unanswered)");
         await Assert.That(script.Body).DoesNotContain("Start Menu");
 
@@ -426,73 +430,187 @@ internal sealed class PageServiceTests
         await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 1)).IsTrue();
     }
 
+    // RETIRED 2026-10-12: TheListenerStopsAMinuteAfterTheLastTabLeavesAndTheNextStartOpensANewOne,
+    // which held Q336 a's minute after the last tab, asked through TryStopAsync on every wake.
+    // The maintainer's 69 d of 2026-10-11, in his words verbatim "69 d with fallback to b",
+    // keeps the listener up while the background runs, so a browser's Always allow for its
+    // address lasts; the arm below holds what replaced it.
+
     /// <summary>
-    /// The tab's listener stays for a minute after the last tab leaves, so a reload
-    /// keeps working, and stops once the minute is up; the next person's start opens
-    /// a new one.
+    /// The tab's listener stays up while the background runs, however long after its last tab
+    /// the background's loop asks; a background that starts again over the same data root takes
+    /// the port the last one held and goes on numbering tabs; and with that port taken by another
+    /// program it takes one Windows picks and remembers it.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// <b>Q336 a, the maintainer's words verbatim: <i>"Q336 a - also make sure that
-    /// an exist only happens after 1 min. of a tab closed so a reload keeps working
-    /// (because that does not take 1 min.)"</i></b>
-    /// </para>
-    /// <para>
-    /// ⚠️ <i>Corrected 2026-10-08 (previously "The coordinator stops a minute after
-    /// the last tab leaves", driven through the coordinator's own loop, whose process
-    /// then exited)</i>: the one resident background holds the page now and never
-    /// ends on its own (S a), so what stops after the minute is the listener, asked
-    /// through <see cref="PageService.TryStopAsync"/> on every wake the way the background's
-    /// loop asks it, and the next hand-out starts a listener again.
-    /// </para>
-    /// <para>
-    /// <b>Planted red 2026-10-08</b>, on request, with every stop
-    /// final, the coordinator's shape, whose process ended with its listener: red at
-    /// the person's start after the minute, whose hand-out came back with no tab.
-    /// </para>
+    /// <b>69 d with fallback b, the maintainer's words of 2026-10-11 verbatim: <i>"69 d with
+    /// fallback to b"</i>.</b> Firefox remembers <i>Always allow</i> for opening BrowserAI per
+    /// address, port included, so the address a folder link is clicked from has to outlive the
+    /// listener's last tab and the background's restart. The memory is the product's file under
+    /// the rig's scratch data root.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheListenerStopsAMinuteAfterTheLastTabLeavesAndTheNextStartOpensANewOne()
+    public async Task TheListenerStaysUpWhileTheBackgroundRunsAndARestartTakesItsLastPortAgain()
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("page-memory");
+        var memory = PageListenerMemoryFile.In(scratch.Path);
+        int port;
+        string firstToken;
+
+        await using (var rig = await PageRig.CreateAsync(memory: memory))
+        {
+            var first = await rig.HandOutAsync();
+
+            port = rig.Gate.Port;
+            firstToken = rig.Gate.Token;
+
+            // A tab connects and leaves, and ten minutes pass with the background's loop asking
+            // on every one of them.
+            using (var tab = await rig.StreamAsync(rig.Gate.Root, 1))
+            {
+                await Assert.That(await tab.NextNamedAsync(PageEvents.State)).IsNotNull();
+            }
+
+            await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 0)).IsTrue();
+
+            for (var minute = 0; minute < 10; minute++)
+            {
+                rig.Clock.Advance(TimeSpan.FromMinutes(1));
+                await Assert.That(await rig.Page.TryStopAsync(final: false)).IsFalse().Because($"minute {minute + 1} after the last tab left");
+            }
+
+            await Assert.That(rig.Page.IsServing).IsTrue();
+            await Assert.That((await PageRig.GetAsync(first)).Status).IsEqualTo(200);
+
+            // The next person's start: the same listener, the next tab.
+            await Assert.That(await rig.HandOutAsync()).IsEqualTo(rig.Gate.Root + "?tab=2");
+
+            // The background's own end stops it.
+            await Assert.That(await rig.Page.TryStopAsync(final: true)).IsTrue();
+            await Assert.That(rig.Page.IsServing).IsFalse();
+        }
+
+        // The memory under the data root names the port and the last tab.
+        var remembered = await memory.ReadAsync();
+
+        await Assert.That(remembered.Port).IsEqualTo(port);
+        await Assert.That(remembered.Tab).IsEqualTo(2);
+
+        // The background starts again over the same data root: the same port, a new token,
+        // and the tabs numbered on from the last.
+        await using (var again = await PageRig.CreateAsync(memory: memory))
+        {
+            var address = await again.HandOutAsync();
+
+            await Assert.That(again.Gate.Port).IsEqualTo(port);
+            await Assert.That(again.Gate.Token).IsNotEqualTo(firstToken);
+            await Assert.That(address).IsEqualTo(again.Gate.Root + "?tab=3");
+        }
+
+        // That port taken by another program: a port Windows picks, remembered for the next.
+        using var holder = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp)
+        {
+            ExclusiveAddressUse = true,
+        };
+
+        holder.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, port));
+        holder.Listen();
+
+        using var logs = new CapturingLoggerProvider();
+
+        await using var moved = await PageRig.CreateAsync(logs: logs, memory: memory);
+
+        _ = await moved.HandOutAsync();
+
+        await Assert.That(moved.Gate.Port).IsNotEqualTo(port);
+        await Assert.That((await memory.ReadAsync()).Port).IsEqualTo(moved.Gate.Port);
+        await Assert.That(logs.Logged($"last port, {port}, is taken")).IsTrue();
+    }
+
+    /// <summary>
+    /// The first visit, by the address with the token, is answered with the token in this
+    /// port's cookie and the same address without it; the plain address, its stylesheet, its
+    /// script, its event stream and its actions are admitted by the cookie alone, and refused
+    /// without it.
+    /// </summary>
+    /// <remarks>
+    /// <b>74 a, the maintainer's words of 2026-10-11 verbatim: <i>"70 a - can we hide the secret
+    /// from the visible uri? It looks ugly."</i> and <i>"74 a"</i>.</b> What a real browser makes
+    /// of the answer, following it and sending the cookie, is
+    /// <see cref="PageBrowserTests"/>'.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFirstVisitTradesTheTokenInTheAddressForACookieAndAPlainAddress()
     {
         await using var rig = await PageRig.CreateAsync();
 
-        _ = await rig.HandOutAsync();
+        var address = await rig.HandOutAsync(PageKind.Sessions);
+        var uri = new Uri(address);
+        var port = uri.Port;
+        var token = rig.Gate.Token;
+        var host = $"Host: 127.0.0.1:{port}";
 
-        // A tab connected, and five minutes pass.
-        var tab = await rig.StreamAsync(rig.Gate.Root, 1);
+        await Assert.That(uri.PathAndQuery).IsEqualTo($"/{token}/sessions?tab=1");
 
-        rig.Clock.Advance(TimeSpan.FromMinutes(5));
-        await Assert.That(await rig.Page.TryStopAsync(final: false)).IsFalse();
+        var swap = await RawHttp.SendAsync(port, RawHttp.Get(port, uri.PathAndQuery, host, "Sec-Fetch-Site: none"));
 
-        // It leaves, and 59 seconds pass.
-        tab.Dispose();
+        await Assert.That(swap.Status).IsEqualTo(303).Because(swap.Raw);
+        await Assert.That(swap.Header("Location")).IsEqualTo("/sessions?tab=1");
+        await Assert.That(swap.Header("Set-Cookie")).IsEqualTo($"browserai-{port}={token}; Path=/; HttpOnly; SameSite=Strict");
+        await Assert.That(swap.Body).IsEmpty();
 
-        await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 0)).IsTrue();
+        var cookie = $"Cookie: browserai-{port}={token}";
+        var page = await RawHttp.SendAsync(port, RawHttp.Get(port, "/sessions?tab=1", host, "Sec-Fetch-Site: none", cookie));
 
-        rig.Clock.Advance(TimeSpan.FromSeconds(59));
-        await Assert.That(await rig.Page.TryStopAsync(final: false)).IsFalse();
+        await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
+        await Assert.That(page.Body).Contains("<h1 class=\"page-title\">Conversations and browsers</h1>");
+        await Assert.That(page.Values("Set-Cookie")).IsEmpty();
 
-        // It reloads inside the minute and leaves again: the minute starts over.
-        using (var reload = await rig.StreamAsync(rig.Gate.Root, 1))
+        // Every relative address the page names resolves under the plain one.
+        await Assert.That(page.Body).Contains("href=\"page.css\"");
+        await Assert.That(page.Body).Contains("src=\"page.js\"");
+
+        foreach (var route in new[] { "/page.css", "/page.js" })
         {
-            await Assert.That(await reload.NextNamedAsync(PageEvents.State)).IsNotNull();
+            var asset = await RawHttp.SendAsync(port, RawHttp.Get(port, route, host, "Sec-Fetch-Site: same-origin", cookie));
+
+            await Assert.That(asset.Status).IsEqualTo(200).Because(route);
         }
 
-        await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 0)).IsTrue();
+        using (var stream = await RawEventStream.OpenThroughTheCookieAsync(port, token, 1, "sessions"))
+        {
+            await Assert.That(stream.Status).IsEqualTo(200);
+            await Assert.That(await stream.NextNamedAsync(PageEvents.State)).IsNotNull();
+        }
 
-        rig.Clock.Advance(TimeSpan.FromSeconds(59));
-        await Assert.That(await rig.Page.TryStopAsync(final: false)).IsFalse();
+        var acted = await RawHttp.SendAsync(port, RawHttp.Post("/action", """{"action":"measure-sessions"}""", host, $"Origin: http://127.0.0.1:{port}", "Sec-Fetch-Site: same-origin", "Content-Type: application/json", cookie));
 
-        // The minute runs out, and the listener stops.
-        rig.Clock.Advance(TimeSpan.FromSeconds(1));
+        await Assert.That(acted.Status).IsEqualTo(204).Because(acted.Raw);
 
-        await Assert.That(await rig.Page.TryStopAsync(final: false)).IsTrue();
-        await Assert.That(rig.Page.IsServing).IsFalse();
+        // The plain address with no cookie, or another port's, is the gate's bare 404.
+        foreach (var (shape, request) in new[]
+        {
+            ("no cookie", RawHttp.Get(port, "/sessions?tab=1", host, "Sec-Fetch-Site: none")),
+            ("another port's cookie", RawHttp.Get(port, "/sessions?tab=1", host, "Sec-Fetch-Site: none", $"Cookie: browserai-{port + 1}={token}")),
+            ("an older listener's token", RawHttp.Get(port, "/sessions?tab=1", host, "Sec-Fetch-Site: none", $"Cookie: browserai-{port}={PageGate.NewToken()}")),
+        })
+        {
+            var refused = await RawHttp.SendAsync(port, request);
 
-        // A person's start after that is handed a tab on a new listener.
-        await Assert.That(await rig.Page.HandOutAsync(PageKind.Status)).IsNotNull();
-        await Assert.That(rig.Page.IsServing).IsTrue();
+            await Assert.That(refused.Status).IsEqualTo(404).Because(shape);
+            await Assert.That(refused.Body).IsEmpty().Because(shape);
+        }
+
+        // An event stream and an action by the token's address are as they were: the page's
+        // script asks for them by the plain address, and an older tab by the token's.
+        using (var byTheToken = await rig.StreamAsync(rig.Gate.Root, 1, "sessions"))
+        {
+            await Assert.That(await byTheToken.NextNamedAsync(PageEvents.State)).IsNotNull();
+        }
+
+        await Assert.That((await rig.ActAsync("""{"action":"measure-sessions"}""")).Status).IsEqualTo(204);
     }
 
     /// <summary>

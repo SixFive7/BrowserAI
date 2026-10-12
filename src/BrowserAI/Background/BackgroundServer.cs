@@ -4,6 +4,8 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.App.Interop;
+using BrowserAI.App.Page;
 using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
@@ -46,6 +48,12 @@ internal interface IBackgroundVerbs
 
     /// <summary>The uninstall hook's stop, or the suite's: close every session cleanly and end.</summary>
     void Stop();
+
+    /// <summary>A folder link's start: whether the link carries the page's token, and what it opens.</summary>
+    /// <remarks><b>Added 2026-10-12 for the maintainer's 55 a and 75 a</b>, of 2026-10-11.</remarks>
+    /// <param name="ask">What the link asks for.</param>
+    /// <returns>The folder, the picker's sentence and what follows the choice, or the refusal.</returns>
+    Task<LinkAnswer> LinkAsync(LinkAsk ask);
 }
 
 /// <summary>
@@ -380,6 +388,10 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
                         _verbs.Stop();
                         return;
 
+                    case BackgroundPipe.Link:
+                        await AnswerLinkAsync(stream, request, client).ConfigureAwait(false);
+                        return;
+
                     case RelayProtocol.Hello:
                         await ServeRelayAsync(stream, request, client).ConfigureAwait(false);
                         return;
@@ -387,7 +399,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
                     default:
                         // The texts polish, 2026-10-10, page #156 (previously "The
                         // background's pipe starts with ..."): a connection starts with one.
-                        await WriteAsync(stream, Refusal(request.Id, (int)McpErrorCode.MethodNotFound, $"A connection to the background's pipe starts with '{RelayProtocol.Hello}', '{BackgroundPipe.Show}' or '{BackgroundPipe.Stop}', and this one sent '{request.Method}'.", "method")).ConfigureAwait(false);
+                        await WriteAsync(stream, Refusal(request.Id, (int)McpErrorCode.MethodNotFound, $"A connection to the background's pipe starts with '{RelayProtocol.Hello}', '{BackgroundPipe.Show}', '{BackgroundPipe.Stop}' or '{BackgroundPipe.Link}', and this one sent '{request.Method}'.", "method")).ConfigureAwait(false);
                         return;
                 }
             }
@@ -420,6 +432,95 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
                 ? new JsonRpcResponse { Id = request.Id, Result = new JsonObject { ["address"] = handed, ["pid"] = Environment.ProcessId } }
                 : Refusal(request.Id, (int)McpErrorCode.InternalError, refusal ?? "The background could not hand out a tab.", "show")).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// A folder link's start: the verbs say whether the link is the page's and what it opens;
+    /// for Windows' folder picker the connection stays open for what was chosen.
+    /// </summary>
+    /// <remarks>
+    /// <b>55 a and 75 a, the maintainer's words of 2026-10-11 verbatim: <i>"55 a"</i> and
+    /// <i>"75 a"</i>.</b> The link start opens the folder, or shows the picker, itself: a
+    /// process the browser had Windows start may bring a window to the front, and the
+    /// background the Task Scheduler started may not. What was chosen comes back as
+    /// <see cref="BackgroundPipe.Picked"/>, with no bound but the background's own stop,
+    /// since a person is choosing; a connection that closes first is a picker closed with
+    /// nothing chosen.
+    /// </remarks>
+    /// <param name="stream">The connection.</param>
+    /// <param name="request">The link start's question.</param>
+    /// <param name="client">The pid Windows reads off the pipe, when it could.</param>
+    /// <returns>The answer, and for a picker the answer to what was chosen.</returns>
+    private async Task AnswerLinkAsync(FileStream stream, JsonRpcRequest request, int? client)
+    {
+        var parameters = request.Params;
+        var ask = LinkAskOf(parameters);
+
+        if (ask is null)
+        {
+            await WriteAsync(stream, Refusal(request.Id, (int)McpErrorCode.InvalidParams, "This folder link's question names no folder, session or setup action the page draws.", "link")).ConfigureAwait(false);
+            return;
+        }
+
+        var answer = await _verbs.LinkAsync(ask).ConfigureAwait(false);
+        var described = PageLinks.Described(ask);
+
+        switch (answer)
+        {
+            case LinkAnswer.Open open:
+                BackgroundServerLog.LinkAnswered(_logger, client ?? 0, described);
+                await WriteAsync(stream, new JsonRpcResponse { Id = request.Id, Result = new JsonObject { ["open"] = open.Directory } }).ConfigureAwait(false);
+                return;
+
+            case LinkAnswer.Pick pick:
+                BackgroundServerLog.LinkAnswered(_logger, client ?? 0, described);
+                await WriteAsync(stream, new JsonRpcResponse { Id = request.Id, Result = new JsonObject { ["pick"] = pick.Prompt } }).ConfigureAwait(false);
+
+                JsonRpcMessage? next;
+
+                try
+                {
+                    next = await ReadFirstFrameAsync(stream, _stopping.Token).ConfigureAwait(false);
+                }
+                catch (Exception failure) when (failure is OperationCanceledException or IOException)
+                {
+                    next = null;
+                }
+
+                if (next is not JsonRpcRequest { Method: BackgroundPipe.Picked } picked)
+                {
+                    // The picker's process went, or sent something else: nothing was chosen.
+                    _ = await pick.Finish(FolderPick.Cancelled).ConfigureAwait(false);
+                    return;
+                }
+
+                var said = await pick.Finish(PickOf(picked.Params)).ConfigureAwait(false);
+
+                await WriteAsync(stream, new JsonRpcResponse { Id = picked.Id, Result = new JsonObject { ["said"] = said } }).ConfigureAwait(false);
+                return;
+
+            case LinkAnswer.Refused refused:
+                BackgroundServerLog.LinkRefused(_logger, client ?? 0, described, refused.Sentence);
+                await WriteAsync(stream, Refusal(request.Id, (int)McpErrorCode.InvalidParams, refused.Sentence, "link")).ConfigureAwait(false);
+                return;
+        }
+    }
+
+    /// <summary>A link start's question, as its parameters carry it, or <see langword="null"/> for one that names nothing the page draws.</summary>
+    private static LinkAsk? LinkAskOf(JsonNode? parameters) =>
+        (Text(parameters, "verb"), Text(parameters, "token")) switch
+        {
+            (_, null or "") => null,
+            ("open-folder", { } token) when Text(parameters, "folder") is { Length: > 0 } folder => new LinkAsk(LinkVerb.OpenFolder, token, Folder: folder),
+            ("open-session", { } token) when Text(parameters, "session") is { Length: > 0 } session => new LinkAsk(LinkVerb.OpenSession, token, Session: session),
+            ("pick", { } token) when Text(parameters, "action") is { Length: > 0 } action && Text(parameters, "client") is { Length: > 0 } app => new LinkAsk(LinkVerb.Pick, token, Action: action, Client: app),
+            _ => null,
+        };
+
+    /// <summary>What a link start's picker came back with, as its parameters carry it.</summary>
+    private static FolderPick PickOf(JsonNode? parameters) =>
+        Text(parameters, "folder") is { Length: > 0 } folder ? FolderPick.Of(folder)
+        : Text(parameters, "failed") is { Length: > 0 } reason ? FolderPick.Broke(reason)
+        : FolderPick.Cancelled;
 
     private async Task ServeRelayAsync(FileStream stream, JsonRpcRequest hello, int? relayPid)
     {
@@ -711,4 +812,11 @@ internal static partial class BackgroundServerLog
     // 34 d, 2026-10-11: a connection that missed the bound was closed with no line.
     [LoggerMessage(EventId = 10, Level = LogLevel.Warning, Message = "A connection from pid {Client} sent no complete first message in {Seconds} s, and was refused and closed.")]
     public static partial void NoFirstMessage(ILogger logger, int client, double seconds);
+
+    // 55 a and 75 a, 2026-10-11: never with the token.
+    [LoggerMessage(EventId = 11, Level = LogLevel.Information, Message = "A folder link's start (pid {Client}) asked to {Link}, and was answered.")]
+    public static partial void LinkAnswered(ILogger logger, int client, string link);
+
+    [LoggerMessage(EventId = 12, Level = LogLevel.Information, Message = "A folder link's start (pid {Client}) asked to {Link}, and was refused: {Sentence}")]
+    public static partial void LinkRefused(ILogger logger, int client, string link, string sentence);
 }

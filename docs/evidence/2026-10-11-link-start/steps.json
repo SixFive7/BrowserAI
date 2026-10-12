@@ -1,0 +1,95 @@
+[
+  {
+    "label": "1 (A, open-itself)",
+    "url": "http://127.0.0.1:53117/t1/",
+    "link": "A",
+    "at": "p1",
+    "clickedAtUtc": "2026-10-11T16:38:01.196Z",
+    "focus": {
+      "raw": "",
+      "err": "\u001b[31;1mfocus.ps1: \u001b[31;1mException calling \"GetCurrentThreadId\" with \"0\" argument(s): \"Unable to find an entry point named 'GetCurrentThreadId' in DLL 'user32.dll'.\"\u001b[0m"
+    },
+    "closed": {
+      "hwnd": "0x200174",
+      "class": "CabinetWClass",
+      "title": "C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-A-p1 - File Explorer",
+      "ownerPid": 95764,
+      "kind": "folder-close"
+    }
+  },
+  {
+    "label": "3 (C, pick-itself)",
+    "url": "http://127.0.0.1:53117/t1/",
+    "link": "C",
+    "at": "p1",
+    "clickedAtUtc": "2026-10-11T16:38:09.713Z",
+    "focus": {
+      "raw": "",
+      "err": "\u001b[31;1mfocus.ps1: \u001b[31;1mException calling \"GetCurrentThreadId\" with \"0\" argument(s): \"Unable to find an entry point named 'GetCurrentThreadId' in DLL 'user32.dll'.\"\u001b[0m"
+    },
+    "closed": {
+      "hwnd": "0x362554",
+      "class": "#32770",
+      "title": "Browse For Folder",
+      "ownerPid": 90188,
+      "kind": "picker-cancel"
+    }
+  },
+  {
+    "label": "4 (E, stand-in no grant, CONTROL)",
+    "url": "http://127.0.0.1:53117/t1/",
+    "link": "E",
+    "at": "p1",
+    "clickedAtUtc": "2026-10-11T16:38:17.719Z",
+    "focus": {
+      "raw": "",
+      "err": "\u001b[31;1mfocus.ps1: \u001b[31;1mException calling \"GetCurrentThreadId\" with \"0\" argument(s): \"Unable to find an entry point named 'GetCurrentThreadId' in DLL 'user32.dll'.\"\u001b[0m"
+    },
+    "closed": {
+      "hwnd": "0x3D258A",
+      "class": "CabinetWClass",
+      "title": "C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-E-p1 - File Explorer",
+      "ownerPid": 95764,
+      "kind": "folder-close"
+    }
+  },
+  {
+    "label": "5 (B, stand-in granted, open)",
+    "url": "http://127.0.0.1:53117/t1/",
+    "link": "B",
+    "at": "p1",
+    "clickedAtUtc": "2026-10-11T16:38:25.989Z",
+    "focus": {
+      "raw": "",
+      "err": "\u001b[31;1mfocus.ps1: \u001b[31;1mException calling \"GetCurrentThreadId\" with \"0\" argument(s): \"Unable to find an entry point named 'GetCurrentThreadId' in DLL 'user32.dll'.\"\u001b[0m"
+    },
+    "closed": {
+      "hwnd": "0x120A20",
+      "class": "CabinetWClass",
+      "title": "C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\run-20261011T161900Z\\folders\\Probe-B-p1 - File Explorer",
+      "ownerPid": 95764,
+      "kind": "folder-close"
+    }
+  },
+  {
+    "label": "6 (D, stand-in granted, pick)",
+    "url": "http://127.0.0.1:53117/t1/",
+    "link": "D",
+    "at": "p1",
+    "clickedAtUtc": "2026-10-11T16:38:34.277Z",
+    "focus": {
+      "raw": "",
+      "err": "\u001b[31;1mfocus.ps1: \u001b[31;1mException calling \"GetCurrentThreadId\" with \"0\" argument(s): \"Unable to find an entry point named 'GetCurrentThreadId' in DLL 'user32.dll'.\"\u001b[0m"
+    },
+    "closed": {
+      "hwnd": "0xAC15B0",
+      "class": "#32770",
+      "title": "Browse For Folder",
+      "ownerPid": 98104,
+      "kind": "picker-cancel"
+    }
+  },
+  {
+    "error": "Navigation timeout of 25000 ms exceeded"
+  }
+]

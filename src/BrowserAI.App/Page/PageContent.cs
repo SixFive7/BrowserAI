@@ -93,6 +93,9 @@ internal static class PageContent
         var running = facts.StartedAt is { } started ? $"Running since {PageWords.When(started, now)}" : "Running";
         var subject = view.Subject is { Length: > 0 } named ? $" data-subject=\"{Text(named)}\"" : string.Empty;
 
+        // 73 b, 2026-10-11: one line under the page's first folder link, which the script puts there.
+        var linkHint = view.Links is not null ? $" data-link-hint=\"{Text(LinkHint)}\"" : string.Empty;
+
         return $"""
             <!doctype html>
             <html lang="en">
@@ -104,7 +107,7 @@ internal static class PageContent
             <link rel="stylesheet" href="page.css">
             <script src="page.js" defer></script>
             </head>
-            <body data-page="{page}" data-tab="{tabText}"{subject} data-unanswered="{Text(Unanswered(facts.InstallRoot is not null))}">
+            <body data-page="{page}" data-tab="{tabText}"{subject} data-unanswered="{Text(Unanswered(facts.InstallRoot is not null))}"{linkHint}>
             <header class="top"><div class="top-in">
             <a class="brand" id="l-brand" href="{Home(tab)}">{PageIcons.Brand("top")}<span>BrowserAI</span> <span class="version">{Text(facts.Version)}</span></a>
             <span class="top-gap"></span>
@@ -124,16 +127,49 @@ internal static class PageContent
 
     /// <summary>What the page's banner says once BrowserAI stops answering it.</summary>
     /// <remarks>
+    /// <para>
     /// <i>Added 2026-10-10, the texts polish (previously the script said "BrowserAI is not
     /// answering this page. If it does not come back, open BrowserAI from the Start Menu
     /// again." on every build)</i>: for a build that is not installed, the Start Menu
     /// starts the installed BrowserAI, never this one, as the background's own stop says.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>71 a, the maintainer's words of 2026-10-11 verbatim: <i>"71 a - maybe
+    /// communicate on the page that you need to restart from the start menu?"</i></b> A folder
+    /// link clicked while no background answers opens nothing, so the banner says what starts
+    /// BrowserAI again, and that the start opens its page in a tab of its own. <i>Corrected
+    /// 2026-10-12 (previously "BrowserAI is not answering this page. If it does not come back,
+    /// open BrowserAI from the Start Menu again.")</i>. The start hands out a newer tab, which
+    /// replaces this one if it is reloaded (Q337 a), so the sentence does not send the person
+    /// back to reload this one.
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-12 by the reader's pass (previously "and it opens this page again
+    /// in a new tab")</i>: a Start Menu start names no page, so its tab is the home, whatever
+    /// page this one is.
+    /// </para>
     /// </remarks>
     /// <param name="installed">Whether this BrowserAI is installed.</param>
     /// <returns>The sentence.</returns>
     public static string Unanswered(bool installed) => installed
-        ? "BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again."
+        ? "BrowserAI is not answering this page. Start BrowserAI from the Start Menu, and it opens its page again in a new tab."
         : "BrowserAI is not answering this page.";
+
+    /// <summary>
+    /// The line under a page's first folder link: the browser asks once whether the page may
+    /// open BrowserAI.
+    /// </summary>
+    /// <remarks>
+    /// <b>73 b, the maintainer's words of 2026-10-11 verbatim: <i>"73 b"</i></b>, of a line
+    /// whose wording he left to the build. Firefox asks per address, with a box that always
+    /// allows it, and the address stays the same while the background runs and across its
+    /// restarts (69 d with b), so the question comes once. <i>Corrected 2026-10-12 by the
+    /// reader's pass (previously "Allow it always, and folders open at once from then on."):
+    /// on the setup page the first link opens the picker, not a folder, and one answer covers
+    /// every link of the scheme.</i>
+    /// </remarks>
+    public const string LinkHint =
+        "The first time, your browser asks whether this page may open BrowserAI. Allow it always, and it does not ask again.";
 
     /// <summary>The part of the page a state event replaces.</summary>
     /// <param name="view">What is true now.</param>
@@ -145,6 +181,10 @@ internal static class PageContent
     public static string Fragment(PageView view, PageKind kind, int tab, Occasion occasion, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(view);
+
+        // 55 a and 70 a, 2026-10-11: the folder controls are links carrying the page's token
+        // while the page is drawn with them (PageContent.Button).
+        using var links = PageLinks.Use(view.Links);
 
         var drawn = view with { Tab = tab, Now = now };
         var main = kind switch
@@ -339,7 +379,14 @@ internal static class PageContent
     internal static string Title(string title, string? lede) =>
         "<h1 class=\"page-title\">" + Text(title) + "</h1>\n" + (lede is { Length: > 0 } ? "<p class=\"lede\">" + Text(lede) + "</p>\n" : string.Empty);
 
-    /// <summary>A button that posts one action.</summary>
+    /// <summary>A button that posts one action, or the folder link it is on a page that draws links.</summary>
+    /// <remarks>
+    /// <b>55 a, 70 a and 75 a, 2026-10-11</b>: a button that opens a folder, <c>open-folder</c>
+    /// and <c>open-session</c>, and one that opens Windows' folder picker for a setup, is drawn
+    /// as a <c>browserai:</c> link carrying the page's token while the page is drawn with links
+    /// (<see cref="PageLinks.Use"/>), and keeps its id, its look and its label. Every page
+    /// draws these controls through here, so no composer knows a control is a link.
+    /// </remarks>
     /// <param name="id">Its id.</param>
     /// <param name="action">The action it names.</param>
     /// <param name="label">What it says.</param>
@@ -349,6 +396,12 @@ internal static class PageContent
     /// <returns>The HTML.</returns>
     internal static string Button(string id, string action, string label, string style = "btn", string? icon = null, params (string Name, string Value)[] data)
     {
+        if (PageLinks.Current is { } links && PageLinks.Href(links, action, data) is { } href)
+        {
+            return "<a id=\"" + Text(id) + "\" class=\"" + style + "\" href=\"" + Text(href) + "\" data-link=\"" + Text(action) + "\">"
+                + (icon is null ? string.Empty : PageIcons.Of(icon)) + Text(label) + "</a>";
+        }
+
         var html = new StringBuilder("<button type=\"button\" id=\"").Append(Text(id)).Append("\" class=\"").Append(style).Append("\" data-action=\"").Append(Text(action)).Append('"');
 
         foreach (var (name, value) in data)

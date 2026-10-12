@@ -235,15 +235,22 @@ internal sealed class PageTabs : IDisposable
     /// linger runs out. The coordinator passes its inbox's wake, so it has one
     /// thing to wait on and not two.
     /// </param>
-    public PageTabs(TimeProvider clock, TimeSpan linger, Action changed)
+    /// <param name="handedOutBefore">
+    /// The last tab number the listener before this one handed out, which the numbering goes
+    /// on from: zero for the first, and since 69 b, 2026-10-11, the remembered one, so a tab
+    /// kept open from before a background's restart is never newer than the next one handed out.
+    /// </param>
+    public PageTabs(TimeProvider clock, TimeSpan linger, Action changed, int handedOutBefore = 0)
     {
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentNullException.ThrowIfNull(changed);
+        ArgumentOutOfRangeException.ThrowIfNegative(handedOutBefore);
 
         _clock = clock;
         _changed = changed;
         Linger = linger;
         _lastActivity = clock.GetTimestamp();
+        _handedOut = handedOutBefore;
     }
 
     /// <summary>How long the coordinator waits after the last tab leaves.</summary>

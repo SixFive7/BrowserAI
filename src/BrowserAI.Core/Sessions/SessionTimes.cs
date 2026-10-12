@@ -301,7 +301,9 @@ internal static class SessionTimes
     /// <i>"78-82 your recommendation"</i>, and his condition, <i>"say how old a size is
     /// when it is not fresh"</i>. A browser writes into its profile while a page is open,
     /// so a size is out of date as soon as it is taken; a minute keeps a listing an agent
-    /// repeats inside one task on one measurement. The build's choice, for his review.
+    /// repeats inside one task on one measurement. <b>Approved 2026-10-12 by the maintainer,
+    /// 85, in his words verbatim: <i>"85 a"</i></b>, when he was asked whether the minute
+    /// stays. <i>Corrected 2026-10-12 (previously "The build's choice, for his review.")</i>
     /// </remarks>
     public static TimeSpan FolderSizesFreshFor { get; } = TimeSpan.FromMinutes(1);
 

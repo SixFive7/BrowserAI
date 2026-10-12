@@ -1,0 +1,2 @@
+{"t":"2026-10-11T16:19:00.353Z","tick":161159953,"pid":41072,"mode":"register","ev":"registered","key":"HKCU\\Software\\Classes\\browserai-probe","command":"\u0022C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe\u0022 handle \u0022%1\u0022"}
+{"t":"2026-10-11T16:19:00.360Z","tick":161159953,"pid":41072,"mode":"register","ev":"status","present":true,"default":"URL:BrowserAI link probe","urlProtocol":true,"command":"\u0022C:\\Source\\SixFive7\\BrowserAI\\.work\\link-55a\\bin\\LinkProbe.exe\u0022 handle \u0022%1\u0022","seenThroughHkcr":true}

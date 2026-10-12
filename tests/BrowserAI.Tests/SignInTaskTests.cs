@@ -415,6 +415,54 @@ internal sealed class SignInTaskTests
     }
 
     /// <summary>
+    /// The scheme of the dashboard's folder links is registered by the install and update
+    /// hooks and removed by the uninstall hook, each for this install's root, and the hook's
+    /// log says what came of it; with no step handed in, nothing is asked and nothing is said.
+    /// </summary>
+    /// <remarks>
+    /// <b>55 a and 72 a, the maintainer's words of 2026-10-11 verbatim: <i>"55 a"</i> and
+    /// <i>"72 a"</i></b>, beside the toasts' activator: the suite hands in a stand-in, since a
+    /// scheme an arm wrote under the developer's own classes could be the one his folder links
+    /// start. What the product's step writes is <see cref="LinkSchemeTests"/>'.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheLinkSchemeFollowsTheInstallAndIsLeftAloneWithoutTheSeam()
+    {
+        using var install = await ScratchDirectory.CreateAsync("sign-in-scheme");
+        using var data = await ScratchDirectory.CreateAsync("sign-in-scheme-data");
+        using var quiet = await ScratchDirectory.CreateAsync("sign-in-scheme-quiet");
+
+        var image = await InstalledLayout.CreateAsync(install.Path);
+        var asked = new List<string>();
+
+        string scheme(RegistrationIntent intent, string root)
+        {
+            asked.Add($"{intent} {root}");
+            return $"the suite's scheme, at the {intent} hook";
+        }
+
+        foreach (var intent in new[] { RegistrationIntent.Install, RegistrationIntent.Update, RegistrationIntent.Uninstall })
+        {
+            _ = await HookAsync(intent, image, data.Path, new ScratchLogonTasks(), linkScheme: scheme);
+        }
+
+        await Assert.That(string.Join(" | ", asked))
+            .IsEqualTo($"{RegistrationIntent.Install} {install.Path} | {RegistrationIntent.Update} {install.Path} | {RegistrationIntent.Uninstall} {install.Path}");
+
+        var log = await HookLogAsync(data.Path);
+
+        await Assert.That(log).Contains($"Folder links: the suite's scheme, at the {RegistrationIntent.Install} hook");
+        await Assert.That(log).Contains($"Folder links: the suite's scheme, at the {RegistrationIntent.Uninstall} hook");
+
+        // No seam, no question and no line.
+        _ = await HookAsync(RegistrationIntent.Install, image, quiet.Path, new ScratchLogonTasks(), linkScheme: null);
+
+        await Assert.That(await HookLogAsync(quiet.Path)).DoesNotContain("Folder links:");
+        await Assert.That(asked.Count).IsEqualTo(3);
+    }
+
+    /// <summary>
     /// An uninstall asks the background serving this install's pipe to stop, through
     /// that pipe, and only then removes the task; an install and an update leave a
     /// running background alone.
@@ -703,6 +751,7 @@ internal sealed class SignInTaskTests
     /// <param name="clients">The clients, or <see langword="null"/> for none.</param>
     /// <param name="settings">What the installer named, or <see langword="null"/> for nothing.</param>
     /// <param name="toastActivator">The toasts' activator step, or <see langword="null"/> to leave it alone.</param>
+    /// <param name="linkScheme">The folder links' scheme step, or <see langword="null"/> to leave it alone.</param>
     /// <returns>What the hook did.</returns>
     private static async Task<HookOutcome> HookAsync(
         RegistrationIntent intent,
@@ -712,7 +761,8 @@ internal sealed class SignInTaskTests
         IRegisterAi? tool = null,
         IReadOnlyList<RegistrationClient>? clients = null,
         InstallerSettings? settings = null,
-        Func<RegistrationIntent, string, string>? toastActivator = null) =>
+        Func<RegistrationIntent, string, string>? toastActivator = null,
+        Func<RegistrationIntent, string, string>? linkScheme = null) =>
         await HookRegistration.RunAsync(
             intent,
             "9.9.9",
@@ -726,7 +776,8 @@ internal sealed class SignInTaskTests
             ask: _ => Task.FromResult(false),
             clients: clients ?? [],
             settings: settings,
-            toastActivator: toastActivator);
+            toastActivator: toastActivator,
+            linkScheme: linkScheme);
 
     /// <summary>The command and arguments the one registration RegisterAI was asked for names, joined.</summary>
     /// <param name="tool">The fake RegisterAI.</param>

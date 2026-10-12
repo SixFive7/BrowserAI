@@ -117,7 +117,11 @@ internal static partial class SessionInventory
 
                 var written = new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero);
 
-                if (written > touched)
+                // ⚠️ 86 a, the maintainer's words of 2026-10-12 verbatim: "86 a". BrowserAI's
+                // own record files at the root are left out of the last write: a read of the
+                // record builds its index again, so its time moves with every caller that
+                // reads it, this one included, while a browser writes everywhere else.
+                if (written > touched && !IsOwnRecordFile(session.FullPath, file))
                 {
                     touched = written;
                 }
@@ -352,6 +356,17 @@ internal static partial class SessionInventory
     /// <returns>Whether the file's path begins with the folder's.</returns>
     private static bool IsUnder(string folder, FileInfo file) =>
         file.FullName.StartsWith(folder.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether a file is one of BrowserAI's own record files at the session's root: the
+    /// guard, the record and the files SQLite keeps beside it (86 a, 2026-10-12).
+    /// </summary>
+    /// <param name="root">The session directory.</param>
+    /// <param name="file">One file.</param>
+    /// <returns>Whether it is at the root and named as one of <see cref="SessionLayout.IsOwnRecordFile"/>'s.</returns>
+    private static bool IsOwnRecordFile(string root, FileInfo file) =>
+        string.Equals(file.DirectoryName, root.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase)
+        && SessionLayout.IsOwnRecordFile(file.Name);
 
     /// <summary>
     /// Whether a JSON file is a saved login: Playwright's storage state, an object

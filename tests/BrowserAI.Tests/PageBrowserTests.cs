@@ -117,6 +117,13 @@ internal sealed class PageBrowserTests
             await Assert.That(await evaluateAsync("() => document.querySelector('.version').textContent")).Contains("9.0.0");
             await Assert.That(await evaluateAsync("() => document.querySelector('h1').textContent")).Contains("Claude Code and Codex");
 
+            // ⚠️ 74 a, 2026-10-12: the engine followed the swap. The address bar holds the
+            // plain address, the token is in a cookie no script can read, and the page's
+            // stream and its writes went through that cookie.
+            await Assert.That(await evaluateAsync("() => 'at=' + location.href")).Contains("at=" + PlainAddressOf(first));
+            await Assert.That(await evaluateAsync("() => 'at=' + location.href")).DoesNotContain(rig.Gate.Token);
+            await Assert.That(await evaluateAsync("() => 'cookies=' + document.cookie + '.'")).DoesNotContain(rig.Gate.Token);
+
             // A button, clicked in the page, posts through the gate: the registration,
             // which the rig's first read refused, is read again, and this time it reads.
             // Corrected 2026-10-10 (previously the update check's button, deleted with
@@ -174,7 +181,7 @@ internal sealed class PageBrowserTests
             {
                 var tabs = await TabsAsync(client, session);
 
-                if (IndexOf(tabs, first) is not { } index)
+                if (IndexOf(tabs, PlainAddressOf(first)) is not { } index)
                 {
                     return true;
                 }
@@ -186,7 +193,7 @@ internal sealed class PageBrowserTests
 
             await Assert.That(rig.Page.Tabs?.Connected).IsEqualTo(1);
 
-            await SelectAsync(client, session, IndexOf(await TabsAsync(client, session), second)!.Value);
+            await SelectAsync(client, session, IndexOf(await TabsAsync(client, session), PlainAddressOf(second))!.Value);
             await Assert.That(await evaluateAsync("() => document.body.dataset.tab")).Contains("2");
         }
         finally
@@ -324,6 +331,109 @@ internal sealed class PageBrowserTests
                 [SessionToolSurface.WhyParameter] = "the page suite finished with its session",
             });
         }
+    }
+
+    /// <summary>
+    /// In a real browser the home's folder buttons are links of the install's scheme carrying
+    /// the page's token, and the line about the browser's question sits under the first of
+    /// them, put there by the page's script.
+    /// </summary>
+    /// <remarks>
+    /// <b>55 a, 70 a and 73 b, the maintainer's words of 2026-10-11 verbatim: <i>"55 a"</i>,
+    /// <i>"70 a"</i> and <i>"73 b"</i>.</b> No link is followed: a click hands the link to
+    /// Windows, which starts whatever the scheme names, and nothing here registers one. The
+    /// scheme is the test pack's, never the shipping one.
+    /// </remarks>
+    /// <param name="browser">The provisioned family.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments(ProvisionedBrowsers.Chromium)]
+    [Arguments(ProvisionedBrowsers.Firefox)]
+    public async Task InARealBrowserTheFolderButtonsAreLinksAndTheFirstCarriesTheLineAboutTheBrowsersQuestion(string browser)
+    {
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+
+        if (browser is ProvisionedBrowsers.Firefox)
+        {
+            await SuiteEnvironment.RequireProvisionedFirefoxAsync();
+        }
+        else
+        {
+            await SuiteEnvironment.RequireProvisionedChromiumAsync();
+        }
+
+        PublishedSlice.EnsureFresh();
+
+        await using var rig = await PageRig.CreateAsync(facts: facts => facts with { LinkScheme = "browserai-test" });
+        using var scratch = await ScratchDirectory.CreateAsync($"page-links-{browser}");
+
+        var address = await rig.HandOutAsync();
+        var session = Path.Combine(scratch.Path, "links-session");
+
+        await using var client = await RawStdioClient.StartAsync(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
+
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        _ = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "the suite reading BrowserAI's own folder links in a headless browser",
+            ["browser"] = browser,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        try
+        {
+            async Task<string> evaluateAsync(string function) =>
+                TextOf(await CallAsync(client, "browser_evaluate", new JsonObject
+                {
+                    ["function"] = function,
+                    [SessionToolSurface.SessionParameter] = session,
+                    [SessionToolSurface.WhyParameter] = "the suite reading BrowserAI's own folder links",
+                }));
+
+            _ = await CallAsync(client, "browser_navigate", new JsonObject
+            {
+                ["url"] = address,
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the suite opening BrowserAI's home the way a person's start does",
+            });
+
+            await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 1)).IsTrue();
+
+            await Assert.That(await evaluateAsync("() => 'links=' + document.querySelectorAll('a[data-link=\"open-folder\"]').length")).Contains("links=3");
+            await Assert.That(await evaluateAsync("() => document.querySelector('a[data-link]').getAttribute('href')"))
+                .Contains($"browserai-test:open-folder?folder=install&t={rig.Gate.Token}");
+
+            // The script's one line, under the row that holds the first link, and only one.
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync("() => 'hints=' + document.querySelectorAll('.link-hint').length")).Contains("hints=1", StringComparison.Ordinal))).IsTrue();
+            await Assert.That(await evaluateAsync("() => document.querySelector('.link-hint').textContent")).Contains(PageContent.LinkHint);
+            await Assert.That(await evaluateAsync("() => 'under=' + (document.querySelector('a[data-link]').closest('.btn-row').nextElementSibling === document.querySelector('.link-hint'))"))
+                .Contains("under=true");
+        }
+        finally
+        {
+            _ = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
+            {
+                ["directory"] = session,
+                [SessionToolSurface.WhyParameter] = "the page suite finished with its session",
+            });
+        }
+    }
+
+    /// <summary>The address a tab shows once the address it was handed is swapped: the token taken out (74 a).</summary>
+    /// <param name="handed">The address the start was handed.</param>
+    /// <returns>The plain address.</returns>
+    private static string PlainAddressOf(string handed)
+    {
+        var uri = new Uri(handed);
+        var rest = uri.PathAndQuery[(uri.PathAndQuery.IndexOf('/', 1) + 1)..];
+
+        return $"{uri.Scheme}://{uri.Authority}/{rest}";
     }
 
     /// <summary>The session's tabs, as <c>browser_tabs</c> lists them.</summary>

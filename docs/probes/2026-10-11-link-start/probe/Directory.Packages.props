@@ -1,0 +1,4 @@
+<Project>
+  <!-- Scratch isolation: no central package management here. -->
+  <PropertyGroup><ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally></PropertyGroup>
+</Project>

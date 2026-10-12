@@ -59,7 +59,22 @@ internal sealed class RawEventStream : IDisposable
     /// <param name="page">Which page: <c>status</c>, <c>sessions</c> or another page's name.</param>
     /// <param name="extra">More of the query, such as <c>id=...</c> for a session's page, or <see langword="null"/>.</param>
     /// <returns>The open stream, its head read.</returns>
-    public static async Task<RawEventStream> OpenAsync(int port, string token, int tab, string page = "status", string? extra = null)
+    public static Task<RawEventStream> OpenAsync(int port, string token, int tab, string page = "status", string? extra = null) =>
+        OpenAsync(port, token, tab, page, extra, throughTheCookie: false);
+
+    /// <summary>
+    /// Opens a tab's event stream at the address with no token, the way a page opened through
+    /// the cookie does (74 a, 2026-10-12).
+    /// </summary>
+    /// <param name="port">The listener's port.</param>
+    /// <param name="token">The token the cookie carries.</param>
+    /// <param name="tab">The tab number.</param>
+    /// <param name="page">Which page the stream is for.</param>
+    /// <returns>The stream, its status read.</returns>
+    public static Task<RawEventStream> OpenThroughTheCookieAsync(int port, string token, int tab, string page = "status") =>
+        OpenAsync(port, token, tab, page, extra: null, throughTheCookie: true);
+
+    private static async Task<RawEventStream> OpenAsync(int port, string token, int tab, string page, string? extra, bool throughTheCookie)
     {
         RawEventStream? stream = null;
 
@@ -72,7 +87,9 @@ internal sealed class RawEventStream : IDisposable
             await stream._socket.ConnectAsync(IPAddress.Loopback, port, bound.Token);
 
             var more = extra is null ? string.Empty : "&" + extra;
-            var request = $"GET /{token}/events?tab={tab}&page={page}{more} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nAccept: text/event-stream\r\nSec-Fetch-Site: same-origin\r\n\r\n";
+            var request = throughTheCookie
+                ? $"GET /events?tab={tab}&page={page}{more} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nAccept: text/event-stream\r\nSec-Fetch-Site: same-origin\r\nCookie: browserai-{port}={token}\r\n\r\n"
+                : $"GET /{token}/events?tab={tab}&page={page}{more} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nAccept: text/event-stream\r\nSec-Fetch-Site: same-origin\r\n\r\n";
 
             _ = await stream._socket.SendAsync(Encoding.ASCII.GetBytes(request), SocketFlags.None, bound.Token);
 
