@@ -59,50 +59,50 @@ not have is refused.
 ### Added
 
 - ✨ **A Start Menu click opens BrowserAI's dashboard, a page in your own browser.**
-  Its home says first whatever needs you, then what runs now, counted: the conversations in
-  Claude Code and Codex that use BrowserAI, how many of them are working, how many of their
-  browsers are windows on your screen, hidden or not open, and the sessions kept for later, with
-  one button to the conversations and their browsers. Cards beside it say when a waiting update installs, how Claude Code and Codex are set
-  up, how much room the session folders take and which are not open now, and where BrowserAI is
-  installed, when it started and where its updates come from. Each card leads to a page of its
-  own. The setup page sets up Claude Code and Codex each on its own, or removes
-  BrowserAI from one, for all your projects or in a project you choose. The conversations page
-  draws every conversation, BrowserAI and every browser session as a map joined by lines, each
-  line naming its state in a word and drawn in a colour and pattern of its own. A click on a card
-  shows beside the map what it is, what it uses and where its folder is, and a link to a session
-  opens the map with that session shown. The page becomes a list in a narrow window or when it
-  would draw more than eight rows or twelve sessions. It and the home follow every change as it
-  happens. What is new lists every release beside the one installed, and a file a change names
-  opens on GitHub. The dashboard deletes no session folder. It follows Windows' light or dark
-  setting and lives at an address on your own machine that keeps its port while BrowserAI runs
-  and, when the port is free, after a restart. The key that admits your browser is made for each
-  run and handed to nobody else: after the first visit your browser keeps it in a cookie, and the
-  address bar shows the address without it.
-  [`DECISIONS.md`](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser) has
+  Its home says first whatever needs you, then counts what runs now: the conversations in Claude
+  Code and Codex that use BrowserAI, how many of them are working, how many browsers are windows
+  on your screen, hidden or not open, and the sessions kept for later. Cards beside it say when a
+  waiting update installs, how Claude Code and Codex are set up, how much room the session folders
+  take and which are not open now, and where BrowserAI is installed, when it started and where its
+  updates come from. Each card leads to a page of its own. The setup page sets up Claude Code and
+  Codex each on its own, or removes BrowserAI from one, for all your projects or in a project you
+  choose. The conversations page draws every conversation, BrowserAI and every browser session as
+  a map joined by lines, each line naming its state in a word and drawn in that state's colour and
+  pattern. A click on a card shows beside the map what it is, what it uses and where its folder
+  is. The page becomes a list in a narrow window or when it would draw more than eight rows or
+  twelve sessions. It and the home follow every change as it happens. The What is new page lists
+  every release and marks the one installed, and a file it links to opens on GitHub. The dashboard
+  deletes no session folder. It follows Windows' light or dark setting and lives at an address on
+  your own machine that keeps its port while BrowserAI runs and, when the port is free, after a
+  restart. The key that admits your browser is made for each run and handed to nobody else: after
+  the first visit your browser keeps it in a cookie, and the address bar shows the address without
+  it. [`DECISIONS.md`](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser) has
   [the decision and its redesign](DECISIONS.md#the-dashboard-decided-2026-10-11), and the
-  decisions on [the map and What is new](DECISIONS.md#the-maps-lines-the-session-page-and-what-is-new-decided-2026-10-11-and-2026-10-12).
+  decisions on
+  [the map and What is new](DECISIONS.md#the-maps-lines-the-session-page-and-what-is-new-decided-2026-10-11-and-2026-10-12).
 
 - ✨ **The dashboard's folder buttons open the folder in front of your browser.**
-  Each is a link your browser hands to BrowserAI, and the BrowserAI it starts opens the folder
-  itself, or Windows' folder picker when you set up a project; measured in Firefox, both come to
-  the front. The first time, the browser asks whether the page may open BrowserAI: allow it
-  always, and folders open at once from then on. A link opens only BrowserAI's own folders, and
-  only with the key of the dashboard open now. While BrowserAI is not running a click opens
-  nothing, and the page says to start BrowserAI from the Start Menu.
-  [The decision](DECISIONS.md#the-folder-links-decided-2026-10-11).
+  Each is a link your browser hands to BrowserAI, which opens the folder, or Windows' folder
+  picker for a project; both come to the front, as measured in Firefox. The first time, the
+  browser asks whether the page may open BrowserAI: allow it always, and it does not ask again. A
+  link opens only a folder the dashboard shows, and only with the key of the dashboard open now.
+  While BrowserAI is not running, a click opens nothing, and the page says to start BrowserAI from
+  the Start Menu. [`DECISIONS.md`](DECISIONS.md#the-folder-links-decided-2026-10-11) has the
+  decision.
 
-- ✨ **The dashboard's home shows what BrowserAI's own processes use, CPU and memory, as it changes.**
+- ✨ **The dashboard's home shows the CPU and memory BrowserAI's own processes use, as they change.**
   Every two seconds while the home or the conversations page is open, BrowserAI reads its
   background, each conversation's connection and each session's browser with the server that
   drives it. The home gives the CPU as a share of the whole PC and the memory only BrowserAI
-  holds, in those four parts, each with a two-minute chart, beside the memory its processes share
-  with other programs, said once and as an estimate. The conversations page gives each session's
-  share. Nothing is read while neither page is open.
-  [The decision](DECISIONS.md#the-home-its-cpu-and-memory-and-the-after-update-notice-decided-2026-10-11).
+  holds, each with a two-minute chart, beside an estimate of the memory its processes share with
+  other programs. The conversations page gives each session's CPU and own memory. Nothing is read
+  while neither page is open.
+  [`DECISIONS.md`](DECISIONS.md#the-home-its-cpu-and-memory-and-the-after-update-notice-decided-2026-10-11)
+  has the decision.
 
 - ✨ **After an update, the dashboard's home says so until you have seen what is new.**
-  The notice shows in every tab and after a restart until you open the changelog from any of its
-  What is new links, or dismiss it, and it comes back only when a newer version is installed.
+  The notice shows in every tab and after a restart until you open What is new or dismiss it, and
+  it comes back only when a newer version is installed.
 
 - ✨ **BrowserAI registers itself with Codex as well as Claude Code.**
   The installer registers it with each client for all your projects and the uninstaller removes it
@@ -337,17 +337,16 @@ not have is refused.
 
 ### Fixed
 
-- 🐛 **`browserai_catch_up`'s last file written leaves out BrowserAI's own record files.**
-  Its own read of a closed session's record writes a file beside it, so a closed session with no
-  browser running read as written 0 seconds ago. The lock, the record and the three files SQLite
-  keeps beside it no longer count; a file of the same name inside the profile is the browser's
-  and still does.
-
 - 🐛 **Claude Code sessions have BrowserAI's tools again.**
   From 2026-09-30 Claude Code opened its servers at MCP revision `2026-07-28`, which BrowserAI
   accepted and did not implement, so 145 of the 153 connections counted from 2026-09-30 to
   2026-10-04 had no BrowserAI tool to call. BrowserAI offers revision `2025-11-25` alone now, and
   Claude Code falls back to the handshake it used before.
+
+- 🐛 **`browserai_catch_up`'s last file written leaves out BrowserAI's own record files.**
+  Its own read of a closed session's record writes a file beside it, so a closed session read as
+  written 0 seconds ago. The lock, the record and the three files SQLite keeps beside it no longer
+  count; a file of the same name inside the profile is the browser's and still does.
 
 - 🐛 **A Chromium screenshot past 16,384 px on a side is refused, where it came back repeated.**
   Chromium repeats the image past that line and still reports success. The refusal names
@@ -383,10 +382,10 @@ not have is refused.
   nothing now.
 
 - 🐛 **A refusal for a session another BrowserAI is opening names that session's purpose.**
-  An agent that asked in the moment between that BrowserAI taking the session's folder and
-  writing its record was told the session records no purpose, or, when a different BrowserAI
-  had the folder before, was given that one's purpose. Such a request now waits until the
-  record is written, as one made a moment earlier already did.
+  An agent that asked in the moment between that BrowserAI taking the session's folder and writing
+  its record was told the session records no purpose, or, when a different BrowserAI had the
+  folder before, was given that one's purpose. Such a request is now answered after the record is
+  written.
 
 ## [1.1.0] - 2026-09-23
 
