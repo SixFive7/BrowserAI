@@ -2756,6 +2756,115 @@ into.
 opens. It sends no input and moves no focus; the four timed processes are its own
 children. Compare each table here with `summary.txt`.
 
+## What a reading of BrowserAI's CPU and memory costs -- measured 2026-10-12
+
+`[MACHINE]` for every number, `[STABLE]` for what Microsoft's pages for the two structures
+say, and `[FLOATS]` for the browser revision, because what a reading costs grows with the
+processes a session's browser runs. Windows 11 Pro 26H2, build **26300.9550**, AMD Ryzen 9
+5950X (16 cores, 32 logical), 128 GB; .NET SDK **10.0.401**, runtime **10.0.12**, NativeAOT
+win-x64; headless Chromium **155.0.8059.12** from `chromium-1247`, on `about:blank`. Taken
+2026-10-12 by an exploration at 13:54Z and by a rig from 15:55Z to 16:03Z that compiles in
+the product's own `ProcessUsage` and `JobObject`, each under the suite's lock and while
+other work ran on the same machine.
+[Rig](../../docs/probes/2026-10-12-usage/README.md),
+[evidence](../../docs/evidence/2026-10-12-usage/README.md).
+
+It was taken for the maintainer's 59 b, 62 a and 65 a of 2026-10-11, which put what
+BrowserAI's own processes use on the dashboard, read every two seconds while a tab shows
+it, with the build to measure what a reading costs and record it. A reading of one session
+asks its job for the job's CPU total (`QueryInformationJobObject` for
+`JOBOBJECT_BASIC_ACCOUNTING_INFORMATION`) and its list of processes, and then opens each
+process for `PROCESS_QUERY_LIMITED_INFORMATION` and asks it `GetProcessTimes`,
+`IsProcessInJob` and `K32GetProcessMemoryInfo` for `PROCESS_MEMORY_COUNTERS_EX2`, with
+`QueryFullProcessImageNameW` the first time the process is met. The background reads itself
+and each relay through a handle it already holds, with no open, no membership check and no
+image, and the rig reads neither.
+
+### A reading, hot and at the shipped pace
+
+The rig started one headless Chromium in a kill-on-close job of its own, and in a second
+run four, each in a job of its own, let them settle, read every job a thousand times back
+to back, and then once every 2 s for 120 s against the same 120 s with no reading, by the
+rig process's `QueryProcessCycleTime` and `GetProcessTimes`:
+
+| | One session | Four sessions |
+|---|--:|--:|
+| Processes read | 11 | 43, 10 or 11 a session |
+| The first reading, every image read | 1,450.5 µs | 3,026.7 µs |
+| A thousand hot readings: median / p99 / max | **104.7** / 320.8 / 466.9 µs | **427.3** / 1,000.7 / 1,528.5 µs |
+| Per process, at the hot median | 9.5 µs | 9.9 µs |
+| A reading every 2 s, cold: median / p99 / max | **225.7** / 332.4 / 332.4 µs, over 61 | **782.5** / 1,459.1 / 1,459.1 µs, over 60 |
+| Cycles in the 120 s with no reading | 9,001,500 | 8,418,740 |
+| Cycles in the 120 s with a reading every 2 s | 54,735,920 | 163,477,780 |
+| **Cycles a reading, over the wait alone** | **749,745** | **2,584,317** |
+| `GetProcessTimes` over the 120 s, with readings and without | 0.0 and 0.0 ms | 15.6 and 0.0 ms |
+
+**At the TSC's 3.40 GHz**, the rate
+[the input check's entry](#what-the-visible-input-check-costs-and-the-timer-it-runs-on----measured-2026-10-08)
+took for this machine, 749,745 cycles is about 220 µs and 2,584,317 about 760 µs, each
+close to the cold median beside it. At one reading every two seconds that is **0.011 % and
+0.038 % of one of the 32 logical processors**, about 0.4 s and 1.4 s of one processor for
+an hour of a tab open. The cycles are the measurement and the times a reading of them, for
+the reason that entry quotes from Microsoft. `GetProcessTimes` saw one 15.6 ms step in the
+four-session run and none in the other.
+
+**The cost is per process**: about 10 µs a process hot at both sizes, and 18 to 21 µs cold,
+225.7 µs for 11 and 782.5 µs for 43, so a session costs what the processes of its browser
+cost. A process's image is read once, the first reading that meets it, which is
+what the first readings carry beside being cold. **Readings are taken only while a tab of
+the overview or the conversations page is connected**, so with none open they cost nothing.
+
+### Which of the two shared figures the page shows
+
+`PROCESS_MEMORY_COUNTERS_EX2` carries a process's working set, its private part and a
+shared commit. Microsoft's page says of the last only *"The current shared commit usage, in
+bytes."*
+([PROCESS_MEMORY_COUNTERS_EX2](https://learn.microsoft.com/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex2)),
+and the working set is *"the set of pages in the virtual address space of the process that
+are currently resident in physical memory"*
+([Working Set](https://learn.microsoft.com/windows/win32/memory/working-set)) `[STABLE]`, so
+the working set less its private part is the memory of the process in RAM that it can share.
+Read over seven starts of the same browser, the browser process, in MB:
+
+| Start | Working set | Private working set | **Shared working set** | Shared commit |
+|---|--:|--:|--:|--:|
+| Exploration, `about:blank` | 141.9 | 41.7 | **100.3** | 76.8 |
+| Exploration, asked for a page on the web | 141.6 | 41.2 | **100.4** | 76.8 |
+| Rig, one session | 141.6 | 41.2 | **100.4** | 18.0 |
+| Rig, four sessions, each | 140.3 to 141.5 | 39.9 to 41.0 | **100.4 to 100.6** | 83.3, 18.0, 18.0 and 18.0 |
+
+**The shared working set read the same at every start and the shared commit did not**:
+100.3 to 100.6 MB, against 18.0 MB at four starts, 76.8 MB at two and 83.3 MB at one. In
+one process of each of the rig's five starts the shared commit, 11.9 MB, was larger than
+that process's whole working set, 10.7 or 10.8 MB, so it counts memory the process does not
+hold in RAM. The page shows the shared working set, the build's choice 1 of
+[the home's decisions](../../DECISIONS.md#the-home-its-cpu-and-memory-and-the-after-update-notice-decided-2026-10-11).
+
+**Why the page says *about*.** A shared page is in the working set of every process that
+has it, and Windows does not say which processes those are, so the shared figures of
+BrowserAI's processes cannot be added up. The page shows the largest that any one of them
+holds, and what they share together is at least that much. Their private working sets do
+add up: 200.6 MB for the one session's processes, and 777.7 MB for the four sessions', with
+no browser server in the rig's jobs, where the product's job holds one and its console host.
+
+### The job's CPU total counts the processes that ended
+
+`TotalUserTime` and `TotalKernelTime` count *"all active processes associated with the job,
+as well as all terminated processes no longer associated with the job"*
+([JOBOBJECT_BASIC_ACCOUNTING_INFORMATION](https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-jobobject_basic_accounting_information))
+`[STABLE]`, so a session's CPU between two readings includes a browser process that ended
+between them. Each of the exploration's two jobs had held 17 processes, 12 of them running,
+when it was read.
+
+**How to re-establish it:** from
+[`docs/probes/2026-10-12-usage`](../../docs/probes/2026-10-12-usage/README.md),
+`dotnet publish Usage -c Release -r win-x64`, then `Usage.exe measure --chrome <browsers
+root>\chromium-1247\chrome-win64\chrome.exe --out <dir> --sessions 1 --readings 1000
+--paced 120`, and again with `--sessions 4`, each started detached so no console window
+opens, and under the suite's lock, since it runs browsers from the shared browsers root.
+Compare each table here with that run's `summary.txt`; the exploration is
+`shared-probe.ps1` beside it.
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

@@ -1,0 +1,144 @@
+The code: every arm the planted runs watched red, the classes around what changed, and the house rules, filtered.
+9e3d6b0efc3b2df7b65a9cc55cbefb5d39dd609b
+ M AGENTS.md
+ M ARCHITECTURE.md
+ M CHANGELOG.md
+ M DECISIONS.md
+ M docs/evidence/README.md
+ M docs/probes/README.md
+ M kb/numbers.md
+ M kb/re-verification.md
+ M kb/windows/processes.md
+M  src/BrowserAI.App/Page/OverviewContent.cs
+ M src/BrowserAI.App/Page/PageAssets.cs
+M  src/BrowserAI.App/Page/PageIcons.cs
+M  src/BrowserAI.App/Page/PageModel.cs
+MM src/BrowserAI.App/Page/PageService.cs
+M  src/BrowserAI.App/Page/PageTabs.cs
+M  src/BrowserAI.App/Page/PageUsage.cs
+A  src/BrowserAI.App/Page/UpdateNotice.cs
+ M src/BrowserAI.App/Page/UpdatePageContent.cs
+M  src/BrowserAI.App/Page/UsageContent.cs
+M  src/BrowserAI.Core/Interop/JobObject.cs
+A  src/BrowserAI.Core/Interop/ProcessUsage.cs
+M  src/BrowserAI.Core/ProcessBounds.cs
+A  src/BrowserAI/Background/BackgroundPageUsage.cs
+M  src/BrowserAI/Background/BackgroundServer.cs
+M  src/BrowserAI/Background/RelayRoster.cs
+ M src/BrowserAI/Interop/AGENTS.md
+ M src/BrowserAI/Program.Background.cs
+M  src/BrowserAI/Proxy/ChildConnection.cs
+M  src/BrowserAI/Sessions/SessionManager.cs
+ M tests/BrowserAI.Tests/DashboardTests.cs
+ M tests/BrowserAI.Tests/Harness/PageRig.cs
+ M tests/BrowserAI.Tests/InteropLayoutTests.cs
+ M tests/BrowserAI.Tests/NativeMethods.txt
+ M tests/BrowserAI.Tests/UsageTests.cs
+?? docs/evidence/2026-10-12-usage/
+?? docs/probes/2026-10-12-usage/
+?? tests/BrowserAI.Tests/BackgroundPageUsageTests.cs
+?? tests/BrowserAI.Tests/HomeBrowserTests.cs
+?? tests/BrowserAI.Tests/HomeTests.cs
+failed EveryRowNamesANumberThatExistsAndHoldsItsValue (513ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be empty
+  but received "line 260: OverviewContent.RowsShown names no static number on BrowserAI.App.Page.OverviewContent"
+  
+  at Assert.That(string.Join(Environment.NewLine, Unresolvable(rows))).IsEmpty()
+    at BrowserAI.Tests.NumbersIndexTests.EveryRowNamesANumberThatExistsAndHoldsItsValue() in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\NumbersIndexTests.cs:114
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed TheUpdatePageSplitsWhatHoldsTheUpdateAndGivesEachItsCountdown (8ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to contain "Each holds the update for ten minutes after its app last sent BrowserAI anything but a ping."
+  but received "<section id="conversations" class="card span-4"><div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg><h2>Conversations</h2></div>
+  <p class="caption">Each holds the update for 10 min after its app last sent BrowserAI anything but a ping. Every conversation loses BrowserAI when the update installs, whether it holds the update or not.</p>
+  <div class="hold-list">
+  <div class="hold-item"><span class="sess-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 10l3 2.2L7 14.5M12.5 15h4.5"/></svg></span><div><b>Claude Code in one</b><p class="sub">Claude Code 2.1.290</p><p class="sub">Holds the update until its countdown runs out, if its app sends nothing but pings.</p><p class="sub warning">After an update, run /mcp in that terminal, choose BrowserAI, then Reconnect.</p></div><span class="chip"><span class="countdown" data-ends-at="480000">8:00</span></span></div>
+  <div class="hold-item"><span class="sess-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg></span><div><b>Codex in two</b><p class="sub">Codex 0.161.0</p><p class="sub">Idle: it no longer holds the update.</p><p class="sub warning">After an update, BrowserAI is back only in a new conversation.</p></div><span class="chip">Idle</span></div>
+  <div class="hold-item"><span class="sess-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/></svg></span><div><b>Claude Code in three</b><p class="sub">Claude Code 2.1.290</p><p class="sub">A call is running now, so it holds the update.</p><p class="sub">Reconnects by itself after an update.</p></div><span class="chip live"><span class="pulse" aria-hidden="true"></span>Working</span></div>
+  </div>
+  "
+  
+  at Assert.That(conversations).Contains("Each holds the update for ten minutes after its app last sent BrowserAI anything but a ping.")
+    at BrowserAI.Tests.UpdatePageTests.TheUpdatePageSplitsWhatHoldsTheUpdateAndGivesEachItsCountdown() in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\UpdatePageTests.cs:87
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed TheFragmentCountInClaudeMdIsWhatTheScanFinds (7s 964ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be 1906, because AGENTS.md publishes 1894 `#fragment` links and the scan finds 1906. Re-measure and stamp it -- never adjust it by counting the links in a diff.
+  but found 1894
+  
+  at Assert.That(stated).IsEqualTo(live).Because("AGENTS.md publishes 1894 `#fragment` links and the scan finds 1906. Re-measure and stamp it -- never adjust it by counting the links in a diff.")
+    at BrowserAI.Tests.RecordedCountTests.TheFragmentCountInClaudeMdIsWhatTheScanFinds() in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\RecordedCountTests.cs:223
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+[slow] still running after 1m 00s: TheAgentIsToldThatDestroyingTheSessionsItMakesIsItsOwnJob (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 1m 00s: TheOnlyFolderAFileCanBeUploadedFromIsNamedWhereTheSessionDirectoryIs (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 1m 00s: DestroyingASessionIsSaidToTakeTheScreenshotsAndDownloadsWithIt (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 1m 00s: MovingASessionDirectoryByHandIsOnTheResumeDescription (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 1m 00s: EveryModelFacingStringFitsTheClientsSilentTruncationBudget (BrowserAI.Tests.dll|net10.0|x64)
+running... 279 completed, 3 failed | active: 5 tests running
+running... 279 completed, 3 failed | active: 5 tests running
+[slow] still running after 2m 00s: TheAgentIsToldThatDestroyingTheSessionsItMakesIsItsOwnJob (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 2m 00s: TheOnlyFolderAFileCanBeUploadedFromIsNamedWhereTheSessionDirectoryIs (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 2m 00s: DestroyingASessionIsSaidToTakeTheScreenshotsAndDownloadsWithIt (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 2m 00s: MovingASessionDirectoryByHandIsOnTheResumeDescription (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 2m 00s: EveryModelFacingStringFitsTheClientsSilentTruncationBudget (BrowserAI.Tests.dll|net10.0|x64)
+running... 279 completed, 3 failed | active: 5 tests running
+running... 279 completed, 3 failed | active: 5 tests running
+running... 279 completed, 3 failed | active: 5 tests running
+running... 279 completed, 3 failed | active: 5 tests running
+[slow] still running after 4m 00s: TheAgentIsToldThatDestroyingTheSessionsItMakesIsItsOwnJob (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 4m 00s: TheOnlyFolderAFileCanBeUploadedFromIsNamedWhereTheSessionDirectoryIs (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 4m 00s: DestroyingASessionIsSaidToTakeTheScreenshotsAndDownloadsWithIt (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 4m 00s: MovingASessionDirectoryByHandIsOnTheResumeDescription (BrowserAI.Tests.dll|net10.0|x64)
+[slow] still running after 4m 00s: EveryModelFacingStringFitsTheClientsSilentTruncationBudget (BrowserAI.Tests.dll|net10.0|x64)
+running... 279 completed, 3 failed | active: 5 tests running
+running... 279 completed, 3 failed | active: 5 tests running
+running... 279 completed, 3 failed | active: 5 tests running
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\BrowserAI.app-<version>-full.nupkg
+  shipping release    ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\BrowserAI.app-<version>-full.nupkg, at the top of the directory and not under test-pack
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\dash-home rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-12T17:21:30.378Z is 2m51s newer than the newest of 235 inputs (src\BrowserAI.App\Page\UsageContent.cs, 2026-10-12T17:18:38.594Z) · exe and tree both 1.1.1-alpha.0.402 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/(UsageTests|HomeTests|BackgroundPageUsageTests|InteropLayoutTests|HomeBrowserTests|DashboardTests|PageServiceTests|UpdatePageTests|PageRegistrationTests|BrokenInstallTests|ChangelogPageTests|ToastPageStartTests|PageBrowserTests|BackgroundServerTests|BackgroundProcessTests|ClientReconnectTests|JobObjectTests|AppBinaryTests|SessionHostTests|ProcessLivenessTests|DedicatedThreadTests|StarvedPoolTests|NumbersIndexTests|HouseRuleTests|DocumentationLinkTests|RecordedCountTests|ChangelogTests|AppendOnlyRecordTests|HazardIndexTests|ReVerificationIndexTests|NeverByImageNameTests|BuildConfigurationTests|ModelSurfaceTests)/*' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 86,977 MiB (61.6%) · end 86,913 MiB (61.5%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 1435 events, 0 about visible root windows and none of them this run's, 131 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 154 scans, 105 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=73116 created=134362993669196613), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  3 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed! - C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 284
+  failed: 3
+  succeeded: 281
+  skipped: 0
+  duration: 5m 21s 728ms
+green run exit 2

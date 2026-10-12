@@ -1,0 +1,17 @@
+started chrome pid 105056 at 2026-10-12T13:54:24.4709619+00:00
+members: 12
+105056 ok=True err=0 cb=96 ws=   141.6 pws=    41.2 sharedws=   100.4 sharedcommit=    76.8 private=    51.4 cpu=  1.766s chrome.exe
+ 91564 ok=True err=0 cb=96 ws=    11.5 pws=     1.9 sharedws=     9.7 sharedcommit=     5.1 private=     2.9 cpu=  0.031s chrome.exe
+ 82952 ok=True err=0 cb=96 ws=    10.7 pws=     1.8 sharedws=     8.9 sharedcommit=     5.1 private=     2.7 cpu=  0.031s chrome.exe
+ 94892 ok=True err=0 cb=96 ws=    92.8 pws=    36.7 sharedws=    56.1 sharedcommit=    13.4 private=    85.7 cpu=  0.828s chrome.exe
+ 97748 ok=True err=0 cb=96 ws=    18.4 pws=     3.1 sharedws=    15.3 sharedcommit=     0.9 private=     8.3 cpu=  0.047s chrome.exe
+ 76524 ok=True err=0 cb=96 ws=   109.7 pws=    54.1 sharedws=    55.6 sharedcommit=     4.1 private=    66.2 cpu=  0.375s chrome.exe
+103700 ok=True err=0 cb=96 ws=    38.4 pws=     9.0 sharedws=    29.5 sharedcommit=     2.0 private=    16.4 cpu=  0.016s chrome.exe
+ 98568 ok=True err=0 cb=96 ws=    32.0 pws=     8.2 sharedws=    23.8 sharedcommit=     1.3 private=    15.4 cpu=  0.047s chrome.exe
+103836 ok=True err=0 cb=96 ws=    41.4 pws=     8.6 sharedws=    32.9 sharedcommit=     5.0 private=    16.5 cpu=  0.234s chrome.exe
+ 97680 ok=True err=0 cb=96 ws=    43.0 pws=    14.0 sharedws=    29.0 sharedcommit=     1.4 private=    22.7 cpu=  0.063s chrome.exe
+ 91500 ok=True err=0 cb=96 ws=    40.0 pws=    11.0 sharedws=    29.0 sharedcommit=     1.4 private=    19.7 cpu=  0.031s chrome.exe
+105792 ok=True err=0 cb=96 ws=    34.5 pws=    10.8 sharedws=    23.6 sharedcommit=     1.3 private=    18.0 cpu=  0.094s chrome.exe
+job accounting: user 1.828125 s kernel 2 s processes total 17 active 12
+1000 readings of the whole job: median 417.4 us, p99 651.6 us, max 13001.3 us
+job closed at 2026-10-12T13:54:36.9366575+00:00

@@ -57,9 +57,10 @@ argument a tool does not have is refused.
 ### Added
 
 - ✨ **A Start Menu click opens BrowserAI's dashboard, a page in your own browser.**
-  Its home says first whatever needs you, then what runs now: each conversation in Claude Code
-  or Codex that uses BrowserAI, the browsers it opened, and whether one is a window on your
-  screen. Cards beside it say when a waiting update installs, how Claude Code and Codex are set
+  Its home says first whatever needs you, then what runs now, counted: the conversations in
+  Claude Code and Codex that use BrowserAI, how many of them are working, how many of their
+  browsers are windows on your screen, hidden or not open, and the sessions kept for later, with
+  one button to the conversations and their browsers. Cards beside it say when a waiting update installs, how Claude Code and Codex are set
   up, how much room the session folders take and which are not open now, and where BrowserAI is
   installed, when it started and where its updates come from. Each card leads to a page of its
   own with a way back. The setup page sets up Claude Code and Codex each on its own, or removes
@@ -71,6 +72,19 @@ argument a tool does not have is refused.
   on your own machine that is made for each run and handed to nobody else.
   [The decision](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser) and
   [the redesign](DECISIONS.md#the-dashboard-decided-2026-10-11).
+
+- ✨ **The dashboard's home shows what BrowserAI's own processes use, CPU and memory, as it changes.**
+  Every two seconds while the home or the conversations page is open, BrowserAI reads its
+  background, each conversation's connection and each session's browser with the server that
+  drives it. The home gives the CPU as a share of the whole PC and the memory only BrowserAI
+  holds, in those four parts, each with a two-minute chart, beside the memory its processes share
+  with other programs, said once and as an estimate. The conversations page gives each session's
+  share. Nothing is read while neither page is open.
+  [The decision](DECISIONS.md#the-home-its-cpu-and-memory-and-the-after-update-notice-decided-2026-10-11).
+
+- ✨ **After an update, the dashboard's home says so until you have seen what is new.**
+  The notice shows in every tab and after a restart until you open the changelog from any of its
+  What is new links, or dismiss it, and it comes back only when a newer version is installed.
 
 - ✨ **BrowserAI registers itself with Codex as well as Claude Code.**
   The installer registers it with each client for all your projects and the uninstaller removes it

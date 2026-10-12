@@ -1,0 +1,114 @@
+failed TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt (190ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to contain "Held by 1 window, 1 hidden browser and 1 active conversation."
+  but received "<!doctype html>
+  <html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>BrowserAI</title>
+  <link rel="stylesheet" href="page.css">
+  <script src="page.js" defer></script>
+  </head>
+  <body data-page="status" data-tab="1" data-unanswered="BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.">
+  <header class="top"><div class="top-in">
+  <a class="brand" id="l-brand" href="./?tab=1"><svg class="brand-mark" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><defs><linearGradient id="top-g" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="0.55" stop-color="#10B981"/><stop offset="1" stop-color="#0E7490"/></linearGradient><clipPath id="top-c"><circle cx="128" cy="128" r="112"/></clipPath></defs><circle cx="128" cy="128" r="112" fill="url(#top-g)"/><g clip-path="url(#top-c)" fill="none" stroke="#ECFEFF" stroke-width="10" opacity="0.45" stroke-linecap="round"><path d="M6 100 Q128 82 250 100"/><path d="M6 158 Q128 176 250 158"/><path d="M128 14 Q70 128 128 242"/><path d="M128 14 Q186 128 128 242"/></g><path d="M44 128 Q128 58 212 128 Q128 198 44 128 Z" fill="#F0FDFA"/><circle cx="128" cy="128" r="31" fill="#083344"/><circle cx="140" cy="116" r="9" fill="#ECFEFF"/></svg><span>BrowserAI</span> <span class="version">9.0.0</span></a>
+  <span class="top-gap"></span>
+  <span class="running"><span class="dot" aria-hidden="true"></span>Running since 01:00</span>
+  <a class="help" id="l-help" href="https://github.com/SixFive7/BrowserAI#readme" target="_blank" rel="noopener noreferrer"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.8" r=".7" fill="currentColor"/></svg><span>How BrowserAI works</span></a>
+  </div></header>
+  <p id="banner" class="banner" role="status" hidden></p>
+  <main id="main" tabindex="-1">
+  <div class="band"><section class="hello"><h1>All quiet</h1><p class="lede">BrowserAI is running. No conversation is using it right now.</p></section>
+  </div>
+  <div class="split">
+  <div class="col col-main">
+  <article class="card" id="card-now">
+  <div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg><h2>Right now</h2></div>
+  </article>
+  </div>
+  <div class="col col-side">
+  <article class="card" id="card-update">
+  <div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11m0 0-4.2-4.2M12 14.5l4.2-4.2"/><path d="M4 16.5V19a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-2.5"/></svg><h2>Update</h2></div>
+  <p class="big">9.1.0 is ready</p>
+  <p>It installs by itself in <span class="countdown" data-ends-at="2880000">48:00</span>, at about 01:48, if nothing uses BrowserAI before then.</p>
+  <div class="btn-row"><a id="l-update" class="btn primary" href="update?tab=1">See what holds it</a></div>
+  </article>
+  <article class="card" id="card-apps">
+  <div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5"/><path d="M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0z"/><path d="M12 17v4"/></svg><h2>Claude Code and Codex</h2><a class="more" id="l-manage" href="setup?tab=1">Manage<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+  <p class="caption">Your agents reach BrowserAI through these apps.</p>
+  <p>BrowserAI could not read how Claude Code and Codex are set up.</p>
+  </article>
+  <article class="card" id="card-storage">
+  <div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="2.8"/><path d="M4 6v12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8V6"/><path d="M4 12c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8"/></svg><h2>Storage</h2><a class="more" id="l-storage" href="storage?tab=1">Details<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+  <div class="empty"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg><p class="empty-title">No session folder yet</p><p>Each time an agent starts a browser session, it names a folder for it.</p></div>
+  </article>
+  <article class="card" id="card-install">
+  <div class="card-head"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor"/></svg><h2>This install</h2><a class="more" id="l-install" href="install?tab=1">Paths<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></a></div>
+  <dl class="facts"><dt>Version</dt><dd>9.0.0, <a id="l-whats-new" href="changelog?tab=1">what is new</a></dd><dt>Running</dt><dd>since 01:00, started at sign-in</dd><dt>Updates</dt><dd>from GitHub releases</dd></dl>
+  <div class="btn-row"><button type="button" id="b-open-folder-install" class="btn" data-action="open-folder" data-folder="install"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Install folder</button><button type="button" id="b-open-folder-data" class="btn" data-action="open-folder" data-folder="data"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.2h8.5A1.5 1.5 0 0 1 21 8.7V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>Data</button><button type="button" id="b-open-folder-logs" class="btn" data-action="open-folder" data-folder="logs"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h7.5l4.5 4.5V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4.5h4.5M9 12.5h6M9 16h6"/></svg>Logs</button></div>
+  </article>
+  </div>
+  </div>
+  
+  </main>
+  <footer class="foot"><span>BrowserAI 9.0.0</span><a id="l-foot-changelog" href="changelog?tab=1">What is new</a><a id="l-foot-install" href="install?tab=1">This install</a></footer>
+  </body>
+  </html>
+  "
+  
+  at Assert.That(home.Body).Contains("Held by 1 window, 1 hidden browser and 1 active conversation.")
+    at BrowserAI.Tests.DashboardTests.TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt() in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\DashboardTests.cs:392
+    at BrowserAI.Tests.DashboardTests.TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt() in C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\DashboardTests.cs:398
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\BrowserAI.app-<version>-full.nupkg
+  shipping release    ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\BrowserAI.app-<version>-full.nupkg, at the top of the directory and not under test-pack
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\dash-home rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-12T15:50:04.470Z is 1m48s newer than the newest of 235 inputs (src\BrowserAI.App\Page\UsageContent.cs, 2026-10-12T15:48:15.640Z) · exe and tree both 1.1.1-alpha.0.402 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/DashboardTests/TheUpdatePageSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdownAndTheHomeCountsWhatHoldsIt' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 71,228 MiB (50.4%) · end 71,231 MiB (50.4%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 0 events, 0 about visible root windows and none of them this run's, 134 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 2 scans, 44 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=73844 created=134362949143904840), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  3 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed! - C:\Source\SixFive7\BrowserAI\.work\wt\dash-home\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 1
+  failed: 1
+  succeeded: 0
+  skipped: 0
+  duration: 1s 432ms
+red dashboard run exit 2
