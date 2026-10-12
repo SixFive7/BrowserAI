@@ -72,7 +72,7 @@ internal static class LinkScheme
             return null;
         }
 
-        if (StandardLocation.IsShipping(packId) || packId.Length > 0)
+        if (StandardLocation.IsShipping(packId))
         {
             return ShippingScheme;
         }

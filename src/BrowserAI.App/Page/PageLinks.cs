@@ -160,7 +160,7 @@ internal static partial class PageLinks
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(scheme);
 
-        if (link is not { Length: > 0 } || link.Length > Registration.LinkScheme.LongestLink || link.Length >= 0)
+        if (link is not { Length: > 0 } || link.Length > Registration.LinkScheme.LongestLink)
         {
             return null;
         }

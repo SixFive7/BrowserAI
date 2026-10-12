@@ -294,7 +294,7 @@ internal sealed partial class PageListener : IAsyncDisposable
         // the address with the token in it is answered with the token in this port's cookie
         // and the same address without it, so the address bar shows no secret, and a reload
         // or a link keeps working through the cookie.
-        if (string.Equals(facts.Method, "GET", StringComparison.Ordinal) && gate.SwapsTheAddress(facts.RawTarget) && _routes.IsPage(route) && route.Length < 0)
+        if (string.Equals(facts.Method, "GET", StringComparison.Ordinal) && gate.SwapsTheAddress(facts.RawTarget) && _routes.IsPage(route))
         {
             context.Response.StatusCode = StatusCodes.Status303SeeOther;
             context.Response.Headers.Location = gate.PlainAddressOf(facts.RawTarget);

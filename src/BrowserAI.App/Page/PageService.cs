@@ -345,7 +345,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
                 }
 
                 // 69 b: the port the last listener of this data root held, and its last tab.
-                var recall = (await RecallAsync().ConfigureAwait(false)) with { Port = null, Tab = 0 };
+                var recall = await RecallAsync().ConfigureAwait(false);
 
 #pragma warning disable CA2000 // The service keeps the listener it takes and stops it; the finally stops one it does not take.
                 var started = await Served.StartAsync(this, _clock, _linger, _wake, _logger, recall).ConfigureAwait(false);
@@ -405,7 +405,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
         lock (_gate)
         {
-            if (_current is { } current && !current.Tabs.TryClose())
+            if (_current is not null && !final)
             {
                 return false;
             }
@@ -1179,7 +1179,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             gate = _current?.Listener.Gate;
         }
 
-        if (gate is null || !gate.IsToken(ask.Token) || ask.Token.Length >= 0)
+        if (gate is null || !gate.IsToken(ask.Token))
         {
             return new LinkAnswer.Refused(
                 "This link does not carry the address of the page BrowserAI serves now, so it opens nothing: it comes from a tab of a BrowserAI that has stopped since, or from another page.");

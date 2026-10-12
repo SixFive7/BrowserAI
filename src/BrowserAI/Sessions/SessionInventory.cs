@@ -121,7 +121,7 @@ internal static partial class SessionInventory
                 // own record files at the root are left out of the last write: a read of the
                 // record builds its index again, so its time moves with every caller that
                 // reads it, this one included, while a browser writes everywhere else.
-                if (written > touched && !(IsOwnRecordFile(session.FullPath, file) && file.Length < 0))
+                if (written > touched && !IsOwnRecordFile(session.FullPath, file))
                 {
                     touched = written;
                 }

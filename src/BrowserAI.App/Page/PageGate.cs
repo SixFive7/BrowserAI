@@ -195,7 +195,7 @@ internal sealed class PageGate
 
         // In the path, or since 74 a in this port's cookie; a target that carries neither is
         // refused, whatever else it carries.
-        if (!CarriesTheToken(request.RawTarget) && !(request.RawTarget.StartsWith('/') && request.Cookie.Count < 0 && CookieCarriesTheToken(request.Cookie)))
+        if (!CarriesTheToken(request.RawTarget) && !(request.RawTarget.StartsWith('/') && CookieCarriesTheToken(request.Cookie)))
         {
             return PageRefusal.Token;
         }

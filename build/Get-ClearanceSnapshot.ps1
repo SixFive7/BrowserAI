@@ -76,6 +76,14 @@
          `SuiteCoverageTests.TheClearanceNamesATestPacksActivatorLeftBehind`; the gate
          never passes it.
 
+     10. The folder links' scheme under HKCU\Software\Classes -- ADDED 2026-10-12 with
+         the maintainer's 55 a and 72 a. The install and update hooks register a scheme
+         whose command starts the install's own BrowserAI.exe, `browserai` for the
+         shipping pack and `browserai-test` for the suite's test pack, and the uninstall
+         hook takes it back. So `browserai` must come out of a run exactly as it went in,
+         and `browserai-test` must be absent. `-ClassesKey` points this reading at a
+         scratch key too, for `SuiteCoverageTests.TheClearanceNamesATestPacksLinkSchemeLeftBehind`.
+
     ⚠️ IT READS AND NEVER REPAIRS. A snapshot that fixed what it found would
     destroy the evidence of the run that broke it. On a difference the gate
     stops and a human looks; TESTING.md says how to clear a dangling key.
@@ -84,8 +92,8 @@
     Names the snapshot file under `.work/clearance/`.
 
 .PARAMETER ClassesKey
-    The key under HKCU the activator reading reads, `Software\Classes` unless a test
-    names a scratch key of its own.
+    The key under HKCU the activator reading and the scheme reading read,
+    `Software\Classes` unless a test names a scratch key of its own.
 
 .EXAMPLE
     pwsh -File build/Get-ClearanceSnapshot.ps1 -Tag ord-ps-1-before
@@ -351,6 +359,36 @@ try {
         else {
             'ABSENT'
         }))
+}
+catch {
+    $out += "  UNREADABLE: $($_.Exception.Message)"
+}
+
+# 10. The folder links' scheme (55 a and 72 a, 2026-10-11). The shipping pack's is
+# `browserai`, the maintainer's, and LinkScheme.NameFor gives every other pack one of its
+# own; the test pack's is `browserai-test`. The real one's reading must not move; the test
+# pack's must be absent.
+function Get-SchemeReading([string] $scheme) {
+    $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("$ClassesKey\$scheme")
+    $command = $null
+    $present = $null -ne $key
+    if ($key) {
+        $open = $key.OpenSubKey('shell\open\command')
+        if ($open) {
+            $command = $open.GetValue('', $null)
+            $open.Dispose()
+        }
+        $key.Dispose()
+    }
+    [pscustomobject]@{ Present = $present; Command = $command }
+}
+
+$out += "--- HKCU\$ClassesKey, the folder links' scheme ---"
+try {
+    $realScheme = Get-SchemeReading 'browserai'
+    $out += ('  browserai: {0}' -f $(if ($realScheme.Present) { 'starts=' + $(if ($null -ne $realScheme.Command) { $realScheme.Command } else { 'ABSENT' }) } else { 'ABSENT' }))
+    $testScheme = Get-SchemeReading 'browserai-test'
+    $out += ('  browserai-test: {0}' -f $(if ($testScheme.Present) { 'PRESENT <<< MUST BE ABSENT (starts=' + $(if ($null -ne $testScheme.Command) { $testScheme.Command } else { 'ABSENT' }) + ')' } else { 'ABSENT' }))
 }
 catch {
     $out += "  UNREADABLE: $($_.Exception.Message)"

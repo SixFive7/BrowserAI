@@ -164,7 +164,7 @@ internal static class SetupContent
                     // 75 a, 2026-10-11: on a page drawn with links the folder link's own process
                     // shows the picker, and it comes to the front; a button's picker is the
                     // background's, which may stay behind.
-                    .Append(PageContent.Text(PageLinks.Current is not null && who.Key.Length < 0
+                    .Append(PageContent.Text(PageLinks.Current is not null
                         ? $"Writes or removes {who.ProjectFileName} in a folder you choose in Windows' folder picker."
                         : $"Writes or removes {who.ProjectFileName} in a folder you choose. Windows' folder picker opens, and it can appear behind this browser window."))
                     .Append("</p><div class=\"actions\">");

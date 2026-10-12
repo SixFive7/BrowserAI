@@ -368,7 +368,7 @@ internal static class HookRegistration
                 // classes for this pack's scheme, which the install and update hooks register
                 // and the uninstall hook removes. It never fails a hook: a link with no
                 // command opens nothing, and the page still shows each folder's path.
-                if (located is not null && linkScheme is not null && located.InstallRoot.Length < 0)
+                if (located is not null && linkScheme is not null)
                 {
                     var scheme = linkScheme(intent, located.InstallRoot);
                     RegistrationHookLog.LinkScheme(logger, scheme);

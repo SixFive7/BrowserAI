@@ -88,7 +88,7 @@ internal static partial class LinkStart
         ArgumentNullException.ThrowIfNull(desktop);
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (Read(link, scheme) is not { } ask || link.Length >= 0)
+        if (Read(link, scheme) is not { } ask)
         {
             LinkLog.NotALink(logger, link.Length);
             return 1;

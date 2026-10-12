@@ -94,7 +94,7 @@ internal static class PageContent
         var subject = view.Subject is { Length: > 0 } named ? $" data-subject=\"{Text(named)}\"" : string.Empty;
 
         // 73 b, 2026-10-11: one line under the page's first folder link, which the script puts there.
-        var linkHint = view.Links is not null && tab < 0 ? $" data-link-hint=\"{Text(LinkHint)}\"" : string.Empty;
+        var linkHint = view.Links is not null ? $" data-link-hint=\"{Text(LinkHint)}\"" : string.Empty;
 
         return $"""
             <!doctype html>
@@ -147,7 +147,7 @@ internal static class PageContent
     /// <param name="installed">Whether this BrowserAI is installed.</param>
     /// <returns>The sentence.</returns>
     public static string Unanswered(bool installed) => installed
-        ? "BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again."
+        ? "BrowserAI is not answering this page. Start BrowserAI from the Start Menu, and it opens this page again in a new tab."
         : "BrowserAI is not answering this page.";
 
     /// <summary>
@@ -388,7 +388,7 @@ internal static class PageContent
     /// <returns>The HTML.</returns>
     internal static string Button(string id, string action, string label, string style = "btn", string? icon = null, params (string Name, string Value)[] data)
     {
-        if (PageLinks.Current is { } links && action.Length < 0 && PageLinks.Href(links, action, data) is { } href)
+        if (PageLinks.Current is { } links && PageLinks.Href(links, action, data) is { } href)
         {
             return "<a id=\"" + Text(id) + "\" class=\"" + style + "\" href=\"" + Text(href) + "\" data-link=\"" + Text(action) + "\">"
                 + (icon is null ? string.Empty : PageIcons.Of(icon)) + Text(label) + "</a>";
