@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Collections.Concurrent;
+using System.Text;
 using BrowserAI.App;
 using BrowserAI.App.Interop;
 using BrowserAI.App.Page;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
 using BrowserAI.Tests.Harness;
+using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Tests;
 
@@ -103,6 +105,95 @@ internal sealed class LinkStartTests
         await Assert.That(exit).IsEqualTo(0);
         await Assert.That(desktop.Opened.ToList()).IsEquivalentTo([folder]);
         await Assert.That(logs.Logged($"opened {folder} in Explorer")).IsTrue();
+    }
+
+    /// <summary>
+    /// A folder the shell does not open is logged on a line of its own, as not opened, and the
+    /// link start exits with 1; the line for an opened folder is not written.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12, from the reader's pass over the folder links' texts</b>: the line
+    /// for an opened folder was written whatever the shell answered, so a refused open read
+    /// <i>"opened ..., and the shell said False."</i>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFolderTheShellDoesNotOpenIsLoggedAsNotOpenedOnALineOfItsOwn()
+    {
+        var folder = @"C:\Users\sam\AppData\Local\BrowserAI\logs";
+        var verbs = new FakeBackgroundVerbs
+        {
+            Link = static _ => Task.FromResult<LinkAnswer>(new LinkAnswer.Open(@"C:\Users\sam\AppData\Local\BrowserAI\logs")),
+        };
+
+        await using var background = await BackgroundServerRig.StartAsync(verbs: verbs);
+        using var logs = new CapturingLoggerProvider();
+
+        var desktop = new RecordingDesktop { Opens = false };
+        var exit = await LinkStart.RunAsync($"{Scheme}:open-folder?folder=logs&t={PageGate.NewToken()}", Scheme, background.Identity.PipeName, desktop.AsDesktop(), logs.CreateLogger("link"));
+
+        await Assert.That(exit).IsEqualTo(1);
+        await Assert.That(desktop.Opened.ToList()).IsEquivalentTo([folder]);
+        await Assert.That(logs.Records.Count).IsEqualTo(1);
+        await Assert.That(logs.Records[0].EventId.Id).IsEqualTo(6);
+        await Assert.That(logs.Records[0].Level).IsEqualTo(LogLevel.Warning);
+        await Assert.That(logs.Records[0].Message).Contains($"Explorer did not open {folder}");
+        await Assert.That(logs.Logged($"opened {folder} in Explorer")).IsFalse();
+    }
+
+    /// <summary>
+    /// An answer that names neither a folder nor a picker is logged as what it was, an answer,
+    /// and not as a refusal; nothing is opened and nothing is shown.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12, from the reader's pass over the folder links' texts.</b> The product's
+    /// background never answers so, so the background here is a stand-in on a pipe of the
+    /// arm's that answers the question with an empty result.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnAnswerNamingNeitherAFolderNorAPickerIsLoggedAsAnAnswerAndNotAsARefusal()
+    {
+        var pipe = PublishedBackground.NewPipeName();
+
+        using var served = NamedPipes.CreateStreamServer(pipe);
+
+        var answering = Task.Run(async () =>
+        {
+            using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
+
+            if (!await NamedPipes.WaitForClientAsync(served, hang.Token))
+            {
+                return;
+            }
+
+            await using var stream = new FileStream(served, FileAccess.ReadWrite, bufferSize: 0, isAsync: true);
+
+            var one = new byte[1];
+
+            while (await stream.ReadAsync(one, hang.Token) is 1 && one[0] is not (byte)'\n')
+            {
+            }
+
+            var empty = """{"jsonrpc":"2.0","id":"browserai-start-1","result":{}}""" + "\n";
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(empty), hang.Token);
+            await stream.FlushAsync(hang.Token);
+        });
+
+        using var logs = new CapturingLoggerProvider();
+
+        var desktop = new RecordingDesktop();
+        var exit = await LinkStart.RunAsync($"{Scheme}:open-folder?folder=data&t={PageGate.NewToken()}", Scheme, pipe, desktop.AsDesktop(), logs.CreateLogger("link"));
+
+        await answering.WaitAsync(TestDefaults.InProcessHang);
+
+        await Assert.That(exit).IsEqualTo(1);
+        await Assert.That(desktop.Opened).IsEmpty();
+        await Assert.That(desktop.Prompts).IsEmpty();
+        await Assert.That(logs.Records.Count).IsEqualTo(1);
+        await Assert.That(logs.Records[0].EventId.Id).IsEqualTo(7);
+        await Assert.That(logs.Records[0].Message).Contains("answered a folder link with neither a folder to open nor a picker to show");
+        await Assert.That(logs.Records[0].Message).DoesNotContain("refused");
     }
 
     /// <summary>
@@ -265,11 +356,14 @@ internal sealed class LinkStartTests
         /// <summary>Whether the picker throws, as a link start that goes with its picker open does.</summary>
         public bool Fails { get; set; }
 
+        /// <summary>What the shell answers a folder it is asked to open.</summary>
+        public bool Opens { get; set; } = true;
+
         public LinkDesktop AsDesktop() => new(
             directory =>
             {
                 Opened.Enqueue(directory);
-                return Task.FromResult(true);
+                return Task.FromResult(Opens);
             },
             prompt =>
             {
