@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
+using BrowserAI.TestProbe;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -356,7 +357,24 @@ internal sealed class BrowserContainmentTests
         foreach (var row in walk)
         {
             var said = row!.ToJsonString() + Environment.NewLine + ContainmentReport.Kept(kept);
+            var verdict = (string)row["verdict"]!;
 
+            // ⚠️ A ROW THAT HAD GONE BY ITS QUERY COUNTS NEITHER WAY AND OWES NO JOB LIST --
+            // 95 c, the maintainer's words of 2026-10-12 verbatim: "95 your recommendation".
+            // Chromium retires helpers while the walk runs, and a helper born after the first
+            // membership list and gone before the second is in neither, because the job's list
+            // leaves an exited member out even while a handle holds it (20 of 20, measured
+            // 2026-10-12, kb/windows/job-objects.md). The launcher asks whether a process is
+            // still there before it asks the job, so such a row reads Exited, and the
+            // teardown below holds it to the only claim left: that it is not alive.
+            // JobContainmentTests keeps the stricter row, a static tree's.
+            if (verdict is nameof(ProcessQueryVerdict.Verdict.Exited))
+            {
+                await Assert.That((string)row["note"]!).Contains("between the walk and the query").Because(said);
+                continue;
+            }
+
+            await Assert.That(verdict).IsEqualTo(nameof(ProcessQueryVerdict.Verdict.Queried)).Because(said);
             await Assert.That((bool?)row["inOurJob"] is true).IsTrue().Because(said);
             await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue().Because(said);
             await Assert.That((string)row["note"]!).IsEmpty().Because(said);
@@ -389,12 +407,16 @@ internal sealed class BrowserContainmentTests
                 $"the driver did not navigate. Its answer was: {(string?)child["answer"] ?? "<none>"}"
                 + Environment.NewLine + await LauncherWait.EvidenceAsync(scratchPath));
 
-        var walked = walk.Select(row => (int)row!["pid"]!).ToHashSet();
+        // By who each walked process is, pid and creation time, and not by its number:
+        // the launcher lets its handles go once the report is written, so a pid of the
+        // walk can name a browser of another arm by now, out of the same root (95 a,
+        // 2026-10-12).
+        var walked = walk.Select(row => ((int)row!["pid"]!, (long)row["createdFileTime"]!)).ToHashSet();
 
         // Matched on the full image PATH, which is the documented detection
         // route; an image name would find the user's own Chrome just as readily.
         var fromOurRoot = BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory)
-            .Where(process => walked.Contains(process.ProcessId))
+            .Where(process => walked.Contains((process.ProcessId, process.CreatedFileTime)))
             .ToList();
 
         await Assert.That(fromOurRoot.Count).IsGreaterThan(0);
@@ -485,10 +507,14 @@ internal sealed class BrowserContainmentTests
             fromOurRoot.Count,
             registered.Count,
             (double)report["readyMilliseconds"]!,
-            (double)report["readyPatienceMilliseconds"]!);
+            (double)report["readyPatienceMilliseconds"]!,
+            (int)report["membersHeld"]!,
+            report["joinsNotHeld"]!.AsArray().Count,
+            walk.Count(row => (string?)row!["verdict"] is nameof(ProcessQueryVerdict.Verdict.Exited)));
     }
 
     /// <remarks>
+    /// <para>
     /// ⚠️ <b><c>readyMilliseconds</c> is recorded on every run, including the
     /// ones that pass, and that is the point of it.</b> A bound can only be
     /// called too tight against a distribution, and a distribution cannot be
@@ -496,6 +522,13 @@ internal sealed class BrowserContainmentTests
     /// machine: unloaded, this whole test is 5.3-5.7 s over eight consecutive
     /// runs -- the launcher's ready-wait is a small fraction of that, against a
     /// patience of 180 s.
+    /// </para>
+    /// <para>
+    /// <b>The three counts of 95 a and c are recorded the same way</b>, since 2026-10-12: how
+    /// many members the launcher held when the walk began, how many join messages held
+    /// nothing, and how many rows had gone by their query. They are what the probe's
+    /// churn is, on a passing run, and nothing asserts them.
+    /// </para>
     /// </remarks>
     private static async Task RecordAsync(
         string browser,
@@ -505,7 +538,10 @@ internal sealed class BrowserContainmentTests
         int fromOurRoot,
         int restartRegistered,
         double readyMilliseconds,
-        double readyPatienceMilliseconds)
+        double readyPatienceMilliseconds,
+        int membersHeld,
+        int joinsNotHeld,
+        int rowsExited)
     {
         var summary = new JsonObject
         {
@@ -518,6 +554,9 @@ internal sealed class BrowserContainmentTests
             ["profileDeletedCleanly"] = true,
             ["readyMilliseconds"] = readyMilliseconds,
             ["readyPatienceMilliseconds"] = readyPatienceMilliseconds,
+            ["membersHeldWhenTheWalkBegan"] = membersHeld,
+            ["joinMessagesThatHeldNothing"] = joinsNotHeld,
+            ["rowsGoneByTheirQuery"] = rowsExited,
             ["utc"] = DateTimeOffset.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
         };
 

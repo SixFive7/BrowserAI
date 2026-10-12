@@ -35,6 +35,11 @@ namespace BrowserAI.Tests;
 /// the gap between them: a process whose parent has already exited is
 /// re-parented and invisible to a pure parent-child walk, and would be missed
 /// by a check that only walked. The two lists must agree in both directions.
+/// ⚠️ <i>Added 2026-10-12 by addition, 95 a:</i> the launcher holds each member
+/// from its join message and seeds the walk with those processes, never with a
+/// bare pid, which
+/// <see cref="APidThePortReportedThatNamesAProcessOutsideTheJobIsNeitherWalkedNorCounted"/>
+/// holds.
 /// </para>
 /// <para>
 /// <b>Nothing here matches a process by image name at any step</b>, including
@@ -238,6 +243,13 @@ internal sealed class JobContainmentTests
     /// its join message and keeps it only when <c>IsProcessInJob</c> says it is the job's
     /// drops it there, and says so in the report's <c>joinsNotHeld</c>.
     /// </para>
+    /// <para>
+    /// <b>Watched red 2026-10-12 at <c>1c4ea1a3</c></b>, the walk as it stood, under the suite
+    /// lock: <i>"Expected to be 0, because the launcher counted 43 walked process(es) outside
+    /// its job"</i>, the first row the test host itself and the rest what it had started, its
+    /// probes and their <c>node</c>, <c>conhost</c>, Chromium and Firefox processes, nine of
+    /// them already gone and read without an image path.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -279,6 +291,12 @@ internal sealed class JobContainmentTests
     /// member of the launcher's own job whose pid and creation time it checks first, waits for
     /// its exit and keeps the handle. Its row has to read <c>Exited</c>, with no membership
     /// read off it at all.
+    /// </para>
+    /// <para>
+    /// <b>Watched red 2026-10-12 at <c>1c4ea1a3</c></b>, under the suite lock: <i>"Expected to
+    /// be equal to "Exited" ... but received "Queried""</i>. The walk as it stood opened the
+    /// ended member again by its pid, the open succeeded, and <c>IsProcessInJob</c> read it as
+    /// a live member of the job.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>

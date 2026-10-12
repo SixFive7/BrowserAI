@@ -50,6 +50,22 @@ namespace BrowserAI.TestProbe;
 /// been a member while it existed, which is the containment claim; what is
 /// dropped is only the demand that a corpse answer <c>IsProcessInJob</c>.
 /// </para>
+/// <para>
+/// ⚠️ <b>Added 2026-10-12 by addition, 95 c, the maintainer's words verbatim:
+/// <i>"95 your recommendation"</i>.</b> A failed open is one of three ways a row
+/// reads <see cref="Verdict.Exited"/> since that day. The launcher holds every
+/// member from its join message and asks each walked process whether it is still
+/// there before it asks the job, so a member that exited while a handle held it
+/// reads Exited, and so does a pid that now names a process created after the one
+/// the walk listed. A corpse still answers <c>IsProcessInJob</c>, and it answers
+/// that it is in the job (20 of 20, measured 2026-10-12), which is why the
+/// question waits. The paragraph above holds for <c>JobContainmentTests</c>, whose
+/// trees are static; the Chromium and Firefox arms of
+/// <c>BrowserContainmentTests</c> no longer hold an Exited row to the job's list,
+/// because a helper born after the first list and gone before the second is in
+/// neither, and the job's list leaves out an exited member even while a handle
+/// holds it.
+/// </para>
 /// </remarks>
 internal static class ProcessQueryVerdict
 {

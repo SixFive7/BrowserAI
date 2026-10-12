@@ -39,7 +39,18 @@ namespace BrowserAI.TestProbe;
 /// <b>No step of this file matches a process by image name.</b> The toolhelp
 /// walk deliberately declares <c>szExeFile</c> as an opaque buffer and never
 /// reads it -- the structure has to be the size Windows expects, but nothing
-/// here can compare it to <c>chrome.exe</c> even by accident.
+/// here can compare it to <c>chrome.exe</c> even by accident. The image path a
+/// report row carries since 2026-10-12 is read off that process's own handle and
+/// only printed, beside the pid and creation time that identify it.
+/// </para>
+/// <para>
+/// ⚠️ <b>A process is who it is, never a pid alone -- 95 a and c, the maintainer's
+/// words of 2026-10-12 verbatim: <i>"95 your recommendation"</i>.</b> Every member
+/// the job's port reports is opened at its join message and held until the report
+/// is written, the walk is seeded with those processes, and each walked process is
+/// asked whether it is still there before it is asked whether it is the job's. The
+/// two planted launcher modes, <c>job-launcher-told-of</c> and
+/// <c>job-launcher-ending-one</c>, are how <c>JobContainmentTests</c> holds both.
 /// </para>
 /// </remarks>
 internal static partial class JobProbe
@@ -71,7 +82,8 @@ internal static partial class JobProbe
     private const string ChildStandardErrorFile = "child-stderr.log";
     private const string LauncherErrorFile = "launcher-error.txt";
 
-    private static readonly HashSet<int> EverInJob = [];
+    private const uint WaitObject0 = 0x00000000;
+    private const uint WaitTimeout = 0x00000102;
 
     /// <summary>
     /// Creates a job with the product's own code, starts a child in it, proves
@@ -114,10 +126,22 @@ internal static partial class JobProbe
 
         // Associated BEFORE the child exists, so the very first membership
         // message is captured. This is what makes a process whose parent has
-        // already exited reachable: the walk below is seeded with every pid the
+        // already exited reachable: the walk below is seeded with every member the
         // job ever reported, not only with the ones still linked to the root.
         var port = AssociateCompletionPort(job);
-        var drain = new Thread(() => DrainCompletionPort(port)) { IsBackground = true };
+
+        // ⚠️ EVERY MEMBER IS HELD FROM ITS JOIN MESSAGE, AND THE WALK IS SEEDED BY WHO IT IS
+        // -- 95 a, the maintainer's words of 2026-10-12 verbatim: "95 your recommendation".
+        // Until that day the drain kept bare pids and the walk seeded every one still in
+        // the snapshot, so a helper Chromium had retired, whose pid Windows had given to a
+        // process outside the job, could be walked, opened and counted, which fits the
+        // Chromium arm's "escapees 2" of that day. The drain now opens each member as its
+        // message arrives and keeps the handle while IsProcessInJob says the process is
+        // this job's, until the report is written, and Windows does not reuse a pid while
+        // a handle to it is open (kb, measured 2026-08-18). The drain stays on a thread of
+        // its own, as before: its dequeue is a kernel wait no worker of the pool is parked in.
+        using var members = new HeldMembers(job);
+        var drain = new Thread(() => DrainCompletionPort(port, members)) { IsBackground = true };
         drain.Start();
 
         if (plant.ReportedStranger is not 0)
@@ -186,7 +210,8 @@ internal static partial class JobProbe
         // after -- which is the only set whose absence from the walk means the
         // seeding actually failed.
         var jobBefore = job.ProcessIds();
-        var walk = Walk(process.Id);
+        var held = members.Held();
+        var walk = Walk(process.Id, held);
         var jobAfter = job.ProcessIds();
 
         var jobProcessIds = jobAfter;
@@ -203,54 +228,11 @@ internal static partial class JobProbe
 
         foreach (var entry in walk)
         {
-            var inOurJob = default(bool?);
-            var inAnyJob = default(bool?);
-            var imagePath = default(string);
-            var note = string.Empty;
-            var verdict = ProcessQueryVerdict.Verdict.Queried;
+            var reading = Query(entry, held, job);
 
-            using var handle = OpenProcess(ProcessQueryLimitedInformation, bInheritHandle: false, (uint)entry.ProcessId);
-
-            if (handle.IsInvalid)
+            if (reading is { Verdict: ProcessQueryVerdict.Verdict.Queried, InOurJob: false })
             {
-                // ⚠️ A PID THE WALK SAW AND THE QUERY CANNOT OPEN IS NOT ONE
-                // OUTCOME, and spelling it as one read a probe race as a
-                // containment failure on 2026-09-16. The tree here is live:
-                // helpers retire while the walk is still running, so by the time
-                // the row is built a descendant may simply be gone -- which is
-                // containment holding and not failing, since an exited
-                // process is neither a survivor nor an escapee.
-                //
-                // ProcessQueryVerdict decides which it was, from what Windows
-                // said, once. It is NOT a retry and NOT a suppression: any error
-                // that is not one of the two vanished-pid shapes stays
-                // Unreadable, keeps its note and still reddens the run. See
-                // JobContainmentTests.AWalkedPidThatVanishedBeforeTheQueryIsExitedAndAnyOtherFailureIsStillAFailure,
-                // which plants all three directions with live controls on the
-                // error numbers.
-                var lastError = Marshal.GetLastPInvokeError();
-
-                verdict = ProcessQueryVerdict.ForFailedOpen(lastError);
-                note = $"OpenProcess failed with {lastError.ToString(CultureInfo.InvariantCulture)}";
-
-                if (verdict is ProcessQueryVerdict.Verdict.Exited)
-                {
-                    note += ", so this process had exited between the walk and the query";
-                }
-            }
-            else
-            {
-                inOurJob = job.Contains(handle);
-                inAnyJob = JobObject.IsInAnyJob(handle);
-
-                // Read off the handle and only ever printed: a failing arm names the
-                // processes it counted with it (95 d), and nothing here compares it.
-                imagePath = ImagePathOf(handle);
-
-                if (inOurJob is false)
-                {
-                    escapees++;
-                }
+                escapees++;
             }
 
             rows.Add(new JsonObject
@@ -259,12 +241,13 @@ internal static partial class JobProbe
                 ["parentPid"] = entry.ParentProcessId,
                 ["createdFileTime"] = entry.CreatedFileTime,
                 ["depth"] = entry.Depth,
-                ["imagePath"] = imagePath,
-                ["inOurJob"] = inOurJob,
-                ["inAnyJob"] = inAnyJob,
+                ["held"] = entry.Held,
+                ["imagePath"] = reading.ImagePath,
+                ["inOurJob"] = reading.InOurJob,
+                ["inAnyJob"] = reading.InAnyJob,
                 ["inJobProcessIdList"] = jobProcessIdSet.Contains(entry.ProcessId),
-                ["verdict"] = verdict.ToString(),
-                ["note"] = note,
+                ["verdict"] = reading.Verdict.ToString(),
+                ["note"] = reading.Note,
             });
         }
 
@@ -283,6 +266,8 @@ internal static partial class JobProbe
             ["jobMembersTheWalkMissed"] = new JsonArray(
                 [.. stableJobMembers.Where(id => !walked.Contains(id)).Select(id => JsonValue.Create(id))]),
             ["escapees"] = escapees,
+            ["membersHeld"] = held.Count,
+            ["joinsNotHeld"] = members.NotHeld(),
             ["walk"] = rows,
             ["endedMember"] = ended is null
                 ? null
@@ -295,6 +280,10 @@ internal static partial class JobProbe
         };
 
         await File.WriteAllTextAsync(Path.Combine(outputDirectory, "report.json"), report.ToJsonString(), new UTF8Encoding(false));
+
+        // Held until the report is written, as 95 a has it, and no longer: the drain ends
+        // with its next message or its next half second, and holds nothing more.
+        members.Release();
 
         // The done marker is written last and is what the test waits on, so a
         // partially written report can never be read as a complete one.
@@ -703,17 +692,14 @@ internal static partial class JobProbe
         }
     }
 
-    private static void DrainCompletionPort(nint port)
+    private static void DrainCompletionPort(nint port, HeldMembers members)
     {
-        while (true)
+        while (!members.Released)
         {
             if (GetQueuedCompletionStatus(port, out var message, out _, out var overlapped, 500) && message == JobObjectMessageNewProcess)
             {
-                lock (EverInJob)
-                {
-                    // The "overlapped" pointer is the pid for job messages.
-                    _ = EverInJob.Add((int)overlapped);
-                }
+                // The "overlapped" pointer is the pid for job messages.
+                members.Joined((int)overlapped);
             }
         }
     }
@@ -735,28 +721,36 @@ internal static partial class JobProbe
 
     /// <summary>
     /// A toolhelp descendant walk, seeded with the root child <b>and</b> every
-    /// pid the job ever reported.
+    /// member the job reported that the launcher holds.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The seeding is what makes this a cross-check instead of a second
     /// opinion from the same source: a process whose parent has already exited
     /// is re-parented and would be invisible to a pure parent-child walk, so it
     /// is reached from the completion port instead. A child that predates its
     /// parent is skipped, because a pid the kernel has reused is not a
     /// descendant.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A seed is a process, never a number -- 95 a, 2026-10-12.</b> Each held member's
+    /// pid is pinned by the launcher's handle to it, and so is the root child's, by the
+    /// handle <c>JobLauncher</c> answered, so the snapshot's entry under that pid is that
+    /// process and no other. A held member that has exited is in no snapshot (20 of 20,
+    /// measured 2026-10-12, kb), and seeds nothing.
+    /// </para>
     /// </remarks>
-    private static List<ProcessEntry> Walk(int rootProcessId)
+    /// <param name="rootProcessId">The child the launcher started, whose handle it holds.</param>
+    /// <param name="held">The members held when the walk began.</param>
+    /// <returns>The walk, shallowest first.</returns>
+    private static List<ProcessEntry> Walk(int rootProcessId, Dictionary<int, HeldMember> held)
     {
-        var all = Snapshot();
+        var all = Snapshot(held);
         var byProcessId = all.ToDictionary(entry => entry.ProcessId);
         var children = all.GroupBy(entry => entry.ParentProcessId).ToDictionary(group => group.Key, group => group.ToList());
 
         var seeds = new List<int> { rootProcessId };
-
-        lock (EverInJob)
-        {
-            seeds.AddRange(EverInJob.Where(id => id != rootProcessId));
-        }
+        seeds.AddRange(held.Keys.Where(id => id != rootProcessId));
 
         var result = new List<ProcessEntry>();
         var seen = new HashSet<int>();
@@ -799,7 +793,26 @@ internal static partial class JobProbe
         return [.. result.OrderBy(entry => entry.Depth).ThenBy(entry => entry.ProcessId)];
     }
 
-    private static List<ProcessEntry> Snapshot()
+    /// <summary>
+    /// Every process on the machine, each with its parent and its creation time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A held member's creation time is the one read off the launcher's own handle</b>, so
+    /// its entry costs no second open. Any other entry's is read by opening its pid after the
+    /// snapshot, and that read can land on another process if the listed one has exited and
+    /// Windows has given its pid away in between.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>So a creation time later than the snapshot is no creation time -- 95 a,
+    /// 2026-10-12.</b> Every process the snapshot lists was created before the moment read
+    /// once it exists, so a later one names a process the snapshot never saw. The entry keeps
+    /// 0, the value that already meant unreadable, and its query reads the process as gone.
+    /// </para>
+    /// </remarks>
+    /// <param name="held">The members the launcher holds.</param>
+    /// <returns>The entries, in the snapshot's order.</returns>
+    private static List<ProcessEntry> Snapshot(Dictionary<int, HeldMember> held)
     {
         var entries = new List<ProcessEntry>();
 
@@ -809,6 +822,9 @@ internal static partial class JobProbe
         {
             throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not take a process snapshot.");
         }
+
+        // Read once the snapshot exists, and compared with every creation time read after it.
+        var taken = DateTime.UtcNow.ToFileTimeUtc();
 
         var entry = default(ProcessEntry32);
         entry.Size = (uint)Unsafe.SizeOf<ProcessEntry32>();
@@ -820,7 +836,10 @@ internal static partial class JobProbe
 
         do
         {
-            entries.Add(new ProcessEntry((int)entry.ProcessId, (int)entry.ParentProcessId, CreationTimeOf((int)entry.ProcessId), 0));
+            var processId = (int)entry.ProcessId;
+            var created = held.TryGetValue(processId, out var member) ? member.CreatedFileTime : CreationTimeOf(processId);
+
+            entries.Add(new ProcessEntry(processId, (int)entry.ParentProcessId, created > taken ? 0 : created, 0, member is not null));
         }
         while (Process32NextW(snapshot, ref entry));
 
@@ -832,6 +851,301 @@ internal static partial class JobProbe
         using var handle = OpenProcess(ProcessQueryLimitedInformation, bInheritHandle: false, (uint)processId);
 
         return !handle.IsInvalid && GetProcessTimes(handle, out var creation, out _, out _, out _) ? creation : 0;
+    }
+
+    /// <summary>
+    /// Asks Windows about one walked process, by who it is: whether it is still there first,
+    /// and only then whether it is the job's.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>WHETHER IT IS STILL THERE IS ASKED FIRST -- 95 c, the maintainer's words of
+    /// 2026-10-12 verbatim: "95 your recommendation".</b> A member that has exited is still an
+    /// object Windows answers for while anything holds a handle to it: <c>OpenProcess</c> on
+    /// its pid succeeds and <c>IsProcessInJob</c> says it is in the job, while the job's own
+    /// list leaves it out (20 of 20, measured 2026-10-12, kb). Asked the other way round, a
+    /// Chromium helper that retired during the walk while the browser held it read as a live
+    /// member the job's list did not have, which is the red of 2026-10-11. A row found exited
+    /// is <see cref="ProcessQueryVerdict.Verdict.Exited"/>, counted neither in the job nor
+    /// out of it.
+    /// </para>
+    /// <para>
+    /// <b>A process the launcher does not hold is asked about only once its creation time
+    /// matches the walk's</b>, so a pid Windows has given to another process since reads as the
+    /// walked process having exited, and never as a process outside the job.
+    /// </para>
+    /// </remarks>
+    /// <param name="entry">The walked process.</param>
+    /// <param name="held">The members held when the walk began.</param>
+    /// <param name="job">The launcher's job.</param>
+    /// <returns>What was read.</returns>
+    private static Reading Query(ProcessEntry entry, Dictionary<int, HeldMember> held, JobObject job)
+    {
+        if (held.TryGetValue(entry.ProcessId, out var member))
+        {
+            return Read(member.Handle, job);
+        }
+
+        using var handle = OpenProcess(Synchronize | ProcessQueryLimitedInformation, bInheritHandle: false, (uint)entry.ProcessId);
+
+        if (handle.IsInvalid)
+        {
+            // ⚠️ A PID THE WALK SAW AND THE QUERY CANNOT OPEN IS NOT ONE
+            // OUTCOME, and spelling it as one read a probe race as a
+            // containment failure on 2026-09-16. The tree here is live:
+            // helpers retire while the walk is still running, so by the time
+            // the row is built a descendant may simply be gone -- which is
+            // containment holding and not failing, since an exited
+            // process is neither a survivor nor an escapee.
+            //
+            // ProcessQueryVerdict decides which it was, from what Windows
+            // said, once. It is NOT a retry and NOT a suppression: any error
+            // that is not one of the two vanished-pid shapes stays
+            // Unreadable, keeps its note and still reddens the run. See
+            // JobContainmentTests.AWalkedPidThatVanishedBeforeTheQueryIsExitedAndAnyOtherFailureIsStillAFailure,
+            // which plants all three directions with live controls on the
+            // error numbers.
+            var lastError = Marshal.GetLastPInvokeError();
+            var note = $"OpenProcess failed with {lastError.ToString(CultureInfo.InvariantCulture)}";
+
+            return ProcessQueryVerdict.ForFailedOpen(lastError) is ProcessQueryVerdict.Verdict.Exited
+                ? Reading.Exited(note + ", so this process had exited between the walk and the query")
+                : Reading.Unreadable(note);
+        }
+
+        if (!GetProcessTimes(handle, out var created, out _, out _, out _))
+        {
+            return Reading.Unreadable($"GetProcessTimes failed with {Marshal.GetLastPInvokeError().ToString(CultureInfo.InvariantCulture)}");
+        }
+
+        return created == entry.CreatedFileTime
+            ? Read(handle, job)
+            : Reading.Exited(
+                $"its pid now names a process created at {created.ToString(CultureInfo.InvariantCulture)}, and not the one the walk listed, so that one had exited between the walk and the query");
+    }
+
+    /// <summary>
+    /// Reads one process through a handle known to name it: gone, or the job's or not.
+    /// </summary>
+    /// <remarks>
+    /// The zero timeout is the whole wait: <c>WaitForSingleObject</c> answers whether the
+    /// handle is signalled and returns, and parks nothing, as <c>LaunchedProcess.HasExited</c>
+    /// does in the product.
+    /// </remarks>
+    /// <param name="handle">An open handle to the process, with <c>SYNCHRONIZE</c>.</param>
+    /// <param name="job">The launcher's job.</param>
+    /// <returns>What was read.</returns>
+    private static Reading Read(SafeProcessHandle handle, JobObject job)
+    {
+        var answer = WaitForSingleObject(handle, 0);
+
+        return answer switch
+        {
+            WaitObject0 => Reading.Exited("it had exited between the walk and the query"),
+            WaitTimeout => new Reading(ProcessQueryVerdict.Verdict.Queried, job.Contains(handle), JobObject.IsInAnyJob(handle), ImagePathOf(handle), string.Empty),
+            _ => Reading.Unreadable(
+                $"WaitForSingleObject answered 0x{answer.ToString("X8", CultureInfo.InvariantCulture)} with error {Marshal.GetLastPInvokeError().ToString(CultureInfo.InvariantCulture)}"),
+        };
+    }
+
+    /// <summary>What the query of one walked process established.</summary>
+    /// <param name="Verdict">Whether the process was read, had gone, or could not be read.</param>
+    /// <param name="InOurJob">What <c>IsProcessInJob</c> said about the launcher's job, when it was asked.</param>
+    /// <param name="InAnyJob">What it said about any job, when it was asked.</param>
+    /// <param name="ImagePath">The image path read off the handle, printed and never compared.</param>
+    /// <param name="Note">Why a row is not a plain read, or empty.</param>
+    private readonly record struct Reading(ProcessQueryVerdict.Verdict Verdict, bool? InOurJob, bool? InAnyJob, string? ImagePath, string Note)
+    {
+        /// <summary>A process that had gone by its query: counted neither in the job nor out of it.</summary>
+        /// <param name="note">What showed it had gone.</param>
+        /// <returns>The reading.</returns>
+        public static Reading Exited(string note) => new(ProcessQueryVerdict.Verdict.Exited, null, null, null, note);
+
+        /// <summary>A process nothing could be read about, which reddens the run.</summary>
+        /// <param name="note">What failed.</param>
+        /// <returns>The reading.</returns>
+        public static Reading Unreadable(string note) => new(ProcessQueryVerdict.Verdict.Unreadable, null, null, null, note);
+    }
+
+    /// <summary>
+    /// Every member the job's port reported that is the job's own, each held open from its
+    /// join message until the report is written, and every join message that held nothing,
+    /// with the reason.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Opened on the drain's thread the moment its message is dequeued</b>, with
+    /// <c>SYNCHRONIZE</c> and <c>PROCESS_QUERY_LIMITED_INFORMATION</c>. A member that has
+    /// already exited still opens while anything holds it, and <c>IsProcessInJob</c> still says
+    /// it is the job's (20 of 20, measured 2026-10-12, kb), so it is held for what it is.
+    /// </para>
+    /// <para>
+    /// <b>One window stays open, and the membership check is what makes it harmless.</b> Between
+    /// a member's creation and this open the member can exit, nothing may hold it, and Windows
+    /// can give its pid to another process. That process is outside the job,
+    /// <c>IsProcessInJob</c> says so, and the message holds nothing. A member that exits with
+    /// nobody holding it fails the open, and is no seed, which costs the walk nothing: it is
+    /// gone.
+    /// </para>
+    /// </remarks>
+    /// <param name="job">The job whose members these are.</param>
+    private sealed class HeldMembers(JobObject job) : IDisposable
+    {
+        private readonly Lock _gate = new();
+        private readonly Dictionary<int, HeldMember> _held = [];
+        private readonly List<(int ProcessId, string Reason)> _notHeld = [];
+        private bool _released;
+
+        /// <summary>Whether the report is written and every handle let go.</summary>
+        public bool Released
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return _released;
+                }
+            }
+        }
+
+        /// <summary>Holds the process a join message names, while it is this job's.</summary>
+        /// <param name="processId">The pid the message names.</param>
+        public void Joined(int processId)
+        {
+            var handle = OpenProcess(Synchronize | ProcessQueryLimitedInformation, bInheritHandle: false, (uint)processId);
+            string? reason;
+
+            try
+            {
+                if (handle.IsInvalid)
+                {
+                    reason = $"OpenProcess failed with {Marshal.GetLastPInvokeError().ToString(CultureInfo.InvariantCulture)}, so the member had exited and nothing held it";
+                }
+                else
+                {
+                    reason = ReasonNotToHold(handle, out var created);
+
+                    if (reason is null)
+                    {
+                        lock (_gate)
+                        {
+                            // A message that arrives after the report holds nothing, and a second
+                            // message for a member already held needs no second handle. Another
+                            // process under a pid still held is what the held handle prevents, and
+                            // the report says so if it ever happens.
+                            if (!_released)
+                            {
+                                if (!_held.TryGetValue(processId, out var already))
+                                {
+                                    _held[processId] = new HeldMember(processId, created, handle);
+                                    handle = null;
+                                }
+                                else if (already.CreatedFileTime != created)
+                                {
+                                    reason = $"a second process under a pid already held, created at {created.ToString(CultureInfo.InvariantCulture)}, which a held handle is measured to prevent";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                handle?.Dispose();
+            }
+
+            if (reason is not null)
+            {
+                Refuse(processId, reason);
+            }
+        }
+
+        /// <summary>The members held now, for one walk.</summary>
+        /// <returns>A copy keyed by pid; the handles stay this object's.</returns>
+        public Dictionary<int, HeldMember> Held()
+        {
+            lock (_gate)
+            {
+                return new Dictionary<int, HeldMember>(_held);
+            }
+        }
+
+        /// <summary>Every join message that held nothing, for the report.</summary>
+        /// <returns>One object per message: the pid and the reason.</returns>
+        public JsonArray NotHeld()
+        {
+            lock (_gate)
+            {
+                return [.. _notHeld.Select(entry => new JsonObject { ["pid"] = entry.ProcessId, ["reason"] = entry.Reason })];
+            }
+        }
+
+        /// <summary>Lets every handle go: the report is written.</summary>
+        public void Release()
+        {
+            lock (_gate)
+            {
+                _released = true;
+
+                foreach (var member in _held.Values)
+                {
+                    member.Dispose();
+                }
+
+                _held.Clear();
+            }
+        }
+
+        /// <inheritdoc />
+        public void Dispose() => Release();
+
+        private string? ReasonNotToHold(SafeProcessHandle handle, out long created)
+        {
+            created = 0;
+
+            try
+            {
+                if (!job.Contains(handle))
+                {
+                    return "its pid names a process outside the job, so the member had exited and Windows had given the pid away before it was opened";
+                }
+            }
+            catch (Win32Exception failure)
+            {
+                return $"IsProcessInJob failed with {failure.NativeErrorCode.ToString(CultureInfo.InvariantCulture)}";
+            }
+
+            return GetProcessTimes(handle, out created, out _, out _, out _)
+                ? null
+                : $"GetProcessTimes failed with {Marshal.GetLastPInvokeError().ToString(CultureInfo.InvariantCulture)}";
+        }
+
+        private void Refuse(int processId, string reason)
+        {
+            lock (_gate)
+            {
+                _notHeld.Add((processId, reason));
+            }
+        }
+    }
+
+    /// <summary>One member held open from its join message: who it is, and the handle.</summary>
+    /// <param name="processId">Its pid, which the handle pins.</param>
+    /// <param name="createdFileTime">Its creation time, read off the handle.</param>
+    /// <param name="handle">The handle, with <c>SYNCHRONIZE</c> and <c>PROCESS_QUERY_LIMITED_INFORMATION</c>.</param>
+    private sealed class HeldMember(int processId, long createdFileTime, SafeProcessHandle handle) : IDisposable
+    {
+        /// <summary>Its pid.</summary>
+        public int ProcessId { get; } = processId;
+
+        /// <summary>Its creation time.</summary>
+        public long CreatedFileTime { get; } = createdFileTime;
+
+        /// <summary>The handle that pins its pid.</summary>
+        public SafeProcessHandle Handle { get; } = handle;
+
+        /// <inheritdoc />
+        public void Dispose() => Handle.Dispose();
     }
 
     /// <summary>
@@ -857,7 +1171,12 @@ internal static partial class JobProbe
     }
 
     /// <summary>One process in the snapshot: identity only, never a name.</summary>
-    private readonly record struct ProcessEntry(int ProcessId, int ParentProcessId, long CreatedFileTime, int Depth);
+    /// <param name="ProcessId">Its pid.</param>
+    /// <param name="ParentProcessId">The pid of the process that created it.</param>
+    /// <param name="CreatedFileTime">Its creation time, or 0 when it could not be read as the snapshot's.</param>
+    /// <param name="Depth">How far below a seed the walk found it.</param>
+    /// <param name="Held">Whether the launcher has held it since its join message.</param>
+    private readonly record struct ProcessEntry(int ProcessId, int ParentProcessId, long CreatedFileTime, int Depth, bool Held);
 
     /// <summary>
     /// The member the plant of 95 c ended, held open past its exit until the launcher ends.
@@ -1077,6 +1396,10 @@ internal static partial class JobProbe
         out long lpExitTime,
         out long lpKernelTime,
         out long lpUserTime);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint WaitForSingleObject(SafeProcessHandle hHandle, uint dwMilliseconds);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
