@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
+using System.Globalization;
 using System.Security.AccessControl;
 using System.Text.Json.Nodes;
 using BrowserAI.Sessions;
@@ -500,6 +502,85 @@ internal sealed class SessionListTests
     private static string BlockFor(string text, string directory) =>
         text.Split("\n\n", StringSplitOptions.None)
             .Single(block => block.StartsWith(directory + "\n", StringComparison.Ordinal));
+
+    /// <summary>
+    /// A listing answers sizes from the background's measurement of the session folders and
+    /// walks nothing itself: a file written after a measurement is not in the next answer,
+    /// an answer older than the fresh window says how old it is and starts a measurement,
+    /// and the answer after that one has the file in it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 for the maintainer's 80 c</b>, in his words verbatim:
+    /// <i>"78-82 your recommendation"</i>, and his condition, <i>"browserai_list and the
+    /// dashboard show sizes from a background measurement, and say how old a size is when
+    /// it is not fresh"</i>. The arm moves the session's own clock past
+    /// <see cref="SessionTimes.FolderSizesFreshFor"/>, so nothing here waits for a minute to
+    /// pass.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AListingAnswersSizesFromTheBackgroundMeasurementAndSaysHowOldTheyAre()
+    {
+        var clock = new ManualClock();
+
+        await using var sessions = await RigSessionEnvironment.CreateAsync(clock: clock);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var session = Path.Combine(sessions.Root, "weighed-in-the-background");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "a session whose size the listing reads from a measurement",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        async Task<string> listAsync() => TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject { ["directory"] = sessions.Root }));
+
+        static string sizesOf(string text) =>
+            string.Join('\n', text.Split('\n').Where(static line => line.Contains("size on disk:", StringComparison.Ordinal) || line.TrimStart().StartsWith("output:", StringComparison.Ordinal)));
+
+        var first = await listAsync();
+
+        await Assert.That(first).Contains("output: 0 B in 0 file(s)");
+
+        // A file the next answer would count if the listing walked the folder.
+        await File.WriteAllBytesAsync(Path.Combine(session, SessionLayout.OutputFolderName, "written-after-the-measurement.bin"), new byte[3 * 1024 * 1024]);
+
+        var second = await listAsync();
+
+        await Assert.That(sizesOf(second)).IsEqualTo(sizesOf(first)).Because("the listing walked the session's folder for its answer");
+        await Assert.That(second).DoesNotContain("Sizes were measured");
+
+        clock.Advance(SessionTimes.FolderSizesFreshFor * 3);
+
+        var stale = await listAsync();
+
+        await Assert.That(stale).Contains("Sizes were measured 3 minutes ago, and are being measured again.");
+        await Assert.That(sizesOf(stale)).IsEqualTo(sizesOf(first));
+
+        // The measurement the stale answer started finishes, and the answer after it has
+        // the file in it and no age.
+        var waited = Stopwatch.StartNew();
+        var fresh = await listAsync();
+
+        while (sizesOf(fresh) == sizesOf(first))
+        {
+            if (waited.Elapsed > TestDefaults.InProcessHang)
+            {
+                throw new TimeoutException($"no measurement after the stale answer reached the listing -- after {waited.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)} s.");
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(20));
+            fresh = await listAsync();
+        }
+
+        await Assert.That(fresh).Contains("output: 3.0 MiB in 1 file(s)");
+        await Assert.That(fresh).DoesNotContain("Sizes were measured");
+    }
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>
         await rig.Client.RoundTripAsync("tools/call", new JsonObject

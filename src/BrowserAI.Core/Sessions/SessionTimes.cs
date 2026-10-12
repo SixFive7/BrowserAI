@@ -291,6 +291,21 @@ internal static class SessionTimes
     public static TimeSpan PageToolBudget { get; } = TimeSpan.FromSeconds(60);
 
     /// <summary>
+    /// How old the measurement of the session folders may be and still be shown without
+    /// its age: one minute. <c>BackgroundPageFolders.ForAsync</c> starts a new measurement
+    /// behind a listing's answer older than this, and <c>SessionManager</c>'s listing and
+    /// <c>StorageContent.Render</c> say how old an older one is.
+    /// </summary>
+    /// <remarks>
+    /// <b>Chosen 2026-10-12 with the maintainer's 80 c</b>, in his words verbatim:
+    /// <i>"78-82 your recommendation"</i>, and his condition, <i>"say how old a size is
+    /// when it is not fresh"</i>. A browser writes into its profile while a page is open,
+    /// so a size is out of date as soon as it is taken; a minute keeps a listing an agent
+    /// repeats inside one task on one measurement. The build's choice, for his review.
+    /// </remarks>
+    public static TimeSpan FolderSizesFreshFor { get; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
     /// Upstream's own idle timeout, in milliseconds: one hour, which no launch writes
     /// since 2026-10-08. The value of <c>BrowserConfiguration.IdleTimeoutMilliseconds</c>.
     /// </summary>

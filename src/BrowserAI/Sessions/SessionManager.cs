@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.App.Page;
+using BrowserAI.Background;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Logging;
@@ -569,6 +571,7 @@ internal sealed class SessionManager : IAsyncDisposable
     private readonly SessionIndex _index;
     private readonly ILogger _logger;
     private readonly ServerRegistryReap _reap;
+    private readonly BackgroundPageFolders _folders;
     private int _disposed;
     /// <summary>What <see cref="_shutdownCause"/> holds before anything was declared.</summary>
     private const int Undeclared = -1;
@@ -612,7 +615,17 @@ internal sealed class SessionManager : IAsyncDisposable
         // stderr -- so a record of a reap in a session's log would be the one
         // machine-wide event in a per-session file.
         _reap = new ServerRegistryReap(environment.Payload, loggerFactory.CreateLogger<ServerRegistryReap>());
+
+        // 80 c, 2026-10-12: the one measurement of the session folders, which the page and
+        // browserai_list both read.
+        _folders = new BackgroundPageFolders(_index, () => Held().Select(static session => session.Directory), _environment.Clock);
     }
+
+    /// <summary>
+    /// The measurement of every session folder, which <c>browserai_list</c> answers from and
+    /// the page shows: one measurement, decided by the maintainer, 80 c, 2026-10-12.
+    /// </summary>
+    public IPageFolders Folders => _folders;
 
     /// <summary>
     /// The browsers root, so a refusal can name the directory a human would
@@ -2703,9 +2716,16 @@ internal sealed class SessionManager : IAsyncDisposable
         var output = Path.Combine(location.FullPath, SessionLayout.OutputFolderName);
         var (bytes, files) = await SessionLayout.SizeAndFilesAsync(output).ConfigureAwait(false);
 
-        return $"output: {Sizes.Describe(bytes)} in {files.ToString(CultureInfo.InvariantCulture)} file(s) -- "
-            + $"BrowserAI never deletes any of it, on any schedule or at any size; {SessionToolSurface.Destroy} is what removes a session and everything under it.";
+        return OutputLine(bytes, files);
     }
+
+    /// <summary>The output line, out of a size and a count however they were found.</summary>
+    /// <param name="bytes">What <c>output\</c> holds, in bytes.</param>
+    /// <param name="files">How many files.</param>
+    /// <returns>The line.</returns>
+    private static string OutputLine(long bytes, int files) =>
+        $"output: {Sizes.Describe(bytes)} in {files.ToString(CultureInfo.InvariantCulture)} file(s) -- "
+        + $"BrowserAI never deletes any of it, on any schedule or at any size; {SessionToolSurface.Destroy} is what removes a session and everything under it.";
 
     /// <summary>A duration in the largest unit that does not round to zero.</summary>
     /// <param name="span">How long.</param>
@@ -2725,25 +2745,41 @@ internal sealed class SessionManager : IAsyncDisposable
         var lines = new List<string>();
         var found = 0;
 
-        foreach (var entry in await _index.FollowUnderAsync(prefix).ConfigureAwait(false))
-        {
-            if (entry.Session is not { } session || entry.Record is not { } record)
-            {
-                continue;
-            }
+        var listed = (await _index.FollowUnderAsync(prefix).ConfigureAwait(false))
+            .Where(static entry => entry.Session is not null && entry.Record is not null)
+            .Select(static entry => (Session: entry.Session!, Record: entry.Record!))
+            .ToList();
 
+        // ⚠️ 80 c, 2026-10-12, the maintainer's words verbatim: "78-82 your recommendation".
+        // The sizes come from the background's measurement of the session folders, the one
+        // the page shows, and the listing walks nothing: it waits for a measurement only
+        // when none has weighed a session it names, and says how old the sizes are when
+        // they are not fresh. Corrected that day (previously every listing walked each
+        // session it named, twice).
+        var measured = listed.Count is 0
+            ? null
+            : await _folders.ForAsync([.. listed.Select(static item => item.Session)], SessionTimes.FolderSizesFreshFor).ConfigureAwait(false);
+
+        foreach (var (session, record) in listed)
+        {
             found++;
-            var size = await SessionLayout.SizeOnDiskAsync(session.FullPath).ConfigureAwait(false);
-            var output = await OutputSizeAsync(session).ConfigureAwait(false);
+            var folder = measured?.ById(CensusPageSessions.IdOf(session.FullPath));
+            var size = folder?.Bytes is { } bytes ? Megabytes(bytes) : "could not be measured";
+            var output = folder is { Bytes: not null } ? OutputLine(folder.OutputBytes, folder.OutputFiles) : "output: could not be measured";
 
             lines.Add(
                 $"{session.FullPath}\n"
-                + $"  browser: {record.Browser}   size on disk: {Megabytes(size)}\n"
+                + $"  browser: {record.Browser}   size on disk: {size}\n"
                 + $"  created: {Stamp(record.Created)}   last used: {Stamp(record.LastUsed)}\n"
                 + $"  {output}\n"
                 + $"  {InUse(session)}\n"
                 + $"  {SessionErrors.Recorded(record.Purpose)}");
         }
+
+        var age = measured is null ? TimeSpan.Zero : _environment.Clock.GetUtcNow() - measured.MeasuredAt;
+        var sizesAre = age > SessionTimes.FolderSizesFreshFor
+            ? $"Sizes were measured {Age(age)} ago, and are being measured again.\n"
+            : string.Empty;
 
         // ⚠️ ON THE EMPTY ANSWER ONLY, and never above the walk. A listing that
         // found sessions has already proved the tree is there, and `list` is the
@@ -2774,7 +2810,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"No BrowserAI sessions under '{root}'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named.",
                 IsError: false)
             : new ToolOutcome(
-                $"{found.ToString(CultureInfo.InvariantCulture)} session(s) under '{root}':\n\n" + string.Join("\n\n", lines),
+                $"{found.ToString(CultureInfo.InvariantCulture)} session(s) under '{root}':\n{sizesAre}\n" + string.Join("\n\n", lines),
                 IsError: false);
     }
 

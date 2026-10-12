@@ -402,7 +402,8 @@ internal static partial class Program
             backgroundLogger)
         {
             Holds = updates,
-            Folders = new BackgroundPageFolders(new SessionIndex(paths, backgroundLogger), () => host.Sessions.Held().Select(static session => session.Directory), clock),
+            // 80 c, 2026-10-12: the session manager's measurement, which browserai_list reads too.
+            Folders = host.Sessions.Folders,
             Changelog = ShippedChangelog.ForThisBuild(),
             Install = install,
         };

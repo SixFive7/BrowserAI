@@ -85,9 +85,18 @@ internal enum BackgroundStart
 /// <remarks>
 /// <b>Added 2026-10-11, the maintainer's 43 b</b>: each session folder's size, and the
 /// session folders not open now. Whether a folder is open is read when the page is drawn,
-/// from the sessions the background holds then, and never stored here.
+/// from the sessions the background holds then, and never stored here. <b>The output
+/// folder's two numbers since 2026-10-12</b>, the maintainer's 80 c: the same listing finds
+/// them, and <c>browserai_list</c> reports them beside the folder's size.
 /// </remarks>
-internal sealed record SessionFolder(string Id, string Directory, long? Bytes);
+internal sealed record SessionFolder(string Id, string Directory, long? Bytes)
+{
+    /// <summary>What the folder's <c>output</c> folder holds, in bytes.</summary>
+    public long OutputBytes { get; init; }
+
+    /// <summary>How many files the folder's <c>output</c> folder holds.</summary>
+    public int OutputFiles { get; init; }
+}
 
 /// <summary>Every session folder BrowserAI knows of and its size, measured at one moment.</summary>
 /// <param name="MeasuredAt">When the measurement finished.</param>

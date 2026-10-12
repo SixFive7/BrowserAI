@@ -43,8 +43,14 @@ internal static class StorageContent
             return html.Append("<p class=\"small\">Measuring the session folders.</p>\n").ToString();
         }
 
+        // 80 c, 2026-10-12: how old the measurement is, once it is not fresh.
+        var age = view.Now - measured.MeasuredAt;
+        var measuredAt = age > BrowserAI.Sessions.SessionTimes.FolderSizesFreshFor
+            ? $"Measured at {PageWords.ClockToTheSecond(measured.MeasuredAt)}, {PageWords.Minutes(age)} ago."
+            : $"Measured at {PageWords.ClockToTheSecond(measured.MeasuredAt)}.";
+
         _ = html.Append("<p class=\"small read-at\">")
-            .Append(PageContent.Text(view.Measuring ? "Measuring again." : $"Measured at {PageWords.ClockToTheSecond(measured.MeasuredAt)}."))
+            .Append(PageContent.Text(view.Measuring ? "Measuring again." : measuredAt))
             .Append(' ').Append(PageContent.Button("b-measure-sessions", "measure-sessions", "Measure again", "btn quiet", "refresh")).Append("</p>\n");
 
         if (measured.Folders.Count is 0)

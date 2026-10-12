@@ -175,6 +175,46 @@ internal sealed class DashboardTests
     }
 
     /// <summary>
+    /// The storage page says how old its measurement is once it is older than the fresh
+    /// window, and only then.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-12 for the maintainer's 80 c</b>, in his words verbatim:
+    /// <i>"78-82 your recommendation"</i>, and his condition, <i>"say how old a size is when
+    /// it is not fresh"</i>. The measurement's time is set against the page's own clock, so
+    /// the arm waits for nothing to grow old.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStoragePageSaysHowOldItsMeasurementIsOnceItIsNotFresh()
+    {
+        await using var rig = await PageRig.CreateAsync();
+
+        rig.Sessions.Snapshot = Busy();
+        rig.Folders.Folders = [new SessionFolder(CensusPageSessions.IdOf(CheckoutRounding), CheckoutRounding, 1024 * 1024)];
+        rig.Folders.At = rig.Clock.GetUtcNow() - (BrowserAI.Sessions.SessionTimes.FolderSizesFreshFor * 5);
+
+        _ = await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Storage));
+
+        using var storage = await rig.StreamAsync(rig.Gate.Root, 1, "storage");
+
+        var stale = await StateContainingAsync(storage, "min ago");
+
+        await Assert.That(stale).IsNotNull();
+        await Assert.That(stale!).Contains($"Measured at {PageWords.ClockToTheSecond(rig.Folders.At)}, 5 min ago.");
+
+        // Measured again at the page's own now: the time, and no age.
+        rig.Folders.At = rig.Clock.GetUtcNow();
+
+        await Assert.That((await rig.ActAsync("""{"action":"measure-sessions"}""")).Status).IsEqualTo(204);
+
+        var fresh = await StateContainingAsync(storage, $"Measured at {PageWords.ClockToTheSecond(rig.Folders.At)}.");
+
+        await Assert.That(fresh).IsNotNull();
+        await Assert.That(fresh!).DoesNotContain("min ago");
+    }
+
+    /// <summary>
     /// The storage page lists every session folder BrowserAI knows of with its size, largest
     /// first, and says which are open now and which are not; the home's card says the total
     /// and the two parts; and a folder not open now opens in Explorer by its opaque name.
