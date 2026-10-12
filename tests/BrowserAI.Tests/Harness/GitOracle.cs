@@ -6,8 +6,8 @@ using System.Globalization;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// What git says about this repository: the files it holds, and the tag that is
-/// exactly at HEAD.
+/// What git says about this repository: the files it holds, the tag that is
+/// exactly at HEAD, and what a release's tag holds.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -186,6 +186,29 @@ internal static class GitOracle
         var (diffed, changed, _) = await RunAsync([.. new[] { "diff", "--name-only", sha + "..HEAD", "--" }, .. within]);
 
         return diffed is 0 ? changed.Trim().Length > 0 : null;
+    }
+
+    /// <summary>Every path a release's tag holds, its folders included.</summary>
+    /// <remarks>
+    /// <b><c>ls-tree -r -t</c> on <c>refs/tags/</c> and the tag</b>: the full name, so a branch
+    /// or a path spelled like the tag cannot answer for it, and <c>-t</c> so a link to a folder
+    /// is found as well as one to a file. <see langword="null"/> is <i>could not ask</i>: no git,
+    /// or no such tag in this checkout.
+    /// </remarks>
+    /// <param name="tag">The tag, as git spells it, <c>v1.0.0</c>.</param>
+    /// <returns>The paths with forward slashes, or <see langword="null"/>.</returns>
+    public static async Task<IReadOnlySet<string>?> PathsAtTagAsync(string tag)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+
+        if (!await IsAvailableAsync())
+        {
+            return null;
+        }
+
+        var (exitCode, output, _) = await RunAsync("ls-tree", "-r", "-t", "-z", "--name-only", "refs/tags/" + tag);
+
+        return exitCode is 0 ? output.Split('\0', StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.Ordinal) : null;
     }
 
     private static async Task<bool> ProbeAsync()

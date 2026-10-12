@@ -1737,7 +1737,9 @@ background to install now; the listener reads what holds the update once a secon
 new state when it has changed. The changelog page shows the installed version's section of the changelog
 embedded in the build, or the unreleased one for a development build, and since 2026-10-12 (56 a) a
 sidebar of every release it holds, each at an address of its own, with each link into the repository
-opening the file on GitHub at that release's tag (88 c, 92 b). The toasts' **Install now** and
+opening the file on GitHub at that release's tag (88 c, 92 b), and a file renamed since that release as
+it is named today at the build's ref, from the table of renames `ChangelogPageContent.Renamed` (122 b,
+*added 2026-10-12 by addition*). The toasts' **Install now** and
 **Changelog** open them. *Added 2026-10-09 by addition:* the background builds the page with no feed of
 its own, so the status page checks for nothing itself; its update section reads what holds the update
 from the same source the update page does, says whether a downloaded update waits, and links to the

@@ -13,6 +13,33 @@ namespace BrowserAI.App.Page;
 internal sealed record ChangelogSection(string? Version, string? Date, string Markdown);
 
 /// <summary>
+/// A file of this repository renamed after a release whose section links it by its name today
+/// (122 b).
+/// </summary>
+/// <param name="Path">Its path today, from the repository's root.</param>
+/// <param name="Was">Its path before the rename, which the tags of the releases before it hold.</param>
+/// <param name="On">The day of the rename, <c>yyyy-MM-dd</c>: a release dated that day or before holds the file as <paramref name="Was"/>.</param>
+internal sealed record RenamedFile(string Path, string Was, string On);
+
+/// <summary>The refs a section's links into the repository are drawn at.</summary>
+/// <param name="Section">The section's own: its release's tag, or the build's ref for what is not yet released (92 b).</param>
+/// <param name="Build">The build's ref, which a link to a file renamed after the section's release is drawn at (122 b).</param>
+/// <param name="Dated">The day the section's release is dated, <c>yyyy-MM-dd</c>, or <see langword="null"/> for what is not yet released and for a release whose heading gives no date.</param>
+internal sealed record LinkRefs(string Section, string Build, string? Dated)
+{
+    /// <summary>
+    /// The ref a link to a file is drawn at: the build's for a file renamed on or after the day
+    /// the section's release is dated, and the section's own for every other.
+    /// </summary>
+    /// <param name="path">The file's path from the repository's root, as the changelog names it.</param>
+    /// <returns>The ref.</returns>
+    public string At(string path) =>
+        Dated is { } day && ChangelogPageContent.Renamed.Any(renamed => string.Equals(renamed.Path, path, StringComparison.Ordinal) && string.CompareOrdinal(day, renamed.On) <= 0)
+            ? Build
+            : Section;
+}
+
+/// <summary>
 /// The dashboard's changelog page: the section of <c>CHANGELOG.md</c> shipped inside
 /// the build for the version that is installed, rendered readably.
 /// </summary>
@@ -50,7 +77,11 @@ internal sealed record ChangelogSection(string? Version, string? Date, string Ma
 /// build's ref is its release's tag for a release build; <b>a pre-release build has no tag and
 /// carries no commit</b>, since the informational version is built with no source revision,
 /// so its links go to <see cref="PreReleaseRef"/>, which is the build's choice, for his
-/// review. Only a relative path that stays inside the repository becomes such a link; an
+/// review. <b>A link in a release's section to a file renamed since that release opens the file
+/// as it is named today, at the build's ref</b>, his answer verbatim: <i>"122 b"</i>, since the
+/// release's tag holds it under its old name; the page knows such a file from
+/// <see cref="Renamed"/>, a table of renames with their days, which is the build's choice, for
+/// his review. Only a relative path that stays inside the repository becomes such a link; an
 /// address keeps the treatment it had, and anything else stays its label.
 /// </para>
 /// </remarks>
@@ -74,6 +105,24 @@ internal static partial class ChangelogPageContent
     /// </summary>
     public const string PreReleaseRef = "master";
 
+    /// <summary>
+    /// The files renamed after a release whose section links them, each with the day of its
+    /// rename: how the page knows that a release's tag holds such a file under another name
+    /// (122 b), which is the build's choice, for his review.
+    /// </summary>
+    /// <remarks>
+    /// <b>One row for each rename a shipped section's link needs</b>, held against git by
+    /// <c>ChangelogPageTests.EveryLinkTheShippedReleasesDrawIntoTheRepositoryOpensAFileItsRefHolds</c>:
+    /// a link a release's tag does not hold fails there until its rename is a row here, and a
+    /// row that sends a link its tag holds to the build's ref fails there too. The day is the
+    /// date of the commit that made the rename.
+    /// </remarks>
+    public static IReadOnlyList<RenamedFile> Renamed { get; } =
+    [
+        // ecfbab39, 2026-09-29, after 1.1.0: the working instructions left the CLAUDE.md name.
+        new("AGENTS.md", "CLAUDE.md", "2026-09-29"),
+    ];
+
     /// <summary>The ref a build's links into the repository are drawn at: <c>v</c> and its version for a release, <see cref="PreReleaseRef"/> for anything else.</summary>
     /// <param name="version">The build's version; build metadata after <c>+</c> is ignored.</param>
     /// <returns>The ref.</returns>
@@ -87,8 +136,9 @@ internal static partial class ChangelogPageContent
     }
 
     /// <summary>
-    /// The address on GitHub of a link's target inside this repository, at a ref, or
-    /// <see langword="null"/> for a target that is not a relative path inside it.
+    /// The address on GitHub of a link's target inside this repository, at the ref its section
+    /// draws that file at, or <see langword="null"/> for a target that is not a relative path
+    /// inside it.
     /// </summary>
     /// <remarks>
     /// The changelog lives at the repository's root, so a path is read from there. A path that
@@ -96,12 +146,12 @@ internal static partial class ChangelogPageContent
     /// none of this repository's files, and a bare anchor is one of the changelog's own.
     /// </remarks>
     /// <param name="target">The link's target, as the changelog writes it.</param>
-    /// <param name="at">The ref.</param>
+    /// <param name="links">The refs its section's links are drawn at.</param>
     /// <returns>The address, or <see langword="null"/>.</returns>
-    internal static string? InRepository(string target, string at)
+    internal static string? InRepository(string target, LinkRefs links)
     {
         ArgumentNullException.ThrowIfNull(target);
-        ArgumentNullException.ThrowIfNull(at);
+        ArgumentNullException.ThrowIfNull(links);
 
         var hash = target.IndexOf('#', StringComparison.Ordinal);
         var path = hash < 0 ? target : target[..hash];
@@ -136,7 +186,7 @@ internal static partial class ChangelogPageContent
                 continue;
             }
 
-            segments.Add(Uri.EscapeDataString(Uri.UnescapeDataString(part)));
+            segments.Add(Uri.UnescapeDataString(part));
         }
 
         if (segments.Count is 0 || segments.All(static segment => segment.Length is 0))
@@ -144,7 +194,7 @@ internal static partial class ChangelogPageContent
             return null;
         }
 
-        return RepositoryFiles + Uri.EscapeDataString(at) + "/" + string.Join('/', segments)
+        return RepositoryFiles + Uri.EscapeDataString(links.At(string.Join('/', segments))) + "/" + string.Join('/', segments.Select(Uri.EscapeDataString))
             + (anchor.Length is 0 ? string.Empty : "#" + Uri.EscapeDataString(Uri.UnescapeDataString(anchor)));
     }
 
@@ -282,13 +332,14 @@ internal static partial class ChangelogPageContent
         }
 
         // 92 b, 2026-10-12: a release's own tag for its section, the build's ref for what is
-        // not yet released.
-        var at = section.Version is { } itsVersion ? RefFor(itsVersion) : RefFor(installed);
+        // not yet released; and 122 b, the same day: the build's ref for a file renamed since
+        // the section's release.
+        var links = new LinkRefs(section.Version is { } itsVersion ? RefFor(itsVersion) : RefFor(installed), RefFor(installed), section.Version is null ? null : section.Date);
 
         if (view.Releases.Count < 2)
         {
             _ = html.Append("<div class=\"log-group\">\n");
-            AppendBody(html, section.Markdown, at);
+            AppendBody(html, section.Markdown, links);
             return html.Append("</div>\n").ToString();
         }
 
@@ -309,15 +360,15 @@ internal static partial class ChangelogPageContent
         }
 
         _ = html.Append("</nav>\n<div class=\"log-group\">\n");
-        AppendBody(html, section.Markdown, at);
+        AppendBody(html, section.Markdown, links);
         return html.Append("</div>\n</div>\n").ToString();
     }
 
     /// <summary>One section's Markdown, as HTML: its group headings, and each entry folded under its headline.</summary>
     /// <param name="html">Where to write.</param>
     /// <param name="markdown">The section.</param>
-    /// <param name="at">The ref a link into the repository is drawn at, or <see langword="null"/> to show such a link as its label.</param>
-    internal static void AppendBody(StringBuilder html, string markdown, string? at = null)
+    /// <param name="links">The refs a link into the repository is drawn at, or <see langword="null"/> to show such a link as its label.</param>
+    internal static void AppendBody(StringBuilder html, string markdown, LinkRefs? links = null)
     {
         ArgumentNullException.ThrowIfNull(html);
         ArgumentNullException.ThrowIfNull(markdown);
@@ -330,7 +381,7 @@ internal static partial class ChangelogPageContent
         {
             if (paragraph.Count > 0)
             {
-                _ = html.Append("<p>").Append(Inline(string.Join(' ', paragraph), at)).Append("</p>\n");
+                _ = html.Append("<p>").Append(Inline(string.Join(' ', paragraph), links)).Append("</p>\n");
                 paragraph.Clear();
             }
         }
@@ -342,7 +393,7 @@ internal static partial class ChangelogPageContent
                 return;
             }
 
-            AppendEntry(html, entry, at);
+            AppendEntry(html, entry, links);
             entry = null;
         }
 
@@ -365,7 +416,7 @@ internal static partial class ChangelogPageContent
             {
                 closeList();
                 flushParagraph();
-                _ = html.Append("<h2>").Append(Inline(line[4..].Trim(), at)).Append("</h2>\n");
+                _ = html.Append("<h2>").Append(Inline(line[4..].Trim(), links)).Append("</h2>\n");
             }
             else if (line.StartsWith("- ", StringComparison.Ordinal))
             {
@@ -401,9 +452,9 @@ internal static partial class ChangelogPageContent
 
     /// <summary>Escapes text and then reads the inline Markdown the changelog uses.</summary>
     /// <param name="text">Raw Markdown text.</param>
-    /// <param name="at">The ref a link into the repository is drawn at, or <see langword="null"/> to show such a link as its label.</param>
+    /// <param name="links">The refs a link into the repository is drawn at, or <see langword="null"/> to show such a link as its label.</param>
     /// <returns>The HTML.</returns>
-    internal static string Inline(string text, string? at = null)
+    internal static string Inline(string text, LinkRefs? links = null)
     {
         ArgumentNullException.ThrowIfNull(text);
 
@@ -426,7 +477,7 @@ internal static partial class ChangelogPageContent
 
             return target.StartsWith("https://", StringComparison.Ordinal)
                 ? $"<a href=\"{PageContent.Text(target)}\" target=\"_blank\" rel=\"noopener noreferrer\">{label}</a>"
-                : at is not null && InRepository(target, at) is { } file
+                : links is not null && InRepository(target, links) is { } file
                     ? $"<a href=\"{PageContent.Text(file)}\" target=\"_blank\" rel=\"noopener noreferrer\">{label}</a>"
                     : label;
         });
@@ -437,7 +488,7 @@ internal static partial class ChangelogPageContent
     }
 
     /// <summary>One entry: its headline as the summary, and the rest folded under it.</summary>
-    private static void AppendEntry(StringBuilder html, List<string> lines, string? at)
+    private static void AppendEntry(StringBuilder html, List<string> lines, LinkRefs? links)
     {
         // The headline is the first paragraph: the icon and the bold sentence.
         var headline = new List<string>();
@@ -459,7 +510,7 @@ internal static partial class ChangelogPageContent
 
         if (split.Success && split.Groups["rest"].Value.Trim() is { Length: > 0 } rest)
         {
-            _ = detail.Append("<p>").Append(Inline(rest, at)).Append("</p>\n");
+            _ = detail.Append("<p>").Append(Inline(rest, links)).Append("</p>\n");
         }
 
         var paragraph = new List<string>();
@@ -470,7 +521,7 @@ internal static partial class ChangelogPageContent
             {
                 if (paragraph.Count > 0)
                 {
-                    _ = detail.Append("<p>").Append(Inline(string.Join(' ', paragraph), at)).Append("</p>\n");
+                    _ = detail.Append("<p>").Append(Inline(string.Join(' ', paragraph), links)).Append("</p>\n");
                     paragraph.Clear();
                 }
             }
@@ -482,12 +533,12 @@ internal static partial class ChangelogPageContent
 
         if (paragraph.Count > 0)
         {
-            _ = detail.Append("<p>").Append(Inline(string.Join(' ', paragraph), at)).Append("</p>\n");
+            _ = detail.Append("<p>").Append(Inline(string.Join(' ', paragraph), links)).Append("</p>\n");
         }
 
         _ = detail.Length is 0
-            ? html.Append("<p class=\"entry\">").Append(Inline(summary, at)).Append("</p>\n")
-            : html.Append("<details class=\"entry\"><summary>").Append(Inline(summary, at)).Append("</summary>\n").Append(detail).Append("</details>\n");
+            ? html.Append("<p class=\"entry\">").Append(Inline(summary, links)).Append("</p>\n")
+            : html.Append("<details class=\"entry\"><summary>").Append(Inline(summary, links)).Append("</summary>\n").Append(detail).Append("</details>\n");
     }
 
     /// <summary>Every <c>## </c> section of the changelog: its heading and its text.</summary>
