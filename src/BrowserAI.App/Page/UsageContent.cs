@@ -36,6 +36,13 @@ internal static class UsageContent
     /// <summary>What a figure says where Windows would not report it.</summary>
     public const string NotMeasured = "Not measured";
 
+    /// <summary>
+    /// What a session's CPU and own memory say once a reading has been taken that does not
+    /// include the session: nothing of its own runs then. The maintainer's 107 b of
+    /// 2026-10-12; <see cref="Measuring"/> is for before the first reading.
+    /// </summary>
+    public const string NotRunning = "Not running";
+
     /// <summary>The id of the overview's card that says the totals, which a session's shared line links to.</summary>
     public const string CardId = "card-usage";
 
@@ -59,6 +66,12 @@ internal static class UsageContent
     /// <param name="view">What is true now; <see cref="PageView.Usage"/> is the newest reading, or <see langword="null"/> before the first.</param>
     /// <param name="session">The session.</param>
     /// <returns>The HTML.</returns>
+    /// <remarks>
+    /// A session the newest reading does not include says <see cref="NotRunning"/>, 107 b;
+    /// before the first reading every session says <see cref="Measuring"/>, and where Windows
+    /// would not report, <see cref="NotMeasured"/>. <i>Until 2026-10-12 a session no reading
+    /// included said Measuring for as long as that lasted.</i>
+    /// </remarks>
     public static string SessionLines(PageView view, SessionEntry session)
     {
         ArgumentNullException.ThrowIfNull(view);
@@ -66,11 +79,16 @@ internal static class UsageContent
 
         var id = PageContent.Text(session.Id);
         var figures = Figures(view.Usage);
-        var unmeasured = view.Usage is { Unreadable: true } ? NotMeasured : Measuring;
+        var notInTheReading = view.Usage switch
+        {
+            null => Measuring,
+            { Unreadable: true } => NotMeasured,
+            _ => NotRunning,
+        };
 
         return new StringBuilder()
-            .Append("<dt>CPU</dt><dd data-usage=\"").Append(SessionKey(session.Id, "cpu")).Append("\">").Append(PageContent.Text(figures.GetValueOrDefault(SessionKey(session.Id, "cpu"), unmeasured))).Append("</dd>")
-            .Append("<dt>Own memory</dt><dd data-usage=\"").Append(SessionKey(session.Id, "own")).Append("\">").Append(PageContent.Text(figures.GetValueOrDefault(SessionKey(session.Id, "own"), unmeasured))).Append("</dd>")
+            .Append("<dt>CPU</dt><dd data-usage=\"").Append(SessionKey(session.Id, "cpu")).Append("\">").Append(PageContent.Text(figures.GetValueOrDefault(SessionKey(session.Id, "cpu"), notInTheReading))).Append("</dd>")
+            .Append("<dt>Own memory</dt><dd data-usage=\"").Append(SessionKey(session.Id, "own")).Append("\">").Append(PageContent.Text(figures.GetValueOrDefault(SessionKey(session.Id, "own"), notInTheReading))).Append("</dd>")
             .Append("<dt>Shared memory</dt><dd><a id=\"l-shared-").Append(id).Append("\" href=\"").Append(PageContent.Home(view.Tab)).Append('#').Append(CardId).Append("\" data-usage=\"shared-all\">")
             .Append(PageContent.Text(figures["shared-all"])).Append("</a></dd>")
             .ToString();
