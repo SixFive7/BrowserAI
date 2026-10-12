@@ -301,6 +301,12 @@ internal sealed record PageView(
     /// <summary>Whether a measurement of the session folders is running now.</summary>
     public bool Measuring { get; init; }
 
+    /// <summary>
+    /// The newest reading of the CPU and memory BrowserAI's own processes use, or
+    /// <see langword="null"/> before the first (59 b, 62 a and 65 a, 2026-10-11).
+    /// </summary>
+    public PageUsage? Usage { get; init; }
+
     /// <summary>The moment the page is drawn at.</summary>
     public DateTimeOffset Now { get; init; }
 }
