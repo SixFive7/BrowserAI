@@ -259,6 +259,18 @@ is named as candidates and says so.
       [`DECISIONS.md`](DECISIONS.md#licence-release-policy-and-the-tool-surface) has the
       decision.
 
+- [ ] **A row of the coverage block naming the cut each release run gated, the maintainer's 146.**
+      His words of 2026-10-13 verbatim: *"146 your recommendation"*, which was
+      `ReleaseCutTests.AReleaseRunGatesTheStampedTaggedCommitAndTheProgramThatShips` now and
+      this row later. The arm fails a release run that is not at the cut and says nothing in
+      a green one, so six green logs do not say which tag, version and commit they gated.
+      **What to do:** a `release cut` row on every run, with the tag exactly at HEAD, the
+      version the test host was built as and the commit, and `NOT A CUT` in a run that is
+      not one, rendered from the reading the arm judges, the way the `publish freshness`
+      row and `PublishedSlice.EnsureFresh` render one reading. **Done when** each of a cut's
+      six logs names its tag, version and commit, and an arm ties the row to the arm's
+      reading.
+
 - [ ] **Narrow the stale-list refusal to a tool list that differs, the maintainer's 127 c.**
       [Q261 b](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)
       refuses, once, the first call of a connection that has not listed. A relay re-dialled

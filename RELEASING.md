@@ -70,6 +70,23 @@ the gated binary carried `[Unreleased]` and a pre-release version, the shipped o
 stamped section, the release's own version and links at its tag, and no run saw that page
 inside the program that ships. The order is now:
 
+⚠️ **ONCE, AT THE FIRST CUT IN THIS ORDER: A REHEARSAL IN A SCRATCH CLONE, BETWEEN STEPS 1
+AND 2 -- the maintainer's words of 2026-10-13 verbatim: *"148 b"*.** The six runs have
+never been taken at a stamped and tagged commit since the What is new page's arms arrived,
+so the first cut rehearses the order once at a version no release will carry. After step 1
+is committed, `git clone --local` the cut's checkout into a scratch folder: a clone, never a
+worktree, because a tag made in a worktree is a tag of every worktree of the repository.
+In the clone, copy in `payload\` and the checkout's `Releases\`, `archive\` and
+`test-pack\` with it; stamp `CHANGELOG.md` with
+`pwsh -File build/Get-ReleaseNotes.ps1 -StampVersion 9.9.9`; seal `[9.9.9]` with the line
+`AppendOnlyRecordTests` prints; commit; and `git tag v9.9.9` there. Then take steps 4 and 5
+in the clone with one release run from each shell,
+`build/Invoke-ReleaseGate.ps1 -Runs 1 -Prefix rehearsal-ps` and
+`build/invoke-release-gate.sh 1 rehearsal-bash`, about 35 minutes. Both green: keep the two
+logs with the cut's evidence, delete the clone, and go on to step 2 in the real checkout. A
+red is a work item under 100 a, found before the real stamp. The cut that takes it says so
+here, by addition, and the rehearsal is not repeated at later cuts unless he asks for it.
+
 1. **The drift check of the day, committed, and the clock.** [Item 3](#3-upstream-drift-adjudicated)'s
    check is taken on the day of the cut and committed before the stamp, so the tag rides a
    commit that carries it; `build/New-Release.ps1` refuses a stale one at step 4. The cut
@@ -78,8 +95,8 @@ inside the program that ships. The order is now:
    steps 4 to 6 can end before local midnight, and otherwise wait for 00:00 and take the
    check of the new day first. A release run took 11 min 21 s to 11 min 35 s on the
    night of 2026-10-12, by the runs' own summaries. *If the six runs end after midnight all the
-   same, the cut is made again on the new day, as after a red: the build's choice, for his
-   review.*
+   same, the cut is made again on the new day, as after a red: the maintainer's words of
+   2026-10-13 verbatim, "145 a".*
 2. **[Item 10](#10-the-changelogs-unreleased-section-is-not-empty): the stamp and the
    seal, one commit.** A new section, by the command, which dates it by the local clock at
    the moment it is made. This commit is the cut.
@@ -89,8 +106,8 @@ inside the program that ships. The order is now:
    and its What is new page reads the stamped section as its own, with its links at the
    tag; `ChangelogPageTests.EveryLinkTheShippedReleasesDrawIntoTheRepositoryOpensAFileItsRefHolds`
    reads each of those links through git at that tag, and is red without it. Item 9's two
-   commands are recorded here. *The tag before the runs, and not after them, is the build's
-   choice, for his review.*
+   commands are recorded here. *The tag before the runs, and not after them: the
+   maintainer's words of 2026-10-13 verbatim, "143 a".*
 4. **The slice, then the clean pack.** Publish the slice; delete the four files of the
    shipping feed that step 5 of the old order below names, keeping `archive/` and
    `test-pack/`; and run `build/New-Release.ps1` with no `-AllowPreRelease`. It publishes
@@ -101,7 +118,9 @@ inside the program that ships. The order is now:
    installer from the same publish. A filtered pass over `AppendOnlyRecordTests`,
    `ChangelogTests`, `ChangelogPageTests`, `RecordedCountTests` and
    `DocumentationLinkTests` here costs minutes and finds a seal pasted wrong before the
-   first of the six runs does: iteration, not evidence.
+   first of the six runs does: iteration, not evidence. *This pass, and the six runs'
+   reading of the drift check's day beside the stamp's, were the build's choices; the
+   maintainer approved them as drafted, in his words of 2026-10-13 verbatim: "152 a".*
 5. **[Item 8](#8-run-everything): the six runs, at the cut.** Each one fails, in
    `ReleaseCutTests.AReleaseRunGatesTheStampedTaggedCommitAndTheProgramThatShips`, unless
    the tag exactly at HEAD names the newest dated section, `[Unreleased]` holds no entry,
@@ -120,9 +139,10 @@ inside the program that ships. The order is now:
    release exists.
 
 **A red stops the cut, [his 100 a](DECISIONS.md#licence-release-policy-and-the-tool-surface),
-and the cut is made again.** The cause is found and the fix planted red. *Then, as the
-build's choice for his review*: the stamp commit is reverted, the fix lands as any change
-does, with its entry under `[Unreleased]` when it has one, and steps 1 to 5 run again. The
+and the cut is made again.** The cause is found and the fix planted red. *Then, by the
+maintainer's words of 2026-10-13 verbatim, "144 a"*: the stamp commit is reverted, the
+fix lands as any change does, with its entry under `[Unreleased]` when it has one, and
+steps 1 to 5 run again. The
 new stamp is dated by the clock at that moment, so a retry after local midnight carries
 the new day, after the drift check of that day. The tag moves with `git tag -f` in this
 checkout, which drafts nothing because it was never pushed. The shipping feed already

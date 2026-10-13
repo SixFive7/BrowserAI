@@ -828,7 +828,11 @@ the changelog as one run of its bytes was measured on 2026-10-13
 **It is a test and not a refusal from the session hook**, as the filter's is: a
 filter that deselects it makes the run a filtered one, which a release run refuses
 from the session hook already, so a release run that reaches its end green has run
-this arm. *The build's choice, for his review.*
+this arm. The maintainer's words of 2026-10-13 verbatim: *"146 your
+recommendation"*, which was this arm now and, later, a row of the coverage block
+naming the tag, the version and the commit each release run gated, so that six green
+logs say which cut they gated; that row is
+[a TODO item](TODO.md#the-next-version).
 
 **What it cannot see**: whether the tag is pushed, which comes after the go; whether
 the six runs were six, since each run reads only itself; and whether the lookups

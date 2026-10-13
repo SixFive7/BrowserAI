@@ -35,7 +35,10 @@ namespace BrowserAI.Tests;
 /// host, the published slice and the release publish must each have been built as that
 /// version; the two published binaries must each carry this tree's <c>CHANGELOG.md</c> byte for
 /// byte; and the full package that ships must carry the release publish. A release run in the
-/// order before 2026-10-13, at the commit before the stamp, fails on the first of those.
+/// order before 2026-10-13, at the commit before the stamp, fails on the first of those. The
+/// maintainer chose the tag before the runs and this arm to hold it, in his words of 2026-10-13
+/// verbatim: <i>"143 a"</i> and <i>"146 your recommendation"</i>, the second with a row of the
+/// coverage block naming the cut to follow, which <c>TODO.md</c> carries.
 /// </para>
 /// <para>
 /// <b>An ordinary run gates no cut</b>, so it holds the judgement over readings it builds, one
