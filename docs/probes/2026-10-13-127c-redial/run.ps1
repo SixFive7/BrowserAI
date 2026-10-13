@@ -186,10 +186,9 @@ $clientVariables = @{
     DRIVER_BOUND_MS = '180000'
 }
 
-if ($Client -eq 'stream') {
-    # What the VS Code extension sets for the binary it starts.
-    $clientVariables['CLAUDE_CODE_ENTRYPOINT'] = 'claude-vscode'
-}
+# No CLAUDE_CODE_ENTRYPOINT for the stream-json transport: with the extension's own value,
+# claude-vscode, the binary answers "Not logged in" and never asks the model stub, which is
+# what the rig's first attempt of 2026-10-13 met; the transport is the same without it.
 
 $driver = Start-Windowless $Node @((Join-Path $PSScriptRoot 'driver.js')) $clientVariables (Join-Path $work 'driver.out.log')
 

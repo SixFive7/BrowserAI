@@ -26,8 +26,10 @@ $ErrorActionPreference = 'Stop'
 $refusalText = 'was NOT forwarded, once, because this connection has never asked BrowserAI for its tool list'
 
 $run = Get-Content -LiteralPath (Join-Path $Folder 'run.json') -Raw | ConvertFrom-Json
-$clientPid = [int](Get-Content -LiteralPath (Join-Path $Folder 'client.pid') -Raw)
-$events = @(Get-Content -LiteralPath (Join-Path $Folder 'standin.jsonl') | ForEach-Object { $_ | ConvertFrom-Json })
+$pidFile = Join-Path $Folder 'client.pid'
+$clientPid = if (Test-Path -LiteralPath $pidFile) { [int](Get-Content -LiteralPath $pidFile -Raw) } else { 0 }
+$standInLog = Join-Path $Folder 'standin.jsonl'
+$events = if (Test-Path -LiteralPath $standInLog) { @(Get-Content -LiteralPath $standInLog | ForEach-Object { $_ | ConvertFrom-Json }) } else { @() }
 
 $hellos = @($events | Where-Object { $_.event -eq 'received' -and $_.method -eq 'browserai/hello' })
 $calls = @($events | Where-Object { $_.event -eq 'received' -and $_.method -eq 'tools/call' })
@@ -35,7 +37,8 @@ $rewritten = @($events | Where-Object { $_.event -eq 'record-rewritten' })
 
 # What the model was handed: the tool results of the last request, which carries the
 # whole conversation.
-$requests = @(Get-Content -LiteralPath (Join-Path $Folder 'model.requests.jsonl') | ForEach-Object { $_ | ConvertFrom-Json })
+$requestLog = Join-Path $Folder 'model.requests.jsonl'
+$requests = if (Test-Path -LiteralPath $requestLog) { @(Get-Content -LiteralPath $requestLog | ForEach-Object { $_ | ConvertFrom-Json }) } else { @() }
 $results = @()
 
 if ($requests.Count -gt 0) {
