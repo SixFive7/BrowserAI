@@ -269,6 +269,16 @@ is named as candidates and says so.
       record for its client does is the build's to propose. The sentence is not reworded
       until then. **Done when** a re-dial on the same build forwards its first call, a
       re-dial across an update that moved the list is refused as today, and arms hold both.
+      ⚠️ *Added 2026-10-13 by addition, his 149 a, 150 a, 151 b and 152 a, which
+      [`DECISIONS.md`](DECISIONS.md) quotes:* a relay with no record for its client refuses
+      as Q261 b does; the record is keyed by the client process and the relay's own command
+      line; the arms that hold both run in process, two relays sharing one record, and the
+      file's own arms run on real files; no arm drives a real Claude Code, and the same list
+      let through is instead measured once, end to end, after the release, with a scratch
+      `CLAUDE_CONFIG_DIR` and `CODEX_HOME`, then recorded in the kb with its date, its
+      versions and how to re-establish it, with re-verification row 149 checking it by
+      hand. Which process starts a server Claude Code launches again is measured already:
+      [the batch](docs/evidence/2026-10-13-redial-parent/README.md).
 
 - [ ] **The update toast, and the sessions page it opens.** The decision is
       [Q254](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)

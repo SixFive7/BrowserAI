@@ -114,6 +114,9 @@ internal sealed class ClientReconnectTests
     /// whose record names the relay's own list, needs the relay started by the client
     /// itself, with no process between them, and is held in process by
     /// <c>RelayTests.AClientThatListedThisSameListThroughAnEarlierRelayHasItsFirstCallPassedOn</c>.
+    /// Against a real Claude Code it is checked by hand and by no arm, the maintainer's
+    /// 151 b of 2026-10-13, in his words verbatim <i>"151 b"</i>: re-verification row 149
+    /// says how.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>

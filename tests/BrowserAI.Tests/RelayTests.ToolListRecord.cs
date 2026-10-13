@@ -28,6 +28,14 @@ namespace BrowserAI.Tests;
 /// <b>The refusal's words do not change</b>, at the same decision: every arm that meets it
 /// compares it with <see cref="SessionErrors.ToolListPredatesThisServer"/> whole.
 /// </para>
+/// <para>
+/// <b>His answers of 2026-10-13, verbatim: <i>"149 a"</i>, <i>"150 a"</i>, <i>"151 b"</i>
+/// and <i>"152 a"</i>.</b> A relay with no record refuses as Q261 b does (149 a), which the
+/// Q261 b arms with the rig's empty record hold; the record's key is the file's, held by
+/// <c>ToolListRecordTests</c> (150 a); and no arm drives a real Claude Code through this
+/// (151 b): with a real client, the same list let through is checked by hand, and
+/// re-verification row 149 says how.
+/// </para>
 /// </remarks>
 internal sealed partial class RelayTests
 {
