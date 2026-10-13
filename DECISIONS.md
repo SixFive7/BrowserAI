@@ -1393,7 +1393,8 @@ review:**
    (`FirefoxRestore.NothingAnswered`), where it was said of every `about:neterror` page, a
    redirect loop and a server error among them; and `SessionTimes.FirefoxRestoreWait` counts
    from the start of the browser, as the code always did, and not from once it is up, the
-   early end of the wait left as built. **Considered and not taken**, each kept as built:
+   early end of the wait left as built. *The wait's start moved the same day, to the first list's answer:
+   item 6.* **Considered and not taken**, each kept as built:
    - the tabs reopen *"at that resume"* only when the resume starts the browser; a Firefox not
      yet installed at the resume, or a start that fails, leaves it to the first browser call,
      and the resume's own answer says which. Not taken: a condition in each text that a model
@@ -1428,6 +1429,22 @@ review:**
      reads both answers at once since (`RawPipeClient.AwaitManyAsync`);
    - and the change with the reading's texts and codes in, and the agent's close saying when it
      waits for the start: 48 of 48 green.
+6. **The wait for the restore counts from the first list's answer, with the browser up**
+   (`FirefoxRestore.StartAsync`, *previously from before the first list, the start of the
+   browser, as the reading's fact 5 kept it the same day*). The PowerShell half of the gate at
+   `f4778400`, a full run with the commit charge at 88 to 89%, met a real-Firefox resume whose
+   dead tab had not come up 10 s after the browser's start, and the resume answered that
+   nothing had come up: true, but the launch had eaten the wait. Counted from the first list's
+   answer, a slow launch keeps the whole wait, a normal resume is unchanged, and a profile
+   whose restore brings nothing waits about the launch's time longer. Not taken: the wait kept
+   as it was, with the full run's case recorded as the open edge; and a cap of 20 s from the
+   start of the browser, which doubles what a restore that brings nothing costs.
+   `FirefoxRestoreTests.AFirefoxResumeWhoseBrowserStartsSlowlyStillWaitsTheWholeWaitForTheRestore`
+   holds the first list while the session's clock moves past the whole wait, and was red
+   against the start as it stood, 1 of 49. **The real-Firefox arm was corrected the same day**:
+   it had held the reopened answer alone, a claim about how fast a busy machine is, and holds
+   either true answer since, then lists the tabs until the dead one is up and reads its
+   `document.documentURI` as `about:neterror?e=connectionFailure`.
 
 
 ### The home, its CPU and memory, and the after-update notice, decided 2026-10-11

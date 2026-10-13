@@ -2397,7 +2397,13 @@ a reopened tab is listed, and reads every tab's document URI in one call;
 [the numbers index](../numbers.md). A session's live pages come up with the launch and a dead
 one about 1.6 to 1.8 s after it, so the time the list must hold has to outlast that gap:
 derived from the listing times, and not run, a 1 s span would have answered before the dead
-tab in all six `three-mixed` resumes.
+tab in all six `three-mixed` resumes. ⚠️ *Added 2026-10-13 by addition, measured that day*:
+under the suite's full run, the PowerShell half of the gate at `f4778400`, the commit charge at
+88 to 89%, the real-Firefox arm's resume of the `one-dead` case had no reopened tab 10 s after
+the browser's start, 1 of 1, the start's own log line reading *"started its browser in
+00:00:10.1579153: the child listed 1 tab(s) last"*, and the resume answered that nothing had
+come up. The wait has counted from the first list's answer, with the browser up, since then,
+so a slow launch no longer eats it.
 
 ⚠️ **Not established:** a machine slower than this one, on which a dead tab comes up more than
 3 s after the last change and is left out of the resume's answer, the open edge of
