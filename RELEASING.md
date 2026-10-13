@@ -162,8 +162,9 @@ then six runs of 784 cases each, all green
 ([the session's ledger](docs/ledger/2026-09-22-release-session.md)). That does not measure
 the suite of a later cut at a tagged commit: the What is new page and its arms arrived
 from 2026-10-08, two of them on 2026-10-12, and one of those two was red on any stamped
-tree until 2026-10-13 (`ChangelogPageTests.EveryReleaseTheChangelogHoldsIsReadInItsOrder`,
-which expected an empty `[Unreleased]` in the page's list of releases).
+tree (`ChangelogPageTests.EveryReleaseTheChangelogHoldsIsReadInItsOrder`, which expected an
+empty `[Unreleased]` in the page's list of releases) until the maintainer's 142 c fixed it
+in the 2.0.0 cut itself, on 2026-10-13, before that cut's stamp.
 
 **What this order costs.** The date is chosen before the runs and not after them, so a cut
 that overruns midnight is made again, where the old order waited for 00:00 and stamped

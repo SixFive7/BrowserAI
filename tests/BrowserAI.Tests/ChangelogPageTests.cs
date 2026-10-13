@@ -559,8 +559,17 @@ internal sealed partial class ChangelogPageTests
 
     /// <summary>
     /// Every release the changelog holds is read, in its order, with what is not yet released
-    /// first when it holds an entry and left out when it holds none.
+    /// first when it holds an entry and left out when it holds none; and the shipped changelog
+    /// is read that way as it stands and as the stamp leaves it.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>As the stamp leaves it, on every run, since 2026-10-13</b>, with the maintainer's
+    /// 103 e, in his words of 2026-10-12 verbatim: <i>"103 your recommendation"</i>, which moved
+    /// the six release runs after the stamp. His 142 c of the same day fixed this arm's scan for
+    /// a stamped tree; what it reads is the tree as it stands, so between two cuts the stamped
+    /// state went unread until the next stamp. <c>build/Get-ReleaseNotes.ps1</c> now stamps a
+    /// copy of an unstamped changelog, so every run reads both states.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task EveryReleaseTheChangelogHoldsIsReadInItsOrder()
@@ -585,7 +594,43 @@ internal sealed partial class ChangelogPageTests
 
         await Assert.That(headings.Count).IsGreaterThanOrEqualTo(4).Because("the positive control: the shipped changelog holds at least four sections the page reads");
         await Assert.That(string.Join("|", ShippedChangelog.Releases().Select(static release => release.Version ?? "Unreleased"))).IsEqualTo(string.Join("|", headings));
+
+        // The scan over the two changelogs above, one with an entry under [Unreleased] and one
+        // with none, so it is read both ways whatever state the tree is in.
+        await Assert.That(string.Join("|", HeadingsThePageReads(Sample))).IsEqualTo("Unreleased|1.2.0|1.1.0");
+        await Assert.That(string.Join("|", HeadingsThePageReads("# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-09-17\n\n- x\n"))).IsEqualTo("1.0.0");
+
+        // ⚠️ And the shipped changelog as the stamp leaves it, since 2026-10-13 (103 e): the
+        // release script stamps a copy. A tree that is stamped already is that state, and the
+        // script refuses to stamp it a second time.
+        var shipped = ShippedChangelog.Text()!;
+
+        if (HeadingsThePageReads(shipped).Contains(ChangelogPageContent.Unreleased))
+        {
+            using var scratch = await ScratchDirectory.CreateAsync("changelog-page-stamped");
+            var copy = Path.Combine(scratch.Path, "CHANGELOG.md");
+
+            await File.WriteAllTextAsync(copy, shipped);
+
+            var run = await ChildRunner.RunAsync(
+                "pwsh",
+                ["-NoProfile", "-NonInteractive", "-File", StampScript, "-Path", copy, "-StampVersion", "9.9.9", "-Date", "2026-10-13"],
+                RepositoryLayout.Root.FullName,
+                TestDefaults.ProcessHang);
+
+            await Assert.That(run.ExitCode ?? -1).IsEqualTo(0).Because(run.StandardError);
+
+            var stamped = await File.ReadAllTextAsync(copy);
+
+            await Assert.That(stamped.Replace("\r\n", "\n", StringComparison.Ordinal)).Contains("## [Unreleased]\n\n## [9.9.9] - 2026-10-13\n");
+            await Assert.That(HeadingsThePageReads(stamped)).DoesNotContain(ChangelogPageContent.Unreleased);
+            await Assert.That(string.Join("|", ChangelogPageContent.Releases(stamped).Select(static release => release.Version ?? "Unreleased")))
+                .IsEqualTo(string.Join("|", HeadingsThePageReads(stamped)));
+        }
     }
+
+    /// <summary>The release script that stamps the changelog, RELEASING.md item 10's command.</summary>
+    private static string StampScript { get; } = Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ReleaseNotes.ps1");
 
     /// <summary>
     /// Every section heading a changelog holds, in order, but for an <c>[Unreleased]</c> heading
