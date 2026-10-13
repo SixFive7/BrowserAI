@@ -136,6 +136,14 @@ more* link to its detail; nothing else depends on it.
   BrowserAI now waits for the other program to let go, for up to 30 seconds, as it already did
   for its other records.
 
+- 📦 **The release stamp now writes the changelog's new line breaks as line feeds.**
+  `build/Get-ReleaseNotes.ps1 -StampVersion` wrote the two line breaks it adds above a new
+  release's heading as Windows writes them, a carriage return and a line feed, into a file
+  whose every other line ends in a line feed alone. Git took the two carriage returns out on
+  commit, so until the next checkout the changelog BrowserAI compiles in for the What is new
+  page was not the committed one at those two line ends. The stamp writes line feeds now, and
+  a test stamps a copy and refuses a carriage return in it.
+
 ## [2.0.0] - 2026-10-13
 
 BrowserAI gives an AI agent a real browser on Windows. It is one program now, and

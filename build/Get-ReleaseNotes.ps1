@@ -126,10 +126,16 @@ if ($StampVersion) {
         exit 1
     }
 
+    # ⚠️ LINE FEEDS, THE LINE END OF EVERY LINE IN THE FILE -- 2026-10-14. CHANGELOG.md is an
+    # LF file by .gitattributes, and BrowserAI compiles it in for the What is new page. The two
+    # line breaks were [Environment]::NewLine until that day, a carriage return and a line feed
+    # on Windows: git took the two carriage returns out on commit, and until the next checkout
+    # the changelog the build compiled in still carried them.
+    # ChangelogTests.TheStampWritesLineFeedsAndNoCarriageReturn reads the stamped bytes.
     $heading = $section.Value.Split("`n")[0].TrimEnd("`r")
     $stamped = $content.Remove($section.Index, $heading.Length).Insert(
         $section.Index,
-        ($heading + [Environment]::NewLine + [Environment]::NewLine + '## [' + $StampVersion + '] - ' + $when))
+        ($heading + "`n`n" + '## [' + $StampVersion + '] - ' + $when))
 
     Set-Content -LiteralPath $Path -Value $stamped -NoNewline -Encoding utf8NoBOM
     Write-Verbose "Stamped $StampVersion into $Path."

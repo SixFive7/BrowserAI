@@ -993,6 +993,12 @@ internal sealed partial class ChangelogTests
     /// stamped file through <c>ReplaceLineEndings</c>, which hides the difference, so this arm
     /// reads its bytes.
     /// </para>
+    /// <para>
+    /// <b>Watched red on 2026-10-14</b> at <c>cdd781bb</c>, against the script as it stood at
+    /// <c>df445d33</c>, in a filtered run: expected 0 carriage returns, found 2, with the
+    /// fixture's premise and the count's control green before the stamp. Green with the stamp
+    /// writing two line feeds.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
