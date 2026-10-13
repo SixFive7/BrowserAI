@@ -568,7 +568,12 @@ internal sealed partial class ChangelogPageTests
     /// the six release runs after the stamp. His 142 c of the same day fixed this arm's scan for
     /// a stamped tree; what it reads is the tree as it stands, so between two cuts the stamped
     /// state went unread until the next stamp. <c>build/Get-ReleaseNotes.ps1</c> now stamps a
-    /// copy of an unstamped changelog, so every run reads both states.
+    /// copy of an unstamped changelog, so every run reads both states. <b>Watched red on
+    /// 2026-10-13</b> over an unstamped tree, against a scan that kept an empty
+    /// <c>[Unreleased]</c> as the scan before 142 c did, in a filtered run: at the fixture with
+    /// no entry under <c>[Unreleased]</c>, <i>"Unreleased|1.0.0"</i> against <i>"1.0.0"</i>; and
+    /// with that assertion taken out, at the stamped copy, which still listed
+    /// <c>Unreleased</c>. Green as committed.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]

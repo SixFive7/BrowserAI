@@ -75,9 +75,20 @@ internal sealed partial class ReleaseCutTests
     /// assembly.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The controls first, and unconditionally.</b> No ordinary run is a cut, so a judgement
     /// read only in a release run would run for the first time on the day it matters. Each
     /// fault is planted alone, so a judgement that only refused them together would fail here.
+    /// </para>
+    /// <para>
+    /// <b>Watched red and green on 2026-10-13, each as a filtered release run</b>, which the
+    /// session refuses as well. Red over this branch in the order of that morning: no tag at
+    /// HEAD, two entries under <c>[Unreleased]</c>, the test host and the slice built as
+    /// <c>2.0.1-alpha.0.6</c>, and no release publish and no 2.0.0 package, six problems with
+    /// the tag's first. Green in a scratch clone of the same commit, stamped 9.9.9 and tagged
+    /// <c>v9.9.9</c> in the clone only, its slice published and its release published and
+    /// packed by <c>build/New-Release.ps1</c>, which uploaded nothing.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]

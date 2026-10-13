@@ -32,6 +32,12 @@ internal sealed class CompiledInFilesTests
     /// there; the suite carries a copy of every product project; and the reading resolves the
     /// shapes this tree writes and refuses every other.
     /// </summary>
+    /// <remarks>
+    /// <b>Watched red on 2026-10-13</b> against the tree with <c>FreshnessInputs</c> not reading
+    /// <c>CompiledInFiles</c>, in a filtered run: <i>"Expected to be empty ... but received
+    /// "CHANGELOG.md, upstream-snapshots/tools-list.json, tool-verdicts.json""</i>; green as
+    /// committed.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheFreshnessCheckWatchesEveryFileAProductProjectCompilesIn()
