@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
+using BrowserAI.Sessions;
+
 namespace BrowserAI.Runtime;
 
 /// <summary>
@@ -66,6 +69,92 @@ internal static class FileSystemThread
     /// <param name="overwrite">Whether a file already at <paramref name="to"/> is replaced.</param>
     /// <returns>The rename.</returns>
     public static Task MoveFileAsync(string from, string to, bool overwrite) => RunAsync(() => Here.MoveFile(from, to, overwrite));
+
+    /// <summary>
+    /// Moves a file over the one at <paramref name="to"/> on the file-system thread, and
+    /// tries again while something holds that file open, for as long as the rename window's
+    /// budget.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-13 with the maintainer's 157 a</b>, in his words verbatim:
+    /// <i>"157 a"</i>. Windows refuses a rename over a file that any process has open,
+    /// whatever its share mode, with <c>ERROR_ACCESS_DENIED</c>
+    /// (<see href="../../../kb/windows/processes.md">the kb</see>, measured 2026-08-16), so
+    /// a reader that opened a record at the instant it was replaced made the write fail, and
+    /// five writers gave up on that first refusal: the after-update notice's record, the
+    /// page listener's memory, the record of the last update check, a session's
+    /// <c>browserai.lock</c> and the headed user agent's cache. A notice marked seen came
+    /// back after the next start. Each of them moves its record into place through here.
+    /// </para>
+    /// <para>
+    /// <b>What is waited out is a refusal that clears</b>: the denial a rename over an open
+    /// file and a file that is itself being replaced both give, and a sharing violation.
+    /// Anything else, a source that is not there or a directory that is gone, is answered
+    /// at once. The budget and the pauses are <see cref="SessionTimes.RenameBudget"/>,
+    /// <see cref="SessionTimes.RenameRetryFirstDelayMilliseconds"/> and
+    /// <see cref="SessionTimes.RenameRetryLongestDelayMilliseconds"/>, the numbers
+    /// <c>RenameWindow</c> waits out a reader's side of the same refusal with. The record of
+    /// a background and the session index keep loops of their own, with the budgets their
+    /// remarks give.
+    /// </para>
+    /// </remarks>
+    /// <param name="from">The file, written in full beside the one it replaces.</param>
+    /// <param name="to">The file it replaces.</param>
+    /// <returns>The move, once the file is in place.</returns>
+    /// <exception cref="UnauthorizedAccessException">The destination was still held when the budget ran out.</exception>
+    /// <exception cref="IOException">The move failed for another reason, or a sharing violation outlasted the budget.</exception>
+    public static Task ReplaceFileAsync(string from, string to) =>
+        WaitOutABusyDestinationAsync(() => MoveFileAsync(from, to, overwrite: true));
+
+    /// <summary>
+    /// Makes a move, and makes it again after each refusal that a file somebody holds
+    /// gives, until the move goes through or the rename window's budget runs out.
+    /// </summary>
+    /// <remarks>
+    /// <b>The loop of <see cref="ReplaceFileAsync"/>, with the move handed in</b>, so the
+    /// suite can drive it with refusals of its own making
+    /// (<c>DedicatedThreadTests</c>). The first move is handed over before this returns its
+    /// task, and every pause between two is awaited, so no thread waits in it.
+    /// </remarks>
+    /// <param name="move">One try of the move.</param>
+    /// <returns>The move, once a try has gone through.</returns>
+    internal static async Task WaitOutABusyDestinationAsync(Func<Task> move)
+    {
+        ArgumentNullException.ThrowIfNull(move);
+
+        var clock = Stopwatch.StartNew();
+        var delay = SessionTimes.RenameRetryFirstDelayMilliseconds;
+
+        while (true)
+        {
+            try
+            {
+                await move().ConfigureAwait(false);
+                return;
+            }
+            catch (UnauthorizedAccessException) when (clock.Elapsed < SessionTimes.RenameBudget)
+            {
+            }
+            catch (IOException failure) when (IsSharingViolation(failure) && clock.Elapsed < SessionTimes.RenameBudget)
+            {
+            }
+
+            await Task.Delay(delay).ConfigureAwait(false);
+            delay = Math.Min(delay * 2, SessionTimes.RenameRetryLongestDelayMilliseconds);
+        }
+    }
+
+    private const int ErrorSharingViolation = 32;
+
+    private const int ErrorLockViolation = 33;
+
+    /// <summary>Whether a failed move was refused because somebody holds a file in a mode that excludes it.</summary>
+    /// <remarks>The two codes <c>RenameWindow.IsSharingViolation</c> reads, for the one event Windows reports both ways.</remarks>
+    /// <param name="failure">The refusal.</param>
+    /// <returns><see langword="true"/> when the refusal is a sharing or a lock violation.</returns>
+    private static bool IsSharingViolation(IOException failure) =>
+        (failure.HResult & 0xFFFF) is ErrorSharingViolation or ErrorLockViolation;
 
     /// <summary>Renames a directory on the file-system thread.</summary>
     /// <param name="from">The directory.</param>

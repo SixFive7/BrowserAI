@@ -86,12 +86,38 @@ more* link to its detail; nothing else depends on it.
   next time a client asks BrowserAI for its tools.
   [`DECISIONS.md`](DECISIONS.md) has the decision, the maintainer's 127 c.
 
+- ✅ **Every test that polls a record BrowserAI moves into place now reads it through BrowserAI.**
+  The in-process home arm polled the after-update notice's record with a bare read, which fails
+  when it meets BrowserAI's move of the record into place, as the browser arm's did in a gate
+  run. It asks BrowserAI's own reader now, and a check over the whole suite refuses a poll that
+  reads such a record any other way, with a positive control for each shape it looks for.
+
+- ✅ **Two real-browser arms wait for the view their change sends before they read what it kept.**
+  The map arm and the home arm marked the page and took the first new view for the one their
+  change sent. The page also sends a view when a folder measurement it started comes in, at a
+  moment no arm chooses, so a late one could stand in for the change's. The map arm now waits
+  for the closed browser in its inspector, and the home arm for the measurement, before either
+  reads anything.
+
+- ✅ **A test run removes the tool-list records its relays wrote, and a gate stops on one left behind.**
+  Every relay the suite starts records the tool list it answered under the data root the suite
+  shares with the installed BrowserAI, keyed by the test host, and a gate had left 29 of them
+  there. The run's end removes every record keyed by its own test host now, and the snapshot a
+  gate takes before and after each run names any such record left behind, which stops the gate.
+
 ### Fixed
 
 - 🐛 **The dashboard no longer shows an older view after a newer one.**
   When two changes landed at once, such as a browser closing while a folder's size was being
   measured, a tab could show the view from before the newer change until the next one came.
   Each tab now receives its views in the order they were drawn.
+
+- 🐛 **BrowserAI no longer loses a write when another program has that file open at the same moment.**
+  An antivirus scan, an indexer or a second BrowserAI reading one of BrowserAI's small records
+  at the instant it was replaced made the write fail: an update's notice that had been marked as
+  seen came back after the next start, and opening a session could fail to take its folder.
+  BrowserAI now waits for the other program to let go, for up to 30 seconds, as it already did
+  for its other records.
 
 ## [2.0.0] - 2026-10-13
 

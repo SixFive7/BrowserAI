@@ -224,6 +224,17 @@ internal sealed class PageBrowserTests
     /// part, which a replacement takes away; the change that sends it is a session's browser
     /// closing, which the inspector it chose then says.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-13 by addition</b> (previously the paragraph above, and the arm
+    /// waited for the mark alone): a replacement is not yet the change's. The page's draw
+    /// starts a folder measurement on the thread pool and sends its first state once it is
+    /// in, so a measurement late enough to land after the mark could take the mark away with
+    /// the browser still drawn open. The arm waits until the mark is gone and the inspector
+    /// says the browser is closed, and then reads the focus and the choice. Found by the
+    /// sweep of the maintainer's 154 c, and planted red the same day on Chromium, with the
+    /// measurement held until after the mark: the old wait took the measurement's state, and
+    /// the inspector still said the browser was open.
+    /// </para>
     /// </remarks>
     /// <param name="browser">The provisioned family.</param>
     /// <returns>The assertion task.</returns>
@@ -315,12 +326,23 @@ internal sealed class PageBrowserTests
             rig.Sessions.Snapshot = DashboardTests.Busy(checkoutOpen: false);
             rig.Clock.Advance(BrowserAI.App.Page.PageService.HoldsWatchPeriod);
 
-            await Assert.That(await WaitForAsync(async () =>
-                (await evaluateAsync("() => document.querySelector('[data-old]') ? 'old' : 'replaced'")).Contains("replaced", StringComparison.Ordinal))).IsTrue();
+            // ⚠️ The closed view itself is waited for since 2026-10-13, by the sweep of the
+            // maintainer's 154 c (previously any state that took the mark away, and then the
+            // inspector read): the draw starts a folder measurement on the thread pool, whose
+            // first state goes out once it is in, and a measurement late enough to land after
+            // the mark took it away with the browser still drawn open. browser_evaluate answers
+            // "### Result" and the value in quotes, so the value is looked for in the answer.
+            async Task<bool> closedViewDrawnAsync()
+            {
+                var drawn = await evaluateAsync($"() => (document.querySelector('[data-old]') ? 'mark=kept' : 'mark=gone') + ' ' + document.getElementById('inspect-{node[2..]}').textContent");
+
+                return drawn.Contains("mark=gone", StringComparison.Ordinal) && drawn.Contains("No browser open", StringComparison.Ordinal);
+            }
+
+            await Assert.That(await WaitForAsync(closedViewDrawnAsync)).IsTrue();
 
             await Assert.That(await evaluateAsync("() => 'focus=' + (document.activeElement ? document.activeElement.id : '')")).Contains($"focus={node}");
             await Assert.That(await evaluateAsync($"() => 'shown=' + !document.getElementById('inspect-{node[2..]}').hidden")).Contains("shown=true");
-            await Assert.That(await evaluateAsync($"() => document.getElementById('inspect-{node[2..]}').textContent")).Contains("No browser open");
             await Assert.That(await evaluateAsync("() => 'wires=' + document.querySelectorAll('#wires path.wire').length")).Contains("wires=7");
         }
         finally

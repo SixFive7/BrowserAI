@@ -6,9 +6,12 @@
     Writes the clearance snapshot the gate compares either side of every run.
 
 .DESCRIPTION
-    The suite installs a real pack under a test id, and the eight things below are
-    the ones a run must not disturb. They are read before and after each run and
+    The suite installs a real pack under a test id, and the things below are the
+    ones a run must not disturb. They are read before and after each run and
     compared; a difference stops the gate instead of being reported at the end.
+    *Corrected 2026-10-13 (previously "the eight things below"), when the
+    eleventh reading arrived: the ninth and the tenth had already left the
+    number behind.*
 
       1. HKCU Uninstall\BrowserAI.app -- the maintainer's own Add/Remove entry,
          every value, because Velopack writes one key per pack id per user and an
@@ -84,6 +87,21 @@
          and `browserai-test` must be absent. `-ClassesKey` points this reading at a
          scratch key too, for `SuiteCoverageTests.TheClearanceNamesATestPacksLinkSchemeLeftBehind`.
 
+     11. The tool-list records of this checkout's test hosts -- ADDED 2026-10-13 with
+         the maintainer's 160 c, verbatim: "160 c". A relay keeps the tool list its
+         client was last answered under the data root's `tool-lists`, in a file named
+         for the client's pid and creation time (127 c), and a relay the suite starts
+         is its test host's child. A session's start records its test host under
+         `.work/clearance/test-hosts` by the same pid and creation time, and its end
+         removes the records keyed by it, so a record keyed by a recorded test host
+         is one a run left behind, and it must be absent. Only those: the installed
+         BrowserAI keeps the maintainer's own records in the same folder, and every
+         relay removes the records of clients that have gone, so the folder as a
+         whole changes in a gate for reasons that are not the suite's. `-DataRoot`
+         points the reading at a scratch data root for
+         `SuiteCoverageTests.TheClearanceNamesAToolListRecordATestHostLeftBehind`; the
+         gate never passes it.
+
     ⚠️ IT READS AND NEVER REPAIRS. A snapshot that fixed what it found would
     destroy the evidence of the run that broke it. On a difference the gate
     stops and a human looks; TESTING.md says how to clear a dangling key.
@@ -95,13 +113,19 @@
     The key under HKCU the activator reading and the scheme reading read,
     `Software\Classes` unless a test names a scratch key of its own.
 
+.PARAMETER DataRoot
+    The data root the tool-list reading reads, the one every BrowserAI resolves
+    when nothing names another, `%LOCALAPPDATA%\BrowserAI`, unless a test names a
+    scratch one of its own.
+
 .EXAMPLE
     pwsh -File build/Get-ClearanceSnapshot.ps1 -Tag ord-ps-1-before
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)] [string] $Tag,
-    [string] $ClassesKey = 'Software\Classes'
+    [string] $ClassesKey = 'Software\Classes',
+    [string] $DataRoot = (Join-Path ([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::LocalApplicationData, [System.Environment+SpecialFolderOption]::DoNotVerify)) 'BrowserAI')
 )
 
 # Continue and not Stop: a snapshot that throws half way through reports
@@ -389,6 +413,37 @@ try {
     $out += ('  browserai: {0}' -f $(if ($realScheme.Present) { 'starts=' + $(if ($null -ne $realScheme.Command) { $realScheme.Command } else { 'ABSENT' }) } else { 'ABSENT' }))
     $testScheme = Get-SchemeReading 'browserai-test'
     $out += ('  browserai-test: {0}' -f $(if ($testScheme.Present) { 'PRESENT <<< MUST BE ABSENT (starts=' + $(if ($null -ne $testScheme.Command) { $testScheme.Command } else { 'ABSENT' }) + ')' } else { 'ABSENT' }))
+}
+catch {
+    $out += "  UNREADABLE: $($_.Exception.Message)"
+}
+
+# 11. The tool-list records of this checkout's test hosts (160 c, 2026-10-13). A
+# record's name is `<client pid>-<client creation FILETIME>-<digest>.json`, and a
+# file a write of one left beside it begins the same way (127 c). A session's start
+# writes one file named `<pid>-<creation FILETIME>` under .work\clearance\test-hosts
+# for its test host, and every relay the suite starts is that test host's child, so
+# a record whose name begins with a recorded test host is the suite's. The names are
+# split as ToolListRecordFile.ClientOf splits them. Nothing else in the folder is
+# read: the maintainer's own records are his clients', and they come and go.
+$out += "--- the data root's tool-lists, the records of this checkout's test hosts ---"
+try {
+    $hostsFolder = Join-Path $root '.work' 'clearance' 'test-hosts'
+    $hosts = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    if (Test-Path -LiteralPath $hostsFolder) {
+        foreach ($file in (Get-ChildItem -LiteralPath $hostsFolder -File)) {
+            if ($file.Name -match '^\d+-\d+$') { $null = $hosts.Add($file.Name) }
+        }
+    }
+    $records = Join-Path $DataRoot 'tool-lists'
+    $left = @()
+    if ($hosts.Count -gt 0 -and (Test-Path -LiteralPath $records)) {
+        $left = @(Get-ChildItem -LiteralPath $records -File | Where-Object {
+                $parts = $_.Name.Split('-', 3)
+                $parts.Count -eq 3 -and $hosts.Contains($parts[0] + '-' + $parts[1])
+            } | ForEach-Object { $_.Name } | Sort-Object)
+    }
+    $out += '  keyed by a test host: ' + $(if ($left.Count -gt 0) { ($left -join ' | ') + ' <<< MUST BE ABSENT' } else { 'none' })
 }
 catch {
     $out += "  UNREADABLE: $($_.Exception.Message)"

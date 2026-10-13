@@ -117,6 +117,19 @@ internal static class SuiteCoverage
     [Before(TestSession)]
     public static async Task TakeTheInstallerLock() => await InstallerLock.TakeAsync();
 
+    /// <summary>
+    /// Records this test host for the clearance before the first test starts a relay.
+    /// </summary>
+    /// <remarks>
+    /// <b>A session hook, so no filter can deselect it</b>, and the maintainer's 160 c, in his
+    /// words verbatim: <i>"160 c"</i>. Every relay the run starts keys its tool-list record by
+    /// this test host, and the clearance snapshot names a record left behind for a test host
+    /// recorded here. See <see cref="SuiteToolLists"/>.
+    /// </remarks>
+    /// <returns>The recording.</returns>
+    [Before(TestSession)]
+    public static Task RecordThisTestHostForTheClearanceAsync() => SuiteToolLists.RecordThisTestHostAsync();
+
     /// <summary>Writes the coverage block at the end of the session.</summary>
     [After(TestSession)]
     public static async Task ReportWhatThisRunExercised()
@@ -129,6 +142,12 @@ internal static class SuiteCoverage
         // And the safe-mode scan, for the same reason: its closing scan reads any
         // process that started after the last tick.
         await SafeModeWatch.StopAsync();
+
+        // ⚠️ 160 c, 2026-10-13: the tool-list records this test host's relays wrote under
+        // the data root the suite shares with the installed BrowserAI. Every test has ended
+        // and closed the job of each relay it started, and a record this cannot remove is
+        // one the clearance snapshot names after the run. See SuiteToolLists.
+        _ = await SuiteToolLists.RemoveThisTestHostsRecordsAsync();
 
         var summary = await SuiteEnvironment.SummaryAsync();
 

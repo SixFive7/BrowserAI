@@ -29,6 +29,15 @@ namespace BrowserAI.Tests;
 /// itself. Nothing in it depends on how long the fold takes.
 /// </para>
 /// <para>
+/// ⚠️ <b>Nothing is marked before the folder measurement's state is drawn, since
+/// 2026-10-13</b>, by the sweep of the maintainer's 154 c (previously the first mark came
+/// straight after the page loaded): the home's draw starts that measurement on the thread
+/// pool, and its first state goes out once it is in, at a moment the arm does not choose.
+/// Sent after the second mark, it would draw the page again where the arm holds that a
+/// reading draws nothing. Planted red the same day on Chromium, with the measurement held
+/// until after the second mark: the kept read found the page drawn again.
+/// </para>
+/// <para>
 /// <b>The maintainer's 59 b and 57 a, 2026-10-11</b>, his words verbatim: <i>"Show this all
 /// with realtime updates."</i> and <i>"57 a - also allow dismissing the banner in a nice
 /// way."</i>
@@ -96,6 +105,14 @@ internal sealed class HomeBrowserTests
 
             await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 1)).IsTrue();
             await Assert.That(await evaluateAsync("() => document.querySelector('[data-usage=\"own\"]').textContent")).Contains("46 MB");
+
+            // ⚠️ The folder measurement's state is waited for first since 2026-10-13, by the sweep
+            // of the maintainer's 154 c: the draw starts that measurement on the thread pool and
+            // sends its first state once it is in, which could land after the second mark below
+            // and draw the page again where the arm holds that a reading draws nothing. The rig
+            // has no session folders, so the storage card says so once the measurement is in.
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync("() => document.getElementById('card-storage').textContent")).Contains("No session folder yet", StringComparison.Ordinal))).IsTrue();
 
             // The page's watch reads what holds the update and the sessions once a second, and
             // its first second sends the tab a new state. That is let happen and drawn before

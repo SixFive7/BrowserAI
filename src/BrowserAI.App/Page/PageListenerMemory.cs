@@ -136,13 +136,16 @@ internal sealed class PageListenerMemoryFile(string path) : IPageListenerMemory
     /// <inheritdoc />
     /// <remarks>
     /// Written beside itself and moved into place, so a reader never meets half of it; one
-    /// background serves a data root at a time, so the temporary name is never contended.
+    /// background serves a data root at a time, so the temporary name is never contended. The
+    /// move waits out a reader holding the file since 2026-10-13, the maintainer's 157 a
+    /// (<see cref="FileSystemThread.ReplaceFileAsync"/>); before that its first refusal was the
+    /// answer.
     /// </remarks>
     public async Task WriteAsync(int port, int tab)
     {
         var temporary = path + ".partial";
 
         await File.WriteAllTextAsync(temporary, string.Create(CultureInfo.InvariantCulture, $"port {port}\ntab {tab}\n")).ConfigureAwait(false);
-        await FileSystemThread.MoveFileAsync(temporary, path, overwrite: true).ConfigureAwait(false);
+        await FileSystemThread.ReplaceFileAsync(temporary, path).ConfigureAwait(false);
     }
 }

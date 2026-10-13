@@ -169,8 +169,13 @@ internal sealed class HomeTests
 
         await Assert.That(state).IsNotNull();
         await Assert.That(state!.Member("html")).DoesNotContain("Updated to BrowserAI");
-        await Assert.That(await WaitForAsync(async () => File.Exists(Path.Combine(rig.Facts.DataRoot, UpdateNoticeFile.FileName))
-            && (await File.ReadAllTextAsync(Path.Combine(rig.Facts.DataRoot, UpdateNoticeFile.FileName))).Trim() is "9.0.0 seen")).IsTrue();
+
+        // ⚠️ Read through the product's own reader since 2026-10-13, as the browser arm has read
+        // it since b87a6944, by the sweep of the maintainer's 154 c: the dismiss writes the
+        // record after its 204, beside itself and then moved into place, and a bare read that
+        // meets the move, or another process holding the record, throws where the reader
+        // answers that there is no record yet.
+        await Assert.That(await WaitForAsync(async () => await UpdateNoticeFile.ReadAsync(rig.Facts.DataRoot) is { Version: "9.0.0", Seen: true })).IsTrue();
     }
 
     /// <summary>

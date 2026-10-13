@@ -212,4 +212,88 @@ internal sealed class DedicatedThreadTests
 
         await Assert.That(Directory.Exists(renamed)).IsFalse();
     }
+
+    /// <summary>
+    /// A move into place waits out a holder of the file it replaces, through both refusals
+    /// Windows gives for one, and goes through once the holder lets go; any other failure is
+    /// the answer at the first try.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 157 a, 2026-10-13</b>, in his words verbatim: <i>"157 a"</i>. Five
+    /// writers gave up on the first refusal of a move over a record somebody had open, and
+    /// each moves its record into place through <c>FileSystemThread.ReplaceFileAsync</c>
+    /// since. <c>HouseRuleTests.EveryMoveIntoPlaceWaitsOutAHolderOfTheFileItReplaces</c> holds
+    /// that each of them does.
+    /// </para>
+    /// <para>
+    /// <b>The order is forced and not timed.</b> The loop is driven first with refusals of the
+    /// arm's own making, and then over a real file held open: the move's first try is handed
+    /// to the file-system thread before <c>ReplaceFileAsync</c> returns, so an item the arm
+    /// hands over after it runs after that try, which the hold refused, and the holder lets go
+    /// only then.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-13</b>: with the loop's budget made zero, at its first half, the
+    /// injected <c>UnauthorizedAccessException</c> thrown at the first try; and with
+    /// <c>ReplaceFileAsync</c> made one move, at its real-file half, the move over the held
+    /// record faulted by the round trip.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AMoveIntoPlaceWaitsOutAHolderOfTheFileItReplacesAndAnswersAnyOtherFailureAtOnce()
+    {
+        // The two refusals a file somebody holds gives a rename over it, then the move.
+        var refusals = new Queue<Exception>(
+        [
+            new UnauthorizedAccessException("Access to the path is denied."),
+            new IOException("The process cannot access the file because it is being used by another process.", unchecked((int)0x80070020)),
+        ]);
+        var tries = 0;
+
+        await FileSystemThread.WaitOutABusyDestinationAsync(() =>
+        {
+            tries++;
+            return refusals.TryDequeue(out var refusal) ? Task.FromException(refusal) : Task.CompletedTask;
+        }).WaitAsync(TestDefaults.InProcessHang);
+
+        await Assert.That(tries).IsEqualTo(3);
+
+        // Anything else is not a holder passing through, and is the answer at once.
+        var once = 0;
+
+        _ = await Assert.ThrowsAsync<FileNotFoundException>(() => FileSystemThread.WaitOutABusyDestinationAsync(() =>
+        {
+            once++;
+            return Task.FromException(new FileNotFoundException("The file written beside the record is not there."));
+        }));
+
+        await Assert.That(once).IsEqualTo(1);
+
+        // And a real record, held open the way a reader holds it.
+        using var scratch = await ScratchDirectory.CreateAsync("file-system-thread-replace");
+        var record = Path.Combine(scratch.Path, "record.txt");
+        var beside = record + ".partial";
+
+        await File.WriteAllTextAsync(record, "old");
+        await File.WriteAllTextAsync(beside, "new");
+
+        Task replacing;
+
+        await using (var reader = new FileStream(record, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous))
+        {
+            replacing = FileSystemThread.ReplaceFileAsync(beside, record);
+
+            // Handed over after the move's first try, so it runs after that try was refused.
+            await FileSystemThread.RunAsync(static () => { }).WaitAsync(TestDefaults.InProcessHang);
+
+            await Assert.That(replacing.IsFaulted).IsFalse().Because("the move's first refusal over a held record was its answer");
+        }
+
+        await replacing.WaitAsync(TestDefaults.InProcessHang);
+
+        await Assert.That(await File.ReadAllTextAsync(record)).IsEqualTo("new");
+        await Assert.That(File.Exists(beside)).IsFalse();
+    }
 }

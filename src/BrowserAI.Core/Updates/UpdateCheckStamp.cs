@@ -118,14 +118,16 @@ internal sealed class UpdateCheckStampFile(string path) : IUpdateCheckStamp
     /// <remarks>
     /// Written beside itself and moved into place, so a reader never meets half a
     /// line; the data root holds one background at a time, so the temporary name
-    /// is never contended.
+    /// is never contended. The move waits out a reader holding the record since
+    /// 2026-10-13, the maintainer's 157 a (<see cref="FileSystemThread.ReplaceFileAsync"/>);
+    /// before that its first refusal was the answer.
     /// </remarks>
     public async Task WriteAsync(DateTimeOffset at)
     {
         var temporary = path + ".partial";
 
         await File.WriteAllTextAsync(temporary, at.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture) + "\n").ConfigureAwait(false);
-        await FileSystemThread.MoveFileAsync(temporary, path, overwrite: true).ConfigureAwait(false);
+        await FileSystemThread.ReplaceFileAsync(temporary, path).ConfigureAwait(false);
     }
 
     /// <summary>Enough of an unreadable record to recognise it, and no more.</summary>

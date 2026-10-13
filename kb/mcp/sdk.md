@@ -543,6 +543,23 @@ and read `SendRequestAsync` and `ProcessMessagesCoreAsync` side by side; the
 behaviour half is `DeadChildTests`, which kills a session's child and calls
 again.
 
+### The in-process rig's teardown waits for a call still in its handler -- measured 2026-10-13
+
+**`McpTestHarness.DisposeAsync` does not return while a call it forwarded is still in
+BrowserAI's handler, so a row the handler settles in its `finally` is settled before the
+teardown closes the session's store.** Measured 2026-10-13 under `ModelContextProtocol` 2.2.0
+and .NET 10.0.12, with a seam awaited in `BrowserProxy`'s forwarded call after the answer was
+sent and before the row was settled, on a full-page Chromium screenshot past the line, which
+BrowserAI refuses: started while the seam held, the rig's teardown had not returned 30 s later,
+returned 59 ms after the seam let go, and the screenshot's row read once the rig was gone said
+`failed`. Which step of the teardown waits was not measured.
+
+It answered a suspicion of the sweep of the maintainer's 154 c, that
+`ScreenshotLimitTests`, which reads its row once its rig is gone, could read one still in
+flight, and the arm was left as it was. **To re-establish:** await a gate in `BrowserProxy`'s
+forwarded call's `finally`, before its `SettleAsync`, take one such screenshot through a rig
+of `McpTestHarness.ThroughTheProxyAsync`, and dispose the rig while the gate is shut.
+
 ## Lossless passthrough: cancellation, notifications and error frames
 
 What survives, what is reordered and what has to be rebuilt when the two tool

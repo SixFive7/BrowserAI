@@ -217,6 +217,17 @@ internal static class LockScopes
     /// the failure path.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Corrected 2026-10-13 by addition</b> (previously the paragraph above, with
+    /// nothing after it, which names the waits of <c>browserai.json</c>, the record that was
+    /// its own lock until 2026-08-26, and members that went with it): the three inside
+    /// <c>SessionLock.TakeOrReportAsync</c> are <c>SessionLock.ReadRecordAsync</c>'s wait on
+    /// the store, <c>LockFile.WriteAsync</c>'s move into place, which waits out a holder
+    /// through <c>FileSystemThread.ReplaceFileAsync</c> since the maintainer's 157 a, and the
+    /// hold's re-open through <c>RenameWindow.WaitOutWhereNoOwnerIsPossibleAsync</c>. From its
+    /// first version on 2026-08-26 until that day the move was refused at once, so the count
+    /// stood one above the waits the path took.
+    /// </para>
+    /// <para>
     /// <b>It is a constant so that adding a fourth is a red build and not a
     /// silent 30 s.</b> A new wait inside the critical section has to be counted
     /// here, and counting it fails

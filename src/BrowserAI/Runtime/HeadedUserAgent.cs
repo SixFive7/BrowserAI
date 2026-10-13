@@ -254,7 +254,9 @@ internal static class HeadedUserAgent
         try
         {
             await File.WriteAllTextAsync(partial, $"{stamp}\n{headed}\n", new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)).ConfigureAwait(false);
-            await FileSystemThread.MoveFileAsync(partial, cache, overwrite: true).ConfigureAwait(false);
+            // Waits out another process reading the cache at the instant of the move since
+            // 2026-10-13, the maintainer's 157 a; before that the first refusal kept nothing.
+            await FileSystemThread.ReplaceFileAsync(partial, cache).ConfigureAwait(false);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {

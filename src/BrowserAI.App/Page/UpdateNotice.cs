@@ -63,6 +63,12 @@ internal static class UpdateNoticeFile
     }
 
     /// <summary>Writes the record under a data root, beside itself first and then moved into place.</summary>
+    /// <remarks>
+    /// <b>The move waits out a reader holding the record since 2026-10-13</b>, the maintainer's
+    /// 157 a (<see cref="FileSystemThread.ReplaceFileAsync"/>). <i>Previously the first refusal
+    /// was the answer</i>: a read at the instant of the move made the write fail, so a notice
+    /// marked seen came back after the next start.
+    /// </remarks>
     /// <param name="dataRoot">The data root.</param>
     /// <param name="notice">What it says.</param>
     /// <returns>The write.</returns>
@@ -78,6 +84,6 @@ internal static class UpdateNoticeFile
 
         _ = await FileSystemThread.CreateDirectoryAsync(dataRoot).ConfigureAwait(false);
         await File.WriteAllTextAsync(temporary, notice.Version + " " + (notice.Seen ? Seen : Waiting) + "\n").ConfigureAwait(false);
-        await FileSystemThread.MoveFileAsync(temporary, path, overwrite: true).ConfigureAwait(false);
+        await FileSystemThread.ReplaceFileAsync(temporary, path).ConfigureAwait(false);
     }
 }

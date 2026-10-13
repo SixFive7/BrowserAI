@@ -185,6 +185,19 @@ before the gate is asked.** Measured from raw sockets against
   `Host` headers, `400`; an HTTP/1.1 request with no `Host`, `400`; a header
   block over the 8 KB limit, `431`; bytes that are not HTTP, `400`. The
   prototype's raw socket answered these with its own `404`.
+- ⚠️ **The header block over the limit loses no answer: measured 2026-10-13**,
+  *added that day by addition*, for the maintainer's 158 a, after
+  `PageListenerTests.WhatKestrelRefusesItselfIsAnsweredEmptyAndReachesNoRoute`,
+  which sends it, was suspected of the reset that lost the body's `404`. A header
+  block of `PageListener.MaximumHeaderBytes` and 1,024 bytes more, sent 400 times
+  through the arm's raw client, was answered an empty `431` 400 times of 400; 400
+  more, read to the end on a socket of their own, closed in order 400 times, with
+  no `SocketError.ConnectionReset`, and no route was reached. Measured from the test
+  host over the listener as it stands at `40911cbb`, under the versions above, read
+  again that day. **Re-establish** by sending `RawHttp.Get` with an `X-Padding`
+  header of `PageListener.MaximumHeaderBytes + 1024` bytes to a `PageListener` 400
+  times and counting the answers that are not an empty `431`, then 400 more on a
+  raw socket read to the end, counting the resets.
 - **The socket**: the same port on `[::1]` refused the connection. A second
   socket of the same user binding `127.0.0.1` and the port was refused, with
   `WSAEACCES` when it asked to share and `WSAEADDRINUSE` when it did not, and a

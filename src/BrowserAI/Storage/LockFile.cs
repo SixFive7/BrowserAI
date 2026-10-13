@@ -152,6 +152,13 @@ internal static class LockFile
     /// <summary>
     /// Writes the holder record into place, durably, and takes nothing.
     /// </summary>
+    /// <remarks>
+    /// <b>The move waits out a handle on the old record since 2026-10-13</b>, the maintainer's
+    /// 157 a (<see cref="FileSystemThread.ReplaceFileAsync"/>): the caller holds the per-directory
+    /// gate and found nobody holding the file, so what refuses the move is a peer's probe or a
+    /// reader passing through, and from its first version on 2026-08-26 that refusal was the
+    /// answer. It is one of the waits <c>LockScopes.RenameWindowWaitsInsideTheGate</c> counts.
+    /// </remarks>
     /// <param name="path">The lock file.</param>
     /// <param name="holder">Who is taking it.</param>
     /// <returns>The write, complete once the record is in place.</returns>
@@ -176,7 +183,7 @@ internal static class LockFile
                 await stream.WriteAsync(Serialise(holder)).ConfigureAwait(false);
             }
 
-            await FileSystemThread.MoveFileAsync(temporary, path, overwrite: true).ConfigureAwait(false);
+            await FileSystemThread.ReplaceFileAsync(temporary, path).ConfigureAwait(false);
         }
         finally
         {
