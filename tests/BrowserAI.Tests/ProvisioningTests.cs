@@ -444,6 +444,15 @@ internal sealed partial class ProvisioningTests
     /// duration anywhere in it, so there is no load under which it behaves
     /// differently.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-13 by addition</b> (previously the paragraph above,
+    /// with nothing after it): there is no real duration in it, and there is an
+    /// order the scheduler picks. Whether the provisioner polls once more between
+    /// the release and the install's landing is the scheduler's, and the bound on
+    /// the clock held only when it did; it was red once, in the first release run
+    /// of 2.0.0's third attempt, at exactly what a thousand polls give. The bound
+    /// is that figure now, so the order no longer decides it.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -513,12 +522,17 @@ internal sealed partial class ProvisioningTests
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Installed);
         await Assert.That(started!.WasStopped).IsFalse();
 
-        // The run really was longer than the cap, by a factor of a thousand.
+        // The run really was a thousand polls long, each one tick short of the cap.
         // Without this the arm would pass against a detector that fired on the
         // first poll, because a stopped install and an install that never
-        // started look the same from outside.
+        // started look the same from outside. ⚠️ Corrected 2026-10-13 (previously
+        // "longer than the cap, by a factor of a thousand", held as more than
+        // cap * UnboundedPolls): a thousand polls move the clock by exactly
+        // (cap - one tick) * UnboundedPolls, so the old bound held only when the
+        // provisioner polled once more before it saw the install land, and the
+        // release run of 2.0.0 at bed09d9e found it had not.
         await Assert.That(Volatile.Read(ref polls)).IsGreaterThanOrEqualTo(UnboundedPolls);
-        await Assert.That(clock.GetElapsedTime(0)).IsGreaterThan(cap * UnboundedPolls);
+        await Assert.That(clock.GetElapsedTime(0)).IsGreaterThanOrEqualTo((cap - TimeSpan.FromTicks(ManualClock.OneTick)) * UnboundedPolls);
     }
 
     /// <summary>

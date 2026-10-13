@@ -417,10 +417,20 @@ internal sealed class CloseReasonTests
 
         await WaitUntilAsync(() => child.HasStopped, "the session never ended its browser server after its browser ended");
 
+        // ⚠️ Waited for since 2026-10-13. The session hands its close to the store's thread
+        // and ends the browser server without waiting for the write (82 b), so a read at the
+        // stop can come before it: the release run of 2.0.0 at bed09d9e read no close here,
+        // and the store held it afterwards, BrowserCrashed with the crash's exit code.
+        var path = SessionPath.For(directory);
+
+        await WaitUntilAsync(
+            async () => (await SessionLock.ReadRecordAsync(path))?.ClosedHistory.Count > 0,
+            "the session never recorded the close of its browser");
+
         var said = EndsDuringACall(rig);
         var why = code is 0 ? "a clean exit beside a tab close" : "a crash beside a tab close";
 
-        await Assert.That((await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Single().Value.Cause).IsEqualTo(closedFor).Because(why);
+        await Assert.That((await SessionLock.ReadRecordAsync(path))!.ClosedHistory.Single().Value.Cause).IsEqualTo(closedFor).Because(why);
 
         if (code is 0)
         {
