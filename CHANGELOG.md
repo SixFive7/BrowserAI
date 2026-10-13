@@ -76,7 +76,7 @@ more* link to its detail; nothing else depends on it.
   published before an edit to one of them was still driven. The list now comes from the projects'
   own resources, so a file compiled in later is counted without a change.
 
-- 🔧 **A client that started BrowserAI again with no update between, or across an update that kept the tool list, is no longer told its tool list came from another BrowserAI.**
+- 🔧 **A client that starts BrowserAI again with the same tool list is no longer refused its first call.**
   2.0.0 refuses, once, the first call of a connection that has not asked for the tool list,
   because a client that starts a server again calls from the list it took before. Now each
   BrowserAI a client starts keeps the tool list it answered that client, in
