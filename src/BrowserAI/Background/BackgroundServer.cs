@@ -177,6 +177,20 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     internal Func<Task>? Accepted { get; init; }
 
     /// <summary>
+    /// Awaited by an accepted connection's conversation once it has begun and before it
+    /// reads its first message: the suite's seam, which holds the connection open there.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-13</b> for the arm that connects while a stop is under way
+    /// (<c>BackgroundServerTests</c>): a connection accepted as the stop begins reads its
+    /// first message under the stop's cancelled token and ends at once, so whether the stop
+    /// found it still open when it took its list was the scheduler's. Held here, it is open
+    /// then. The product sets nothing here, and while nothing is set the conversation goes
+    /// straight to its first message.
+    /// </remarks>
+    internal Func<Task>? Serving { get; init; }
+
+    /// <summary>
     /// The clock <see cref="FirstFrameBound"/> runs on: the suite's seam, which moves it by
     /// hand.
     /// </summary>
@@ -363,6 +377,11 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         {
             try
             {
+                if (Serving is { } serving)
+                {
+                    await serving().ConfigureAwait(false);
+                }
+
                 var (first, refused) = await ReadOrRefuseAsync(stream, client).ConfigureAwait(false);
 
                 if (refused)

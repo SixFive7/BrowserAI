@@ -52,6 +52,12 @@ more* link to its detail; nothing else depends on it.
   update's and holds each before it to the view it last saw, all but the live CPU and memory
   figures, which the page writes in place.
 
+- ✅ **The background stop's arm holds the connection it counts open until the stop has counted it.**
+  A connection accepted as the stop began read its first message under the stop's cancelled
+  token and ended at once, so whether the stop still found it open was left to chance, and the
+  arm went red twice. A seam BrowserAI leaves unset holds that connection open for the arm
+  until the stop has taken its list.
+
 ## [2.0.0] - 2026-10-13
 
 BrowserAI gives an AI agent a real browser on Windows. It is one program now, and

@@ -122,6 +122,11 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     /// <see cref="BackgroundServer.Accepted"/>, the seam that holds it there; or
     /// <see langword="null"/>.
     /// </param>
+    /// <param name="serving">
+    /// What an accepted connection's conversation awaits before it reads its first message:
+    /// <see cref="BackgroundServer.Serving"/>, the seam that holds it open there; or
+    /// <see langword="null"/>.
+    /// </param>
     /// <param name="boundOnTheClock">
     /// Whether the bound on a connection's first message runs on <see cref="Clock"/>, which
     /// only the arm moves, through <see cref="BackgroundServer.Clock"/>; otherwise it runs
@@ -139,7 +144,8 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
         RigSessionEnvironment? sessions = null,
         FakeBackgroundVerbs? verbs = null,
         Func<Task>? accepted = null,
-        bool boundOnTheClock = false)
+        bool boundOnTheClock = false,
+        Func<Task>? serving = null)
     {
         var pipe = pipeName ?? PublishedBackground.NewPipeName();
         var owns = sessions is null;
@@ -172,6 +178,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
             rig._server = new BackgroundServer(rig.Host, rig.Identity, rig.Roster, rig.Verbs, rig._loggerFactory)
             {
                 Accepted = accepted,
+                Serving = serving,
                 Clock = boundOnTheClock ? rig.Clock : TimeProvider.System,
             };
 

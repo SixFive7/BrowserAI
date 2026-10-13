@@ -1453,6 +1453,20 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       Playwright passes the switch itself first, BrowserAI's copy is a duplicate: say so to the
       maintainer and leave it until he decides. If both reports close without a fix, record the
       reason in the kb section and close this item.
+      ⚠️ *Added 2026-10-13 by addition, the maintainer's "Update our tracking todo item with
+      the Chromium bug updates.", read at about 08:30Z from the issue's public record and the
+      tracker's two notifications*: at 04:11:07Z
+      [572877174](https://issues.chromium.org/issues/572877174) was moved from the component
+      Chromium (1363614) to Chromium > Internals > Metrics > SamplingProfiler (1456427), the
+      team that owns the stack sampling profiler. It stands at status New, priority P2,
+      severity S2, on the hotlist Unconfirmed (5437934), with no assignee and no comment beyond
+      the report. At 07:02:40Z a Google account updated it again: the public record lists two
+      more hotlists since, 7218816, which the tracker does not show to the public (it answers
+      403), and 5432799, and the change itself is not public, nor did a notification come for
+      it. [microsoft/playwright#43327](https://github.com/microsoft/playwright/issues/43327) is
+      open, with no labels and no reply beyond the cross-link of 01:29:06Z. **Read both again**
+      with an anonymous GET of `https://issues.chromium.org/action/issues/572877174` and
+      `gh issue view 43327 --repo microsoft/playwright`.
 
 ---
 

@@ -918,12 +918,19 @@ internal sealed class BackgroundServerTests
     {
         var accepted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var counted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var rig = await BackgroundServerRig.StartAsync(accepted: async () =>
-        {
-            _ = accepted.TrySetResult();
-            await release.Task.WaitAsync(TestDefaults.InProcessHang);
-        });
+        // ⚠️ The conversation is held open by BackgroundServer.Serving since 2026-10-13, until
+        // the stop has taken its list: let go, it read its first message under the stop's
+        // cancelled token and ended at once, and whether the stop found it still open was the
+        // scheduler's, and the arm went red on it twice, on 2026-10-12 and on 2026-10-13.
+        await using var rig = await BackgroundServerRig.StartAsync(
+            accepted: async () =>
+            {
+                _ = accepted.TrySetResult();
+                await release.Task.WaitAsync(TestDefaults.InProcessHang);
+            },
+            serving: () => counted.Task.WaitAsync(TestDefaults.InProcessHang));
 
         using var client = await rig.ConnectAsync();
 
@@ -944,6 +951,12 @@ internal sealed class BackgroundServerTests
             _ = release.TrySetResult();
         }
 
+        // The stop writes how many connections it waits for once it has its list, and the
+        // held conversation is let go then, or once the hang detector has run out, which the
+        // line below then says.
+        await StopLineWrittenAsync(rig);
+        _ = counted.TrySetResult();
+
         await stopping.WaitAsync(TestDefaults.InProcessHang);
 
         var waited = rig.Logs.Records.Where(record => record.EventId.Id is 9).Select(record => record.Message).ToList();
@@ -951,6 +964,19 @@ internal sealed class BackgroundServerTests
         await Assert.That(string.Join(" | ", waited))
             .IsEqualTo("The background's pipe is closed; it waits for 1 open connection(s) to end before it stops.");
         await Assert.That(await client.ClosedAsync()).IsTrue();
+    }
+
+    /// <summary>Waits until the stop has written how many connections it waits for, bounded by the in-process hang detector.</summary>
+    /// <param name="rig">The rig.</param>
+    /// <returns>The wait.</returns>
+    private static async Task StopLineWrittenAsync(BackgroundServerRig rig)
+    {
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+
+        while (!rig.Logs.Records.Any(record => record.EventId.Id is 9) && waited.Elapsed < TestDefaults.InProcessHang)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(20));
+        }
     }
 
     /// <summary>
