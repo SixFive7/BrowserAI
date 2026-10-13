@@ -178,6 +178,19 @@ internal static partial class RelayLog
     public static partial void ClosedForNoFirstMessage(ILogger logger, string refusal, string sentence);
 
     /// <summary>
+    /// The relay's client holds this relay's own list, by the record, so its first call
+    /// before a list was not refused (127 c, 2026-10-12).
+    /// </summary>
+    /// <param name="logger">Where to log.</param>
+    /// <param name="build">The version of the relay that answered the client the list.</param>
+    /// <param name="listedAt">When it did.</param>
+    [LoggerMessage(
+        EventId = 27,
+        Level = LogLevel.Information,
+        Message = "Relay: the client was answered this same tool list by build {Build} at {ListedAt}, so its first call before a list is not refused.")]
+    public static partial void ListedTheSameToolList(ILogger logger, string build, DateTimeOffset listedAt);
+
+    /// <summary>
     /// The record of the tool list this relay's client was answered could not be written
     /// (127 c, 2026-10-12), logged by the exception's type and code, as
     /// <see cref="ClassifyFailed"/> is.
@@ -190,4 +203,17 @@ internal static partial class RelayLog
         Level = LogLevel.Warning,
         Message = "Relay: the record of the tool list this client was answered could not be written ({ExceptionType}, {HResult}); the relay it starts next reads the record as it was before.")]
     public static partial void ToolListNotRecorded(ILogger logger, string exceptionType, int hresult);
+
+    /// <summary>
+    /// The record of the tool list this relay's client was last answered could not be read
+    /// (127 c, 2026-10-12), so it counts as none, logged by the exception's type and code.
+    /// </summary>
+    /// <param name="logger">Where to log.</param>
+    /// <param name="exceptionType">The exception's type name.</param>
+    /// <param name="hresult">The exception's code.</param>
+    [LoggerMessage(
+        EventId = 29,
+        Level = LogLevel.Warning,
+        Message = "Relay: the record of the tool list this client was last answered could not be read ({ExceptionType}, {HResult}), so it counts as none.")]
+    public static partial void ToolListRecordUnread(ILogger logger, string exceptionType, int hresult);
 }

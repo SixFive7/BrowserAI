@@ -30,8 +30,19 @@ internal sealed partial class RelayEngine
     /// </summary>
     private bool _listed;
 
-    /// <summary>Whether the one stale-list refusal of this connection has been made.</summary>
-    private bool _staleListRefused;
+    /// <summary>
+    /// Whether this connection's first call before a list has been decided since its last
+    /// <c>initialize</c>: refused once, or passed on because its client holds this list.
+    /// </summary>
+    /// <remarks>
+    /// <i>Previously <c>_staleListRefused</c>, "Whether the one stale-list refusal of this
+    /// connection has been made"</i>, renamed 2026-10-13 with 127 c, since a call a matching
+    /// record lets through decides the question too.
+    /// </remarks>
+    private bool _staleListDecided;
+
+    /// <summary>What the record said this client was last answered, read when the relay started (127 c).</summary>
+    private Task<ListedToolList?>? _recordedList;
 
     /// <summary>Whether this relay has started writing the record of the list its client was answered (127 c).</summary>
     private bool _listRecorded;
@@ -161,7 +172,7 @@ internal sealed partial class RelayEngine
         // "Since the handshake" is what the stale-list refusal counts from, so a
         // second handshake on the same connection starts the question again.
         _listed = false;
-        _staleListRefused = false;
+        _staleListDecided = false;
 
         await AnswerLocallyAsync(frame).ConfigureAwait(false);
 
@@ -385,26 +396,91 @@ internal sealed partial class RelayEngine
     /// before the refusal; the refusal is what recovers the turn, and it is never a
     /// wall: the next call goes through.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Narrowed 2026-10-13 by the maintainer's 127 c, in his words verbatim:
+    /// <i>"127 c"</i></b>, by addition. A client whose record says it was last answered
+    /// this relay's own list, byte for byte, holds the list this relay answers, so its
+    /// call is not refused and goes on as any call does; a record that names another
+    /// list, or none, or that could not be read, leaves the refusal exactly as Q261 b
+    /// made it, and its words are unchanged at the same decision. The record is the one
+    /// read the loop waits for, and it was started when the relay started
+    /// (<see cref="ReadTheRecord"/>).
+    /// </para>
     /// </remarks>
     /// <param name="id">The call.</param>
     /// <param name="tool">The tool it named.</param>
     /// <returns><see langword="true"/> when the call was refused and must not go further.</returns>
     private async Task<bool> RefuseAStaleListAsync(RequestId id, string tool)
     {
-        if (_listed || _staleListRefused)
+        if (_listed || _staleListDecided)
         {
             return false;
         }
 
-        _staleListRefused = true;
+        _staleListDecided = true;
+
+        var recorded = await RecordedListAsync().ConfigureAwait(false);
+
+        if (recorded is not null && string.Equals(recorded.Digest, ListDigest, StringComparison.Ordinal))
+        {
+            RelayLog.ListedTheSameToolList(_logger, recorded.Build, recorded.ListedAt);
+            return false;
+        }
 
         await WriteToClientAsync(RelayWire.Notification(NotificationMethods.ToolListChangedNotification, null)).ConfigureAwait(false);
         await AnswerInPlaceAsync(
             id,
             SessionErrors.ToolListPredatesThisServer(tool, _facts.Build, _clientName, Signatures),
-            "the connection never asked for the tool list").ConfigureAwait(false);
+            recorded is null
+                ? "the connection never asked for the tool list, and no list its client was answered is recorded"
+                : "the connection never asked for the tool list, and the one its client was last answered differs from this relay's").ConfigureAwait(false);
 
         return true;
+    }
+
+    /// <summary>
+    /// Starts reading what the record says this relay's client was last answered, off the
+    /// loop, when the relay starts and before any frame of the client's is read.
+    /// </summary>
+    /// <returns>The read, which never faults the loop: <see cref="RecordedListAsync"/> takes a failure for no record.</returns>
+    private Task<ListedToolList?> ReadTheRecord()
+    {
+        Enter();
+
+        var reading = Task.Run(() => _toolListRecord.ReadAsync(), CancellationToken.None);
+
+        _ = reading.ContinueWith(
+            static (_, state) => ((RelayEngine)state!).Leave(),
+            this,
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+
+        return reading;
+    }
+
+    /// <summary>What the record said, once its read has finished; a read that failed is no record, and says so in the log.</summary>
+    /// <returns>The list, or <see langword="null"/>.</returns>
+    private async Task<ListedToolList?> RecordedListAsync()
+    {
+        if (_recordedList is not { } reading)
+        {
+            return null;
+        }
+
+        await ((Task)reading).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+
+        if (!reading.IsCompletedSuccessfully)
+        {
+            if (reading.Exception?.InnerException is { } failure)
+            {
+                RelayLog.ToolListRecordUnread(_logger, failure.GetType().Name, failure.HResult);
+            }
+
+            return null;
+        }
+
+        return await reading.ConfigureAwait(false);
     }
 
     private async Task OnClientNotificationAsync(RelayFrame frame, DateTimeOffset at)

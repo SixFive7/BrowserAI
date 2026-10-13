@@ -127,6 +127,16 @@ internal static class SessionErrors
     /// reason about and the retry the sentence recommends is safe.
     /// </para>
     /// <para>
+    /// ⚠️ <i>Narrowed 2026-10-13 by the maintainer's 127 c, by addition; the words are
+    /// unchanged at the same decision:</i> a relay makes it only when the record of the
+    /// tool list its client was last answered names another list, or none
+    /// (<c>Relay.ToolListRecordFile</c>). A client that holds the relay's own list,
+    /// started again with no update between or across an update that left the list as
+    /// it was, is not refused. Where the record names another list, the sentence's claim
+    /// that the list came from a different BrowserAI is true; where there is none, it is
+    /// as true as it was before 127 c.
+    /// </para>
+    /// <para>
     /// ⚠️ <i>Corrected 2026-10-10, from the texts review (previously a parameter
     /// <c>throughTheSessionHost</c> chose a second sentence, "It reached BrowserAI's
     /// session host, version {version}, which may be the BrowserAI the tool list you are

@@ -215,8 +215,16 @@ internal sealed partial class RelayTests
     /// handshake starts the question again.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Q261 b, moved from the server to the relay with the one-binary build, because
     /// the relay is what knows whether its client has listed.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Added 2026-10-13 by addition, the maintainer's 127 c:</i> the rig's record is
+    /// empty, so this is a relay with no record of its client's list, which keeps the
+    /// refusal as Q261 b made it; a client whose record names this relay's own list is
+    /// <see cref="AClientThatListedThisSameListThroughAnEarlierRelayHasItsFirstCallPassedOn"/>.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]

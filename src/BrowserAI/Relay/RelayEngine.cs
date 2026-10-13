@@ -195,6 +195,10 @@ internal sealed partial class RelayEngine
         using var stopping = new CancellationTokenSource();
         _stopping = stopping.Token;
 
+        // 127 c: what the record says this client was last answered, read before its
+        // first frame is, so a first call before a list rarely waits for the disk.
+        _recordedList = ReadTheRecord();
+
         StartReadingTheClient();
 
         using var stop = cancellationToken.Register(static state => ((RelayEngine)state!).Post(new StopRequested()), this);

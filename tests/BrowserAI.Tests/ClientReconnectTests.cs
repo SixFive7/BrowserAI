@@ -105,6 +105,16 @@ internal sealed class ClientReconnectTests
     /// SENT, because that is BrowserAI's own behaviour and the reason the wording
     /// mentions it.
     /// </para>
+    /// <para>
+    /// ⚠️ <i>Added 2026-10-13 by addition, the maintainer's 127 c:</i> <b>the shim is each
+    /// relay's parent here, and a new process at every launch</b>, so the record the first
+    /// relay wrote is keyed by the first shim and the re-dialled relay finds no record of
+    /// its own client. It is refused as Q261 b refuses, which is the branch this arm holds
+    /// for a real client since that day: a relay with no record. The other branch, a client
+    /// whose record names the relay's own list, needs the relay started by the client
+    /// itself, with no process between them, and is held in process by
+    /// <c>RelayTests.AClientThatListedThisSameListThroughAnEarlierRelayHasItsFirstCallPassedOn</c>.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
