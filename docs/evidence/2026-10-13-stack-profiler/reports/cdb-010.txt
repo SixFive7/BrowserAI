@@ -1,0 +1,143 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:\Users\jori\AppData\Local\ms-playwright\chromium-1247\chrome-win64
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.000 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.031 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 46
+
+Microsoft (R) Windows Debugger Version 10.0.29661.1004 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\runs\main1\010-on\profile\Crashpad\reports\b2876c2b-027d-4ef4-b53f-5262c8a6cd4c.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:\Users\jori\AppData\Local\ms-playwright\chromium-1247\chrome-win64
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols
+Symbol search path is: srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols
+Executable search path is: C:\Users\jori\AppData\Local\ms-playwright\chromium-1247\chrome-win64
+Windows 10 Version 26300 (9550) MP (32 procs) Free x64
+Product: WinNt
+Edition build lab: Windows NT 10.0.26300.9550
+Debug session time: Tue Oct 13 00:32:14.000 2026 (UTC + 2:00)
+System Uptime: 0 days 8:14:17.138
+Process Uptime: 0 days 0:00:15.000
+................................................................
+..........................
+Loading unloaded module list
+..........................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr
+(199a0.1bebc): Access violation - code c0000005 (first/second chance not available)
+ReadVirtual() failed in GetXStateConfiguration() first read attempt (error == 0.)
+Invalid mini-dump Miscellaneous information in InitializeConfiguration()
+For analysis of this file, run !analyze -v
+*** WARNING: Unable to verify checksum for ntdll.dll
+ntdll!NtDelayExecution+0x14:
+00007ffe`8e8e2244 c3              ret
+0:011> cdb: Reading initial command '.echo ==SAMPLED==; .ecxr; .cxr @r14; r rip; r rsp; r rbp; r rdi; r rsi; r rbx; r r12; r r13; r r14; r r15; ? @rip - chrome; .cxr; .echo ==MAIN==; ~0 s; r rsp; !teb; q'
+==SAMPLED==
+rax=0000000000000000 rbx=0000000000000001 rcx=00007ffe8e7a0161
+rdx=00007ffd22c88188 rsi=000000d6dc1fed48 rdi=00007ffd22c88188
+rip=00007ffe8e7a0191 rsp=000000d6dc1feb80 rbp=00007ffd11440000
+ r8=ffffffffffffff80  r9=0000000000000210 r10=0000000000000006
+r11=0000000000000000 r12=0000000000000018 r13=00007ffd11440000
+r14=000000d6dc1ff130 r15=00007ffe8e780000
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00010246
+ntdll!RtlpUnwindPrologue+0x381:
+00007ffe`8e7a0191 4d8b4108        mov     r8,qword ptr [r9+8] ds:00000000`00000218=????????????????
+*** WARNING: Unable to verify checksum for chrome.dll
+rax=0000bd7eea1838a6 rbx=00006a84006a7c30 rcx=0000bd7eea1838a6
+rdx=00000000000007b0 rsi=00006a8409c69800 rdi=000000d6d11fd630
+rip=00007ffd169bd48c rsp=00006a84006a7408 rbp=0000000000000000
+ r8=0000000000000148  r9=0000000000000290 r10=0000000000001480
+r11=0000000000000520 r12=0000000000000001 r13=0000000000000148
+r14=00006a8400e12000 r15=0000000000000638
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=002b  ds=0000  es=0000  fs=0000  gs=0000             efl=00000246
+chrome!IsSandboxedProcess+0x21fcfdc:
+00007ffd`169bd48c c5f877          vzeroupper
+Last set context:
+rip=00007ffd169bd48c
+Last set context:
+rsp=00006a84006a7408
+Last set context:
+rbp=0000000000000000
+Last set context:
+rdi=000000d6d11fd630
+Last set context:
+rsi=00006a8409c69800
+Last set context:
+rbx=00006a84006a7c30
+Last set context:
+r12=0000000000000001
+Last set context:
+r13=0000000000000148
+Last set context:
+r14=00006a8400e12000
+Last set context:
+r15=0000000000000638
+Evaluate expression: 89642124 = 00000000`0557d48c
+Resetting default scope
+==MAIN==
+chrome!IsSandboxedProcess+0x4a6b42:
+00007ffd`14c66ff2 4531d3          xor     r11d,r10d
+rsp=000000d6d11fd3d0
+TEB at 000000d6d089a000
+    ExceptionList:        0000000000000000
+    StackBase:            000000d6d1200000
+    StackLimit:           000000d6d11f4000
+    SubSystemTib:         0000000000000000
+    FiberData:            0000000000001e00
+    ArbitraryUserPointer: 0000000000000000
+    Self:                 000000d6d089a000
+    EnvironmentPointer:   0000000000000000
+    ClientId:             00000000000199a0 . 0000000000014adc
+    RpcHandle:            0000000000000000
+    Tls Storage:          000001f7af444160
+    PEB Address:          000000d6d0899000
+    LastErrorValue:       0
+    LastStatusValue:      103
+    Count Owned Locks:    0
+    HardErrorMode:        0
+quit:
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'

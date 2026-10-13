@@ -331,6 +331,22 @@ is named as candidates and says so.
       call's start; beside it the same with the server still answering, and the same with
       Chromium, enough times each to tell a stall from a slow start. Then the row in the
       hazard index gains the result, and a fix or a stated reason.
+- [ ] **Check whether Chromium sends anywhere the minidump a crash leaves in a session's
+      profile, after the release.** The maintainer's 133 a of 2026-10-13, in his words
+      verbatim, *"133 a"*. A Chrome for Testing that crashes writes a minidump of the
+      browser process into the session's profile, `Crashpad\reports`, although Playwright
+      passes `--disable-breakpad`: 2,805,056 bytes for the release run's red at `44368995`,
+      and it stays until `browserai_destroy` deletes the session
+      ([the hazard index](HAZARDS.md), its open row of that day, and
+      [the kb](kb/playwright/configuration.md#chrome-for-testing-samples-its-own-stacks-and-the-sampler-can-crash-the-browser----measured-2026-10-13)).
+      **What to do:** with [the rig of 129 a](docs/probes/2026-10-13-stack-profiler/README.md),
+      under the suite's lock and without the switch, crash a browser on purpose and read what
+      Crashpad does with the dump: its database's state for the report after the crash and
+      after the browser's next start in the same profile, the handler's command line, and
+      every connection the handler and the browser open, read off the machine and never
+      inferred from Chromium's source. Then the row in the hazard index gains the result,
+      and either a measured answer that nothing leaves the machine or a question for the
+      maintainer about the dumps a profile keeps.
 
 ---
 
@@ -1393,6 +1409,42 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       this item; adopting the option is a question for the maintainer through
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md). If #38 closes without either, record
       the reason in the kb section and close this item.
+- [ ] **WATCH the reports to Chromium and to Playwright on Chrome for Testing's stack sampling
+      profiler, whose stack walk crashes the browser, and take `--disable-stack-profiler` out
+      again when a fix ships.** The maintainer's 129 d of 2026-10-13, in his words verbatim:
+      *"129 a - but also d and add monitoring d to the long term todo. If it gets fixed we
+      reverse a."* Chrome for Testing runs Chromium's own profiler in every browser, and a
+      sample that stops the main thread on a `vzeroupper` between an epilogue's `pop rbp` and
+      its `ret` ends the browser with 0xC0000005 in Windows' unwinder; a rig lost the browser in
+      5 of 10 launches, and in 0 of 10 with the switch
+      ([kb](kb/playwright/configuration.md#chrome-for-testing-samples-its-own-stacks-and-the-sampler-can-crash-the-browser----measured-2026-10-13),
+      [the hazard index](HAZARDS.md)). BrowserAI passes the switch on every Chromium launch
+      since 129 a (`BrowserConfiguration.StackProfilerSwitch`). The reports are the
+      maintainer's 131 a. [microsoft/playwright#43327](https://github.com/microsoft/playwright/issues/43327), opened under `SixFive7` on
+      2026-10-13 at 00:40:38Z, asks Playwright to pass the switch among its default Chromium
+      arguments on Windows. A comment for [Chromium issue 473587142](https://issues.chromium.org/issues/473587142),
+      the open P1 on the same crash path, is drafted for the maintainer to post
+      ([the draft](docs/evidence/2026-10-13-stack-profiler/reports/chromium-comment-draft.md.txt)):
+      that issue's fix, CL 8482885, does not cover this case, since Chrome for Testing
+      157.0.8101.0, which carries it, still lost the browser in 4 of 10 launches. Over
+      155.0.8059.12, 156.0.8078.4 and 157.0.8101.0 the reports' rigs lost 14 of 40 launches
+      and 0 of 40 with the switch. Playwright's own default for `headless: true`,
+      `chromium-headless-shell`, runs no stack sampling profiler; only the full Chrome for
+      Testing, which BrowserAI launches, does. Write the comment's link here once it is
+      posted. **What to do:** check both at least once a week, and read the Chromium revision
+      of every Playwright roll the daily drift check finds. **When either is answered,
+      merged or released**, write what changed into this item with its date. **When a Chrome
+      for Testing that a Playwright release ships may carry a fix**, run
+      [the rig](docs/probes/2026-10-13-stack-profiler/README.md) against it as its README
+      says, twenty launches alternating with and without the switch. If the launches without
+      it lose no browser and leave no dump at `ntdll!RtlpUnwindPrologue` over at least the
+      287 captures of 2026-10-13, measured and never inferred from an issue's state, take
+      `BrowserConfiguration.StackProfilerSwitch` out of `BrowserConfiguration.ChromiumArguments`,
+      turn `StackProfilerTests`' arm round or retire it with a remark, correct the kb section
+      and re-verification row 220 with dated previously clauses, and close this item. If
+      Playwright passes the switch itself first, BrowserAI's copy is a duplicate: say so to the
+      maintainer and leave it until he decides. If both reports close without a fix, record the
+      reason in the kb section and close this item.
 
 ---
 

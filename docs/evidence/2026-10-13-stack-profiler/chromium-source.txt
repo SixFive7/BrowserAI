@@ -1,0 +1,69 @@
+Chromium source read on 2026-10-13 at the tag 155.0.8059.12, the version chromium-1247 reports,
+fetched from https://raw.githubusercontent.com/chromium/chromium/155.0.8059.12/<path>.
+Each file: its path, the SHA-256 and the size in bytes of what was fetched, and the lines read.
+
+chrome/common/profiler/thread_profiler_configuration.cc
+  sha256 1a21aa6173215ffd1835fa4b5ab0ee07ab5314ce738589440422c9a2bba2bafc, 10383 bytes
+  45    #if defined(OFFICIAL_BUILD) && BUILDFLAG(GOOGLE_CHROME_BRANDING)   (GetReleaseChannel: a channel only then)
+  69-70 base::Seconds(IsBrowserTestModeEnabled() ? 1 : 30); params.sampling_interval = base::Milliseconds(100);
+  222-223 if (command_line->HasSwitch(switches::kDisableStackProfiler))
+            return {std::nullopt, std::nullopt};
+
+chrome/common/profiler/thread_profiler_platform_configuration.h
+  sha256 dbfd497a001d6cfcc3205190c29144d35387cd3bab2e3da391110bbca5b8ce79, 4575 bytes
+  42-46 struct RelativePopulations { double disabled; double enabled; double experiment; };
+
+chrome/common/profiler/thread_profiler_platform_configuration.cc
+  sha256 4d8587619467c3db3f284991eb8c57e3cf0abb250becae168160c5194a74ab97, 12798 bytes
+  64-65 // This is a local/CQ build.  return RelativePopulations{0.0, 100.0, 0.0};
+
+build/config/chrome_build.gni
+  sha256 8c2ab25d5ca26b7761ca9b6ab5830a6c8f9f25dbf2e9d7c0cc369329813c5978, 4037 bytes
+  80-81 assert(!is_chrome_for_testing || !is_chrome_branded,
+               "`is_chrome_for_testing` is incompatible with `is_chrome_branded`")
+
+chrome/app/chrome_main_delegate.cc
+  sha256 f0c26e4db79a0ec99cb1de5876f8b162a3ce0ac9f1fdad574f5161a6d4bb6f44, 78309 bytes
+  1017-1019 // Start the sampling profiler as early as possible - namely, once the thread
+            // pool has been created.
+            sampling_profiler_ = std::make_unique<MainThreadStackSamplingProfiler>();
+
+chrome/common/profiler/main_thread_stack_sampling_profiler.cc
+  sha256 d482e356cc61d685ef668209e9160a7c87195277163f5f87cf9e7814f7dda9b5, 2062 bytes
+  the browser process's profiler is sampling_profiler::ThreadProfiler::CreateAndStartOnMainThread()
+
+components/sampling_profiler/thread_profiler.cc
+  sha256 7dd68557823642a5e8b565e03fa5da3c59ab123c3035536bdf2909f1057e8f64, 11541 bytes
+  55    constexpr double kFractionOfExecutionTimeToSample = 0.02;
+
+base/profiler/stack_sampler.cc
+  sha256 54676020f70e42afc40ecdf2198ca6a989227a6821eea8342d1f6fd615ac0e2c, 14876 bytes
+  104   thread_pool_runner_ = base::ThreadPool::CreateSequencedTaskRunner({});
+  270   return WalkStack(unwind_data->module_cache(), &thread_context, ...   (posted to that runner)
+
+base/profiler/win32_stack_frame_unwinder.cc
+  sha256 c24060b1b2083b2cffbcd85097153f2c14de95889f37fea4d240d1c2319937cb, 5314 bytes
+  62    ::RtlVirtualUnwind(UNW_FLAG_NHANDLER, image_base, program_counter, runtime_function, context,
+                           &handler_data, &establisher_frame, &nvcontext);
+
+base/profiler/native_unwinder_win.cc
+  sha256 2b20f13c647dcc5dd650e41f423cc2f24e3257d33bb76f83efe0c4e5eefe7be7, 4790 bytes
+  read for the checks made between frames: a module for the frame, and a stack pointer that grows
+
+content/browser/devtools/protocol/page_handler.cc
+  sha256 768a47e82d54c7646b58df863fbd8b5aaa1576f0324c749a6567ecb2dad3d4ac, 113633 bytes
+  1928  void PageHandler::ScreenshotCaptured(
+  1960  encoded_bitmap = request->encoder.Run(bitmap);   (the encode, in the handler itself)
+
+chrome/common/chrome_switches.h
+  sha256 e73e2db1257bdafe37216df4315d330976d03545e95ca3c52333763879537bfa, 51061 bytes
+  278   inline constexpr char kDisableStackProfiler[] = "disable-stack-profiler";
+
+GitHub code search on 2026-10-13, chromium/chromium as GitHub serves it (its default branch):
+  kDisableStackProfiler                    2 files: chrome/common/chrome_switches.h,
+                                                    chrome/common/profiler/thread_profiler_configuration.cc
+GitHub code search on 2026-10-13, microsoft/playwright:
+  "disable-stack-profiler"                 0 files
+  "disable-breakpad" (positive control)    1 file: packages/playwright-core/src/server/chromium/chromiumSwitches.ts
+The payload's playwright-core 1.64.0-alpha-1790635538000, lib/coreBundle.js:
+  --disable-breakpad 1 line, disable-stack-profiler 0, stack-profiler 0

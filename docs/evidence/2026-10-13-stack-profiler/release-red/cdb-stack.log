@@ -1,0 +1,291 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Opened log file 'C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\cdb\first.log'
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.000 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.281 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 46
+
+Microsoft (R) Windows Debugger Version 10.0.29661.1004 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\dump\49ec8e29-f6d3-4f4d-a02c-c50f5d705d46.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Symbol search path is: srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Executable search path is: 
+Windows 10 Version 26300 (9550) MP (32 procs) Free x64
+Product: WinNt
+Edition build lab: Windows NT 10.0.26300.9550
+Debug session time: Tue Oct 13 00:04:23.000 2026 (UTC + 2:00)
+System Uptime: 0 days 7:46:26.710
+Process Uptime: 0 days 0:00:01.000
+.NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'
+...............................................................
+..........................
+Loading unloaded module list
+...........................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr
+(179d0.19df0): Access violation - code c0000005 (first/second chance not available)
+ReadVirtual() failed in GetXStateConfiguration() first read attempt (error == 0.)
+Invalid mini-dump Miscellaneous information in InitializeConfiguration()
+For analysis of this file, run !analyze -v
+*** WARNING: Unable to verify checksum for ntdll.dll
+ntdll!NtDelayExecution+0x14:
+00007ffe`8e8e2244 c3              ret
+0:011> .ecxr; kn 60; .echo ==UNLOADED==; lmu; .echo ==THREADS==; ~; q
+rax=0000000000000000 rbx=0000000000000001 rcx=00007ffe8e7a0161
+rdx=00007ffcfcbd8188 rsi=0000009f73bfeb08 rdi=00007ffcfcbd8188
+rip=00007ffe8e7a0191 rsp=0000009f73bfe940 rbp=00007ffceb390000
+ r8=ffffffffffffff80  r9=0000000000000210 r10=0000000000000006
+r11=0000000000000000 r12=0000000000000018 r13=00007ffceb390000
+r14=0000009f73bfeef0 r15=00007ffe8e780000
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00010246
+ntdll!RtlpUnwindPrologue+0x381:
+00007ffe`8e7a0191 4d8b4108        mov     r8,qword ptr [r9+8] ds:00000000`00000218=????????????????
+ # Child-SP          RetAddr               Call Site
+00 0000009f`73bfe940 00007ffe`8e79f549     ntdll!RtlpUnwindPrologue+0x381
+01 0000009f`73bfe9f0 00007ffe`8e7a13cb     ntdll!RtlpxVirtualUnwind+0x109
+*** WARNING: Unable to verify checksum for KERNEL32.DLL
+02 0000009f`73bfeaa0 00007ffe`8d1d7218     ntdll!RtlVirtualUnwind+0x15b
+*** WARNING: Unable to verify checksum for chrome.dll
+03 0000009f`73bfeb40 00007ffc`f7d12f23     KERNEL32!RtlVirtualUnwindStub+0x38
+04 0000009f`73bfeb90 00007ffc`f7d12e75     chrome!sqlite3_dbdata_init+0xc11c43
+05 0000009f`73bfed30 00007ffc`f6ec7532     chrome!sqlite3_dbdata_init+0xc11b95
+06 0000009f`73bfed80 00007ffc`f6ecf5b7     chrome!CrashForExceptionInNonABICompliantCodeRange+0x4565f52
+07 0000009f`73bfee10 00007ffc`f6ecfa90     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456dfd7
+08 0000009f`73bfee90 00007ffc`f6ecfdac     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456e4b0
+09 0000009f`73bff410 00007ffc`f0ea3dc2     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456e7cc
+0a 0000009f`73bff490 00007ffc`ef70acc1     chrome!IsSandboxedProcess+0x2793912
+0b 0000009f`73bff4d0 00007ffc`ef0506a2     chrome!IsSandboxedProcess+0xffa811
+0c 0000009f`73bff5c0 00007ffc`ef04f3e7     chrome!IsSandboxedProcess+0x9401f2
+0d 0000009f`73bff700 00007ffc`ef04dc7c     chrome!IsSandboxedProcess+0x93ef37
+0e 0000009f`73bffa90 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d7cc
+0f 0000009f`73bffc50 00007ffc`ebb70676     chrome+0x7ea18
+10 0000009f`73bffc90 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+11 0000009f`73bffd20 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+12 0000009f`73bffd50 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+==UNLOADED==
+start             end                 module name
+00007ff6`bbf40000 00007ff6`bc3a7000   chrome_exe   (deferred)             
+00007ffc`eb390000 00007ffc`fd90b000   chrome   C (export symbols)       C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll
+00007ffe`13f50000 00007ffe`1422a000   chrome_elf   (deferred)             
+00007ffe`38da0000 00007ffe`38dc7000   nlansp_c   (deferred)             
+00007ffe`480d0000 00007ffe`4814a000   cryptngc   (deferred)             
+00007ffe`50a60000 00007ffe`50abc000   dataexchange   (deferred)             
+00007ffe`51c40000 00007ffe`51c6d000   ngcksp     (deferred)             
+00007ffe`51e40000 00007ffe`51fa0000   wpnapps    (deferred)             
+00007ffe`525b0000 00007ffe`52c4a000   Windows_Media   (deferred)             
+00007ffe`533d0000 00007ffe`534b6000   twinapi    (deferred)             
+00007ffe`5aa50000 00007ffe`5aabd000   CryptoWinRT   (deferred)             
+00007ffe`643e0000 00007ffe`64483000   directmanipulation   (deferred)             
+00007ffe`64490000 00007ffe`645e1000   Windows_UI_Immersive   (deferred)             
+00007ffe`65720000 00007ffe`6587b000   Windows_UI   (deferred)             
+00007ffe`661c0000 00007ffe`663a2000   InputHost   (deferred)             
+00007ffe`67030000 00007ffe`67176000   textinputframework   (deferred)             
+00007ffe`6a080000 00007ffe`6a172000   windhawk   (deferred)             
+00007ffe`6e170000 00007ffe`6e18a000   NETAPI32   (deferred)             
+00007ffe`6eec0000 00007ffe`6ef35000   OLEACC     (deferred)             
+00007ffe`6f030000 00007ffe`6f2c0000   COMCTL32   (deferred)             
+00007ffe`79f60000 00007ffe`7a005000   MMDevApi   (deferred)             
+00007ffe`7af00000 00007ffe`7b559000   OneCoreUAPCommonProxyStub   (deferred)             
+00007ffe`7b750000 00007ffe`7b9a1000   twinapi_appcore   (deferred)             
+00007ffe`83b40000 00007ffe`83b77000   WINMM      (deferred)             
+00007ffe`84110000 00007ffe`8412b000   wkscli     (deferred)             
+00007ffe`84570000 00007ffe`84595000   dhcpcsvc   (deferred)             
+00007ffe`845e0000 00007ffe`8470a000   WINHTTP    (deferred)             
+00007ffe`84740000 00007ffe`8475e000   dhcpcsvc6   (deferred)             
+00007ffe`84830000 00007ffe`8483b000   VERSION    (deferred)             
+00007ffe`85670000 00007ffe`857da000   WinTypes   (deferred)             
+00007ffe`868f0000 00007ffe`869e5000   PROPSYS    (deferred)             
+00007ffe`87290000 00007ffe`874fa000   DWrite     (deferred)             
+00007ffe`884f0000 00007ffe`8861b000   CoreMessaging   (deferred)             
+00007ffe`889b0000 00007ffe`889bd000   Secur32    (deferred)             
+00007ffe`889d0000 00007ffe`889fa000   WTSAPI32   (deferred)             
+00007ffe`88a30000 00007ffe`88ad7000   uxtheme    (deferred)             
+00007ffe`88b10000 00007ffe`88b54000   dxcore     (deferred)             
+00007ffe`88cc0000 00007ffe`88cee000   dwmapi     (deferred)             
+00007ffe`893a0000 00007ffe`89c4d000   windows_storage   (deferred)             
+00007ffe`89f10000 00007ffe`89f2b000   SAMCLI     (deferred)             
+00007ffe`89f30000 00007ffe`89f69000   SAMLIB     (deferred)             
+00007ffe`89f70000 00007ffe`89f7d000   netutils   (deferred)             
+00007ffe`89f90000 00007ffe`89fc3000   IPHLPAPI   (deferred)             
+00007ffe`8a020000 00007ffe`8a178000   DNSAPI     (deferred)             
+00007ffe`8a540000 00007ffe`8a579000   rsaenh     (deferred)             
+00007ffe`8a5e0000 00007ffe`8a5fb000   kernel_appcore   (deferred)             
+00007ffe`8a710000 00007ffe`8a746000   ntmarta    (deferred)             
+00007ffe`8a8a0000 00007ffe`8a8e9000   SSPICLI    (deferred)             
+00007ffe`8a980000 00007ffe`8a98d000   DSPARSE    (deferred)             
+00007ffe`8ac00000 00007ffe`8ac25000   gpapi      (deferred)             
+00007ffe`8ac30000 00007ffe`8ac64000   USERENV    (deferred)             
+00007ffe`8ade0000 00007ffe`8adec000   CRYPTBASE   (deferred)             
+00007ffe`8afc0000 00007ffe`8afdb000   CRYPTSP    (deferred)             
+00007ffe`8b030000 00007ffe`8b043000   MSASN1     (deferred)             
+00007ffe`8b0e0000 00007ffe`8b11f000   NTASN1     (deferred)             
+00007ffe`8b130000 00007ffe`8b160000   ncrypt     (deferred)             
+00007ffe`8b170000 00007ffe`8b1d6000   WINSTA     (deferred)             
+00007ffe`8b500000 00007ffe`8b52f000   DEVOBJ     (deferred)             
+00007ffe`8b540000 00007ffe`8b592000   cfgmgr32   (deferred)             
+00007ffe`8b5c0000 00007ffe`8b5ca000   DPAPI      (deferred)             
+00007ffe`8b5f0000 00007ffe`8b605000   UMPDC      (deferred)             
+00007ffe`8b610000 00007ffe`8b66e000   powrprof   (deferred)             
+00007ffe`8b860000 00007ffe`8b88a000   bcrypt     (deferred)             
+00007ffe`8b890000 00007ffe`8b8b9000   profapi    (deferred)             
+00007ffe`8b980000 00007ffe`8ba23000   msvcp_win   (deferred)             
+00007ffe`8bac0000 00007ffe`8bc3f000   CRYPT32    (deferred)             
+00007ffe`8bc50000 00007ffe`8c051000   KERNELBASE   (deferred)             
+00007ffe`8c060000 00007ffe`8c1ac000   ucrtbase   (deferred)             
+00007ffe`8c1c0000 00007ffe`8c1e7000   win32u     (deferred)             
+00007ffe`8c1f0000 00007ffe`8c318000   gdi32full   (deferred)             
+00007ffe`8c320000 00007ffe`8c3cc000   bcryptprimitives   (deferred)             
+00007ffe`8c4a0000 00007ffe`8c4aa000   NSI        (deferred)             
+00007ffe`8c610000 00007ffe`8c728000   RPCRT4     (deferred)             
+00007ffe`8c910000 00007ffe`8cae7000   USER32     (deferred)             
+00007ffe`8caf0000 00007ffe`8cc8a000   ole32      (deferred)             
+00007ffe`8cc90000 00007ffe`8cd11000   WS2_32     (deferred)             
+00007ffe`8cd20000 00007ffe`8cdf9000   OLEAUT32   (deferred)             
+00007ffe`8ce00000 00007ffe`8ce2b000   GDI32      (deferred)             
+00007ffe`8ce30000 00007ffe`8cf29000   shcore     (deferred)             
+00007ffe`8cf30000 00007ffe`8cfeb000   ADVAPI32   (deferred)             
+00007ffe`8cff0000 00007ffe`8d021000   IMM32      (deferred)             
+00007ffe`8d0f0000 00007ffe`8d19e000   clbcatq    (deferred)             
+00007ffe`8d1b0000 00007ffe`8d27b000   KERNEL32 C (pdb symbols)          c:\source\sixfive7\browserai\.work\shot-diag-scratch\symbols\kernel32.pdb\EB96AE1E1A7EFE44176774C15ED1FEB01\kernel32.pdb
+00007ffe`8d280000 00007ffe`8da1c000   SHELL32    (deferred)             
+00007ffe`8da30000 00007ffe`8dad9000   msvcrt     (deferred)             
+00007ffe`8db70000 00007ffe`8defa000   combase    (deferred)             
+00007ffe`8df00000 00007ffe`8df66000   SHLWAPI    (deferred)             
+00007ffe`8e510000 00007ffe`8e5b8000   sechost    (deferred)             
+00007ffe`8e5d0000 00007ffe`8e72c000   MSCTF      (deferred)             
+00007ffe`8e780000 00007ffe`8e9e7000   ntdll    C (pdb symbols)          c:\source\sixfive7\browserai\.work\shot-diag-scratch\symbols\ntdll.pdb\CDE33ED1E32C78E3ECA6171C84A5493B1\ntdll.pdb
+
+Unloaded modules:
+00007ffe`67d70000 00007ffe`67de8000   windows-animations_1.3.7_409391.
+00007ffe`87c00000 00007ffe`87e5f000   d3d11.dll
+00007ffe`88b60000 00007ffe`88c9b000   dxgi.dll
+00007ffe`8b610000 00007ffe`8b66e000   powrprof.dll
+00007ffe`8b5f0000 00007ffe`8b605000   UMPDC.dll
+00007ffe`87e70000 00007ffe`88098000   dcomp.dll
+00007ffe`8a5e0000 00007ffe`8a5fb000   kernel.appcore.dll
+00007ffe`86ba0000 00007ffe`86bba000   Microsoft.Internal.WarpPal.dll
+00007ffe`88cc0000 00007ffe`88cee000   dwmapi.dll
+00007ffe`8cd20000 00007ffe`8cdf9000   OLEAUT32.dll
+00007ffe`8caf0000 00007ffe`8cc8a000   ole32.dll
+00007ffe`8d280000 00007ffe`8da1c000   SHELL32.dll
+00007ffe`8ce30000 00007ffe`8cf29000   shcore.dll
+00007ffe`8df00000 00007ffe`8df66000   SHLWAPI.dll
+00007ffe`5b400000 00007ffe`5b5a9000   libc++.whl
+00007ffe`67a00000 00007ffe`67a3a000   libunwind.whl
+00007ffe`8db70000 00007ffe`8defa000   combase.dll
+00007ffe`8ce30000 00007ffe`8cf29000   shcore.dll
+00007ffe`8ce30000 00007ffe`8cf29000   shcore.dll
+00007ffe`869f0000 00007ffe`869f6000   KBDUSX.DLL
+00007ffe`5ab40000 00007ffe`5abce000   MDMRegistration.dll
+00007ffe`54580000 00007ffe`545b9000   omadmapi.dll
+00007ffe`543c0000 00007ffe`54451000   msvcp110_win.dll
+00007ffe`8cd20000 00007ffe`8cdf9000   OLEAUT32.dll
+00007ffe`6e170000 00007ffe`6e18a000   netapi32.dll
+00007ffe`86a20000 00007ffe`86b95000   DSREG.DLL
+00007ffe`6e170000 00007ffe`6e18a000   netapi32.dll
+==THREADS==
+   0  Id: 179d0.f124 Suspend: 0 Teb: 0000009f`683c0000 Unfrozen "CrBrowserMain"
+   1  Id: 179d0.144c4 Suspend: 0 Teb: 0000009f`683c2000 Unfrozen
+   2  Id: 179d0.8fec Suspend: 0 Teb: 0000009f`683c4000 Unfrozen
+   3  Id: 179d0.116d0 Suspend: 0 Teb: 0000009f`683c6000 Unfrozen
+   4  Id: 179d0.314c Suspend: 0 Teb: 0000009f`683c8000 Unfrozen "WindhawkMainLoopThreadAttachExempt"
+   5  Id: 179d0.1ab70 Suspend: 0 Teb: 0000009f`683ca000 Unfrozen "StackSamplingProfiler"
+   6  Id: 179d0.fa98 Suspend: 0 Teb: 0000009f`683cc000 Unfrozen "BrokerEvent"
+   7  Id: 179d0.18500 Suspend: 0 Teb: 0000009f`683ce000 Unfrozen "HangWatcher"
+   8  Id: 179d0.17150 Suspend: 0 Teb: 0000009f`683d0000 Unfrozen "PerfettoTrace"
+   9  Id: 179d0.7888 Suspend: 0 Teb: 0000009f`683d2000 Unfrozen "ThreadPoolServiceThread"
+  10  Id: 179d0.12aa8 Suspend: 0 Teb: 0000009f`683d4000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedForegroundBlocking"
+. 11  Id: 179d0.19df0 Suspend: 0 Teb: 0000009f`683d6000 Unfrozen "ThreadPoolForegroundWorker"
+  12  Id: 179d0.18944 Suspend: 0 Teb: 0000009f`683d8000 Unfrozen "ThreadPoolForegroundWorker"
+  13  Id: 179d0.1bd34 Suspend: 0 Teb: 0000009f`683da000 Unfrozen "ThreadPoolBackgroundWorker"
+  14  Id: 179d0.9c84 Suspend: 0 Teb: 0000009f`683dc000 Unfrozen "ThreadPoolForegroundWorker"
+  15  Id: 179d0.1b3f8 Suspend: 0 Teb: 0000009f`683de000 Unfrozen "ThreadPoolBackgroundWorker"
+  16  Id: 179d0.d16c Suspend: 0 Teb: 0000009f`683e0000 Unfrozen
+  17  Id: 179d0.17654 Suspend: 0 Teb: 0000009f`683e2000 Unfrozen "Chrome_IOThread"
+  18  Id: 179d0.1a4fc Suspend: 0 Teb: 0000009f`683e4000 Unfrozen "MemoryInfra"
+  19  Id: 179d0.eae0 Suspend: 0 Teb: 0000009f`683e6000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedBackgroundBlocking"
+  20  Id: 179d0.1b578 Suspend: 0 Teb: 0000009f`683e8000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedForeground"
+  21  Id: 179d0.14ac4 Suspend: 0 Teb: 0000009f`683ea000 Unfrozen "ThreadPoolForegroundWorker"
+  22  Id: 179d0.1ac70 Suspend: 0 Teb: 0000009f`683ec000 Unfrozen "ThreadPoolForegroundWorker"
+  23  Id: 179d0.1501c Suspend: 0 Teb: 0000009f`683ee000 Unfrozen "ThreadPoolForegroundWorker"
+  24  Id: 179d0.12f64 Suspend: 0 Teb: 0000009f`683f0000 Unfrozen "ThreadPoolForegroundWorker"
+  25  Id: 179d0.8cfc Suspend: 0 Teb: 0000009f`683f2000 Unfrozen "ThreadPoolForegroundWorker"
+  26  Id: 179d0.19cd8 Suspend: 0 Teb: 0000009f`683f4000 Unfrozen
+  27  Id: 179d0.19f14 Suspend: 0 Teb: 0000009f`683f6000 Unfrozen "ThreadPoolSingleThreadForegroundBlocking"
+  28  Id: 179d0.11fc0 Suspend: 0 Teb: 0000009f`683f8000 Unfrozen "CacheThread_BlockFile"
+  29  Id: 179d0.19560 Suspend: 0 Teb: 0000009f`683fa000 Unfrozen "CompositorTileWorker1"
+  30  Id: 179d0.37f4 Suspend: 0 Teb: 0000009f`683fc000 Unfrozen "VideoCaptureThread"
+  31  Id: 179d0.196fc Suspend: 0 Teb: 0000009f`683fe000 Unfrozen "MemoryListSampler"
+  32  Id: 179d0.1b500 Suspend: 0 Teb: 0000009f`68200000 Unfrozen
+  33  Id: 179d0.17674 Suspend: 0 Teb: 0000009f`68202000 Unfrozen
+  34  Id: 179d0.1c200 Suspend: 0 Teb: 0000009f`68204000 Unfrozen
+  35  Id: 179d0.46c8 Suspend: 0 Teb: 0000009f`68206000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedBackgroundBlocking"
+  36  Id: 179d0.1adc Suspend: 0 Teb: 0000009f`68208000 Unfrozen "ThreadPoolSingleThreadSharedBackgroundBlocking"
+  37  Id: 179d0.86b4 Suspend: 0 Teb: 0000009f`6820a000 Unfrozen "ThreadPoolSingleThreadForegroundBlocking"
+  38  Id: 179d0.1a9c4 Suspend: 0 Teb: 0000009f`6820c000 Unfrozen "ThreadPoolForegroundWorker"
+  39  Id: 179d0.1a640 Suspend: 0 Teb: 0000009f`6820e000 Unfrozen "ThreadPoolSingleThreadSharedForeground"
+  40  Id: 179d0.51f0 Suspend: 0 Teb: 0000009f`68210000 Unfrozen "ThreadPoolForegroundWorker"
+  41  Id: 179d0.18408 Suspend: 0 Teb: 0000009f`68212000 Unfrozen "ThreadPoolForegroundWorker"
+  42  Id: 179d0.14f20 Suspend: 0 Teb: 0000009f`68214000 Unfrozen "ThreadPoolForegroundWorker"
+  43  Id: 179d0.10fb0 Suspend: 0 Teb: 0000009f`68216000 Unfrozen "ThreadPoolForegroundWorker"
+  44  Id: 179d0.1bad8 Suspend: 0 Teb: 0000009f`68218000 Unfrozen "ThreadPoolForegroundWorker"
+  45  Id: 179d0.1aa38 Suspend: 0 Teb: 0000009f`6821a000 Unfrozen "ThreadPoolForegroundWorker"
+  46  Id: 179d0.15390 Suspend: 0 Teb: 0000009f`6821c000 Unfrozen "ThreadPoolForegroundWorker"
+  47  Id: 179d0.1a344 Suspend: 0 Teb: 0000009f`6821e000 Unfrozen "ThreadPoolForegroundWorker"
+  48  Id: 179d0.1f30 Suspend: 0 Teb: 0000009f`68220000 Unfrozen "ThreadPoolForegroundWorker"
+  49  Id: 179d0.137c4 Suspend: 0 Teb: 0000009f`68222000 Unfrozen "ThreadPoolForegroundWorker"
+  50  Id: 179d0.5614 Suspend: 0 Teb: 0000009f`68224000 Unfrozen "ThreadPoolForegroundWorker"
+  51  Id: 179d0.73fc Suspend: 0 Teb: 0000009f`68226000 Unfrozen "DevToolsPipeHandlerReadThread"
+  52  Id: 179d0.10460 Suspend: 0 Teb: 0000009f`68228000 Unfrozen "DevToolsPipeHandlerWriteThread"
+  53  Id: 179d0.13b24 Suspend: 0 Teb: 0000009f`6822a000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedForegroundBlocking"
+  54  Id: 179d0.15414 Suspend: 0 Teb: 0000009f`6822c000 Unfrozen "DManip Delegate Thread"
+quit:
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'

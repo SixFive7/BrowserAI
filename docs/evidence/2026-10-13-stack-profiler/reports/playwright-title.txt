@@ -1,0 +1,1 @@
+[Bug]: Windows: Chrome for Testing crashes in its stack sampling profiler during fullPage screenshots

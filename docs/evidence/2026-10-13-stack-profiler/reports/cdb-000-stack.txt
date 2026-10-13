@@ -1,0 +1,165 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:\Users\jori\AppData\Local\ms-playwright\chromium-1247\chrome-win64
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.000 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.016 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 46
+
+Microsoft (R) Windows Debugger Version 10.0.29661.1004 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\runs\main1\000-on\profile\Crashpad\reports\dc8d64ce-0c24-4a41-85b8-ca03c4515327.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:\Users\jori\AppData\Local\ms-playwright\chromium-1247\chrome-win64
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols
+Symbol search path is: srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols
+Executable search path is: C:\Users\jori\AppData\Local\ms-playwright\chromium-1247\chrome-win64
+Windows 10 Version 26300 (9550) MP (32 procs) Free x64
+Product: WinNt
+Edition build lab: Windows NT 10.0.26300.9550
+Debug session time: Tue Oct 13 00:27:44.000 2026 (UTC + 2:00)
+System Uptime: 0 days 8:09:47.546
+Process Uptime: 0 days 0:00:05.000
+................................................................
+..........................
+Loading unloaded module list
+..........................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr
+(2b78.16f64): Access violation - code c0000005 (first/second chance not available)
+ReadVirtual() failed in GetXStateConfiguration() first read attempt (error == 0.)
+Invalid mini-dump Miscellaneous information in InitializeConfiguration()
+For analysis of this file, run !analyze -v
+*** WARNING: Unable to verify checksum for ntdll.dll
+ntdll!NtDelayExecution+0x14:
+00007ffe`8e8e2244 c3              ret
+0:011> cdb: Reading initial command '.ecxr; .echo ==STACK==; kn 30; .echo ==LM==; lmvm chrome; lmvm ntdll; q'
+rax=0000000000000000 rbx=0000000000000001 rcx=00007ffe8e7a0161
+rdx=00007ffd22c88188 rsi=0000001fbcffe758 rdi=00007ffd22c88188
+rip=00007ffe8e7a0191 rsp=0000001fbcffe590 rbp=00007ffd11440000
+ r8=ffffffffffffff80  r9=0000000000000210 r10=0000000000000006
+r11=0000000000000000 r12=0000000000000018 r13=00007ffd11440000
+r14=0000001fbcffeb40 r15=00007ffe8e780000
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00010246
+ntdll!RtlpUnwindPrologue+0x381:
+00007ffe`8e7a0191 4d8b4108        mov     r8,qword ptr [r9+8] ds:00000000`00000218=????????????????
+==STACK==
+ # Child-SP          RetAddr               Call Site
+00 0000001f`bcffe590 00007ffe`8e79f549     ntdll!RtlpUnwindPrologue+0x381
+01 0000001f`bcffe640 00007ffe`8e7a13cb     ntdll!RtlpxVirtualUnwind+0x109
+*** WARNING: Unable to verify checksum for KERNEL32.DLL
+02 0000001f`bcffe6f0 00007ffe`8d1d7218     ntdll!RtlVirtualUnwind+0x15b
+*** WARNING: Unable to verify checksum for chrome.dll
+03 0000001f`bcffe790 00007ffd`1ddc2f23     KERNEL32!RtlVirtualUnwindStub+0x38
+04 0000001f`bcffe7e0 00007ffd`1ddc2e75     chrome!sqlite3_dbdata_init+0xc11c43
+05 0000001f`bcffe980 00007ffd`1cf77532     chrome!sqlite3_dbdata_init+0xc11b95
+06 0000001f`bcffe9d0 00007ffd`1cf7f5b7     chrome!CrashForExceptionInNonABICompliantCodeRange+0x4565f52
+07 0000001f`bcffea60 00007ffd`1cf7fa90     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456dfd7
+08 0000001f`bcffeae0 00007ffd`1cf7fdac     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456e4b0
+09 0000001f`bcfff060 00007ffd`16f53dc2     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456e7cc
+0a 0000001f`bcfff0e0 00007ffd`157bacc1     chrome!IsSandboxedProcess+0x2793912
+0b 0000001f`bcfff120 00007ffd`151006a2     chrome!IsSandboxedProcess+0xffa811
+0c 0000001f`bcfff210 00007ffd`150ff3e7     chrome!IsSandboxedProcess+0x9401f2
+0d 0000001f`bcfff350 00007ffd`150fdc7c     chrome!IsSandboxedProcess+0x93ef37
+0e 0000001f`bcfff6e0 00007ffd`114bea18     chrome!IsSandboxedProcess+0x93d7cc
+0f 0000001f`bcfff8a0 00007ffd`11c20676     chrome+0x7ea18
+10 0000001f`bcfff8e0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+11 0000001f`bcfff970 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+12 0000001f`bcfff9a0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+==LM==
+start             end                 module name
+00007ffd`11440000 00007ffd`239bb000   chrome   C (export symbols)       C:\Users\jori\AppData\Local\ms-playwright\chromium-1247\chrome-win64\chrome.dll
+    Loaded symbol image file: C:\Users\jori\AppData\Local\ms-playwright\chromium-1247\chrome-win64\chrome.dll
+    Mapped memory image file: c:\users\jori\appdata\local\ms-playwright\chromium-1247\chrome-win64\chrome.dll
+    Image path: C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\chromium-1247\chrome-win64\chrome.dll
+    Image name: chrome.dll
+    Timestamp:        Tue Sep 22 23:40:09 2026 (6AB2F5B9)
+    CheckSum:         00000000
+    ImageSize:        1257B000
+    Mapping Form:     Loaded
+    File version:     155.0.8059.12
+    Product version:  155.0.8059.12
+    File flags:       0 (Mask 0)
+    File OS:          0 Unknown Base
+    File type:        1.0 App
+    File date:        00000000.00000000
+    Translations:     0409.04b0
+    Information from resource tables:
+        CompanyName:      Google LLC
+        ProductName:      Google Chrome for Testing
+        InternalName:     chrome_dll
+        OriginalFilename: chrome.dll
+        ProductVersion:   155.0.8059.12
+        FileVersion:      155.0.8059.12
+        FileDescription:  Google Chrome for Testing
+        LegalCopyright:   Copyright 2026 Google LLC. All rights reserved.
+start             end                 module name
+00007ffe`8e780000 00007ffe`8e9e7000   ntdll    C (pdb symbols)          c:\source\sixfive7\browserai\.work\shot-diag-scratch\symbols\ntdll.pdb\CDE33ED1E32C78E3ECA6171C84A5493B1\ntdll.pdb
+    Loaded symbol image file: C:\Windows\System32\ntdll.dll
+    Mapped memory image file: C:\WINDOWS\SYSTEM32\ntdll.dll
+    Image path: C:\WINDOWS\SYSTEM32\ntdll.dll
+    Image name: ntdll.dll
+    Image was built with /Brepro flag.
+    Timestamp:        B396C142 (This is a reproducible build file hash, not a timestamp)
+    CheckSum:         00000000
+    ImageSize:        00267000
+    Mapping Form:     Loaded
+    File version:     10.0.26100.9549
+    Product version:  10.0.26100.9549
+    File flags:       0 (Mask 0)
+    File OS:          0 Unknown Base
+    File type:        2.0 Dll
+    File date:        00000000.00000000
+    Translations:     0409.04b0
+    Information from resource tables:
+        CompanyName:      Microsoft Corporation
+        ProductName:      Microsoft® Windows® Operating System
+        InternalName:     ntdll.dll
+        OriginalFilename: ntdll.dll
+        ProductVersion:   10.0.26100.9549
+        FileVersion:      10.0.26100.9549 (WinBuild.160101.0800)
+        FileDescription:  NT Layer DLL
+        LegalCopyright:   © Microsoft Corporation. All rights reserved.
+quit:
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'

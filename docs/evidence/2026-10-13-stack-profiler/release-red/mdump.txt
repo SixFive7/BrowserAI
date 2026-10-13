@@ -1,0 +1,203 @@
+signature 504d444d version 0000a793 streams 13 dir_rva 32 time 2026-10-12 22:04:23+00:00 flags 200000
+stream type 0x00000007 size 56 rva 188
+stream type 0x0000000f size 1364 rva 260
+stream type 0x00000003 size 2644 rva 1624
+stream type 0x00000018 size 664 rva 79952
+stream type 0x00000006 size 168 rva 83628
+stream type 0x00000004 size 9724 rva 85184
+stream type 0x0000000e size 660 rva 105392
+stream type 0x43500001 size 64 rva 106940
+stream type 0x00000010 size 122656 rva 113192
+stream type 0x0000000c size 38256 rva 235848
+stream type 0x4b6b0003 size 537 rva 274576
+stream type 0x00000005 size 35716 rva 275116
+stream type 0x4b6b0002 size 47 rva 310832
+EXCEPTION thread 105968 code 0xc0000005 flags 0 address 0x7ffe8e7a0191 params ['0x0', '0x218']
+  in module C:\WINDOWS\SYSTEM32\ntdll.dll +0x20191
+  context: Rax=0000000000000000 Rcx=00007ffe8e7a0161 Rdx=00007ffcfcbd8188 Rbx=0000000000000001 Rsp=0000009f73bfe940 Rbp=00007ffceb390000 Rsi=0000009f73bfeb08 Rdi=00007ffcfcbd8188 R8=ffffffffffffff80 R9=0000000000000210 R10=0000000000000006 R11=0000000000000000 R12=0000000000000018 R13=00007ffceb390000 R14=0000009f73bfeef0 R15=00007ffe8e780000 Rip=00007ffe8e7a0191
+EXC_TID 105968 RSP 0x9f73bfe940 RIP 0x7ffe8e7a0191
+MISC pid 96720 process create time 2026-10-12 22:04:22+00:00 user 1s kernel 0s
+MODULES:
+  00007ff6bbf40000 00467000 155.0.8059.12 C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe ('chrome.exe.pdb', 'ADDD31BC7959CF9D4C4C44205044422E', 1)
+  00007ffe8e780000 00267000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\ntdll.dll ('ntdll.pdb', 'CDE33ED1E32C78E3ECA6171C84A5493B', 1)
+  00007ffe8d1b0000 000cb000 10.0.26100.9549 C:\WINDOWS\System32\KERNEL32.DLL ('kernel32.pdb', 'EB96AE1E1A7EFE44176774C15ED1FEB0', 1)
+  00007ffe8bc50000 00401000 10.0.26100.9549 C:\WINDOWS\System32\KERNELBASE.dll ('kernelbase.pdb', '605ECD2E55DB33A16D8EC6DA29AB6087', 1)
+  00007ffe13f50000 002da000 155.0.8059.12 C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome_elf.dll ('chrome_elf.dll.pdb', '6D0109A2CE35B8AF4C4C44205044422E', 1)
+  00007ffe84830000 0000b000 10.0.26100.1150 C:\WINDOWS\SYSTEM32\VERSION.dll ('version.pdb', '440DD63BE2B021F80FD0C78EF0AECEF2', 1)
+  00007ffe8da30000 000a9000 7.0.26100.9444 C:\WINDOWS\System32\msvcrt.dll ('msvcrt.pdb', '3D6633E02A7A1306A00D36101110A822', 1)
+  00007ffe8c320000 000ac000 10.0.26100.9549 C:\WINDOWS\System32\bcryptprimitives.dll ('bcryptprimitives.pdb', 'B66EEA174244665AF8C80C00D2A48591', 1)
+  00007ffe6a080000 000f2000 1.7.3.0 C:\Program Files\Windhawk\Engine\1.7.3_3\64\windhawk.dll ('C:\\Program Files\\Windhawk\\Engine\\1.7.3_3\\64\\windhawk.dll', '00000000000000000000000000000000', 0)
+  00007ffe8cf30000 000bb000 10.0.26100.9549 C:\WINDOWS\System32\ADVAPI32.dll ('advapi32.pdb', '7119AA5662AF285F2CB6DD7968C7F228', 1)
+  00007ffe8e510000 000a8000 10.0.26100.9549 C:\WINDOWS\System32\sechost.dll ('sechost.pdb', '247299BBA09E02830EB8911DC0C493D7', 1)
+  00007ffe8c610000 00118000 10.0.26100.9549 C:\WINDOWS\System32\RPCRT4.dll ('rpcrt4.pdb', '1870BDE19FE8AEC6D55BC8391C2B9B35', 1)
+  00007ffe8ce00000 0002b000 10.0.26100.8328 C:\WINDOWS\System32\GDI32.dll ('gdi32.pdb', '92C6EC2ABE478836C99BC83C2F3AE355', 1)
+  00007ffe8c1c0000 00027000 10.0.26100.9549 C:\WINDOWS\System32\win32u.dll ('win32u.pdb', 'FA99B6C359C0171026D9F170C29F1FD4', 1)
+  00007ffe8c1f0000 00128000 10.0.26100.9549 C:\WINDOWS\System32\gdi32full.dll ('gdi32full.pdb', '8B759EB1CBC1CC641286046B969CA79D', 1)
+  00007ffe8b980000 000a3000 10.0.26100.9444 C:\WINDOWS\System32\msvcp_win.dll ('msvcp_win.pdb', 'F7D54E930C80BFB08820802872942811', 1)
+  00007ffe8c060000 0014c000 10.0.26100.9444 C:\WINDOWS\System32\ucrtbase.dll ('ucrtbase.pdb', '158F9F38CC492128FE8C9354A209CFB5', 1)
+  00007ffe8c910000 001d7000 10.0.26100.9549 C:\WINDOWS\System32\USER32.dll ('user32.pdb', 'F0BF56EE0A784974D49A58173A7CBC7E', 1)
+  00007ffe8cff0000 00031000 10.0.26100.9278 C:\WINDOWS\System32\IMM32.DLL ('imm32.pdb', 'FCE5E7A9B4504EB08BF6492A4AD1E07B', 1)
+  00007ffe88b10000 00044000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\dxcore.dll ('DXCore.pdb', '265D19622AE70A70179C86A8F531C6D4', 1)
+  00007ffe8a710000 00036000 10.0.26100.7019 C:\WINDOWS\system32\ntmarta.dll ('ntmarta.pdb', 'A1E053A1582C23463F30DF9CEC4FB869', 1)
+  00007ffceb390000 1257b000 155.0.8059.12 C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll ('chrome.dll.pdb', '728441B965B003FE4C4C44205044422E', 1)
+  00007ffe8cc90000 00081000 10.0.26100.9549 C:\WINDOWS\System32\WS2_32.dll ('ws2_32.pdb', 'E4D5FA80DC76AD6AAD30CD741BCF6740', 1)
+  00007ffe8bac0000 0017f000 10.0.26100.9549 C:\WINDOWS\System32\CRYPT32.dll ('crypt32.pdb', '521CAFCC97DCFEDA6B4C9FEAE8217A41', 1)
+  00007ffe83b40000 00037000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\WINMM.dll ('winmm.pdb', '323F8C7EA2970AC609D0D009C5B9F6EE', 1)
+  00007ffe87290000 0026a000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\DWrite.dll ('DWrite.pdb', 'C1DF82856E136341D54A282682CFC5F6', 1)
+  00007ffe8b5c0000 0000a000 10.0.26100.8521 C:\WINDOWS\SYSTEM32\DPAPI.DLL ('dpapi.pdb', '966F81E9361EF441CBC66D53D64D02C9', 1)
+  00007ffe88a30000 000a7000 10.0.26100.9549 C:\WINDOWS\system32\uxtheme.dll ('uxtheme.pdb', 'E3B000F9BC9FEB681571367B75481222', 1)
+  00007ffe8db70000 0038a000 10.0.26100.9549 C:\WINDOWS\System32\combase.dll ('combase.pdb', 'A517A2EA961FBDDD623F6C3C884D8C05', 1)
+  00007ffe8ac30000 00034000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\USERENV.dll ('userenv.pdb', 'AC230C1D95C5D8186A386A21382A3036', 1)
+  00007ffe8ac00000 00025000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\gpapi.dll ('gpapi.pdb', 'B1E278AFA9F85D6535562D66F059E9CE', 1)
+  00007ffe8ce30000 000f9000 10.0.26100.9549 C:\WINDOWS\System32\shcore.dll ('shcore.pdb', 'D27BFB8722C42B7497C9EAE6B78BEDB2', 1)
+  00007ffe8df00000 00066000 10.0.26100.9549 C:\WINDOWS\System32\SHLWAPI.dll ('shlwapi.pdb', '6EE62103BE2AA3702ADF815CC1933DBC', 1)
+  00007ffe84110000 0001b000 10.0.26100.7019 C:\WINDOWS\SYSTEM32\wkscli.dll ('wkscli.pdb', '85B257DC40B9941D90A129F126E89F03', 1)
+  00007ffe89f70000 0000d000 10.0.26100.1882 C:\WINDOWS\SYSTEM32\netutils.dll ('netutils.pdb', 'A62B5BE79F6C45E02EEA8270BB52C5D7', 1)
+  00007ffe8caf0000 0019a000 10.0.26100.9549 C:\WINDOWS\System32\ole32.dll ('ole32.pdb', '7A0E668D517F5167B9AB6FE73BCC86E2', 1)
+  00007ffe8a5e0000 0001b000 10.0.26100.9278 C:\WINDOWS\SYSTEM32\kernel.appcore.dll ('Kernel.Appcore.pdb', '6E8EA6DD53E12966620C37875551E6F6', 1)
+  00007ffe8e5d0000 0015c000 10.0.26100.9549 C:\WINDOWS\System32\MSCTF.dll ('msctf.pdb', '3DE20B5AFD632226D2CA570700199E9F', 1)
+  00007ffe8b610000 0005e000 10.0.26100.3912 C:\WINDOWS\SYSTEM32\powrprof.dll ('powrprof.pdb', '4C3CA2761B95AF4F1653318F5E717999', 1)
+  00007ffe8b5f0000 00015000 10.0.26100.8972 C:\WINDOWS\SYSTEM32\UMPDC.dll ('UMPDC.pdb', '550F2F22934B186C699CF195CFE5E5AD', 1)
+  00007ffe8cd20000 000d9000 10.0.26100.9549 C:\WINDOWS\System32\OLEAUT32.dll ('oleaut32.pdb', '5F2306A28154F2268DEA35F72AFEE87D', 1)
+  00007ffe8b030000 00013000 10.0.26100.9444 C:\WINDOWS\System32\MSASN1.dll ('msasn1.pdb', 'BF21E5043BE9355AC195FC29148E9CB9', 1)
+  00007ffe8b890000 00029000 10.0.26100.9549 C:\WINDOWS\System32\profapi.dll ('profapi.pdb', 'C84B757CBC4DE5A913FF3227C607E335', 1)
+  00007ffe6f030000 00290000 6.10.26100.9549 C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.9549_none_3e0a0396e3330090\COMCTL32.dll ('comctl32.pdb', 'DD30367BF8E0CDC1A8587F6587E58330', 1)
+  00007ffe8ade0000 0000c000 10.0.26100.9444 C:\WINDOWS\SYSTEM32\CRYPTBASE.dll ('cryptbase.pdb', 'D796D1450E6C390AE346F535748B7F60', 1)
+  00007ffe38da0000 00027000 10.0.26100.9549 C:\WINDOWS\system32\nlansp_c.dll ('nlansp_c.pdb', '1F689E89EC3A5DB68F9DA8EE938E210B', 1)
+  00007ffe889b0000 0000d000 10.0.26100.7705 C:\WINDOWS\SYSTEM32\Secur32.dll ('secur32.pdb', '4086D48D454CB5A55D7006FDFF298D3C', 1)
+  00007ffe8a8a0000 00049000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\SSPICLI.DLL ('sspicli.pdb', 'EF43C485E8F123CC22CB5859C8DBB090', 1)
+  00007ffe89f90000 00033000 10.0.26100.9278 C:\WINDOWS\SYSTEM32\IPHLPAPI.DLL ('iphlpapi.pdb', '23648DDA4C96DCCCE139DC2340F3030B', 1)
+  00007ffe8c4a0000 0000a000 10.0.26100.9444 C:\WINDOWS\System32\NSI.dll ('nsi.pdb', '662A028F57A7C702B11F583CE15A8E63', 1)
+  00007ffe84740000 0001e000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\dhcpcsvc6.DLL ('dhcpcsvc6.pdb', 'FE4998B7942D763C08D4CCE1D59C1918', 1)
+  00007ffe84570000 00025000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\dhcpcsvc.DLL ('dhcpcsvc.pdb', '0F3E5DFE50D6814788EAAB8B5B1E9126', 1)
+  00007ffe8a020000 00158000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\DNSAPI.dll ('dnsapi.pdb', 'A72770303008FC4123C01B01435FC8C6', 1)
+  00007ffe8a980000 0000d000 10.0.26100.1 C:\WINDOWS\SYSTEM32\DSPARSE.dll ('dsparse.pdb', '8FA49081BBE43D8CBFF3D9797D087DB2', 1)
+  00007ffe8d0f0000 000ae000 2001.12.10941.16384 C:\WINDOWS\System32\clbcatq.dll ('CLBCatQ.pdb', 'AF2718C671D6F2ABB7878E21511A7B23', 1)
+  00007ffe67030000 00146000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\textinputframework.dll ('TextInputFramework.pdb', 'EEAF2534DD6FFF5D8B6FC8F7D4DF1E1C', 1)
+  00007ffe8d280000 0079c000 10.0.26100.9549 C:\WINDOWS\System32\SHELL32.dll ('shell32.pdb', 'E5F50DE105B255C9B37281C191A99E13', 1)
+  00007ffe893a0000 008ad000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\windows.storage.dll ('Windows.Storage.pdb', 'FC2C41F4093E147F64921116B8DD3873', 1)
+  00007ffe889d0000 0002a000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\WTSAPI32.dll ('wtsapi32.pdb', '1FDEA2A2383C5518F7ACA68B350C0B60', 1)
+  00007ffe8b170000 00066000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\WINSTA.dll ('winsta.pdb', '11089B36C830A46A4E2CFE3611315F92', 1)
+  00007ffe79f60000 000a5000 10.0.26100.9549 C:\WINDOWS\System32\MMDevApi.dll ('MMDevAPI.pdb', '0EC5D9BA53D894FC9D5E87A3D7B686C0', 1)
+  00007ffe8b500000 0002f000 10.0.26100.9549 C:\WINDOWS\System32\DEVOBJ.dll ('devobj.pdb', 'E5EEAD1D78B61F52B7132F1AA82FD559', 1)
+  00007ffe8b540000 00052000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\cfgmgr32.dll ('cfgmgr32.pdb', 'BCEF01E7E75F186EA3077993BF409D57', 1)
+  00007ffe845e0000 0012a000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\WINHTTP.dll ('winhttp.pdb', 'ACDDE45A37BAD27AB13ECB58134E7561', 1)
+  00007ffe525b0000 0069a000 10.0.26100.9549 C:\Windows\System32\Windows.Media.dll ('Windows.Media.pdb', '65137CE9C5254515EC1481D233A89E94', 1)
+  00007ffe85670000 0016a000 10.0.26100.9549 C:\Windows\System32\WinTypes.dll ('WinTypes.pdb', '0034A267D61ED27229C7F7F29D59030E', 1)
+  00007ffe65720000 0015b000 10.0.26100.9549 C:\Windows\System32\Windows.UI.dll ('Windows.UI.pdb', '4F6187339063B44DF5F217BCD5A5248A', 1)
+  00007ffe64490000 00151000 10.0.26100.9549 C:\Windows\System32\Windows.UI.Immersive.dll ('Windows.UI.Immersive.pdb', '773D986EAF998EE295F5B9BC42D4BEFD', 1)
+  00007ffe51e40000 00160000 10.0.26100.9549 C:\Windows\System32\wpnapps.dll ('wpnapps.pdb', '66DA10695DB863C49D306EC4E49709FB', 1)
+  00007ffe7af00000 00659000 10.0.26100.9549 C:\Windows\System32\OneCoreUAPCommonProxyStub.dll ('OneCoreUAPCommonProxyStub.pdb', '3DBC9257B8ECDF17623EFC3127140A13', 1)
+  00007ffe5aa50000 0006d000 10.0.26100.9549 C:\Windows\System32\CryptoWinRT.dll ('CryptoWinRT.pdb', '39778CC4E58B2411A881AF30AD8A064A', 1)
+  00007ffe480d0000 0007a000 10.0.26100.9549 C:\Windows\System32\cryptngc.dll ('cryptngc.pdb', '88F89B088FBBD131011DD2016D6AADA9', 1)
+  00007ffe8b130000 00030000 10.0.26100.9549 C:\Windows\System32\ncrypt.dll ('ncrypt.pdb', '299613F4BF3D5DEAB7C702074D951BDE', 1)
+  00007ffe8b0e0000 0003f000 10.0.26100.1882 C:\Windows\System32\NTASN1.dll ('ntasn1.pdb', '5858845AC890E5F0CB04F2303DD78B3E', 1)
+  00007ffe8b860000 0002a000 10.0.26100.9549 C:\Windows\System32\bcrypt.dll ('bcrypt.pdb', '50597FAD239A650EDDE1E0D639E7EC72', 1)
+  00007ffe51c40000 0002d000 10.0.26100.9549 C:\WINDOWS\system32\ngcksp.dll ('ngcksp.pdb', 'DDF65BF8B43A0CC1846747787ECA7D62', 1)
+  00007ffe661c0000 001e2000 10.0.26100.9549 C:\Windows\System32\InputHost.dll ('InputHost.pdb', '43E9A4DF8C08085AE228676BCC7BD27F', 1)
+  00007ffe884f0000 0012b000 10.0.26100.9549 C:\Windows\System32\CoreMessaging.dll ('CoreMessaging.pdb', '0DE392AB38053E598ED9F336D230446C', 1)
+  00007ffe868f0000 000f5000 7.0.26100.9549 C:\WINDOWS\SYSTEM32\PROPSYS.dll ('propsys.pdb', '3D09BFA165709518AA9A8A87B6FBE69F', 1)
+  00007ffe88cc0000 0002e000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\dwmapi.dll ('dwmapi.pdb', '03449B4864BEFF0E155BEB1845861AF7', 1)
+  00007ffe533d0000 000e6000 10.0.26100.9549 C:\WINDOWS\system32\twinapi.dll ('twinapi.pdb', '2561CD905D3B3762F1A927F71D06780B', 1)
+  00007ffe50a60000 0005c000 10.0.26100.9549 C:\WINDOWS\system32\dataexchange.dll ('DataExchange.pdb', 'A94D8A9C2EE5C6EC8ADF1F41E6A12F3A', 1)
+  00007ffe7b750000 00251000 10.0.26100.9549 C:\WINDOWS\system32\twinapi.appcore.dll ('twinapi.appcore.pdb', '3E81A4DC7C5A861B82BA7E1E06C04EA4', 1)
+  00007ffe6eec0000 00075000 7.2.26100.9549 C:\WINDOWS\SYSTEM32\OLEACC.dll ('oleacc.pdb', 'B0D82BFE47D5641B5B854C5EF26B9835', 1)
+  00007ffe643e0000 000a3000 10.0.26100.9549 C:\WINDOWS\system32\directmanipulation.dll ('directmanipulation.pdb', '78BF90385C756153902ABCC3F96C0684', 1)
+  00007ffe6e170000 0001a000 10.0.26100.7019 C:\WINDOWS\SYSTEM32\NETAPI32.dll ('netapi32.pdb', 'E643EF0F87D93218FF6CC1E99938D580', 1)
+  00007ffe89f10000 0001b000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\SAMCLI.DLL ('samcli.pdb', 'A0096CFC4AA642B8BC42BFE023A4D906', 1)
+  00007ffe89f30000 00039000 10.0.26100.9549 C:\WINDOWS\SYSTEM32\SAMLIB.dll ('samlib.pdb', '427A0C33554825EED29F1977707017D7', 1)
+  00007ffe8afc0000 0001b000 10.0.26100.9444 C:\WINDOWS\System32\CRYPTSP.dll ('cryptsp.pdb', '45B42B6AD9A5CA49C5F18CA4042F9666', 1)
+  00007ffe8a540000 00039000 10.0.26100.7705 C:\WINDOWS\system32\rsaenh.dll ('rsaenh.pdb', 'C1CBDCFF3D390DA0721FDD1FE5F444DE', 1)
+CRASHPAD version 1
+  simple plat = Win64
+  simple prod = Google Chrome for Testing
+  simple ver = 155.0.8059.12
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome_elf.dll] object osarch (type 1) = x86_64
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome_elf.dll] object pid (type 1) = 96720
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome_elf.dll] object ptype (type 1) = browser
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu-generation-intel (type 1) = 0
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu-vsver (type 1) = 5.0
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu-psver (type 1) = 5.0
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu-driver (type 1) = 32.0.16.1656
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu-rev (type 1) = 161
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu-subid (type 1) = 0x89d71043
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu_count (type 1) = 1
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu-devid (type 1) = 0x2c02
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object gpu-venid (type 1) = 0x10de
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object keep_alive_registry (type 1) = {registered_count_=2, restart_allowed_count_=0, KeepAlives=[BROWSER (1), REMOTE_DEBUGGING (1)]}
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object component-extension-1 (type 1) = Chromium PDF Viewer
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object num-component-extensions (type 1) = 1
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object num-extensions (type 1) = 0
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object chrome-trace-id (type 1) = 399607646050609287
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object reentry_guard_tls_slot (type 1) = unused
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object num-variations-runtime-overrides (type 1) = 0
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object variations (type 1) = 5e3a236d-59e286d0,b357b792-3f4a17df,f4f00e05-ca7d8d80,a35976f5-f23d1dea,a983f698-8e9cac75,70678518-dee66fa8,be338734-dee66fa8,5f9907a9-dee66fa8,8eeccb9a-dee66fa8,2b465683-dee66fa8,52fc7926-dee66fa8,bc9b361d-dee66fa8,a41a7188-dee66fa8,ff71bfdc-dee66fa8,2159dd0c-dee66fa8,e7cc79d5-dee66fa8,4b935545-3d47f4f4,9a38bae3-6046c8a7,41ad04e1-e4065f40,2d1e43a3-3d47f4f4,370ace14-3f4a17df,386dc267-3d47f4f4,a4406b35-1657e2d6,408da146-1657e2d6,d69d967d-3695c92e,3c8f75a1-a6f840a5,
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object num-experiments (type 1) = 26
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object LocaleDataPakExists-found_attrs (type 1) = 32
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object LocaleDataPakExists-found_path (type 1) = C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\locales\en-GB.pak
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-47 (type 1) = --noerrdialogs
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-46 (type 1) = --remote-debugging-pipe
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-45 (type 1) = --user-data-dir=C:\Source\SixFive7\BrowserAI\.work\wt\release2\.
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-44 (type 1) = --user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebK
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-43 (type 1) = --hide-crash-restore-bubble
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-42 (type 1) = --enable-aggressive-domstorage-flushing
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-41 (type 1) = --restore-last-session
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-40 (type 1) = --disable-blink-features=AutomationControlled
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-39 (type 1) = --enable-automation
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-38 (type 1) = --blink-settings=primaryHoverType=2,availableHoverTypes=2,primar
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-37 (type 1) = --mute-audio
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-36 (type 1) = --hide-scrollbars
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-35 (type 1) = --headless
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-34 (type 1) = --enable-unsafe-swiftshader
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-33 (type 1) = --disable-sync
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-32 (type 1) = --disable-search-engine-choice-screen
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-31 (type 1) = --disable-infobars
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-30 (type 1) = --edge-skip-compat-layer-relaunch
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-29 (type 1) = --unsafely-disable-devtools-self-xss-warnings
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-28 (type 1) = --disable-search-engine-choice-screen
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-27 (type 1) = --export-tagged-pdf
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-26 (type 1) = --no-service-autorun
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-25 (type 1) = --use-mock-keychain
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-24 (type 1) = --password-store=basic
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-23 (type 1) = --no-first-run
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-22 (type 1) = --metrics-recording-only
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-21 (type 1) = --force-color-profile=srgb
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-20 (type 1) = --disable-updater-scheduler
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-19 (type 1) = --disable-renderer-backgrounding
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-18 (type 1) = --disable-prompt-on-repost
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-17 (type 1) = --disable-popup-blocking
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-16 (type 1) = --disable-ipc-flooding-protection
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-15 (type 1) = --disable-hang-monitor
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-14 (type 1) = --allow-pre-commit-input
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-13 (type 1) = --disable-edgeupdater
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-12 (type 1) = --disable-dev-shm-usage
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-11 (type 1) = --disable-default-apps
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-10 (type 1) = --no-default-browser-check
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-9 (type 1) = --disable-component-update
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-8 (type 1) = --disable-component-extensions-with-background-pages
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-7 (type 1) = --disable-client-side-phishing-detection
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-6 (type 1) = --disable-breakpad
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-5 (type 1) = --disable-back-forward-cache
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-4 (type 1) = --disable-backgrounding-occluded-windows
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-3 (type 1) = --disable-background-timer-throttling
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-2 (type 1) = --disable-background-networking
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object switch-1 (type 1) = --disable-field-trial-config
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object num-switches (type 1) = 52
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-17 (type 1) = msEdgeUpdateLaunchServicesPreferredVersion
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-16 (type 1) = msForceBrowserSignIn
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-15 (type 1) = AimEnabled
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-14 (type 1) = NetworkTimeServiceQuerying
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-13 (type 1) = OptimizationHints
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-12 (type 1) = AutoDeElevate
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-11 (type 1) = Translate
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-10 (type 1) = BlockOriginHeaderModificationOnRedirect
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-9 (type 1) = ThirdPartyStoragePartitioning
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-8 (type 1) = PaintHolding
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-7 (type 1) = MediaRouter
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-6 (type 1) = LensOverlay
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-5 (type 1) = HttpsUpgrades
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-4 (type 1) = GlobalMediaControls
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-3 (type 1) = DialMediaRouteProvider
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-2 (type 1) = DestroyProfileOnBrowserClose
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-disabled-feature-1 (type 1) = AvoidUnnecessaryBeforeUnloadCheckSync
+  [C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.dll] object commandline-enabled-feature-1 (type 1) = CDPScreenshotNewSurface

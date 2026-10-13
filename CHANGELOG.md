@@ -357,6 +357,12 @@ not have is refused.
   Such a launch waited out Playwright's 180 s timeout, as 4 of 133 measured launches did. BrowserAI
   now starts Firefox with its check for a held Shift key switched off.
 
+- 🐛 **A Chromium browser no longer crashes, now and then, during a full-page screenshot of a long page.**
+  Chrome for Testing samples its own threads in its first 30 s and from time to time after that, and
+  a sample that met one particular instruction ended the browser. Full-page screenshots of a
+  16,384 px page lost the browser in 5 of 10 measured launches. BrowserAI now starts Chromium with
+  that sampling switched off.
+
 - 🐛 **A call whose Playwright ends under it is answered with what happened and how to go on.**
   It used to reach the agent as the name of a .NET exception. It says now that part of the call
   may have happened, and that `browserai_resume` starts Playwright again.

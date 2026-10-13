@@ -1,0 +1,11 @@
+Read 2026-10-13T00:27:46.3765552+00:00 with Get-WinEvent, the Application log, from 2026-10-12T22:00:00Z to 2026-10-12T22:40:00Z.
+events in the window: 75
+of them from the providers 'Application Error' or 'Windows Error Reporting': 0
+positive control, 'Application Error' events since 2026-09-15 local: 383
+providers in the window, by count:
+  61 Microsoft-Windows-AppModel-State
+  6 ESENT
+  3 VBScriptDeprecationAlert
+  2 Microsoft-Windows-RestartManager
+  2 Microsoft-Windows-Security-SPP
+  1 SecurityCenter

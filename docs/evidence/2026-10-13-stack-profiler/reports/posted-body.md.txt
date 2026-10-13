@@ -1,0 +1,92 @@
+### Version
+
+1.64.0 (Chrome for Testing 156.0.8078.4) and 1.64.0-alpha-1790635538000 (Chrome for Testing 155.0.8059.12)
+
+### Steps to reproduce
+
+1. `npm i playwright@1.64.0`
+2. `npx playwright install chromium`
+3. `node repro.mjs`
+
+```js
+// repro.mjs
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const url = 'data:text/html,<style>html,body{margin:0}</style><div style="height:16384px;background:rgb(48,96,192)"></div>';
+const tally = { on: { launches: 0, lost: 0, captures: 0 }, off: { launches: 0, lost: 0, captures: 0 } };
+
+for (let i = 0; i < 20; i++) {
+  const arm = i % 2 === 0 ? 'on' : 'off';
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), `profiler-${arm}-`));
+  const context = await chromium.launchPersistentContext(profile, {
+    channel: 'chromium',
+    headless: true,
+    viewport: { width: 1920, height: 1080 },
+    args: arm === 'off' ? ['--disable-stack-profiler'] : [],
+  });
+  const page = context.pages()[0];
+  const started = Date.now();
+  tally[arm].launches++;
+  try {
+    while (Date.now() - started < 28000) {
+      await page.goto(url);
+      await page.screenshot({ fullPage: true });
+      tally[arm].captures++;
+    }
+  } catch (error) {
+    tally[arm].lost++;
+    console.log(`launch ${i} (${arm}): lost at ${Date.now() - started} ms, ${error.message.split('\n')[0]}`);
+    console.log(`  dumps: ${path.join(profile, 'Crashpad', 'reports')}`);
+  }
+  await context.close().catch(() => {});
+}
+console.log(JSON.stringify(tally));
+```
+
+The script launches Chrome for Testing headless 20 times, alternating Playwright's default arguments with the defaults plus `--disable-stack-profiler`, and after each launch takes full-page screenshots of a 1920x16384 page for 28 s.
+
+### Expected behavior
+
+The browser survives every launch.
+
+### Actual behavior
+
+Launches that lost the browser, measured 2026-10-13:
+
+| Playwright | Chrome for Testing | Default arguments | Plus `--disable-stack-profiler` |
+|---|---|---|---|
+| 1.64.0 | 156.0.8078.4 | 2 of 10 (449 captures) | 0 of 10 (472 captures) |
+| 1.64.0-alpha-1790635538000 | 155.0.8059.12 | 3 of 10 (387 captures) | 0 of 10 (465 captures) |
+| 1.64.0, `executablePath` | 157.0.8101.0 (Canary) | 4 of 10 (376 captures) | 0 of 10 (484 captures) |
+
+An earlier rig on 155.0.8059.12 (2026-10-12), with a similar loop over 1920x16385 and 1920x16384 pages and other launch options: 5 of 10 lost (287 captures), 0 of 10 with the switch (439 captures). Pooled over the four runs: 14 of 40 against 0 of 40, Fisher one-sided p = 0.000015.
+
+A loss reads `page.screenshot: Target page, context or browser has been closed`. Each one left a Crashpad dump in `<profile>/Crashpad/reports`, 14 of 14 at the same instruction: browser process, 0xC0000005 in `ntdll!RtlpUnwindPrologue+0x381` (reading 0x218, one dump 0x11d), thread ThreadPoolForegroundWorker, under `RtlVirtualUnwind` called from chrome.dll.
+
+### Additional context
+
+Ask: add `--disable-stack-profiler` to the default Chromium arguments on Windows (`chromiumSwitches()` in `packages/playwright-core/src/server/chromium/chromiumSwitches.ts`).
+
+Cause: Chrome for Testing is not Chrome-branded, so Chrome's profiler configuration treats it as a local build and turns the stack sampling profiler on for every launch. It samples the browser main thread every 100 ms for the first 30 s and unwinds each sample with `RtlVirtualUnwind` on a thread pool thread. A sample that stops the main thread on the `vzeroupper` between `pop rbp` and `ret` of a frame-pointer function is not recognised as an epilog, so the unwinder takes RBP, which already holds the caller's value, as the frame pointer and reads near address 0. chrome.dll has 80 such `pop rbp; vzeroupper; ret` sequences, and in all 14 dumps the sample sits on one. The PNG encode of each capture runs on the browser main thread.
+
+With `--disable-stack-profiler`, `GenerateBrowserProcessConfiguration` returns before it picks a profile ([thread_profiler_configuration.cc](https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/chrome/common/profiler/thread_profiler_configuration.cc#222)) and no StackSamplingProfiler thread runs.
+
+`chromium-headless-shell` 155.0.8059.12, the default for `headless: true`, runs no StackSamplingProfiler thread. Chrome for Testing (`channel: 'chromium'`) does.
+
+Chromium issue https://issues.chromium.org/issues/473587142 (open) has the same symptom: a browser crash in `RtlVirtualUnwind` under `StackSampler::WalkStack` while the main thread encodes the PNG for `Page.captureScreenshot`. Its fix on main, https://chromium-review.googlesource.com/8482885, restores registers other than RBP in the stack copier. Chrome for Testing 157.0.8101.0 contains that fix and still lost the browser in 4 of 10 launches.
+
+Windhawk 1.7.3 is installed on this machine. Its DLL is in the browser process in both arms and not on the crashing stack.
+
+### Environment
+
+```shell
+OS: Windows 11 Pro 26H2, build 26300.9550, x64
+CPU: AMD Ryzen 9 5950X, 16 cores, 32 threads
+Node: 24.21.0
+playwright: 1.64.0, 1.64.0-alpha-1790635538000
+Browsers: Chrome for Testing 156.0.8078.4 (chromium-1248), 155.0.8059.12 (chromium-1247), 157.0.8101.0 (Canary download)
+```
+
