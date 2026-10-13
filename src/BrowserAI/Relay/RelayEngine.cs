@@ -54,6 +54,14 @@ namespace BrowserAI.Relay;
 /// enumerates the environment, so the messaging socket and its token stay where they
 /// were.
 /// </para>
+/// <para>
+/// ⚠️ <i>Added 2026-10-13 by addition, the maintainer's 127 c:</i> the relay keeps one
+/// record outside itself, the tool list its client was last answered, through the
+/// <see cref="IToolListRecord"/> it is handed, so that the relay that client starts next
+/// can tell whether the list the client holds is the one it answers
+/// (<see cref="RecordTheList"/>). The record is written off the loop, after the answer
+/// and never in front of it.
+/// </para>
 /// </remarks>
 internal sealed partial class RelayEngine
 {
@@ -64,6 +72,7 @@ internal sealed partial class RelayEngine
     private readonly Func<JsonObject> _toolList;
     private readonly Func<string?, ClientReading> _readClient;
     private readonly RelayFacts _facts;
+    private readonly IToolListRecord _toolListRecord;
     private readonly TimeProvider _clock;
     private readonly ILogger _logger;
 
@@ -96,6 +105,10 @@ internal sealed partial class RelayEngine
     /// <c>initialize</c>, and sent in the greeting and nowhere else.
     /// </param>
     /// <param name="facts">What the relay knows about itself and its client.</param>
+    /// <param name="toolListRecord">
+    /// Where the tool list this relay's client was last answered is kept, written when this
+    /// relay answers <c>tools/list</c> (127 c, 2026-10-12).
+    /// </param>
     /// <param name="clock">The clock every countdown runs on.</param>
     /// <param name="logger">Where the relay logs.</param>
     public RelayEngine(
@@ -106,6 +119,7 @@ internal sealed partial class RelayEngine
         Func<JsonObject> toolList,
         Func<string?, ClientReading> readClient,
         RelayFacts facts,
+        IToolListRecord toolListRecord,
         TimeProvider clock,
         ILogger logger)
     {
@@ -116,6 +130,7 @@ internal sealed partial class RelayEngine
         ArgumentNullException.ThrowIfNull(toolList);
         ArgumentNullException.ThrowIfNull(readClient);
         ArgumentNullException.ThrowIfNull(facts);
+        ArgumentNullException.ThrowIfNull(toolListRecord);
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -126,6 +141,7 @@ internal sealed partial class RelayEngine
         _toolList = toolList;
         _readClient = readClient;
         _facts = facts;
+        _toolListRecord = toolListRecord;
         _clock = clock;
         _logger = logger;
     }
@@ -208,6 +224,10 @@ internal sealed partial class RelayEngine
         finally
         {
             await ShutDownAsync().ConfigureAwait(false);
+
+            // 127 c: a record of the list this relay answered is finished before the
+            // process can end, so the relay its client starts next can read it.
+            await RecordingFinishedAsync().ConfigureAwait(false);
 
             // Last: whatever still holds the token, a parked read of the client's input
             // or a finder call, is told the relay has gone.

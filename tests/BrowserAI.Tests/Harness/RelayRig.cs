@@ -41,19 +41,21 @@ internal sealed class RelayRig : IAsyncDisposable
     private int _barriers;
     private int _lists;
 
-    private RelayRig(Func<string?, ClientReading>? readClient, bool gated, RelayFacts? facts)
+    private RelayRig(Func<string?, ClientReading>? readClient, bool gated, RelayFacts? facts, Func<JsonObject>? toolList, FakeToolListRecord? record)
     {
         Client = new FrameChannel(_clientHop.ClientReads, _clientHop.ClientWrites);
         Gate = gated ? new GatedStream(_clientHop.ServerWrites) : null;
+        Record = record ?? new FakeToolListRecord();
 
         Engine = new RelayEngine(
             _clientHop.ServerReads,
             Gate ?? _clientHop.ServerWrites,
             Finder,
             _handshake,
-            ToolList,
+            toolList ?? ToolList,
             readClient ?? Classify,
             facts ?? Facts,
+            Record,
             Clock,
             _logs.CreateLogger(nameof(RelayEngine)));
 
@@ -96,6 +98,13 @@ internal sealed class RelayRig : IAsyncDisposable
 
     /// <summary>The finder the engine looks through.</summary>
     public FakeBackgroundFinder Finder { get; } = new();
+
+    /// <summary>
+    /// The record of the tool list the rig's client was last answered: an empty one of the
+    /// rig's own unless the arm handed one in, so a relay of the rig's finds no record and
+    /// refuses a call before a list as Q261 b does (127 c, 2026-10-12).
+    /// </summary>
+    public FakeToolListRecord Record { get; }
 
     /// <summary>The engine under test.</summary>
     public RelayEngine Engine { get; }
@@ -187,8 +196,18 @@ internal sealed class RelayRig : IAsyncDisposable
     /// <param name="readClient">The classifier, when an arm needs its own; otherwise one that records and answers <see cref="Classification"/>.</param>
     /// <param name="gated">Whether the relay's output passes through <see cref="Gate"/>.</param>
     /// <param name="facts">What the relay knows of itself, or <see langword="null"/> for <see cref="Facts"/>.</param>
+    /// <param name="toolList">The tool list the relay answers with, or <see langword="null"/> for <see cref="ToolList"/>.</param>
+    /// <param name="record">
+    /// The record of the tool list the client was last answered, when an arm stands two
+    /// rigs for one client's relays one after another; otherwise an empty one of the rig's own.
+    /// </param>
     /// <returns>The rig, running.</returns>
-    public static RelayRig Start(Func<string?, ClientReading>? readClient = null, bool gated = false, RelayFacts? facts = null) => new(readClient, gated, facts);
+    public static RelayRig Start(
+        Func<string?, ClientReading>? readClient = null,
+        bool gated = false,
+        RelayFacts? facts = null,
+        Func<JsonObject>? toolList = null,
+        FakeToolListRecord? record = null) => new(readClient, gated, facts, toolList, record);
 
     /// <summary>Writes one frame as the client.</summary>
     /// <param name="json">The frame.</param>

@@ -176,4 +176,18 @@ internal static partial class RelayLog
         Level = LogLevel.Warning,
         Message = "Relay: the background refused this connection, for the reason it calls {Refusal}: {Sentence}")]
     public static partial void ClosedForNoFirstMessage(ILogger logger, string refusal, string sentence);
+
+    /// <summary>
+    /// The record of the tool list this relay's client was answered could not be written
+    /// (127 c, 2026-10-12), logged by the exception's type and code, as
+    /// <see cref="ClassifyFailed"/> is.
+    /// </summary>
+    /// <param name="logger">Where to log.</param>
+    /// <param name="exceptionType">The exception's type name.</param>
+    /// <param name="hresult">The exception's code.</param>
+    [LoggerMessage(
+        EventId = 28,
+        Level = LogLevel.Warning,
+        Message = "Relay: the record of the tool list this client was answered could not be written ({ExceptionType}, {HResult}); the relay it starts next reads the record as it was before.")]
+    public static partial void ToolListNotRecorded(ILogger logger, string exceptionType, int hresult);
 }

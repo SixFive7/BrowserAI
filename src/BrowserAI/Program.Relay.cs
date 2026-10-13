@@ -95,6 +95,10 @@ internal static partial class Program
                 // background wherever an installed one names the Start Menu (round 2 of
                 // the texts review, 2026-10-10, #136 to #139).
                 installRoot is null ? RelayErrors.DeveloperStart(Environment.ProcessPath ?? string.Empty, paths.RootAppDir) : null),
+
+            // 127 c, 2026-10-12: the tool list this relay's client was last answered, kept
+            // under the data root for the client process and this relay's command line.
+            new ToolListRecordFile(paths.RootAppDir, ToolListRecordFile.Parent, Environment.CommandLine),
             TimeProvider.System,
             relayLogger);
 

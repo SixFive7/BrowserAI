@@ -22,7 +22,6 @@ internal sealed partial class RelayEngine
     private RelayReconnect _reconnect = RelayReconnect.Unknown;
     private ConversationFacts? _conversation;
     private string? _window;
-    private byte[]? _toolsResult;
     private bool _clientGone;
 
     /// <summary>
@@ -34,8 +33,20 @@ internal sealed partial class RelayEngine
     /// <summary>Whether the one stale-list refusal of this connection has been made.</summary>
     private bool _staleListRefused;
 
+    /// <summary>Whether this relay has started writing the record of the list its client was answered (127 c).</summary>
+    private bool _listRecorded;
+
+    /// <summary>That write, once started, for the relay's end to wait for.</summary>
+    private Task? _recording;
+
     /// <summary>The tool list, asked of the provider once.</summary>
     private JsonObject Tools => field ??= _toolList();
+
+    /// <summary>The tool list's result as <c>tools/list</c> answers it, encoded once.</summary>
+    private byte[] ToolsResult => field ??= Encoded(Tools);
+
+    /// <summary>The digest of <see cref="ToolsResult"/>, which names this relay's list in the record (127 c).</summary>
+    private string ListDigest => field ??= ToolListDigest.Of(ToolsResult);
 
     /// <summary>What every tool in the list takes, for the refusals that name every tool.</summary>
     private ToolSignatures Signatures => field ??= ToolSignatures.From(Tools);
@@ -226,13 +237,74 @@ internal sealed partial class RelayEngine
         _ => nameof(RelayReconnect.Unknown),
     };
 
-    /// <summary>Answers <c>tools/list</c> from the list built into the binary.</summary>
+    /// <summary>Answers <c>tools/list</c> from the list built into the binary, and records that the client was answered it.</summary>
     /// <param name="id">The request.</param>
     /// <returns>A task that completes once it is answered.</returns>
     private async Task AnswerToolListAsync(RequestId id)
     {
-        _toolsResult ??= Encoded(Tools);
-        await WriteToClientAsync(RelayWire.VerbatimResult(id, _toolsResult)).ConfigureAwait(false);
+        await WriteToClientAsync(RelayWire.VerbatimResult(id, ToolsResult)).ConfigureAwait(false);
+        RecordTheList();
+    }
+
+    /// <summary>
+    /// Records, once in this relay's life, that its client was answered the tool list, for
+    /// the relay that client starts next (127 c).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>After the answer and off the loop</b>, as the classifier is (D6 a): the client's
+    /// next frame waits on nothing a disk does. A write that fails is logged and not tried
+    /// again by this relay, and the file store removes the record it could not replace
+    /// (<see cref="ToolListRecordFile"/>), so the relay the client starts next refuses its
+    /// first call before a list, as Q261 b does.
+    /// </para>
+    /// <para>
+    /// <b>Only an answered <c>tools/list</c> writes it.</b> A call this relay passes on or
+    /// refuses changes nothing the client holds, so a relay that was never asked for the
+    /// list leaves the record of the one its client was last answered where it is.
+    /// </para>
+    /// </remarks>
+    private void RecordTheList()
+    {
+        if (_listRecorded)
+        {
+            return;
+        }
+
+        _listRecorded = true;
+
+        var listed = new ListedToolList(ListDigest, _facts.Build, Now);
+
+        Enter();
+
+        var writing = Task.Run(() => _toolListRecord.WriteAsync(listed), CancellationToken.None);
+
+        _recording = writing.ContinueWith(
+            static (done, state) =>
+            {
+                var engine = (RelayEngine)state!;
+
+                if (done.Exception?.InnerException is { } failure)
+                {
+                    RelayLog.ToolListNotRecorded(engine._logger, failure.GetType().Name, failure.HResult);
+                }
+
+                engine.Leave();
+            },
+            this,
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+    }
+
+    /// <summary>Waits for the record's write, when this relay started one.</summary>
+    /// <returns>A task that completes once the write has finished, one way or another.</returns>
+    private async Task RecordingFinishedAsync()
+    {
+        if (_recording is { } recording)
+        {
+            await recording.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+        }
     }
 
     private static byte[] Encoded(JsonNode node)

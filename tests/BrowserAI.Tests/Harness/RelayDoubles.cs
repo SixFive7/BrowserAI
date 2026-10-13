@@ -372,6 +372,141 @@ internal sealed class FakeBackground(PipeDuplex hop) : IDisposable
 }
 
 /// <summary>
+/// The record of the tool list a relay's client was last answered, in memory: what
+/// the engine reads and writes through <see cref="IToolListRecord"/>, shared between
+/// rigs that stand for one client's relays one after another.
+/// </summary>
+/// <remarks>
+/// <b>Nothing here is a file.</b> The file the product keeps is
+/// <see cref="ToolListRecordFile"/>'s, and <c>ToolListRecordTests</c> holds it; this
+/// double holds one value, counts what the engine asked of it, and fails when an arm
+/// says so.
+/// </remarks>
+internal sealed class FakeToolListRecord : IToolListRecord
+{
+    private readonly Lock _gate = new();
+    private ListedToolList? _listed;
+    private int _reads;
+    private int _writes;
+    private bool _failsToRead;
+    private bool _failsToWrite;
+
+    /// <summary>What the record holds, as the last write left it or as an arm set it.</summary>
+    public ListedToolList? Listed
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _listed;
+            }
+        }
+
+        set
+        {
+            lock (_gate)
+            {
+                _listed = value;
+            }
+        }
+    }
+
+    /// <summary>How many times the engine read the record.</summary>
+    public int Reads
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _reads;
+            }
+        }
+    }
+
+    /// <summary>How many times the engine wrote it, failed writes included.</summary>
+    public int Writes
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _writes;
+            }
+        }
+    }
+
+    /// <summary>Whether a read fails, as one that met a fault no file system names does.</summary>
+    public bool FailsToRead
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _failsToRead;
+            }
+        }
+
+        set
+        {
+            lock (_gate)
+            {
+                _failsToRead = value;
+            }
+        }
+    }
+
+    /// <summary>Whether a write fails, as one into a full volume does.</summary>
+    public bool FailsToWrite
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _failsToWrite;
+            }
+        }
+
+        set
+        {
+            lock (_gate)
+            {
+                _failsToWrite = value;
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<ListedToolList?> ReadAsync()
+    {
+        lock (_gate)
+        {
+            _reads++;
+
+            return _failsToRead
+                ? Task.FromException<ListedToolList?>(new InvalidOperationException("The suite's record could not be read."))
+                : Task.FromResult(_listed);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task WriteAsync(ListedToolList listed)
+    {
+        lock (_gate)
+        {
+            _writes++;
+
+            if (_failsToWrite)
+            {
+                return Task.FromException(new IOException("There is not enough space on the disk."));
+            }
+
+            _listed = listed;
+            return Task.CompletedTask;
+        }
+    }
+}
+
+/// <summary>
 /// The relay's end of a background hop, as the one duplex stream a named pipe is,
 /// whose disposal ends a read in progress as closing a pipe handle does.
 /// </summary>
