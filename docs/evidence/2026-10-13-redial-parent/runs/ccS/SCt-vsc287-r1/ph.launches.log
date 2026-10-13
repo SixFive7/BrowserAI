@@ -1,0 +1,13 @@
+2026-10-03T13:50:13.097Z +2ms launch=1 pid=9876 LAUNCH mode=placeholder cap=listChanged ppid=49784
+2026-10-03T13:50:13.104Z +9ms launch=1 pid=9876 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.287","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T13:50:13.143Z +48ms launch=1 pid=9876 tools/list answered with the PLACEHOLDER (update_in_flight)
+2026-10-03T13:50:13.233Z +138ms launch=1 pid=9876 tools/call #1 update_in_flight answered with the PLACEHOLDER text
+2026-10-03T13:50:13.400Z +305ms launch=1 pid=9876 UPDATE DONE (C:\Source\SixFive7\BrowserAI\.work\q369\runs\ccS\SCt-vsc287-r1\update.done appeared): serving the real list from now on, in this process
+2026-10-03T13:50:15.320Z +2225ms launch=1 pid=9876 stdin EOF after 2225 ms; exiting 0
+2026-10-03T13:50:15.371Z +2276ms launch=1 pid=9876 process exit code=0
+2026-10-03T13:50:17.443Z +3ms launch=2 pid=62240 LAUNCH mode=placeholder (the update was already done: REAL) cap=listChanged ppid=49784
+2026-10-03T13:50:17.451Z +11ms launch=2 pid=62240 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.287","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T13:50:17.460Z +20ms launch=2 pid=62240 tools/list answered with the REAL list (browserai_init,browserai_list)
+2026-10-03T13:50:20.495Z +3055ms launch=2 pid=62240 tools/call #1 browserai_list SERVED
+2026-10-03T13:50:21.554Z +4114ms launch=2 pid=62240 stdin EOF after 4114 ms; exiting 0
+2026-10-03T13:50:21.619Z +4179ms launch=2 pid=62240 process exit code=0

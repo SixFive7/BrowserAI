@@ -1,0 +1,12 @@
+2026-10-03T14:05:08.839Z +2ms launch=1 pid=21916 LAUNCH mode=real cap=listChanged ppid=73700
+2026-10-03T14:05:08.846Z +9ms launch=1 pid=21916 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.288","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T14:05:08.900Z +63ms launch=1 pid=21916 tools/list answered with the REAL list (browserai_init,browserai_list)
+2026-10-03T14:05:09.044Z +207ms launch=1 pid=21916 tools/call #1 browserai_list SERVED
+2026-10-03T14:05:09.347Z +510ms launch=1 pid=21916 TERMINATING ITSELF (300 ms after answering call #1): TerminateProcess, exit code 1
+2026-10-03T14:05:19.225Z +2ms launch=2 pid=70372 LAUNCH mode=real cap=listChanged ppid=73700
+2026-10-03T14:05:19.229Z +6ms launch=2 pid=70372 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.288","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T14:05:19.233Z +10ms launch=2 pid=70372 tools/call #1 browserai_list SERVED
+2026-10-03T14:05:19.233Z +10ms launch=2 pid=70372 SEND notifications/tools/list_changed (launch 2, 0 ms after notifications/initialized)
+2026-10-03T14:05:23.293Z +4070ms launch=2 pid=70372 tools/call #2 browserai_list SERVED
+2026-10-03T14:05:24.347Z +5124ms launch=2 pid=70372 stdin EOF after 5124 ms; exiting 0
+2026-10-03T14:05:24.399Z +5176ms launch=2 pid=70372 process exit code=0

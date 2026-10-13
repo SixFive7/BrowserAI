@@ -1,0 +1,131 @@
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+#
+# Reads the Q369 batch of 2026-10-03 and writes, for every Claude Code run whose
+# stand-in server was launched twice, which process started each launch, whether that
+# was the client the harness started, whether the client was alive from before the
+# first launch until the second, and how many tools/list each launch answered.
+#
+# Two positive controls follow, so a reading that could not say "another process" is
+# not taken for one that found none: the same rows compared with a client pid one
+# higher, and the Codex batches, whose harness kept no client pid, read for whether
+# every launch of a run had one parent. `codex exec` is started once per turn, so a
+# second turn's server has another parent.
+#
+# Usage: pwsh -NoProfile -File redial-parent.ps1 <runs folder> <output folder>
+# Reads the runs folder only. Writes parents.tsv, control-codex.tsv and summary.txt.
+
+param(
+    [Parameter(Mandatory)] [string] $Runs,
+    [Parameter(Mandatory)] [string] $Out
+)
+
+$ErrorActionPreference = 'Stop'
+
+$claude = 'ccP', 'ccS', 'ccS2', 'ccKp2', 'ccKs', 'tui', 'tui2', 'tui3', 'tuiK'
+$codex = 'cx', 'cx2', 'cxK'
+
+function AsUtc($value) {
+    if ($null -eq $value -or [string]$value -eq '') { return $null }
+    if ($value -is [datetime]) { return $value.ToUniversalTime() }
+    return [datetimeoffset]::Parse([string]$value, [cultureinfo]::InvariantCulture).UtcDateTime
+}
+
+function Iso($value) {
+    if ($null -eq $value) { return '' }
+    return $value.ToString('o', [cultureinfo]::InvariantCulture)
+}
+
+# One row per run with two launches or more: what its launch log says.
+function Read-Launches([string[]] $batches) {
+    foreach ($batch in $batches) {
+        foreach ($dir in Get-ChildItem -Directory (Join-Path $Runs $batch) | Sort-Object Name) {
+            $log = Join-Path $dir.FullName 'ph.launches.log'
+            if (-not (Test-Path $log)) { continue }
+
+            $lines = Get-Content $log
+            $launches = @($lines | Where-Object { $_ -match ' LAUNCH ' })
+            if ($launches.Count -lt 2) { continue }
+
+            $parents = @($launches | ForEach-Object { if ($_ -match 'ppid=(\d+)') { [int]$Matches[1] } })
+            $lists = 1..$launches.Count | ForEach-Object {
+                $n = $_
+                @($lines | Where-Object { $_ -match "launch=$n .*tools/list answered" }).Count
+            }
+
+            [pscustomobject]@{
+                Run      = "$batch/$($dir.Name)"
+                Folder   = $dir.FullName
+                Launches = $launches.Count
+                Parents  = $parents
+                First    = AsUtc (($launches[0] -split ' ')[0])
+                Second   = AsUtc (($launches[1] -split ' ')[0])
+                Lists    = ($lists -join ',')
+            }
+        }
+    }
+}
+
+# Whether every launch's parent was this pid, the client created before the first
+# launch and alive when the second one started.
+function Holds($row, [int] $client, $created, $exited) {
+    ($row.Parents.Count -eq $row.Launches) `
+        -and (@($row.Parents | Where-Object { $_ -ne $client }).Count -eq 0) `
+        -and ($null -ne $created -and $created -le $row.First) `
+        -and ($null -eq $exited -or $exited -gt $row.Second)
+}
+
+$rows = foreach ($row in Read-Launches $claude) {
+    $result = Get-Content (Join-Path $row.Folder 'result.json') -Raw | ConvertFrom-Json
+    $client = [int]$result.clientPid
+    $process = $result.procs | Where-Object { $_.pid -eq $client -and $_.role -eq 'client' } | Select-Object -First 1
+    $created = AsUtc $process.createdUtc
+    $exited = AsUtc $process.exitUtc
+
+    [pscustomobject]@{
+        run                                 = $row.Run
+        client_pid                          = $client
+        client_created_utc                  = Iso $created
+        client_exited_utc                   = Iso $exited
+        launches                            = $row.Launches
+        launch_parent_pids                  = ($row.Parents -join ',')
+        lists_per_launch                    = $row.Lists
+        ms_between_launches                 = [int]($row.Second - $row.First).TotalMilliseconds
+        parent_is_the_client_alive_throughout = Holds $row $client $created $exited
+        control_one_pid_higher_holds        = Holds $row ($client + 1) $created $exited
+    }
+}
+
+$control = foreach ($row in Read-Launches $codex) {
+    [pscustomobject]@{
+        run                = $row.Run
+        launches           = $row.Launches
+        launch_parent_pids = ($row.Parents -join ',')
+        lists_per_launch   = $row.Lists
+        one_parent         = ($row.Parents.Count -eq $row.Launches) -and (@($row.Parents | Sort-Object -Unique).Count -eq 1)
+    }
+}
+
+$null = New-Item -ItemType Directory -Force $Out
+$rows | Export-Csv -Path (Join-Path $Out 'parents.tsv') -Delimiter "`t" -NoTypeInformation -Encoding utf8NoBOM
+$control | Export-Csv -Path (Join-Path $Out 'control-codex.tsv') -Delimiter "`t" -NoTypeInformation -Encoding utf8NoBOM
+
+$all = @($rows)
+$redials = @($all | Where-Object { $_.lists_per_launch -eq '1,0' })
+$codexRows = @($control)
+
+$summary = @(
+    "Claude Code runs with two launches: $($all.Count)"
+    "  every launch's parent the client, created before launch 1 and alive at launch 2: $(@($all | Where-Object parent_is_the_client_alive_throughout).Count)"
+    "  the same against a client pid one higher (control): $(@($all | Where-Object control_one_pid_higher_holds).Count)"
+    "of them, launched again and sent no tools/list (lists per launch 1,0): $($redials.Count)"
+    "  every launch's parent the client, created before launch 1 and alive at launch 2: $(@($redials | Where-Object parent_is_the_client_alive_throughout).Count)"
+    "  by arm: $((($redials | ForEach-Object { $_.run -replace '-r\d+$', '' }) | Group-Object | ForEach-Object { "$($_.Name) $($_.Count)" }) -join ', ')"
+    "  ms between the two launches: $(($redials | Measure-Object ms_between_launches -Minimum -Maximum | ForEach-Object { "$($_.Minimum) to $($_.Maximum)" }))"
+    "Codex runs with two launches or more (control): $($codexRows.Count)"
+    "  every launch with one parent: $(@($codexRows | Where-Object one_parent).Count)"
+    "  launches with more than one parent: $(@($codexRows | Where-Object { -not $_.one_parent }).Count), by arm: $((($codexRows | Where-Object { -not $_.one_parent } | ForEach-Object { $_.run -replace '-r\d+$', '' }) | Group-Object | ForEach-Object { "$($_.Name) $($_.Count)" }) -join ', ')"
+)
+
+$summary | Set-Content -Path (Join-Path $Out 'summary.txt') -Encoding utf8NoBOM
+$summary

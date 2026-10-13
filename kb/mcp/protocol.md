@@ -894,6 +894,22 @@ cached client, so the next call constructs a new one. Read in the client's own M
 module at offset 230,400,000 of `claude.exe`, in `ensureConnectedClient`, and
 confirmed by the launch lines.
 
+> ⚠️ *Added 2026-10-13 by addition, for the maintainer's 127 c.* **The server it
+> starts again is the child of the same client process.** Read on 2026-10-13 out of
+> the Q369 batch of 2026-10-03, at Claude Code 2.1.287 and 2.1.288: in all 27 runs in
+> which `claude -p` or the stream-json transport launched the stand-in again and sent
+> the second launch no `tools/list`, both launches' parent was the Claude Code process
+> the harness had started, which ran from before the first launch until after the
+> second, 1.8 to 11.0 s later; and so in all 69 runs with two launches, the
+> reconnects and the kills before a handshake among them. Two positive controls: the
+> same rows compared with a client pid one higher hold in none, and 18 `codex exec`
+> runs, started once per turn, had launches with more than one parent. So the process
+> that holds the list a re-dialled server is called from is the one a server can read
+> as its parent, and what that process was answered can be recorded under its pid and
+> creation time. The parent's creation time was not written per launch, which the
+> client running throughout makes unnecessary, and no BrowserAI relay was in these
+> runs. [Evidence](../../docs/evidence/2026-10-13-redial-parent/README.md).
+
 ### Codex never re-launches on the failure path, and does on the next refresh
 
 ⚠️ ***Corrected 2026-09-24, and the maintainer was right to push back.*** The

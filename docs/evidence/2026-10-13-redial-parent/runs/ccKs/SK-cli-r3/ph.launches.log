@@ -1,0 +1,8 @@
+2026-10-03T14:07:23.682Z +2ms launch=1 pid=62096 LAUNCH mode=real cap=listChanged ppid=24656
+2026-10-03T14:07:23.688Z +8ms launch=1 pid=62096 TERMINATING ITSELF (on receiving initialize, before answering it): TerminateProcess, exit code 1
+2026-10-03T14:07:28.856Z +4ms launch=2 pid=73096 LAUNCH mode=real cap=listChanged ppid=24656
+2026-10-03T14:07:28.863Z +11ms launch=2 pid=73096 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.288","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T14:07:28.871Z +19ms launch=2 pid=73096 tools/list answered with the REAL list (browserai_init,browserai_list)
+2026-10-03T14:07:31.925Z +3073ms launch=2 pid=73096 tools/call #1 browserai_list SERVED
+2026-10-03T14:07:32.971Z +4119ms launch=2 pid=73096 stdin EOF after 4119 ms; exiting 0
+2026-10-03T14:07:33.022Z +4170ms launch=2 pid=73096 process exit code=0

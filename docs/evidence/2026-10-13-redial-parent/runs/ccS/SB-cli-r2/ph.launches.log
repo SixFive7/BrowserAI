@@ -1,0 +1,12 @@
+2026-10-03T13:47:06.078Z +5ms launch=1 pid=67624 LAUNCH mode=placeholder cap=listChanged ppid=56676
+2026-10-03T13:47:06.086Z +13ms launch=1 pid=67624 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.288","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T13:47:06.146Z +73ms launch=1 pid=67624 tools/list answered with the PLACEHOLDER (update_in_flight)
+2026-10-03T13:47:06.281Z +208ms launch=1 pid=67624 tools/call #1 update_in_flight answered with the PLACEHOLDER text
+2026-10-03T13:47:06.583Z +510ms launch=1 pid=67624 TERMINATING ITSELF (300 ms after answering call #1): TerminateProcess, exit code 1
+2026-10-03T13:47:16.469Z +2ms launch=2 pid=72432 LAUNCH mode=real cap=listChanged ppid=56676
+2026-10-03T13:47:16.473Z +6ms launch=2 pid=72432 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.288","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T13:47:16.482Z +15ms launch=2 pid=72432 tools/call #1 update_in_flight answered with the STALE text (the update is done)
+2026-10-03T13:47:16.483Z +16ms launch=2 pid=72432 SEND notifications/tools/list_changed (launch 2, 0 ms after notifications/initialized)
+2026-10-03T13:47:20.536Z +4069ms launch=2 pid=72432 tools/call #2 update_in_flight answered with the STALE text (the update is done)
+2026-10-03T13:47:21.575Z +5108ms launch=2 pid=72432 stdin EOF after 5108 ms; exiting 0
+2026-10-03T13:47:21.628Z +5161ms launch=2 pid=72432 process exit code=0

@@ -1,0 +1,10 @@
+Claude Code runs with two launches: 69
+  every launch's parent the client, created before launch 1 and alive at launch 2: 69
+  the same against a client pid one higher (control): 0
+of them, launched again and sent no tools/list (lists per launch 1,0): 27
+  every launch's parent the client, created before launch 1 and alive at launch 2: 27
+  by arm: ccKp2/PBr-cli 3, ccKs/SBr-cli 3, ccKs/SBr-vsc287 3, ccP/PB-cli 3, ccP/PBd-cli 3, ccS/SB-cli 3, ccS/SB-vsc287 3, ccS2/SBts-cli 3, ccS2/SBts-vsc287 3
+  ms between the two launches: 1787 to 10984
+Codex runs with two launches or more (control): 54
+  every launch with one parent: 36
+  launches with more than one parent: 18, by arm: cx/XA-cx155 3, cx/XA-cx160 3, cx/XB-cx155 3, cx/XB-cx160 3, cxK/XK-cx155 3, cxK/XK-cx160 3

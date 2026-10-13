@@ -1,0 +1,11 @@
+2026-10-03T13:51:32.017Z +2ms launch=1 pid=9328 LAUNCH mode=placeholder cap=listChanged ppid=29972
+2026-10-03T13:51:32.025Z +10ms launch=1 pid=9328 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.287","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T13:51:32.071Z +56ms launch=1 pid=9328 tools/list answered with the PLACEHOLDER (update_in_flight)
+2026-10-03T13:51:32.172Z +157ms launch=1 pid=9328 tools/call #1 update_in_flight answered with the PLACEHOLDER text
+2026-10-03T13:51:32.476Z +461ms launch=1 pid=9328 TERMINATING ITSELF (300 ms after answering call #1): TerminateProcess, exit code 1
+2026-10-03T13:51:34.298Z +2ms launch=2 pid=48688 LAUNCH mode=real cap=listChanged ppid=29972
+2026-10-03T13:51:34.302Z +6ms launch=2 pid=48688 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.287","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T13:51:34.305Z +9ms launch=2 pid=48688 tools/list answered with the REAL list (browserai_init,browserai_list)
+2026-10-03T13:51:37.341Z +3045ms launch=2 pid=48688 tools/call #1 browserai_list SERVED
+2026-10-03T13:51:38.419Z +4123ms launch=2 pid=48688 stdin EOF after 4123 ms; exiting 0
+2026-10-03T13:51:38.471Z +4175ms launch=2 pid=48688 process exit code=0
