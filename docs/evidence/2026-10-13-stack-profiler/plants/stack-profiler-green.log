@@ -1,0 +1,138 @@
+Running tests from C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed EverySourceFileCarriesTheTwoLineSpdxHeader (2s 363ms)
+  [Test Failure] AssertionException: Expected to be empty
+but received "docs\evidence\2026-10-13-stack-profiler\reports\chromium-comment-draft.md: no SPDX-FileCopyrightText line in the first four
+docs\evidence\2026-10-13-stack-profiler\reports\chromium-comment-draft.md: no SPDX-License-Identifier line in the LicenseRef- form
+docs\evidence\2026-10-13-stack-profiler\reports\playwright-issue.md: no SPDX-FileCopyrightText line in the first four
+docs\evidence\2026-10-13-stack-profiler\reports\playwright-issue.md: no SPDX-License-Identifier line in the LicenseRef- form
+docs\evidence\2026-10-13-stack-profiler\reports\posted-body.md: no SPDX-FileCopyrightText line in the first four
+docs\evidence\2026-10-13-stack-profiler\reports\posted-body.md: no SPDX-License-Identifier line in the LicenseRef- form"
+
+at Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty()
+  from C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be empty
+  but received "docs\evidence\2026-10-13-stack-profiler\reports\chromium-comment-draft.md: no SPDX-FileCopyrightText line in the first four
+  docs\evidence\2026-10-13-stack-profiler\reports\chromium-comment-draft.md: no SPDX-License-Identifier line in the LicenseRef- form
+  docs\evidence\2026-10-13-stack-profiler\reports\playwright-issue.md: no SPDX-FileCopyrightText line in the first four
+  docs\evidence\2026-10-13-stack-profiler\reports\playwright-issue.md: no SPDX-License-Identifier line in the LicenseRef- form
+  docs\evidence\2026-10-13-stack-profiler\reports\posted-body.md: no SPDX-FileCopyrightText line in the first four
+  docs\evidence\2026-10-13-stack-profiler\reports\posted-body.md: no SPDX-License-Identifier line in the LicenseRef- form"
+  
+  at Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty()
+    at BrowserAI.Tests.HouseRuleTests.EverySourceFileCarriesTheTwoLineSpdxHeader() in C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\HouseRuleTests.cs:84
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed NoTextFileInTheTreeCarriesAControlByte (7s 152ms)
+  [Test Failure] AssertionException: Expected to be empty
+but received "docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 1, column 72 -- a C0 control byte. Nothing in this repository's text is written with one.
+docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 1, column 155 -- a C0 control byte. Nothing in this repository's text is written with one.
+docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 3, column 45 -- a C0 control byte. Nothing in this repository's text is written with one.
+docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 3, column 145 -- a C0 control byte. Nothing in this repository's text is written with one.
+docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 5, column 45 -- a C0 control byte. Nothing in this repository's text is written with one.
+docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 5, column 145 -- a C0 control byte. Nothing in this repository's text is written with one."
+
+at Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty()
+  from C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be empty
+  but received "docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 1, column 72 -- a C0 control byte. Nothing in this repository's text is written with one.
+  docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 1, column 155 -- a C0 control byte. Nothing in this repository's text is written with one.
+  docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 3, column 45 -- a C0 control byte. Nothing in this repository's text is written with one.
+  docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 3, column 145 -- a C0 control byte. Nothing in this repository's text is written with one.
+  docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 5, column 45 -- a C0 control byte. Nothing in this repository's text is written with one.
+  docs\evidence\2026-10-13-stack-profiler\reports\install1640.log: byte 0x1B at line 5, column 145 -- a C0 control byte. Nothing in this repository's text is written with one."
+  
+  at Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty()
+    at BrowserAI.Tests.HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte() in C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\HouseRuleTests.cs:2615
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 2 error(s) (10s 629ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage -- what this run actually exercised
+  ==============================================================================
+    published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+    repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\payload\payload.json
+    Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+    Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+    packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\Releases\BrowserAI.app-<version>-full.nupkg
+    shipping release    ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\Releases\BrowserAI.app-<version>-full.nupkg, at the top of the directory and not under test-pack
+    client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+    release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+    git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix rev-parse --is-inside-work-tree said true
+    Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+    publish freshness   FRESH      exe 2026-10-13T00:43:12.193Z is 22m56s newer than the newest of 238 inputs (src\BrowserAI\Runtime\BrowserConfiguration.cs, 2026-10-13T00:20:16.150Z) · exe and tree both 1.1.1-alpha.0.425 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+    release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     NOT RUN  no first-run test has run in this session yet
+    drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+    filter              FILTERED   --treenode-filter '/*/*/(StackProfilerTests|HeadedUserAgentTests|ConfigRoundTripTests|PasswordPromptTests|HouseRuleTests|DocumentationLinkTests|RecordedCountTests|HazardIndexTests|ReVerificationIndexTests|AppendOnlyRecordTests|ChangelogTests|NeverByImageNameTests|NumbersIndexTests)/*' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+        ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+        about what it selected and about nothing else, and its total/failed/succeeded
+        block is character-for-character the shape a full run's is. --treenode-filter
+        also reads '|' as an OR INSIDE one path segment and never between whole path
+        patterns, so a filter can select far more or far less than it looks like it
+        selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+    foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+        ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+        A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+        window belongs to an ancestor of the launching process, so a change that stole
+        focus on a default install would read as clean on this machine. It is a blind
+        spot in the checking rather than a defect to repair, and nothing here may
+        change the setting: see HAZARDS.md and kb/windows/detection.md.
+    commit charge       HEALTHY    start 72,752 MiB (51.5%) · end 73,083 MiB (51.7%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+    windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 990 events, 0 about visible root windows and none of them this run's, 130 windows in the baseline
+    firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 6 scans, 52 processes read under the browsers root and the scratch roots
+    installer lock      TAKEN    taken by this run (pid=102564 created=134363260535267472), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+  ==============================================================================
+    3 capability above is ABSENT and no test in this run asked for it.
+        Nothing was degraded, and nothing here proves it could have been exercised.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 109
+  failed: 2
+  succeeded: 107
+  skipped: 0
+  duration: 10s 898ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\Releases\BrowserAI.app-<version>-full.nupkg
+  shipping release    ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\Releases\BrowserAI.app-<version>-full.nupkg, at the top of the directory and not under test-pack
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-13T00:43:12.193Z is 22m56s newer than the newest of 238 inputs (src\BrowserAI\Runtime\BrowserConfiguration.cs, 2026-10-13T00:20:16.150Z) · exe and tree both 1.1.1-alpha.0.425 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\shot-fix\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/(StackProfilerTests|HeadedUserAgentTests|ConfigRoundTripTests|PasswordPromptTests|HouseRuleTests|DocumentationLinkTests|RecordedCountTests|HazardIndexTests|ReVerificationIndexTests|AppendOnlyRecordTests|ChangelogTests|NeverByImageNameTests|NumbersIndexTests)/*' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 72,752 MiB (51.5%) · end 73,083 MiB (51.7%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 990 events, 0 about visible root windows and none of them this run's, 130 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 6 scans, 52 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=102564 created=134363260535267472), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  3 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================

@@ -1,0 +1,1 @@
+{"dump": "49ec8e29-f6d3-4f4d-a02c-c50f5d705d46.dmp", "code": "0xC0000005", "at": "ntdll.dll+0x20191", "thread": "ThreadPoolForegroundWorker", "params": ["0x0", "0x218"], "pid": "96720", "ptype": "browser"}

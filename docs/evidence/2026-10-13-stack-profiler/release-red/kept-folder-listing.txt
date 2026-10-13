@@ -1,0 +1,183 @@
+112	2026-10-13T00:04:22.6410919000	app-root/index/48F4177FEE82EA11C3F083CCAE0367620DFEF56518F2AFD4BCB1D1934A0F75ED
+1346	2026-10-13T00:04:22.3263827000	app-root/instances/playwright-mcp-48F4177FEE82EA11.chromium-logging.json
+16384	2026-10-13T00:04:24.1025995000	real-tall/browserai.data
+106	2026-10-13T00:04:22.2887540000	real-tall/browserai.lock
+0	2026-10-13T00:04:23.2496230000	real-tall/output/page-2026-10-12T22-04-23-247Z.yml
+114	2026-10-13T00:04:23.9383672000	real-tall/profile/Crashpad/metadata
+2805056	2026-10-13T00:04:23.9383672000	real-tall/profile/Crashpad/reports/49ec8e29-f6d3-4f4d-a02c-c50f5d705d46.dmp
+40	2026-10-13T00:04:24.0384645000	real-tall/profile/Crashpad/settings.dat
+77824	2026-10-13T00:04:22.9288125000	real-tall/profile/Default/Account Web Data
+0	2026-10-13T00:04:22.9329076000	real-tall/profile/Default/Account Web Data-journal
+53248	2026-10-13T00:04:22.9431858000	real-tall/profile/Default/Affiliation Database
+0	2026-10-13T00:04:22.9446997000	real-tall/profile/Default/Affiliation Database-journal
+6	2026-10-13T00:04:24.7774629000	real-tall/profile/Default/BookmarkMergedSurfaceOrdering
+45056	2026-10-13T00:04:24.6343356000	real-tall/profile/Default/Cache/Cache_Data/data_0
+270336	2026-10-13T00:04:24.7105932000	real-tall/profile/Default/Cache/Cache_Data/data_1
+1056768	2026-10-13T00:04:24.6333238000	real-tall/profile/Default/Cache/Cache_Data/data_2
+4202496	2026-10-13T00:04:24.6099226000	real-tall/profile/Default/Cache/Cache_Data/data_3
+39419	2026-10-13T00:04:24.5530197000	real-tall/profile/Default/Cache/Cache_Data/f_000001
+77973	2026-10-13T00:04:24.6197583000	real-tall/profile/Default/Cache/Cache_Data/f_000002
+524656	2026-10-13T00:04:23.0469734000	real-tall/profile/Default/Cache/Cache_Data/index
+4	2026-10-13T00:04:24.3341793000	real-tall/profile/Default/Cache/No_Vary_Search/journal.baj
+20	2026-10-13T00:04:23.0637849000	real-tall/profile/Default/Cache/No_Vary_Search/snapshot.baf
+0	2026-10-13T00:04:22.8624674000	real-tall/profile/Default/ClientCertificates/LOCK
+0	2026-10-13T00:04:24.1730300000	real-tall/profile/Default/ClientCertificates/LOG
+0	2026-10-13T00:04:22.8624674000	real-tall/profile/Default/ClientCertificates/LOG.old
+24	2026-10-13T00:04:22.8624674000	real-tall/profile/Default/Code Cache/js/index
+48	2026-10-13T00:04:22.8655357000	real-tall/profile/Default/Code Cache/js/index-dir/the-real-index
+24	2026-10-13T00:04:22.8655357000	real-tall/profile/Default/Code Cache/wasm/index
+48	2026-10-13T00:04:22.8713322000	real-tall/profile/Default/Code Cache/wasm/index-dir/the-real-index
+8192	2026-10-13T00:04:22.9344220000	real-tall/profile/Default/DawnGraphiteCache/data_0
+270336	2026-10-13T00:04:24.7410938000	real-tall/profile/Default/DawnGraphiteCache/data_1
+8192	2026-10-13T00:04:22.9374685000	real-tall/profile/Default/DawnGraphiteCache/data_2
+8192	2026-10-13T00:04:22.9374685000	real-tall/profile/Default/DawnGraphiteCache/data_3
+262512	2026-10-13T00:04:22.9272896000	real-tall/profile/Default/DawnGraphiteCache/index
+8192	2026-10-13T00:04:22.9211579000	real-tall/profile/Default/DawnWebGPUCache/data_0
+270336	2026-10-13T00:04:24.7405635000	real-tall/profile/Default/DawnWebGPUCache/data_1
+8192	2026-10-13T00:04:22.9241889000	real-tall/profile/Default/DawnWebGPUCache/data_2
+8192	2026-10-13T00:04:22.9241889000	real-tall/profile/Default/DawnWebGPUCache/data_3
+262512	2026-10-13T00:04:22.9140189000	real-tall/profile/Default/DawnWebGPUCache/index
+76	2026-10-13T00:04:24.1830525000	real-tall/profile/Default/Extension Rules/000003.log
+16	2026-10-13T00:04:22.8828471000	real-tall/profile/Default/Extension Rules/CURRENT
+0	2026-10-13T00:04:22.8729391000	real-tall/profile/Default/Extension Rules/LOCK
+456	2026-10-13T00:04:24.1825349000	real-tall/profile/Default/Extension Rules/LOG
+417	2026-10-13T00:04:22.8936919000	real-tall/profile/Default/Extension Rules/LOG.old
+41	2026-10-13T00:04:22.8740064000	real-tall/profile/Default/Extension Rules/MANIFEST-000001
+38	2026-10-13T00:04:24.1882361000	real-tall/profile/Default/Extension Scripts/000003.log
+16	2026-10-13T00:04:22.9058487000	real-tall/profile/Default/Extension Scripts/CURRENT
+0	2026-10-13T00:04:22.8952084000	real-tall/profile/Default/Extension Scripts/LOCK
+460	2026-10-13T00:04:24.1872299000	real-tall/profile/Default/Extension Scripts/LOG
+421	2026-10-13T00:04:22.9185642000	real-tall/profile/Default/Extension Scripts/LOG.old
+41	2026-10-13T00:04:22.8967332000	real-tall/profile/Default/Extension Scripts/MANIFEST-000001
+114	2026-10-13T00:04:24.3274991000	real-tall/profile/Default/Extension State/000003.log
+16	2026-10-13T00:04:23.0469734000	real-tall/profile/Default/Extension State/CURRENT
+0	2026-10-13T00:04:23.0387981000	real-tall/profile/Default/Extension State/LOCK
+459	2026-10-13T00:04:24.3274991000	real-tall/profile/Default/Extension State/LOG
+417	2026-10-13T00:04:23.0582135000	real-tall/profile/Default/Extension State/LOG.old
+41	2026-10-13T00:04:23.0403210000	real-tall/profile/Default/Extension State/MANIFEST-000001
+20480	2026-10-13T00:04:22.9089029000	real-tall/profile/Default/Favicons
+0	2026-10-13T00:04:22.9130119000	real-tall/profile/Default/Favicons-journal
+8192	2026-10-13T00:04:22.9073644000	real-tall/profile/Default/GPUCache/data_0
+270336	2026-10-13T00:04:24.7405635000	real-tall/profile/Default/GPUCache/data_1
+8192	2026-10-13T00:04:22.9089029000	real-tall/profile/Default/GPUCache/data_2
+8192	2026-10-13T00:04:22.9114931000	real-tall/profile/Default/GPUCache/data_3
+262512	2026-10-13T00:04:22.8997954000	real-tall/profile/Default/GPUCache/index
+204800	2026-10-13T00:04:22.8828471000	real-tall/profile/Default/History
+78488	2026-10-13T00:04:23.2090356000	real-tall/profile/Default/History-journal
+0	2026-10-13T00:04:22.8740064000	real-tall/profile/Default/LOCK
+0	2026-10-13T00:04:24.1797794000	real-tall/profile/Default/LOG
+0	2026-10-13T00:04:22.8734734000	real-tall/profile/Default/LOG.old
+30	2026-10-13T00:04:22.9472256000	real-tall/profile/Default/Local Storage/leveldb/000003.log
+16	2026-10-13T00:04:22.9313846000	real-tall/profile/Default/Local Storage/leveldb/CURRENT
+0	2026-10-13T00:04:22.9160377000	real-tall/profile/Default/Local Storage/leveldb/LOCK
+471	2026-10-13T00:04:24.2256229000	real-tall/profile/Default/Local Storage/leveldb/LOG
+429	2026-10-13T00:04:22.9431858000	real-tall/profile/Default/Local Storage/leveldb/LOG.old
+41	2026-10-13T00:04:22.9185642000	real-tall/profile/Default/Local Storage/leveldb/MANIFEST-000001
+40960	2026-10-13T00:04:22.8900400000	real-tall/profile/Default/Login Data
+40960	2026-10-13T00:04:22.8900400000	real-tall/profile/Default/Login Data For Account
+0	2026-10-13T00:04:22.8936919000	real-tall/profile/Default/Login Data For Account-journal
+0	2026-10-13T00:04:22.8936919000	real-tall/profile/Default/Login Data-journal
+20480	2026-10-13T00:04:23.0371730000	real-tall/profile/Default/Network/Cookies
+0	2026-10-13T00:04:23.0414175000	real-tall/profile/Default/Network/Cookies-journal
+20480	2026-10-13T00:04:23.0105690000	real-tall/profile/Default/Network/Device Bound Sessions
+0	2026-10-13T00:04:23.0141630000	real-tall/profile/Default/Network/Device Bound Sessions-journal
+1093	2026-10-13T00:04:24.7165142000	real-tall/profile/Default/Network/Network Persistent State
+0	2026-10-13T00:04:22.8755445000	real-tall/profile/Default/Network/NetworkDataMigrated
+36864	2026-10-13T00:04:24.7209088000	real-tall/profile/Default/Network/Reporting and NEL
+0	2026-10-13T00:04:24.7239717000	real-tall/profile/Default/Network/Reporting and NEL-journal
+2	2026-10-13T00:04:24.3012126000	real-tall/profile/Default/Network/SCT Auditing Pending Reports
+355	2026-10-13T00:04:24.7127235000	real-tall/profile/Default/Network/TransportSecurity
+36864	2026-10-13T00:04:23.0146679000	real-tall/profile/Default/Network/Trust Tokens
+0	2026-10-13T00:04:23.0178098000	real-tall/profile/Default/Network/Trust Tokens-journal
+0	2026-10-13T00:04:22.8713322000	real-tall/profile/Default/PersistentOriginTrials/LOCK
+0	2026-10-13T00:04:24.1804014000	real-tall/profile/Default/PersistentOriginTrials/LOG
+0	2026-10-13T00:04:22.8713322000	real-tall/profile/Default/PersistentOriginTrials/LOG.old
+7292	2026-10-13T00:04:24.7203140000	real-tall/profile/Default/Preferences
+204	2026-10-13T00:04:22.8373778000	real-tall/profile/Default/README
+7859	2026-10-13T00:04:24.7132401000	real-tall/profile/Default/Secure Preferences
+0	2026-10-13T00:04:22.8729391000	real-tall/profile/Default/Segmentation Platform/SegmentInfoDB/LOCK
+0	2026-10-13T00:04:24.1782406000	real-tall/profile/Default/Segmentation Platform/SegmentInfoDB/LOG
+0	2026-10-13T00:04:22.8713322000	real-tall/profile/Default/Segmentation Platform/SegmentInfoDB/LOG.old
+0	2026-10-13T00:04:22.8740064000	real-tall/profile/Default/Segmentation Platform/SignalDB/LOCK
+0	2026-10-13T00:04:24.1835900000	real-tall/profile/Default/Segmentation Platform/SignalDB/LOG
+0	2026-10-13T00:04:22.8740064000	real-tall/profile/Default/Segmentation Platform/SignalDB/LOG.old
+0	2026-10-13T00:04:22.8770768000	real-tall/profile/Default/Segmentation Platform/SignalStorageConfigDB/LOCK
+0	2026-10-13T00:04:24.1867108000	real-tall/profile/Default/Segmentation Platform/SignalStorageConfigDB/LOG
+0	2026-10-13T00:04:22.8755445000	real-tall/profile/Default/Segmentation Platform/SignalStorageConfigDB/LOG.old
+20480	2026-10-13T00:04:22.8786111000	real-tall/profile/Default/ServerCertificate
+0	2026-10-13T00:04:22.8813272000	real-tall/profile/Default/ServerCertificate-journal
+87	2026-10-13T00:04:24.6929168000	real-tall/profile/Default/Session Storage/000003.log
+16	2026-10-13T00:04:24.2882580000	real-tall/profile/Default/Session Storage/CURRENT
+0	2026-10-13T00:04:24.2755483000	real-tall/profile/Default/Session Storage/LOCK
+417	2026-10-13T00:04:24.3017424000	real-tall/profile/Default/Session Storage/LOG
+41	2026-10-13T00:04:24.2791214000	real-tall/profile/Default/Session Storage/MANIFEST-000001
+2714	2026-10-13T00:04:24.6753666000	real-tall/profile/Default/Sessions/Session_13436316264674922
+24	2026-10-13T00:04:22.9782394000	real-tall/profile/Default/Shared Dictionary/cache/index
+48	2026-10-13T00:04:22.9828191000	real-tall/profile/Default/Shared Dictionary/cache/index-dir/the-real-index
+45056	2026-10-13T00:04:23.0105690000	real-tall/profile/Default/Shared Dictionary/db
+0	2026-10-13T00:04:23.0141630000	real-tall/profile/Default/Shared Dictionary/db-journal
+40	2026-10-13T00:04:22.8875132000	real-tall/profile/Default/Site Characteristics Database/000003.log
+16	2026-10-13T00:04:22.8755445000	real-tall/profile/Default/Site Characteristics Database/CURRENT
+0	2026-10-13T00:04:22.8655357000	real-tall/profile/Default/Site Characteristics Database/LOCK
+487	2026-10-13T00:04:24.1767212000	real-tall/profile/Default/Site Characteristics Database/LOG
+445	2026-10-13T00:04:22.8870048000	real-tall/profile/Default/Site Characteristics Database/LOG.old
+41	2026-10-13T00:04:22.8670610000	real-tall/profile/Default/Site Characteristics Database/MANIFEST-000001
+137	2026-10-13T00:04:24.2965763000	real-tall/profile/Default/Sync Data/LevelDB/000003.log
+16	2026-10-13T00:04:22.8624674000	real-tall/profile/Default/Sync Data/LevelDB/CURRENT
+0	2026-10-13T00:04:22.8567421000	real-tall/profile/Default/Sync Data/LevelDB/LOCK
+463	2026-10-13T00:04:24.1724932000	real-tall/profile/Default/Sync Data/LevelDB/LOG
+421	2026-10-13T00:04:22.8740064000	real-tall/profile/Default/Sync Data/LevelDB/LOG.old
+41	2026-10-13T00:04:22.8588023000	real-tall/profile/Default/Sync Data/LevelDB/MANIFEST-000001
+20480	2026-10-13T00:04:22.9911488000	real-tall/profile/Default/Top Sites
+0	2026-10-13T00:04:22.9946878000	real-tall/profile/Default/Top Sites-journal
+153600	2026-10-13T00:04:24.7159924000	real-tall/profile/Default/Web Data
+0	2026-10-13T00:04:24.7192581000	real-tall/profile/Default/Web Data-journal
+40960	2026-10-13T00:04:24.7159924000	real-tall/profile/Default/WebStorage/QuotaManager
+0	2026-10-13T00:04:24.7192581000	real-tall/profile/Default/WebStorage/QuotaManager-journal
+0	2026-10-13T00:04:22.8701206000	real-tall/profile/Default/chrome_cart_db/LOCK
+0	2026-10-13T00:04:24.1767212000	real-tall/profile/Default/chrome_cart_db/LOG
+0	2026-10-13T00:04:22.8685970000	real-tall/profile/Default/chrome_cart_db/LOG.old
+0	2026-10-13T00:04:22.8713322000	real-tall/profile/Default/commerce_subscription_db/LOCK
+0	2026-10-13T00:04:24.1782406000	real-tall/profile/Default/commerce_subscription_db/LOG
+0	2026-10-13T00:04:22.8706764000	real-tall/profile/Default/commerce_subscription_db/LOG.old
+32768	2026-10-13T00:04:22.9349276000	real-tall/profile/Default/declarative_performance_observer.db
+0	2026-10-13T00:04:22.9359511000	real-tall/profile/Default/declarative_performance_observer.db-journal
+0	2026-10-13T00:04:22.8685970000	real-tall/profile/Default/discount_infos_db/LOCK
+0	2026-10-13T00:04:24.1782406000	real-tall/profile/Default/discount_infos_db/LOG
+0	2026-10-13T00:04:22.8685970000	real-tall/profile/Default/discount_infos_db/LOG.old
+0	2026-10-13T00:04:22.8685970000	real-tall/profile/Default/discounts_db/LOCK
+0	2026-10-13T00:04:24.1767212000	real-tall/profile/Default/discounts_db/LOG
+0	2026-10-13T00:04:22.8670610000	real-tall/profile/Default/discounts_db/LOG.old
+0	2026-10-13T00:04:22.8685970000	real-tall/profile/Default/parcel_tracking_db/LOCK
+0	2026-10-13T00:04:24.1767212000	real-tall/profile/Default/parcel_tracking_db/LOG
+0	2026-10-13T00:04:22.8685970000	real-tall/profile/Default/parcel_tracking_db/LOG.old
+10795	2026-10-13T00:04:24.3078425000	real-tall/profile/Default/shared_proto_db/000003.log
+16	2026-10-13T00:04:23.0090426000	real-tall/profile/Default/shared_proto_db/CURRENT
+0	2026-10-13T00:04:22.9987572000	real-tall/profile/Default/shared_proto_db/LOCK
+459	2026-10-13T00:04:24.2955646000	real-tall/profile/Default/shared_proto_db/LOG
+415	2026-10-13T00:04:23.0178098000	real-tall/profile/Default/shared_proto_db/LOG.old
+41	2026-10-13T00:04:23.0002780000	real-tall/profile/Default/shared_proto_db/MANIFEST-000001
+740	2026-10-13T00:04:24.2960705000	real-tall/profile/Default/shared_proto_db/metadata/000003.log
+16	2026-10-13T00:04:22.9860959000	real-tall/profile/Default/shared_proto_db/metadata/CURRENT
+0	2026-10-13T00:04:22.9782394000	real-tall/profile/Default/shared_proto_db/metadata/LOCK
+477	2026-10-13T00:04:24.2913249000	real-tall/profile/Default/shared_proto_db/metadata/LOG
+433	2026-10-13T00:04:22.9972248000	real-tall/profile/Default/shared_proto_db/metadata/LOG.old
+41	2026-10-13T00:04:22.9782394000	real-tall/profile/Default/shared_proto_db/metadata/MANIFEST-000001
+0	2026-10-13T00:04:22.8283923000	real-tall/profile/GPUPersistentCache/DawnGraphiteCache/KSLPXU6BQUR6FAKDXIYVNROYEZXUJIFE/cache.db
+0	2026-10-13T00:04:22.8289365000	real-tall/profile/GPUPersistentCache/DawnGraphiteCache/KSLPXU6BQUR6FAKDXIYVNROYEZXUJIFE/cache.db-wal
+0	2026-10-13T00:04:22.8283923000	real-tall/profile/GPUPersistentCache/DawnGraphiteCache/KSLPXU6BQUR6FAKDXIYVNROYEZXUJIFE/cache.journal
+45056	2026-10-13T00:04:24.6144856000	real-tall/profile/GrShaderCache/data_0
+270336	2026-10-13T00:04:24.7390408000	real-tall/profile/GrShaderCache/data_1
+8192	2026-10-13T00:04:23.1935099000	real-tall/profile/GrShaderCache/data_2
+4202496	2026-10-13T00:04:24.6144856000	real-tall/profile/GrShaderCache/data_3
+16468	2026-10-13T00:04:23.3541648000	real-tall/profile/GrShaderCache/f_000001
+262512	2026-10-13T00:04:23.1806071000	real-tall/profile/GrShaderCache/index
+13	2026-10-13T00:04:24.1427861000	real-tall/profile/Last Version
+4356	2026-10-13T00:04:24.7224423000	real-tall/profile/Local State
+8192	2026-10-13T00:04:22.8348016000	real-tall/profile/ShaderCache/data_0
+270336	2026-10-13T00:04:24.7390408000	real-tall/profile/ShaderCache/data_1
+8192	2026-10-13T00:04:22.8384231000	real-tall/profile/ShaderCache/data_2
+8192	2026-10-13T00:04:22.8394800000	real-tall/profile/ShaderCache/data_3
+262512	2026-10-13T00:04:22.8283923000	real-tall/profile/ShaderCache/index
+85	2026-10-13T00:04:24.7053179000	real-tall/profile/Variations
+49152	2026-10-13T00:04:24.7105932000	real-tall/profile/segmentation_platform/ukm_db

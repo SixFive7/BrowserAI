@@ -1,0 +1,945 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Opened log file 'C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\cdb\second.log'
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.000 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.016 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 46
+
+Microsoft (R) Windows Debugger Version 10.0.29661.1004 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\dump\49ec8e29-f6d3-4f4d-a02c-c50f5d705d46.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Symbol search path is: srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Executable search path is: 
+Windows 10 Version 26300 (9550) MP (32 procs) Free x64
+Product: WinNt
+Edition build lab: Windows NT 10.0.26300.9550
+Debug session time: Tue Oct 13 00:04:23.000 2026 (UTC + 2:00)
+System Uptime: 0 days 7:46:26.710
+Process Uptime: 0 days 0:00:01.000
+.NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'
+...............................................................
+..........................
+Loading unloaded module list
+...........................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr
+(179d0.19df0): Access violation - code c0000005 (first/second chance not available)
+ReadVirtual() failed in GetXStateConfiguration() first read attempt (error == 0.)
+Invalid mini-dump Miscellaneous information in InitializeConfiguration()
+For analysis of this file, run !analyze -v
+*** WARNING: Unable to verify checksum for ntdll.dll
+ntdll!NtDelayExecution+0x14:
+00007ffe`8e8e2244 c3              ret
+0:011> .ecxr; .echo ==DISASM==; u ntdll!RtlpUnwindPrologue L8; .echo ==UB==; ub @rip L40; u @rip L6; .echo ==CTXR14==; dq 0x9f73bfeef0 L0x20; .echo ==CXR==; .cxr 0x9f73bfeef0; .echo ==FRAME04STACK==; .ecxr; dps 0x9f73bfeb40 L0x60; .echo ==ALLTHREADS==; ~*kn 40; q
+rax=0000000000000000 rbx=0000000000000001 rcx=00007ffe8e7a0161
+rdx=00007ffcfcbd8188 rsi=0000009f73bfeb08 rdi=00007ffcfcbd8188
+rip=00007ffe8e7a0191 rsp=0000009f73bfe940 rbp=00007ffceb390000
+ r8=ffffffffffffff80  r9=0000000000000210 r10=0000000000000006
+r11=0000000000000000 r12=0000000000000018 r13=00007ffceb390000
+r14=0000009f73bfeef0 r15=00007ffe8e780000
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00010246
+ntdll!RtlpUnwindPrologue+0x381:
+00007ffe`8e7a0191 4d8b4108        mov     r8,qword ptr [r9+8] ds:00000000`00000218=????????????????
+==DISASM==
+ntdll!RtlpUnwindPrologue:
+00007ffe`8e79fe10 4c894c2420      mov     qword ptr [rsp+20h],r9
+00007ffe`8e79fe15 4c89442418      mov     qword ptr [rsp+18h],r8
+00007ffe`8e79fe1a 4889542410      mov     qword ptr [rsp+10h],rdx
+00007ffe`8e79fe1f 48894c2408      mov     qword ptr [rsp+8],rcx
+00007ffe`8e79fe24 53              push    rbx
+00007ffe`8e79fe25 56              push    rsi
+00007ffe`8e79fe26 57              push    rdi
+00007ffe`8e79fe27 4154            push    r12
+==UB==
+ntdll!RtlpUnwindPrologue+0x277:
+00007ffe`8e7a0087 cc              int     3
+00007ffe`8e7a0088 cc              int     3
+00007ffe`8e7a0089 cc              int     3
+00007ffe`8e7a008a cc              int     3
+00007ffe`8e7a008b ffc3            inc     ebx
+00007ffe`8e7a008d 0fb7545f04      movzx   edx,word ptr [rdi+rbx*2+4]
+00007ffe`8e7a0092 4585d2          test    r10d,r10d
+00007ffe`8e7a0095 0f8508020000    jne     ntdll!RtlpUnwindPrologue+0x493 (00007ffe`8e7a02a3)
+00007ffe`8e7a009b 8d14d500000000  lea     edx,[rdx*8]
+00007ffe`8e7a00a2 8bc2            mov     eax,edx
+00007ffe`8e7a00a4 49018698000000  add     qword ptr [r14+98h],rax
+00007ffe`8e7a00ab ffc3            inc     ebx
+00007ffe`8e7a00ad e9eefdffff      jmp     ntdll!RtlpUnwindPrologue+0x90 (00007ffe`8e79fea0)
+00007ffe`8e7a00b2 4c3b00          cmp     r8,qword ptr [rax]
+00007ffe`8e7a00b5 0f8217030000    jb      ntdll!RtlpUnwindPrologue+0x5c2 (00007ffe`8e7a03d2)
+00007ffe`8e7a00bb 488b4608        mov     rax,qword ptr [rsi+8]
+00007ffe`8e7a00bf 488b08          mov     rcx,qword ptr [rax]
+00007ffe`8e7a00c2 4883e908        sub     rcx,8
+00007ffe`8e7a00c6 4c3bc1          cmp     r8,rcx
+00007ffe`8e7a00c9 0f8658feffff    jbe     ntdll!RtlpUnwindPrologue+0x117 (00007ffe`8e79ff27)
+00007ffe`8e7a00cf b8280000c0      mov     eax,0C0000028h
+00007ffe`8e7a00d4 e914ffffff      jmp     ntdll!RtlpUnwindPrologue+0x1dd (00007ffe`8e79ffed)
+00007ffe`8e7a00d9 85c0            test    eax,eax
+00007ffe`8e7a00db 0f880cffffff    js      ntdll!RtlpUnwindPrologue+0x1dd (00007ffe`8e79ffed)
+00007ffe`8e7a00e1 4c8bb424d0000000 mov     r14,qword ptr [rsp+0D0h]
+00007ffe`8e7a00e9 488b542468      mov     rdx,qword ptr [rsp+68h]
+00007ffe`8e7a00ee 4881c298000000  add     rdx,98h
+00007ffe`8e7a00f5 e9a2feffff      jmp     ntdll!RtlpUnwindPrologue+0x18c (00007ffe`8e79ff9c)
+00007ffe`8e7a00fa 0fb64f03        movzx   ecx,byte ptr [rdi+3]
+00007ffe`8e7a00fe 83e10f          and     ecx,0Fh
+00007ffe`8e7a0101 488b442448      mov     rax,qword ptr [rsp+48h]
+00007ffe`8e7a0106 488b14c8        mov     rdx,qword ptr [rax+rcx*8]
+00007ffe`8e7a010a 49899698000000  mov     qword ptr [r14+98h],rdx
+00007ffe`8e7a0111 0fb64703        movzx   eax,byte ptr [rdi+3]
+00007ffe`8e7a0115 83e0f0          and     eax,0FFFFFFF0h
+00007ffe`8e7a0118 482bd0          sub     rdx,rax
+00007ffe`8e7a011b 49899698000000  mov     qword ptr [r14+98h],rdx
+00007ffe`8e7a0122 ffc3            inc     ebx
+00007ffe`8e7a0124 e977fdffff      jmp     ntdll!RtlpUnwindPrologue+0x90 (00007ffe`8e79fea0)
+00007ffe`8e7a0129 a801            test    al,1
+00007ffe`8e7a012b 0f859a020000    jne     ntdll!RtlpUnwindPrologue+0x5bb (00007ffe`8e7a03cb)
+00007ffe`8e7a0131 8bc8            mov     ecx,eax
+00007ffe`8e7a0133 4883c102        add     rcx,2
+00007ffe`8e7a0137 488d0c4f        lea     rcx,[rdi+rcx*2]
+00007ffe`8e7a013b 48898c24c8000000 mov     qword ptr [rsp+0C8h],rcx
+00007ffe`8e7a0143 8b442440        mov     eax,dword ptr [rsp+40h]
+00007ffe`8e7a0147 ffc0            inc     eax
+00007ffe`8e7a0149 89442440        mov     dword ptr [rsp+40h],eax
+00007ffe`8e7a014d 83f820          cmp     eax,20h
+00007ffe`8e7a0150 0f861afdffff    jbe     ntdll!RtlpUnwindPrologue+0x60 (00007ffe`8e79fe70)
+00007ffe`8e7a0156 b9ff0000c0      mov     ecx,0C00000FFh
+00007ffe`8e7a015b e830d2ffff      call    ntdll!RtlRaiseStatus (00007ffe`8e79d390)
+00007ffe`8e7a0160 cc              int     3
+00007ffe`8e7a0161 ffc3            inc     ebx
+00007ffe`8e7a0163 895c2424        mov     dword ptr [rsp+24h],ebx
+00007ffe`8e7a0167 440fb74c5f04    movzx   r9d,word ptr [rdi+rbx*2+4]
+00007ffe`8e7a016d 49c1e104        shl     r9,4
+00007ffe`8e7a0171 4c038c24c0000000 add     r9,qword ptr [rsp+0C0h]
+00007ffe`8e7a0179 4c894c2428      mov     qword ptr [rsp+28h],r9
+00007ffe`8e7a017e eb05            jmp     ntdll!RtlpUnwindPrologue+0x375 (00007ffe`8e7a0185)
+00007ffe`8e7a0180 e9be030000      jmp     ntdll!RtlpUnwindPrologue+0x733 (00007ffe`8e7a0543)
+00007ffe`8e7a0185 488b06          mov     rax,qword ptr [rsi]
+00007ffe`8e7a0188 4885c0          test    rax,rax
+00007ffe`8e7a018b 0f858b030000    jne     ntdll!RtlpUnwindPrologue+0x70c (00007ffe`8e7a051c)
+ntdll!RtlpUnwindPrologue+0x381:
+00007ffe`8e7a0191 4d8b4108        mov     r8,qword ptr [r9+8]
+00007ffe`8e7a0195 458bda          mov     r11d,r10d
+00007ffe`8e7a0198 418bd2          mov     edx,r10d
+00007ffe`8e7a019b 48c1e204        shl     rdx,4
+00007ffe`8e7a019f 4803542460      add     rdx,qword ptr [rsp+60h]
+00007ffe`8e7a01a4 498b01          mov     rax,qword ptr [r9]
+==CTXR14==
+0000009f`73bfeef0  00000000`00000000 00000000`00000000
+0000009f`73bfef00  00000000`00000000 00000000`00000000
+0000009f`73bfef10  00000000`00000000 00000000`00000000
+0000009f`73bfef20  00001fa7`0010000b 00000000`00000033
+0000009f`73bfef30  00000246`002b0000 00000000`00000000
+0000009f`73bfef40  00000000`00000000 00000000`00000000
+0000009f`73bfef50  00000000`00000000 00000000`00000000
+0000009f`73bfef60  00000000`00000000 0000d4bb`42cac8bb
+0000009f`73bfef70  0000d4bb`42cac8bb 00000000`000009f0
+0000009f`73bfef80  00003674`006a7030 00003674`006a6808
+0000009f`73bfef90  00000000`00000000 00003674`0122e000
+0000009f`73bfefa0  0000009f`68bfd450 00000000`000001a8
+0000009f`73bfefb0  00000000`00000350 00000000`00001a80
+0000009f`73bfefc0  00000000`000006a0 00000000`00000001
+0000009f`73bfefd0  00000000`000001a8 00003674`00e12000
+0000009f`73bfefe0  00000000`000005d8 00007ffc`f090d48c
+==CXR==
+*** WARNING: Unable to verify checksum for chrome.dll
+rax=0000d4bb42cac8bb rbx=00003674006a7030 rcx=0000d4bb42cac8bb
+rdx=00000000000009f0 rsi=000036740122e000 rdi=0000009f68bfd450
+rip=00007ffcf090d48c rsp=00003674006a6808 rbp=0000000000000000
+ r8=00000000000001a8  r9=0000000000000350 r10=0000000000001a80
+r11=00000000000006a0 r12=0000000000000001 r13=00000000000001a8
+r14=0000367400e12000 r15=00000000000005d8
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=002b  ds=0000  es=0000  fs=0000  gs=0000             efl=00000246
+chrome!IsSandboxedProcess+0x21fcfdc:
+00007ffc`f090d48c c5f877          vzeroupper
+==FRAME04STACK==
+rax=0000000000000000 rbx=0000000000000001 rcx=00007ffe8e7a0161
+rdx=00007ffcfcbd8188 rsi=0000009f73bfeb08 rdi=00007ffcfcbd8188
+rip=00007ffe8e7a0191 rsp=0000009f73bfe940 rbp=00007ffceb390000
+ r8=ffffffffffffff80  r9=0000000000000210 r10=0000000000000006
+r11=0000000000000000 r12=0000000000000018 r13=00007ffceb390000
+r14=0000009f73bfeef0 r15=00007ffe8e780000
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00010246
+ntdll!RtlpUnwindPrologue+0x381:
+00007ffe`8e7a0191 4d8b4108        mov     r8,qword ptr [r9+8] ds:00000000`00000218=????????????????
+0000009f`73bfeb40  00007ffc`eb390000 chrome
+0000009f`73bfeb48  00000000`00000002
+0000009f`73bfeb50  00007ffc`fd1129b4 chrome!sqlite3_dbdata_init+0x60116d4
+0000009f`73bfeb58  00000000`00000000
+0000009f`73bfeb60  0000009f`73bfeef0
+0000009f`73bfeb68  0000009f`73bfebe0
+0000009f`73bfeb70  0000009f`73bfebd8
+0000009f`73bfeb78  0000009f`73bfebe8
+0000009f`73bfeb80  00000000`00000000
+0000009f`73bfeb88  00007ffc`f7d12f23 chrome!sqlite3_dbdata_init+0xc11c43
+0000009f`73bfeb90  00000000`00000000
+0000009f`73bfeb98  00000000`00000000
+0000009f`73bfeba0  00000000`00000000
+0000009f`73bfeba8  00000000`00000000
+0000009f`73bfebb0  0000009f`73bfeef0
+0000009f`73bfebb8  0000009f`73bfebe0
+0000009f`73bfebc0  0000009f`73bfebd8
+0000009f`73bfebc8  0000009f`73bfebe8
+0000009f`73bfebd0  00000000`00000000
+0000009f`73bfebd8  ffffffff`ffffff80
+0000009f`73bfebe0  00000000`00000000
+0000009f`73bfebe8  00000000`00000000
+0000009f`73bfebf0  00000000`00000000
+0000009f`73bfebf8  00000000`00000000
+0000009f`73bfec00  00000000`00000000
+0000009f`73bfec08  00000000`00000000
+0000009f`73bfec10  00000000`00000000
+0000009f`73bfec18  00000000`00000000
+0000009f`73bfec20  00000000`00000000
+0000009f`73bfec28  00000000`00000000
+0000009f`73bfec30  00000000`00000000
+0000009f`73bfec38  00000000`00000000
+0000009f`73bfec40  00000000`00000000
+0000009f`73bfec48  00000000`00000000
+0000009f`73bfec50  00000000`00000000
+0000009f`73bfec58  00000000`00000000
+0000009f`73bfec60  00000000`00000000
+0000009f`73bfec68  00000000`00000000
+0000009f`73bfec70  00000000`00000000
+0000009f`73bfec78  00000000`00000000
+0000009f`73bfec80  00000000`00000000
+0000009f`73bfec88  00000000`00000000
+0000009f`73bfec90  00000000`00000000
+0000009f`73bfec98  00000000`00000000
+0000009f`73bfeca0  00000000`00000000
+0000009f`73bfeca8  00000000`00000000
+0000009f`73bfecb0  00000000`00000000
+0000009f`73bfecb8  00000000`00000000
+0000009f`73bfecc0  00000000`00000000
+0000009f`73bfecc8  00000000`00000000
+0000009f`73bfecd0  00000000`00000000
+0000009f`73bfecd8  00000000`00000000
+0000009f`73bfece0  00000000`00000000
+0000009f`73bfece8  0000d424`3175232b
+0000009f`73bfecf0  00000000`00000001
+0000009f`73bfecf8  0000009f`73bfeef0
+0000009f`73bfed00  0000009f`73bfeef0
+0000009f`73bfed08  00007ffc`faf0eca0 chrome!sqlite3_dbdata_init+0x3e0d9c0
+0000009f`73bfed10  00003674`006a6808
+0000009f`73bfed18  0000009f`73bff438
+0000009f`73bfed20  0000009f`73bfedb8
+0000009f`73bfed28  00007ffc`f7d12e75 chrome!sqlite3_dbdata_init+0xc11b95
+0000009f`73bfed30  00000000`00000002
+0000009f`73bfed38  0000009f`73bff438
+0000009f`73bfed40  00000000`00000001
+0000009f`73bfed48  0000009f`73bfeef0
+0000009f`73bfed50  0000009f`73bfeef0
+0000009f`73bfed58  00007ffc`eb390000 chrome
+0000009f`73bfed60  0000d424`3175258b
+0000009f`73bfed68  00003670`000702e0
+0000009f`73bfed70  00003674`006a99e0
+0000009f`73bfed78  00007ffc`f6ec7532 chrome!CrashForExceptionInNonABICompliantCodeRange+0x4565f52
+0000009f`73bfed80  00007ffc`f090d48c chrome!IsSandboxedProcess+0x21fcfdc
+0000009f`73bfed88  00007ffc`f0875cb4 chrome!IsSandboxedProcess+0x2165804
+0000009f`73bfed90  0000009f`73bfeed0
+0000009f`73bfed98  00003670`00114020
+0000009f`73bfeda0  fffffffc`00000000
+0000009f`73bfeda8  0000009f`73bfee38
+0000009f`73bfedb0  0000009f`73bfee40
+0000009f`73bfedb8  00003674`0114f830
+0000009f`73bfedc0  0000d424`3175253b
+0000009f`73bfedc8  0000009f`73bfeef0
+0000009f`73bfedd0  fffffffc`00000000
+0000009f`73bfedd8  00003674`006a99e0
+0000009f`73bfede0  0000009f`73bff438
+0000009f`73bfede8  00000000`00000010
+0000009f`73bfedf0  00003674`002b2e50
+0000009f`73bfedf8  00000000`00000001
+0000009f`73bfee00  0000009f`73bfeed0
+0000009f`73bfee08  00007ffc`f6ecf5b7 chrome!CrashForExceptionInNonABICompliantCodeRange+0x456dfd7
+0000009f`73bfee10  00003674`0139bc80
+0000009f`73bfee18  00007ffc`eefe0133 chrome!IsSandboxedProcess+0x8cfc83
+0000009f`73bfee20  00000000`00000001
+0000009f`73bfee28  00002698`c2663520
+0000009f`73bfee30  0000009f`73bff438
+0000009f`73bfee38  00007ffc`f090d48c chrome!IsSandboxedProcess+0x21fcfdc
+==ALLTHREADS==
+
+   0  Id: 179d0.f124 Suspend: 0 Teb: 0000009f`683c0000 Unfrozen "CrBrowserMain"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`68bfc370 00007ffc`ee8a34d9     chrome!IsSandboxedProcess+0x192414
+01 0000009f`68bfc470 00007ffc`ec604896     chrome!IsSandboxedProcess+0x193029
+02 0000009f`68bfd540 00007ffc`ed042bdb     chrome!ChromeMain+0xc52376
+03 0000009f`68bfd840 00007ffc`ee360f72     chrome!ChromeMain+0x16906bb
+04 0000009f`68bfd8f0 00007ffc`ed481079     chrome!GetHandleVerifier+0xec802
+05 0000009f`68bfd980 00007ffc`ed480d82     chrome!ChromeMain+0x1aceb59
+06 0000009f`68bfd9b0 00007ffc`ed480a61     chrome!ChromeMain+0x1ace862
+07 0000009f`68bfdac0 00007ffc`ed4808d3     chrome!ChromeMain+0x1ace541
+08 0000009f`68bfdc00 00007ffc`f31e538c     chrome!ChromeMain+0x1ace3b3
+09 0000009f`68bfdca0 00007ffc`f1484e38     chrome!CrashForExceptionInNonABICompliantCodeRange+0x883dac
+0a 0000009f`68bfdcf0 00007ffc`f31e0b62     chrome!IsSandboxedProcess+0x2d74988
+0b 0000009f`68bfdd30 00007ffc`f31d73e3     chrome!CrashForExceptionInNonABICompliantCodeRange+0x87f582
+0c 0000009f`68bfde40 00007ffc`f348f3fd     chrome!CrashForExceptionInNonABICompliantCodeRange+0x875e03
+0d 0000009f`68bfde80 00007ffc`f36edd41     chrome!CrashForExceptionInNonABICompliantCodeRange+0xb2de1d
+0e 0000009f`68bfdf20 00007ffc`f1551b52     chrome!CrashForExceptionInNonABICompliantCodeRange+0xd8c761
+0f 0000009f`68bfe030 00007ffc`f1552c83     chrome!IsSandboxedProcess+0x2e416a2
+10 0000009f`68bfe080 00007ffc`efc2daba     chrome!IsSandboxedProcess+0x2e427d3
+11 0000009f`68bfe0c0 00007ffc`ef0e695e     chrome!IsSandboxedProcess+0x151d60a
+12 0000009f`68bfe960 00007ffc`eb4192d3     chrome!IsSandboxedProcess+0x9d64ae
+13 0000009f`68bfeab0 00007ffc`f05d7f8e     chrome+0x892d3
+14 0000009f`68bfeb20 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+15 0000009f`68bfebb0 00007ffc`eba0f9e2     chrome!ChromeMain+0x865750
+16 0000009f`68bfecb0 00007ffc`eba0edce     chrome!ChromeMain+0x5d4c2
+17 0000009f`68bfed30 00007ffc`eba0ebef     chrome!ChromeMain+0x5c8ae
+18 0000009f`68bfedb0 00007ffc`eba0d956     chrome!ChromeMain+0x5c6cf
+19 0000009f`68bfee50 00007ffc`eb9b4d79     chrome!ChromeMain+0x5b436
+1a 0000009f`68bff050 00007ffc`eb9b444c     chrome!ChromeMain+0x2859
+1b 0000009f`68bff1d0 00007ffc`eb9b285f     chrome!ChromeMain+0x1f2c
+*** WARNING: Unable to verify checksum for chrome.exe
+1c 0000009f`68bff2d0 00007ff6`bbf759ab     chrome!ChromeMain+0x33f
+1d 0000009f`68bff590 00007ff6`bbf735a4     chrome_exe+0x359ab
+1e 0000009f`68bff830 00007ff6`bc169da9     chrome_exe+0x335a4
+*** WARNING: Unable to verify checksum for KERNEL32.DLL
+1f 0000009f`68bffc40 00007ffe`8d1dcdf7     chrome_exe!IsSandboxedProcess+0x128589
+20 0000009f`68bffc80 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+21 0000009f`68bffcb0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   1  Id: 179d0.144c4 Suspend: 0 Teb: 0000009f`683c2000 Unfrozen
+ # Child-SP          RetAddr               Call Site
+00 0000009f`69bffbb8 00007ffe`8e7a4d0e     ntdll!NtWaitForWorkViaWorkerFactory+0x14
+01 0000009f`69bffbc0 00007ffe`8d1dcdf7     ntdll!TppWorkerThread+0x37e
+02 0000009f`69bfff20 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+03 0000009f`69bfff50 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   2  Id: 179d0.8fec Suspend: 0 Teb: 0000009f`683c4000 Unfrozen
+ # Child-SP          RetAddr               Call Site
+00 0000009f`6abff978 00007ffe`8e7a4d0e     ntdll!NtWaitForWorkViaWorkerFactory+0x14
+01 0000009f`6abff980 00007ffe`8d1dcdf7     ntdll!TppWorkerThread+0x37e
+02 0000009f`6abffce0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+03 0000009f`6abffd10 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   3  Id: 179d0.116d0 Suspend: 0 Teb: 0000009f`683c6000 Unfrozen
+ # Child-SP          RetAddr               Call Site
+00 0000009f`6bbff638 00007ffe`8e7a4d0e     ntdll!NtWaitForWorkViaWorkerFactory+0x14
+01 0000009f`6bbff640 00007ffe`8d1dcdf7     ntdll!TppWorkerThread+0x37e
+02 0000009f`6bbff9a0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+03 0000009f`6bbff9d0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   4  Id: 179d0.314c Suspend: 0 Teb: 0000009f`683c8000 Unfrozen "WindhawkMainLoopThreadAttachExempt"
+*** WARNING: Unable to verify checksum for KERNELBASE.dll
+ # Child-SP          RetAddr               Call Site
+00 0000009f`6cbff6b8 00007ffe`8bc72773     ntdll!NtWaitForMultipleObjects+0x14
+01 0000009f`6cbff6c0 00007ffe`8bc72641     KERNELBASE!WaitForMultipleObjectsEx+0x123
+*** WARNING: Unable to verify checksum for windhawk.dll
+02 0000009f`6cbff9b0 00007ffe`6a09d1ad     KERNELBASE!WaitForMultipleObjects+0x11
+03 0000009f`6cbff9f0 00007ffe`6a09d846     windhawk!GlobalHookSessionStart+0x10cd
+04 0000009f`6cbffaa0 00007ffe`6a09d7d7     windhawk!GlobalHookSessionStart+0x1766
+05 0000009f`6cbffae0 00007ffe`6a09d7fc     windhawk!GlobalHookSessionStart+0x16f7
+06 0000009f`6cbffb10 00007ffe`8d1dcdf7     windhawk!GlobalHookSessionStart+0x171c
+07 0000009f`6cbffb40 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+08 0000009f`6cbffb70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   5  Id: 179d0.1ab70 Suspend: 0 Teb: 0000009f`683ca000 Unfrozen "StackSamplingProfiler"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`6dbff998 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`6dbff9a0 00007ffc`f0531724     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`6dbffa40 00007ffc`f0531315     chrome!IsSandboxedProcess+0x1e21274
+03 0000009f`6dbffb20 00007ffc`f05d7f8e     chrome!IsSandboxedProcess+0x1e20e65
+04 0000009f`6dbffc10 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+05 0000009f`6dbffca0 00007ffc`ec86b644     chrome!ChromeMain+0x865750
+06 0000009f`6dbffda0 00007ffc`ec86b381     chrome!ChromeMain+0xeb9124
+07 0000009f`6dbffe00 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+08 0000009f`6dbffeb0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+09 0000009f`6dbfff40 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0a 0000009f`6dbfff70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   6  Id: 179d0.fa98 Suspend: 0 Teb: 0000009f`683cc000 Unfrozen "BrokerEvent"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`6ebffcd8 00007ffe`8bc72d5c     ntdll!NtRemoveIoCompletion+0x14
+01 0000009f`6ebffce0 00007ff6`bbfc6edf     KERNELBASE!GetQueuedCompletionStatus+0x6c
+02 0000009f`6ebffd40 00007ffe`8d1dcdf7     chrome_exe+0x86edf
+03 0000009f`6ebffe30 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+04 0000009f`6ebffe60 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   7  Id: 179d0.18500 Suspend: 0 Teb: 0000009f`683ce000 Unfrozen "HangWatcher"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`6fbff658 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`6fbff660 00007ffc`f0531724     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`6fbff700 00007ffc`f5d61e34     chrome!IsSandboxedProcess+0x1e21274
+03 0000009f`6fbff7e0 00007ffc`f5d61f52     chrome!CrashForExceptionInNonABICompliantCodeRange+0x3400854
+04 0000009f`6fbff880 00007ffc`ebb70676     chrome!CrashForExceptionInNonABICompliantCodeRange+0x3400972
+05 0000009f`6fbff8d0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+06 0000009f`6fbff960 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+07 0000009f`6fbff990 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   8  Id: 179d0.17150 Suspend: 0 Teb: 0000009f`683d0000 Unfrozen "PerfettoTrace"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`70bff508 00007ffe`8bc72d5c     ntdll!NtRemoveIoCompletion+0x14
+01 0000009f`70bff510 00007ffc`ef0d85e1     KERNELBASE!GetQueuedCompletionStatus+0x6c
+02 0000009f`70bff570 00007ffc`ef0d4c03     chrome!IsSandboxedProcess+0x9c8131
+03 0000009f`70bff6f0 00007ffc`eb4192d3     chrome!IsSandboxedProcess+0x9c4753
+04 0000009f`70bff920 00007ffc`f05d7f8e     chrome+0x892d3
+05 0000009f`70bff990 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+06 0000009f`70bffa20 00007ffc`ec86b644     chrome!ChromeMain+0x865750
+07 0000009f`70bffb20 00007ffc`ec86b381     chrome!ChromeMain+0xeb9124
+08 0000009f`70bffb80 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+09 0000009f`70bffc30 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+0a 0000009f`70bffcc0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0b 0000009f`70bffcf0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+   9  Id: 179d0.7888 Suspend: 0 Teb: 0000009f`683d2000 Unfrozen "ThreadPoolServiceThread"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`71bff988 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`71bff990 00007ffc`f0531724     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`71bffa30 00007ffc`f0531315     chrome!IsSandboxedProcess+0x1e21274
+03 0000009f`71bffb10 00007ffc`f05d7f8e     chrome!IsSandboxedProcess+0x1e20e65
+04 0000009f`71bffc00 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+05 0000009f`71bffc90 00007ffc`ee2e8ef4     chrome!ChromeMain+0x865750
+06 0000009f`71bffd90 00007ffc`ec86b381     chrome!GetHandleVerifier+0x74784
+07 0000009f`71bffdf0 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+08 0000009f`71bffea0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+09 0000009f`71bfff30 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0a 0000009f`71bfff60 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  10  Id: 179d0.12aa8 Suspend: 0 Teb: 0000009f`683d4000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedForegroundBlocking"
+*** WARNING: Unable to verify checksum for win32u.dll
+ # Child-SP          RetAddr               Call Site
+00 0000009f`72bffb78 00007ffc`ee86c51e     win32u!NtUserMsgWaitForMultipleObjectsEx+0x14
+01 0000009f`72bffb80 00007ffc`ef04ddd1     chrome!IsSandboxedProcess+0x15c06e
+02 0000009f`72bffbc0 00007ffc`eb40eb08     chrome!IsSandboxedProcess+0x93d921
+03 0000009f`72bffd80 00007ffc`ebb70676     chrome+0x7eb08
+04 0000009f`72bffdc0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`72bffe50 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`72bffe80 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+# 11  Id: 179d0.19df0 Suspend: 0 Teb: 0000009f`683d6000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`73bfd628 00007ffe`8e850fa4     ntdll!NtDelayExecution+0x14
+01 0000009f`73bfd630 00007ffe`8bcdc171     ntdll!RtlDelayExecution+0x34
+*** WARNING: Unable to verify checksum for chrome_elf.dll
+02 0000009f`73bfd660 00007ffe`14149715     KERNELBASE!SleepEx+0x91
+03 0000009f`73bfd6f0 00007ffe`8bd5f5f3     chrome_elf!DumpHungProcessWithPtype_ExportThunk+0x6a3c5
+04 0000009f`73bfd860 00007ffe`8e8e9eb0     KERNELBASE!UnhandledExceptionFilter+0x1f3
+05 0000009f`73bfd950 00007ffe`8e8a4b53     ntdll!RtlUserThreadStart$filt$0+0x3f
+06 0000009f`73bfd980 00007ffe`8e8e631f     ntdll!_C_specific_handler+0x93
+07 0000009f`73bfd9f0 00007ffe`8e844035     ntdll!RtlpExecuteHandlerForException+0xf
+08 0000009f`73bfda20 00007ffe`8e8e5c5e     ntdll!RtlDispatchException+0x5f5
+09 0000009f`73bfe200 00007ffe`8e7a0191     ntdll!KiUserExceptionDispatch+0x2e
+0a 0000009f`73bfe940 00007ffe`8e79f549     ntdll!RtlpUnwindPrologue+0x381
+0b 0000009f`73bfe9f0 00007ffe`8e7a13cb     ntdll!RtlpxVirtualUnwind+0x109
+0c 0000009f`73bfeaa0 00007ffe`8d1d7218     ntdll!RtlVirtualUnwind+0x15b
+0d 0000009f`73bfeb40 00007ffc`f7d12f23     KERNEL32!RtlVirtualUnwindStub+0x38
+0e 0000009f`73bfeb90 00007ffc`f7d12e75     chrome!sqlite3_dbdata_init+0xc11c43
+0f 0000009f`73bfed30 00007ffc`f6ec7532     chrome!sqlite3_dbdata_init+0xc11b95
+10 0000009f`73bfed80 00007ffc`f6ecf5b7     chrome!CrashForExceptionInNonABICompliantCodeRange+0x4565f52
+11 0000009f`73bfee10 00007ffc`f6ecfa90     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456dfd7
+12 0000009f`73bfee90 00007ffc`f6ecfdac     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456e4b0
+13 0000009f`73bff410 00007ffc`f0ea3dc2     chrome!CrashForExceptionInNonABICompliantCodeRange+0x456e7cc
+14 0000009f`73bff490 00007ffc`ef70acc1     chrome!IsSandboxedProcess+0x2793912
+15 0000009f`73bff4d0 00007ffc`ef0506a2     chrome!IsSandboxedProcess+0xffa811
+16 0000009f`73bff5c0 00007ffc`ef04f3e7     chrome!IsSandboxedProcess+0x9401f2
+17 0000009f`73bff700 00007ffc`ef04dc7c     chrome!IsSandboxedProcess+0x93ef37
+18 0000009f`73bffa90 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d7cc
+19 0000009f`73bffc50 00007ffc`ebb70676     chrome+0x7ea18
+1a 0000009f`73bffc90 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+1b 0000009f`73bffd20 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+1c 0000009f`73bffd50 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  12  Id: 179d0.18944 Suspend: 0 Teb: 0000009f`683d8000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`74bffa48 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`74bffa50 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`74bffaf0 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`74bffcb0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`74bffcf0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`74bffd80 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`74bffdb0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  13  Id: 179d0.1bd34 Suspend: 0 Teb: 0000009f`683da000 Unfrozen "ThreadPoolBackgroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`75bff5d8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`75bff5e0 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`75bff680 00007ffc`eb40ea68     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`75bff840 00007ffc`ebb70676     chrome+0x7ea68
+04 0000009f`75bff880 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`75bff910 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`75bff940 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  14  Id: 179d0.9c84 Suspend: 0 Teb: 0000009f`683dc000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`76bff908 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`76bff910 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`76bff9b0 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`76bffb70 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`76bffbb0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`76bffc40 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`76bffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  15  Id: 179d0.1b3f8 Suspend: 0 Teb: 0000009f`683de000 Unfrozen "ThreadPoolBackgroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`77bffa08 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`77bffa10 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`77bffab0 00007ffc`eb40ea68     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`77bffc70 00007ffc`ebb70676     chrome+0x7ea68
+04 0000009f`77bffcb0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`77bffd40 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`77bffd70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  16  Id: 179d0.d16c Suspend: 0 Teb: 0000009f`683e0000 Unfrozen
+ # Child-SP          RetAddr               Call Site
+00 0000009f`78bff5d8 00007ffe`8e7a4d0e     ntdll!NtWaitForWorkViaWorkerFactory+0x14
+01 0000009f`78bff5e0 00007ffe`8d1dcdf7     ntdll!TppWorkerThread+0x37e
+02 0000009f`78bff940 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+03 0000009f`78bff970 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  17  Id: 179d0.17654 Suspend: 0 Teb: 0000009f`683e2000 Unfrozen "Chrome_IOThread"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`79bff418 00007ffe`8bc72d5c     ntdll!NtRemoveIoCompletion+0x14
+01 0000009f`79bff420 00007ffc`ef0d85e1     KERNELBASE!GetQueuedCompletionStatus+0x6c
+02 0000009f`79bff480 00007ffc`ef0d4c03     chrome!IsSandboxedProcess+0x9c8131
+03 0000009f`79bff600 00007ffc`eb4192d3     chrome!IsSandboxedProcess+0x9c4753
+04 0000009f`79bff830 00007ffc`f05d7f8e     chrome+0x892d3
+05 0000009f`79bff8a0 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+06 0000009f`79bff930 00007ffc`ee0874e7     chrome!ChromeMain+0x865750
+07 0000009f`79bffa30 00007ffc`ec86b381     chrome!ChromeMain+0x26d4fc7
+08 0000009f`79bffaa0 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+09 0000009f`79bffb50 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+0a 0000009f`79bffbe0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0b 0000009f`79bffc10 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  18  Id: 179d0.1a4fc Suspend: 0 Teb: 0000009f`683e4000 Unfrozen "MemoryInfra"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`7abff6c8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`7abff6d0 00007ffc`f0531724     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`7abff770 00007ffc`f0531315     chrome!IsSandboxedProcess+0x1e21274
+03 0000009f`7abff850 00007ffc`f05d7f8e     chrome!IsSandboxedProcess+0x1e20e65
+04 0000009f`7abff940 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+05 0000009f`7abff9d0 00007ffc`ec86b644     chrome!ChromeMain+0x865750
+06 0000009f`7abffad0 00007ffc`ec86b381     chrome!ChromeMain+0xeb9124
+07 0000009f`7abffb30 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+08 0000009f`7abffbe0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+09 0000009f`7abffc70 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0a 0000009f`7abffca0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  19  Id: 179d0.eae0 Suspend: 0 Teb: 0000009f`683e6000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedBackgroundBlocking"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`7bbff9e8 00007ffc`ee86c51e     win32u!NtUserMsgWaitForMultipleObjectsEx+0x14
+01 0000009f`7bbff9f0 00007ffc`ef04ddd1     chrome!IsSandboxedProcess+0x15c06e
+02 0000009f`7bbffa30 00007ffc`eb40eb58     chrome!IsSandboxedProcess+0x93d921
+03 0000009f`7bbffbf0 00007ffc`ebb70676     chrome+0x7eb58
+04 0000009f`7bbffc30 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`7bbffcc0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`7bbffcf0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  20  Id: 179d0.1b578 Suspend: 0 Teb: 0000009f`683e8000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedForeground"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`7cbff8d8 00007ffc`ee86c51e     win32u!NtUserMsgWaitForMultipleObjectsEx+0x14
+01 0000009f`7cbff8e0 00007ffc`ef04ddd1     chrome!IsSandboxedProcess+0x15c06e
+02 0000009f`7cbff920 00007ffc`eb40eb08     chrome!IsSandboxedProcess+0x93d921
+03 0000009f`7cbffae0 00007ffc`ebb70676     chrome+0x7eb08
+04 0000009f`7cbffb20 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`7cbffbb0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`7cbffbe0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  21  Id: 179d0.14ac4 Suspend: 0 Teb: 0000009f`683ea000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`7dbff678 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`7dbff680 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`7dbff720 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`7dbff8e0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`7dbff920 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`7dbff9b0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`7dbff9e0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  22  Id: 179d0.1ac70 Suspend: 0 Teb: 0000009f`683ec000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`7ebff788 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`7ebff790 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`7ebff830 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`7ebff9f0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`7ebffa30 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`7ebffac0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`7ebffaf0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  23  Id: 179d0.1501c Suspend: 0 Teb: 0000009f`683ee000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`7fbff868 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`7fbff870 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`7fbff910 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`7fbffad0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`7fbffb10 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`7fbffba0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`7fbffbd0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  24  Id: 179d0.12f64 Suspend: 0 Teb: 0000009f`683f0000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`00fff508 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`00fff510 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`00fff5b0 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`00fff770 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`00fff7b0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`00fff840 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`00fff870 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  25  Id: 179d0.8cfc Suspend: 0 Teb: 0000009f`683f2000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`01fff6d8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`01fff6e0 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`01fff780 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`01fff940 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`01fff980 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`01fffa10 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`01fffa40 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  26  Id: 179d0.19cd8 Suspend: 0 Teb: 0000009f`683f4000 Unfrozen
+ # Child-SP          RetAddr               Call Site
+00 0000009f`02fffab8 00007ffe`8bc72d5c     ntdll!NtRemoveIoCompletion+0x14
+01 0000009f`02fffac0 00007ffc`f5d5517f     KERNELBASE!GetQueuedCompletionStatus+0x6c
+02 0000009f`02fffb20 00007ffc`ebb70676     chrome!CrashForExceptionInNonABICompliantCodeRange+0x33f3b9f
+03 0000009f`02fffc20 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+04 0000009f`02fffcb0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+05 0000009f`02fffce0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  27  Id: 179d0.19f14 Suspend: 0 Teb: 0000009f`683f6000 Unfrozen "ThreadPoolSingleThreadForegroundBlocking"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`03fff838 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`03fff840 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`03fff8e0 00007ffc`eb40eba8     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`03fffaa0 00007ffc`ebb70676     chrome+0x7eba8
+04 0000009f`03fffae0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`03fffb70 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`03fffba0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  28  Id: 179d0.11fc0 Suspend: 0 Teb: 0000009f`683f8000 Unfrozen "CacheThread_BlockFile"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`04ffefe8 00007ffe`8bc72d5c     ntdll!NtRemoveIoCompletion+0x14
+01 0000009f`04ffeff0 00007ffc`ef0d85e1     KERNELBASE!GetQueuedCompletionStatus+0x6c
+02 0000009f`04fff050 00007ffc`ef0d4c03     chrome!IsSandboxedProcess+0x9c8131
+03 0000009f`04fff1d0 00007ffc`eb4192d3     chrome!IsSandboxedProcess+0x9c4753
+04 0000009f`04fff400 00007ffc`f05d7f8e     chrome+0x892d3
+05 0000009f`04fff470 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+06 0000009f`04fff500 00007ffc`ec86b644     chrome!ChromeMain+0x865750
+07 0000009f`04fff600 00007ffc`ec86b381     chrome!ChromeMain+0xeb9124
+08 0000009f`04fff660 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+09 0000009f`04fff710 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+0a 0000009f`04fff7a0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0b 0000009f`04fff7d0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  29  Id: 179d0.19560 Suspend: 0 Teb: 0000009f`683fa000 Unfrozen "CompositorTileWorker1"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`05fff538 00007ffe`8e7d97be     ntdll!NtWaitForAlertByThreadId+0x14
+01 0000009f`05fff540 00007ffe`8bc72a58     ntdll!RtlSleepConditionVariableSRW+0x1de
+02 0000009f`05fff5e0 00007ffc`eb6e30ba     KERNELBASE!SleepConditionVariableSRW+0x38
+03 0000009f`05fff620 00007ffc`ebed9903     chrome+0x3530ba
+04 0000009f`05fff6c0 00007ffc`ebb70676     chrome!ChromeMain+0x5273e3
+05 0000009f`05fff760 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+06 0000009f`05fff7f0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+07 0000009f`05fff820 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  30  Id: 179d0.37f4 Suspend: 0 Teb: 0000009f`683fc000 Unfrozen "VideoCaptureThread"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`06fff4f8 00007ffc`ef0e75d5     win32u!NtUserMsgWaitForMultipleObjectsEx+0x14
+01 0000009f`06fff500 00007ffc`ef0e6926     chrome!IsSandboxedProcess+0x9d7125
+02 0000009f`06fff5d0 00007ffc`eb4192d3     chrome!IsSandboxedProcess+0x9d6476
+03 0000009f`06fff720 00007ffc`f05d7f8e     chrome+0x892d3
+04 0000009f`06fff790 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+05 0000009f`06fff820 00007ffc`ec86b644     chrome!ChromeMain+0x865750
+06 0000009f`06fff920 00007ffc`ec86b381     chrome!ChromeMain+0xeb9124
+07 0000009f`06fff980 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+08 0000009f`06fffa30 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+09 0000009f`06fffac0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0a 0000009f`06fffaf0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  31  Id: 179d0.196fc Suspend: 0 Teb: 0000009f`683fe000 Unfrozen "MemoryListSampler"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`07fff4a8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`07fff4b0 00007ffc`f0531724     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`07fff550 00007ffc`ebe7d5ff     chrome!IsSandboxedProcess+0x1e21274
+03 0000009f`07fff630 00007ffc`ebb70676     chrome!ChromeMain+0x4cb0df
+04 0000009f`07fff840 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`07fff8d0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`07fff900 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  32  Id: 179d0.1b500 Suspend: 0 Teb: 0000009f`68200000 Unfrozen
+ # Child-SP          RetAddr               Call Site
+00 0000009f`08fff458 00007ffe`8bc72773     ntdll!NtWaitForMultipleObjects+0x14
+*** WARNING: Unable to verify checksum for combase.dll
+01 0000009f`08fff460 00007ffe`8dc88a2e     KERNELBASE!WaitForMultipleObjectsEx+0x123
+02 (Inline Function) --------`--------     combase!WaitCoalesced+0x79
+03 0000009f`08fff750 00007ffe`8dc8138f     combase!CROIDTable::WorkerThreadLoop+0xae
+04 0000009f`08fff9c0 00007ffe`8dc8129f     combase!CRpcThread::WorkerLoop+0x5b
+05 0000009f`08fffa30 00007ffe`8d1dcdf7     combase!CRpcThreadCache::RpcWorkerThreadEntry+0x4f
+06 0000009f`08fffa60 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+07 0000009f`08fffa90 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  33  Id: 179d0.17674 Suspend: 0 Teb: 0000009f`68202000 Unfrozen
+ # Child-SP          RetAddr               Call Site
+00 0000009f`09fff8d8 00007ffe`8e7a4d0e     ntdll!NtWaitForWorkViaWorkerFactory+0x14
+01 0000009f`09fff8e0 00007ffe`8d1dcdf7     ntdll!TppWorkerThread+0x37e
+02 0000009f`09fffc40 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+03 0000009f`09fffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  34  Id: 179d0.1c200 Suspend: 0 Teb: 0000009f`68204000 Unfrozen
+ # Child-SP          RetAddr               Call Site
+00 0000009f`0afffb38 00007ffe`8e7a4d0e     ntdll!NtWaitForWorkViaWorkerFactory+0x14
+01 0000009f`0afffb40 00007ffe`8d1dcdf7     ntdll!TppWorkerThread+0x37e
+02 0000009f`0afffea0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+03 0000009f`0afffed0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  35  Id: 179d0.46c8 Suspend: 0 Teb: 0000009f`68206000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedBackgroundBlocking"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`0bfff9c8 00007ffc`ee86c51e     win32u!NtUserMsgWaitForMultipleObjectsEx+0x14
+01 0000009f`0bfff9d0 00007ffc`ef04ddd1     chrome!IsSandboxedProcess+0x15c06e
+02 0000009f`0bfffa10 00007ffc`eb40eb58     chrome!IsSandboxedProcess+0x93d921
+03 0000009f`0bfffbd0 00007ffc`ebb70676     chrome+0x7eb58
+04 0000009f`0bfffc10 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`0bfffca0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`0bfffcd0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  36  Id: 179d0.1adc Suspend: 0 Teb: 0000009f`68208000 Unfrozen "ThreadPoolSingleThreadSharedBackgroundBlocking"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`0cfff878 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`0cfff880 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`0cfff920 00007ffc`eb40ed08     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`0cfffae0 00007ffc`ebb70676     chrome+0x7ed08
+04 0000009f`0cfffb20 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`0cfffbb0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`0cfffbe0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  37  Id: 179d0.86b4 Suspend: 0 Teb: 0000009f`6820a000 Unfrozen "ThreadPoolSingleThreadForegroundBlocking"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`0dfff4c8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`0dfff4d0 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`0dfff570 00007ffc`eb40eba8     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`0dfff730 00007ffc`ebb70676     chrome+0x7eba8
+04 0000009f`0dfff770 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`0dfff800 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`0dfff830 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  38  Id: 179d0.1a9c4 Suspend: 0 Teb: 0000009f`6820c000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`0efff678 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`0efff680 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`0efff720 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`0efff8e0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`0efff920 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`0efff9b0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`0efff9e0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  39  Id: 179d0.1a640 Suspend: 0 Teb: 0000009f`6820e000 Unfrozen "ThreadPoolSingleThreadSharedForeground"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`0ffffb18 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`0ffffb20 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`0ffffbc0 00007ffc`eb40eab8     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`0ffffd80 00007ffc`ebb70676     chrome+0x7eab8
+04 0000009f`0ffffdc0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`0ffffe50 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`0ffffe80 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  40  Id: 179d0.51f0 Suspend: 0 Teb: 0000009f`68210000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`107ffbe8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`107ffbf0 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`107ffc90 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`107ffe50 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`107ffe90 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`107fff20 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`107fff50 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  41  Id: 179d0.18408 Suspend: 0 Teb: 0000009f`68212000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`11fffb88 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`11fffb90 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`11fffc30 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`11fffdf0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`11fffe30 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`11fffec0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`11fffef0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  42  Id: 179d0.14f20 Suspend: 0 Teb: 0000009f`68214000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`12fffbc8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`12fffbd0 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`12fffc70 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`12fffe30 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`12fffe70 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`12ffff00 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`12ffff30 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  43  Id: 179d0.10fb0 Suspend: 0 Teb: 0000009f`68216000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`13fffc18 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`13fffc20 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`13fffcc0 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`13fffe80 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`13fffec0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`13ffff50 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`13ffff80 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  44  Id: 179d0.1bad8 Suspend: 0 Teb: 0000009f`68218000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`147ffb58 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`147ffb60 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`147ffc00 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`147ffdc0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`147ffe00 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`147ffe90 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`147ffec0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  45  Id: 179d0.1aa38 Suspend: 0 Teb: 0000009f`6821a000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`15fffad8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`15fffae0 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`15fffb80 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`15fffd40 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`15fffd80 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`15fffe10 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`15fffe40 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  46  Id: 179d0.15390 Suspend: 0 Teb: 0000009f`6821c000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`16fff8a8 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`16fff8b0 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`16fff950 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`16fffb10 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`16fffb50 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`16fffbe0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`16fffc10 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  47  Id: 179d0.1a344 Suspend: 0 Teb: 0000009f`6821e000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`17fffa58 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`17fffa60 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`17fffb00 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`17fffcc0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`17fffd00 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`17fffd90 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`17fffdc0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  48  Id: 179d0.1f30 Suspend: 0 Teb: 0000009f`68220000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`18fff688 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`18fff690 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`18fff730 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`18fff8f0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`18fff930 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`18fff9c0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`18fff9f0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  49  Id: 179d0.137c4 Suspend: 0 Teb: 0000009f`68222000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`19fff658 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`19fff660 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`19fff700 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`19fff8c0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`19fff900 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`19fff990 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`19fff9c0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  50  Id: 179d0.5614 Suspend: 0 Teb: 0000009f`68224000 Unfrozen "ThreadPoolForegroundWorker"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`1afff868 00007ffe`8bc6be9f     ntdll!NtWaitForSingleObject+0x14
+01 0000009f`1afff870 00007ffc`ef04db54     KERNELBASE!WaitForSingleObjectEx+0xaf
+02 0000009f`1afff910 00007ffc`eb40ea18     chrome!IsSandboxedProcess+0x93d6a4
+03 0000009f`1afffad0 00007ffc`ebb70676     chrome+0x7ea18
+04 0000009f`1afffb10 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`1afffba0 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`1afffbd0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  51  Id: 179d0.73fc Suspend: 0 Teb: 0000009f`68226000 Unfrozen "DevToolsPipeHandlerReadThread"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`1bffe8b8 00007ffe`8bc72b1d     ntdll!NtReadFile+0x14
+01 0000009f`1bffe8c0 00007ffc`f317a61e     KERNELBASE!ReadFile+0x8d
+02 0000009f`1bffe930 00007ffc`f317a13d     chrome!CrashForExceptionInNonABICompliantCodeRange+0x81903e
+03 0000009f`1bffeaf0 00007ffc`f317a4ca     chrome!CrashForExceptionInNonABICompliantCodeRange+0x818b5d
+04 0000009f`1bffed10 00007ffc`efc2daba     chrome!CrashForExceptionInNonABICompliantCodeRange+0x818eea
+05 0000009f`1bffeda0 00007ffc`ef0d3d8b     chrome!IsSandboxedProcess+0x151d60a
+06 0000009f`1bfff640 00007ffc`eb4192d3     chrome!IsSandboxedProcess+0x9c38db
+07 0000009f`1bfff870 00007ffc`f05d7f8e     chrome+0x892d3
+08 0000009f`1bfff8e0 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+09 0000009f`1bfff970 00007ffc`ec86b644     chrome!ChromeMain+0x865750
+0a 0000009f`1bfffa70 00007ffc`ec86b381     chrome!ChromeMain+0xeb9124
+0b 0000009f`1bfffad0 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+0c 0000009f`1bfffb80 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+0d 0000009f`1bfffc10 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0e 0000009f`1bfffc40 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  52  Id: 179d0.10460 Suspend: 0 Teb: 0000009f`68228000 Unfrozen "DevToolsPipeHandlerWriteThread"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`1cfff6c8 00007ffe`8bc72d5c     ntdll!NtRemoveIoCompletion+0x14
+01 0000009f`1cfff6d0 00007ffc`ef0d85e1     KERNELBASE!GetQueuedCompletionStatus+0x6c
+02 0000009f`1cfff730 00007ffc`ef0d4c03     chrome!IsSandboxedProcess+0x9c8131
+03 0000009f`1cfff8b0 00007ffc`eb4192d3     chrome!IsSandboxedProcess+0x9c4753
+04 0000009f`1cfffae0 00007ffc`f05d7f8e     chrome+0x892d3
+05 0000009f`1cfffb50 00007ffc`ec217c70     chrome!IsSandboxedProcess+0x1ec7ade
+06 0000009f`1cfffbe0 00007ffc`ec86b644     chrome!ChromeMain+0x865750
+07 0000009f`1cfffce0 00007ffc`ec86b381     chrome!ChromeMain+0xeb9124
+08 0000009f`1cfffd40 00007ffc`ebb70676     chrome!ChromeMain+0xeb8e61
+09 0000009f`1cfffdf0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+0a 0000009f`1cfffe80 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+0b 0000009f`1cfffeb0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  53  Id: 179d0.13b24 Suspend: 0 Teb: 0000009f`6822a000 Unfrozen "ThreadPoolSingleThreadCOMSTASharedForegroundBlocking"
+ # Child-SP          RetAddr               Call Site
+00 0000009f`1dfffa78 00007ffc`ee86c51e     win32u!NtUserMsgWaitForMultipleObjectsEx+0x14
+01 0000009f`1dfffa80 00007ffc`ef04ddd1     chrome!IsSandboxedProcess+0x15c06e
+02 0000009f`1dfffac0 00007ffc`eb40eb08     chrome!IsSandboxedProcess+0x93d921
+03 0000009f`1dfffc80 00007ffc`ebb70676     chrome+0x7eb08
+04 0000009f`1dfffcc0 00007ffe`8d1dcdf7     chrome!ChromeMain+0x1be156
+05 0000009f`1dfffd50 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+06 0000009f`1dfffd80 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+
+  54  Id: 179d0.15414 Suspend: 0 Teb: 0000009f`6822c000 Unfrozen "DManip Delegate Thread"
+*** WARNING: Unable to verify checksum for directmanipulation.dll
+ # Child-SP          RetAddr               Call Site
+00 0000009f`1efff728 00007ffe`644211a4     win32u!NtUserMsgWaitForMultipleObjectsEx+0x14
+01 0000009f`1efff730 00007ffe`64420f3a     directmanipulation!CManagerImpl::_RunDelegateThread+0x114
+02 0000009f`1efff800 00007ffe`8d1dcdf7     directmanipulation!CManagerImpl::_DelegateThreadProc+0xba
+03 0000009f`1efff840 00007ffe`8e7fee4c     KERNEL32!BaseThreadInitThunk+0x17
+04 0000009f`1efff870 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+quit:
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'

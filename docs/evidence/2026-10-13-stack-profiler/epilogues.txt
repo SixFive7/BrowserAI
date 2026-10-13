@@ -1,0 +1,8 @@
+chrome.dll SHA-256 73a2713b3043992677537f605fb1fbc16fe9e1e72024f5aef76f706fe677bc98
+pop rbp; vzeroupper; ret           80
+pop r15; vzeroupper; ret           338
+any pop; vzeroupper; ret           1514
+vzeroupper; ret (all)              1952
+pop rbp; ret                       3610
+text section size 259681792
+bytes at RVA 0x557d48b: 5dc5f877c3

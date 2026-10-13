@@ -1,0 +1,11 @@
+mode on  launches  10 captures   287 launches that lost the browser   5 dumps   5 profiler thread seen {'True': 9, 'None': 1}
+      4 x browser 0xC0000005 at ntdll.dll+0x20191 on ThreadPoolForegroundWorker (read 0x218)
+      1 x browser 0xC0000005 at ntdll.dll+0x20191 on ThreadPoolForegroundWorker (read 0x11d)
+    launch   0 lost the browser after 5 captures, 4865 ms in: page.screenshot: Target page, context or browser has been closed
+    launch   6 lost the browser after 18 captures, 12065 ms in: page.screenshot: Target page, context or browser has been closed
+    launch  10 lost the browser after 21 captures, 14632 ms in: page.screenshot: Target page, context or browser has been closed
+    launch  12 lost the browser after 1 captures, 1697 ms in: page.screenshot: Target page, context or browser has been closed
+    launch  16 lost the browser after 17 captures, 12082 ms in: page.screenshot: Target page, context or browser has been closed
+mode off launches  10 captures   439 launches that lost the browser   0 dumps   0 profiler thread seen {'False': 10}
+launches: on 5/10 lost, off 0/10 lost, Fisher one-sided p = 0.01625
+per capture: on 5 in 287 (1.74 %), off 0 in 439; P(no loss in 439 captures at the on rate) = 0.000446

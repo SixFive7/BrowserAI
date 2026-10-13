@@ -1,0 +1,137 @@
+Not part of the report. Existing reports:
+
+- https://issues.chromium.org/issues/473587142 (open, P1, Internals>GPU>Testing): browser crash in RtlVirtualUnwind under StackSampler::WalkStack while CrBrowserMain encodes a Page.captureScreenshot PNG. Its CL https://chromium-review.googlesource.com/8482885 landed at main@{#1709431}. Chrome for Testing 157.0.8101.0 (main@{#1716687}) still crashes, below. Pasting the body there as a comment reaches the people on it; as a new issue, keep the 473587142 link.
+- https://issues.chromium.org/issues/462642963 (open, P3; its CLs suppress the tests) and https://issues.chromium.org/issues/450325666 (Fixed): the same RtlVirtualUnwind stack on GPU bots, with 0xffffffffffffff81 among the arguments.
+- https://issues.chromium.org/issues/40245723: merged into 473587142.
+
+---- report ----
+
+Title: Windows x64: StackSamplingProfiler crashes the browser when a sample lands on vzeroupper between pop rbp and ret
+
+Chrome for Testing 157.0.8101.0, 156.0.8078.4 and 155.0.8059.12, win64
+Windows 11 Pro 26H2, build 26300.9550, x64, AMD Ryzen 9 5950X
+Windhawk 1.7.3 is installed. windhawk.dll is loaded in the browser process with and without the flag and is not on the crashing stack.
+
+## Steps
+
+1. `npm i playwright@1.64.0`
+2. `npx playwright install chromium`
+3. `node repro.mjs`
+
+The script launches Chrome for Testing headless 20 times, alternating plain launches with launches given `--disable-stack-profiler`, and after each launch takes full-page PNG screenshots of a 1920x16384 page for 28 s.
+
+```js
+// repro.mjs
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const url = 'data:text/html,<style>html,body{margin:0}</style><div style="height:16384px;background:rgb(48,96,192)"></div>';
+const tally = { on: { launches: 0, lost: 0, captures: 0 }, off: { launches: 0, lost: 0, captures: 0 } };
+
+for (let i = 0; i < 20; i++) {
+  const arm = i % 2 === 0 ? 'on' : 'off';
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), `profiler-${arm}-`));
+  const context = await chromium.launchPersistentContext(profile, {
+    channel: 'chromium',
+    headless: true,
+    viewport: { width: 1920, height: 1080 },
+    args: arm === 'off' ? ['--disable-stack-profiler'] : [],
+  });
+  const page = context.pages()[0];
+  const started = Date.now();
+  tally[arm].launches++;
+  try {
+    while (Date.now() - started < 28000) {
+      await page.goto(url);
+      await page.screenshot({ fullPage: true });
+      tally[arm].captures++;
+    }
+  } catch (error) {
+    tally[arm].lost++;
+    console.log(`launch ${i} (${arm}): lost at ${Date.now() - started} ms, ${error.message.split('\n')[0]}`);
+    console.log(`  dumps: ${path.join(profile, 'Crashpad', 'reports')}`);
+  }
+  await context.close().catch(() => {});
+}
+console.log(JSON.stringify(tally));
+```
+
+## Result
+
+Launches that lost the browser, plain against `--disable-stack-profiler`:
+
+- 157.0.8101.0, `executablePath` set to the Canary download in place of `channel`: 4 of 10 (376 captures) against 0 of 10 (484 captures)
+- 156.0.8078.4, Playwright 1.64.0: 2 of 10 (449 captures) against 0 of 10 (472 captures)
+- 155.0.8059.12, Playwright 1.64.0-alpha-1790635538000: 3 of 10 (387 captures) against 0 of 10 (465 captures)
+- 155.0.8059.12, an earlier rig with a similar loop over 1920x16385 and 1920x16384 pages and other launch options: 5 of 10 (287 captures) against 0 of 10 (439 captures)
+- Pooled: 14 of 40 against 0 of 40, Fisher one-sided p = 0.000015
+
+Every lost browser left a Crashpad dump. 14 of 14 show the crash below.
+
+## Crash
+
+EXCEPTION_ACCESS_VIOLATION reading 0x218 (one 155 dump: 0x11d), browser process, thread ThreadPoolForegroundWorker, StackSamplingProfiler thread present. Stack from 157.0.8101.0:
+
+```
+ntdll!RtlpUnwindPrologue+0x381    mov r8,qword ptr [r9+8]    r8=ffffffffffffff80 r9=0000000000000210
+ntdll!RtlpxVirtualUnwind+0x109
+ntdll!RtlVirtualUnwind+0x15b
+KERNEL32!RtlVirtualUnwindStub+0x38
+chrome.dll+0xcd2d653
+chrome.dll+0xcd2d5a5
+chrome.dll+0xbeb3bc2
+chrome.dll+0xbebe107
+chrome.dll+0xbebe5e0
+chrome.dll+0xbebeabc
+chrome.dll+0x5d66b72
+chrome.dll+0x503eac4
+chrome.dll+0x3cc9691
+chrome.dll+0x3cc8108
+chrome.dll+0x3cc698d
+chrome.dll+0x62388
+chrome.dll+0x925cb6
+KERNEL32!BaseThreadInitThunk+0x17
+ntdll!RtlUserThreadStart+0x2c
+```
+
+chrome.dll.pdb: 34FA074407D33B8C4C4C44205044422E age 1 (157.0.8101.0), CA1F7CEA1842AEC34C4C44205044422E age 1 (156.0.8078.4), 728441B965B003FE4C4C44205044422E age 1 (155.0.8059.12). ntdll.dll 10.0.26100.9549.
+
+## The sample being unwound
+
+The CONTEXT handed to RtlVirtualUnwind has RIP chrome.dll+0x1d103bc and RBP 0. The function, chrome.dll+0x1d0ffb0 to +0x1d16ec0, has unwind info at +0x11c780f8: version 1, frame register RBP at offset 0x80, UWOP_SAVE_XMM128 for xmm6 to xmm15 at 0x290 to 0x320, UWOP_SET_FPREG, UWOP_ALLOC_LARGE 0x338, and eight pushes, rbp first. Its epilog:
+
+```
++0x1d103a9  lea     rsp,[rbp+2B8h]
++0x1d103b0  pop     rbx
++0x1d103b1  pop     rdi
++0x1d103b2  pop     rsi
++0x1d103b3  pop     r12
++0x1d103b5  pop     r13
++0x1d103b7  pop     r14
++0x1d103b9  pop     r15
++0x1d103bb  pop     rbp
++0x1d103bc  vzeroupper      <- RIP of the sample
++0x1d103bf  ret
+```
+
+RIP of the sample in the other builds, each on the `vzeroupper` after `pop rbp`: +0x51fb315 in 156.0.8078.4 (2 dumps), +0x557d48c (7 dumps) and +0x54e4350 (1 dump) in 155.0.8059.12.
+
+## Analysis
+
+1. An x64 epilog may hold only `add rsp` or `lea rsp`, then pops, then `ret` or `jmp`: "No other code can appear." (https://learn.microsoft.com/en-us/cpp/build/prolog-and-epilog). RtlVirtualUnwind finds an epilog by reading the code at RIP. On `vzeroupper` it finds none, takes RIP for body code and reverses the whole prolog.
+2. UWOP_SET_FPREG puts the frame base at RBP - 0x80. `pop rbp` has already run, so RBP holds the caller's value, 0 here. The frame base is -0x80 (r8), the saved xmm6 is read at -0x80 + 0x290 = 0x210 (r9), and the read of its upper half at 0x218 faults.
+3. The 0x11d dump is the same in another function: RIP chrome.dll+0x54e4350 (155.0.8059.12), RBP 5, xmm6 at 0x190, so 5 - 0x80 + 0x190 = 0x115 and the fault is at 0x11d. The GPU bot stacks in 462642963 and 450325666 show 0xffffffffffffff81 among the RtlVirtualUnwind2 arguments, which is RBP 1 minus 0x80.
+4. Each of the three builds holds 80 byte sequences 5d c5 f8 77 c3 (`pop rbp; vzeroupper; ret`) in chrome.dll .text, and 1,514 to 1,545 of `pop <reg>; vzeroupper; ret`.
+5. The sampled thread is CrBrowserMain: in the 10 dumps from 155 and 156, a register of the sample points into CrBrowserMain's stack (RDI in 9, R13 and R14 in 1). In 157 RDI points into the stack copy instead (0x46bc006bae30, RSP 0x46bc006ba808). PageHandler::ScreenshotCaptured runs the PNG encoder on the UI thread: https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/content/browser/devtools/protocol/page_handler.cc#1960
+6. The copy is walked on a ThreadPool sequence, which puts the fault on ThreadPoolForegroundWorker: https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/base/profiler/stack_sampler.cc#263. Win32UnwindFunctions::VirtualUnwind calls ::RtlVirtualUnwind directly: https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/base/profiler/win32_stack_frame_unwinder.cc#62
+7. https://chromium-review.googlesource.com/8482885 restores R12 to R15, RDI and RSI in the register rewrite. The frame register here is RBP, which was rewritten before that change, and 0 is not a stack address. 157.0.8101.0 contains the change and still lost the browser in 4 of 10 launches, every dump on +0x1d103bc.
+8. Chrome for Testing runs the profiler on every launch. GetReleaseChannel() returns nullopt unless OFFICIAL_BUILD and GOOGLE_CHROME_BRANDING are both set (https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/chrome/common/profiler/thread_profiler_configuration.cc#44), a Chrome for Testing build cannot be Chrome-branded (https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/build/config/chrome_build.gni#80), and DefaultPlatformConfiguration::GetEnableRates() then enables the profiler for 100% of launches (https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/chrome/common/profiler/thread_profiler_platform_configuration.cc#63). The startup profile samples every 100 ms for 30 s (https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/chrome/common/profiler/thread_profiler_configuration.cc#69). chrome-headless-shell 155.0.8059.12 runs no StackSamplingProfiler thread.
+
+## Ask
+
+- Make the Windows unwinder survive this epilog shape. One way: when the bytes at RIP are c5 f8 77 c3 (`vzeroupper; ret`), the pops are done, so unwind it as a `ret` (RIP from [RSP], RSP + 8) without calling RtlVirtualUnwind.
+- Or turn the profiler off in Chrome for Testing.
+
+Minidumps of all three builds are available on request. They hold process memory, so none is attached.

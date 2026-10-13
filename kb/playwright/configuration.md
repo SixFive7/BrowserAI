@@ -1106,6 +1106,123 @@ followed by Chromium's own `pid:tid:MMDD/HHMMSS.mmm:LEVEL:file(line)]` prefix, a
 `<process did exit` line once the browser has ended. For the other half, decode the
 *Browser logs:* block of a red's answer out of its run log, where it is JSON-escaped.
 
+⚠️ *Added 2026-10-13 by addition:* the next red of that arm, the release run's at
+`44368995`, carried the same `WARNING` and nothing else from the browser before its end,
+which was a crash Chromium logs nothing about; what named it was the minidump the crash
+left in the kept profile. See [the section below](#chrome-for-testing-samples-its-own-stacks-and-the-sampler-can-crash-the-browser----measured-2026-10-13).
+
+## Chrome for Testing samples its own stacks, and the sampler can crash the browser -- measured 2026-10-13
+
+**Chrome for Testing starts Chromium's stack sampling profiler in every browser process**,
+because it carries no Google Chrome branding and Chromium counts such a build as a local
+one. Read at Chromium 155.0.8059.12 on 2026-10-13: `GetReleaseChannel()` in
+`chrome/common/profiler/thread_profiler_configuration.cc` gives no channel unless
+`OFFICIAL_BUILD` and `GOOGLE_CHROME_BRANDING` are both set, `build/config/chrome_build.gni`
+refuses `is_chrome_for_testing` beside `is_chrome_branded`, and with no channel
+`DefaultPlatformConfiguration::GetEnableRates` enables the profiler for every launch.
+`ChromeMainDelegate` starts it as soon as the browser's thread pool exists; it samples the
+main thread every 100 ms for the first 30 s and then for 2 % of the time
+(`kFractionOfExecutionTimeToSample` in `components/sampling_profiler/thread_profiler.cc`).
+Each sample copies the thread's stack and walks the copy on a thread pool worker
+(`base/profiler/stack_sampler.cc`) with Windows' `RtlVirtualUnwind`
+(`base/profiler/win32_stack_frame_unwinder.cc`). Its own thread is named
+`StackSamplingProfiler`, which the dump below holds and which 9 of the 9 launches of the
+rig whose threads were read ran. `[FLOATS]`
+
+**The walk crashes the browser when a sample stops its main thread on an epilogue clang
+wrote outside the form Windows reads.** Measured 2026-10-13 at `chromium-1247` (Chrome for
+Testing 155.0.8059.12, `chrome.dll` SHA-256
+`73a2713b3043992677537f605fb1fbc16fe9e1e72024f5aef76f706fe677bc98`) and Windows 11 Pro
+10.0.26300, from the Crashpad dump the browser left in its profile on the release run's red
+of `ScreenshotLimitTests.AgainstARealChromiumAPageOnePixelPastTheLineIsRefusedAndOneAtItIsNot`
+at `44368995`, 2026-10-12T22:04:23Z, read with `cdb` against Microsoft's public symbols:
+
+- The browser process (`ptype` `browser`, the pid Playwright launched) took 0xC0000005, a
+  read of address 0x218, at `ntdll!RtlpUnwindPrologue+0x381`, under `RtlVirtualUnwind`
+  called from `chrome.dll` on a thread named `ThreadPoolForegroundWorker`. Its exit code was
+  -1073741819, which the session's record and `SessionLog` event 14 hold.
+- The context being unwound had its instruction pointer at `chrome.dll` RVA 0x557D48C, the
+  `vzeroupper` between `pop rbp` and `ret` at the end of a function whose unwind data uses
+  RBP as its frame register with an offset of 0x80 and saves XMM6 at 0x290. Its RBP was 0,
+  its RSP pointed into a copy of a stack on the heap, and its RDI into the stack of the
+  thread named `CrBrowserMain`.
+- The establisher frame the unwinder had written was 0xFFFFFFFFFFFFFF80, RBP less 0x80.
+
+[Microsoft's rules for an x64 epilog](https://learn.microsoft.com/en-us/cpp/build/prolog-and-epilog)
+allow an `add` or a `lea` of RSP, register pops and a `ret` or a `jmp`, and *"No other code
+can appear"*, because the unwinder recognizes an epilog by scanning the code. With the
+`vzeroupper` in the way it unwinds the frame as a body, takes RBP, which the `pop` has
+already given back to the caller, for this frame's, and reads the saved XMM6 at
+0 - 0x80 + 0x290 + 8. A scan of `chrome.dll`'s `.text` for the bytes of
+`pop <register>; vzeroupper; ret` finds 1,514 such endings, 80 of them after `pop rbp`.
+`[FLOATS]`
+
+**A full-page capture of a long page puts the main thread there.** `PageHandler::ScreenshotCaptured`
+in `content/browser/devtools/protocol/page_handler.cc` runs the PNG encoder on the UI
+thread, and the function at RVA 0x557D080 converts pixels eight at a time to three bytes
+each, so a capture of a page 16,384 rows tall passes that epilogue again and again inside
+the profiler's first 30 s. That the encoder is what calls the function is read from the code
+and the timing, not from a symbol: this build's symbols are not on Chromium's symbol server.
+
+**The rig's A/B** ([`docs/probes/2026-10-13-stack-profiler`](../../docs/probes/2026-10-13-stack-profiler/README.md),
+evidence in [`docs/evidence/2026-10-13-stack-profiler`](../../docs/evidence/2026-10-13-stack-profiler/README.md)),
+from 2026-10-12T22:27:38Z to 22:36:03Z under the suite's lock: `playwright-core`
+1.64.0-alpha-1790635538000 from the payload, a copy of `chromium-1247`, BrowserAI's launch
+arguments, and full-page captures of a 1920x16385 and a 1920x16384 page for 28 s from each
+launch, the two modes alternating:
+
+| | Launches | Captures | Browser lost | `StackSamplingProfiler` thread |
+|---|--:|--:|--:|---|
+| As BrowserAI launched it | 10 | 287 | 5 | 9 of the 9 read |
+| With `--disable-stack-profiler` added | 10 | 439 | 0 | 0 of 10 |
+
+Each of the five left a dump with the same site, `ntdll.dll+0x20191` on a
+`ThreadPoolForegroundWorker`: four at RVA 0x557D48C, and one at RVA 0x54E4350, the same
+ending in another function of the same shape, where the caller's RBP was 5. Fisher's
+one-sided p over the launches is 0.016; at the first row's rate of 1.74 % a capture, the
+chance of the second row's 439 captures losing nothing is 0.00045. The Application log
+holds no `Application Error` or `Windows Error Reporting` event between 22:00Z and 22:40Z,
+for the release red or the rig's five, where it holds 383 `Application Error` events since
+2026-09-15.
+
+⚠️ *Added 2026-10-13 by addition, from the rigs of the upstream reports of the same
+day:* three more A/Bs of ten launches each way, a cut-down loop through Playwright with its
+own default arguments, `channel: 'chromium'` and full-page captures of a 1920x16384 page for
+28 s from each launch, lost the browser in 3 of 10 at 155.0.8059.12, 2 of 10 at
+156.0.8078.4 (`chromium-1248`, Playwright 1.64.0) and 4 of 10 at Canary 157.0.8101.0, and in
+0 of 10 with the switch at each: 14 of 40 against 0 of 40 with the A/B above, Fisher's
+one-sided p 0.000015, every loss a dump at the same site. Canary 157.0.8101.0 carries
+CL 8482885, the fix of [Chromium issue 473587142](https://issues.chromium.org/issues/473587142) for a crash in
+`RtlVirtualUnwind` under `StackSampler::WalkStack` during a `Page.captureScreenshot`, which
+restores the registers other than RBP in the stack copy; with RBP the frame register here and
+0 no stack address, it does not cover this. **Playwright's own default for `headless: true`,
+`chromium-headless-shell` 155.0.8059.12, runs no `StackSamplingProfiler` thread**; the full
+Chrome for Testing, the channel BrowserAI launches, does. Reported as [microsoft/playwright#43327](https://github.com/microsoft/playwright/issues/43327)
+on 2026-10-13, and a comment on the Chromium issue is drafted for the maintainer. The
+reports, their `cdb` readings and the dumps' digests are in
+[the evidence batch](../../docs/evidence/2026-10-13-stack-profiler/README.md).
+
+**`--disable-stack-profiler` keeps the profiler from starting.** Chromium reads the switch
+in `GenerateBrowserProcessConfiguration`, which then gives the browser no profile and its
+child processes no `--start-stack-profiler`; Chromium's source reads it nowhere else, read
+at 155.0.8059.12 and searched on its main branch on 2026-10-13, and neither Playwright's
+`chromiumSwitches` nor the payload's `playwright-core` passes it. BrowserAI passes it on
+every Chromium launch since 2026-10-13, the maintainer's 129 a
+(`BrowserConfiguration.StackProfilerSwitch`), and
+`StackProfilerTests.AgainstARealChromiumASessionsBrowserStartsNoStackSamplingProfiler`
+reads the session's browser for the thread. `[FLOATS]`
+
+**A crash leaves a minidump in the profile**, `profile\Crashpad\reports\<id>.dmp`, 2,805,056
+bytes for the release red and 2.8 MB for each of the rig's, although Playwright launches
+Chromium with `--disable-breakpad`; it holds memory of the browser process. Whether Crashpad
+would upload one is not checked.
+
+**To re-establish it**, run the rig as its README says, with and without the switch, and
+read each dump with `dumpsig.py`; run `StackProfilerTests` filtered with the switch taken
+out of `BrowserConfiguration.ChromiumArguments`, which must go red on the
+`StackSamplingProfiler` thread. For the mechanism, open a dump in `cdb`, `.ecxr`, then
+`.cxr` on the context the unwinder was handed and `.fnent` on its instruction pointer.
+
 ## Shutdown
 
 **`setupExitWatchdog`** hooks `stdin` close, `SIGINT` and `SIGTERM`, calls

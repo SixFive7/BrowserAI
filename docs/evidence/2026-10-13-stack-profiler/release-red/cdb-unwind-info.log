@@ -1,0 +1,270 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64
+Opened log file 'C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\cdb\third.log'
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.000 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.016 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 46
+
+Microsoft (R) Windows Debugger Version 10.0.29661.1004 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\dump\49ec8e29-f6d3-4f4d-a02c-c50f5d705d46.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Symbol search path is: srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Executable search path is: C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64
+Windows 10 Version 26300 (9550) MP (32 procs) Free x64
+Product: WinNt
+Edition build lab: Windows NT 10.0.26300.9550
+Debug session time: Tue Oct 13 00:04:23.000 2026 (UTC + 2:00)
+System Uptime: 0 days 7:46:26.710
+Process Uptime: 0 days 0:00:01.000
+.NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'
+...............................................................
+..........................
+Loading unloaded module list
+...........................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr
+(179d0.19df0): Access violation - code c0000005 (first/second chance not available)
+ReadVirtual() failed in GetXStateConfiguration() first read attempt (error == 0.)
+Invalid mini-dump Miscellaneous information in InitializeConfiguration()
+For analysis of this file, run !analyze -v
+*** WARNING: Unable to verify checksum for ntdll.dll
+ntdll!NtDelayExecution+0x14:
+00007ffe`8e8e2244 c3              ret
+0:011> .ecxr; .echo ==FNENT==; .fnent 0x7ffcf090d48c; .echo ==UFN==; ub 0x7ffcf090d48c L30; u 0x7ffcf090d48c L20; .echo ==RSPMEM==; dq 0x3674006a6808 L20; .echo ==FUNCENTRY==; dd 0x7ffcfcbd8188 L3; .echo ==CALLERS==; .fnent 0x7ffcf7d12f23; .fnent 0x7ffcf6ec7532; q
+rax=0000000000000000 rbx=0000000000000001 rcx=00007ffe8e7a0161
+rdx=00007ffcfcbd8188 rsi=0000009f73bfeb08 rdi=00007ffcfcbd8188
+rip=00007ffe8e7a0191 rsp=0000009f73bfe940 rbp=00007ffceb390000
+ r8=ffffffffffffff80  r9=0000000000000210 r10=0000000000000006
+r11=0000000000000000 r12=0000000000000018 r13=00007ffceb390000
+r14=0000009f73bfeef0 r15=00007ffe8e780000
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00010246
+ntdll!RtlpUnwindPrologue+0x381:
+00007ffe`8e7a0191 4d8b4108        mov     r8,qword ptr [r9+8] ds:00000000`00000218=????????????????
+==FNENT==
+*** WARNING: Unable to verify checksum for chrome.dll
+Debugger function entry 00000297`ae1def80 for:
+(00007ffc`ee7104b0)   chrome!IsSandboxedProcess+0x21fcfdc   |  (00007ffc`f29615e0)   chrome!CrashForExceptionInNonABICompliantCodeRange
+
+BeginAddress      = 00000000`0557d080
+EndAddress        = 00000000`05583fb7
+UnwindInfoAddress = 00000000`11848188
+
+Unwind info at 00007ffc`fcbd8188, 42 bytes
+  version 1, flags 0, prolog 6b, codes 1f
+  frame reg 5 (rbp), frame offs 80h
+  00: offs 6b, unwind op 8, op info 6	UWOP_SAVE_XMM128 FrameOffset: 290 reg: xmm6.
+  02: offs 63, unwind op 8, op info 7	UWOP_SAVE_XMM128 FrameOffset: 2a0 reg: xmm7.
+  04: offs 5b, unwind op 8, op info 8	UWOP_SAVE_XMM128 FrameOffset: 2b0 reg: xmm8.
+  06: offs 53, unwind op 8, op info 9	UWOP_SAVE_XMM128 FrameOffset: 2c0 reg: xmm9.
+  08: offs 4b, unwind op 8, op info a	UWOP_SAVE_XMM128 FrameOffset: 2d0 reg: xmm10.
+  0a: offs 43, unwind op 8, op info b	UWOP_SAVE_XMM128 FrameOffset: 2e0 reg: xmm11.
+  0c: offs 3b, unwind op 8, op info c	UWOP_SAVE_XMM128 FrameOffset: 2f0 reg: xmm12.
+  0e: offs 33, unwind op 8, op info d	UWOP_SAVE_XMM128 FrameOffset: 300 reg: xmm13.
+  10: offs 2b, unwind op 8, op info e	UWOP_SAVE_XMM128 FrameOffset: 310 reg: xmm14.
+  12: offs 23, unwind op 8, op info f	UWOP_SAVE_XMM128 FrameOffset: 320 reg: xmm15.
+  14: offs 1b, unwind op 3, op info 0	UWOP_SET_FPREG.
+  15: offs 13, unwind op 1, op info 0	UWOP_ALLOC_LARGE FrameOffset: 338.
+  17: offs c, unwind op 0, op info 3	UWOP_PUSH_NONVOL reg: rbx.
+  18: offs b, unwind op 0, op info 7	UWOP_PUSH_NONVOL reg: rdi.
+  19: offs a, unwind op 0, op info 6	UWOP_PUSH_NONVOL reg: rsi.
+  1a: offs 9, unwind op 0, op info c	UWOP_PUSH_NONVOL reg: r12.
+  1b: offs 7, unwind op 0, op info d	UWOP_PUSH_NONVOL reg: r13.
+  1c: offs 5, unwind op 0, op info e	UWOP_PUSH_NONVOL reg: r14.
+  1d: offs 3, unwind op 0, op info f	UWOP_PUSH_NONVOL reg: r15.
+  1e: offs 1, unwind op 0, op info 5	UWOP_PUSH_NONVOL reg: rbp.
+==UFN==
+chrome!IsSandboxedProcess+0x21fcefc:
+00007ffc`f090d3ac 2400            and     al,0
+00007ffc`f090d3ae 0200            add     al,byte ptr [rax]
+00007ffc`f090d3b0 00c5            add     ch,al
+00007ffc`f090d3b2 fc              cld
+00007ffc`f090d3b3 58              pop     rax
+00007ffc`f090d3b4 c2c5fe          ret     0FEC5h
+00007ffc`f090d3b7 5b              pop     rbx
+00007ffc`f090d3b8 c0c4e3          rol     ah,0E3h
+00007ffc`f090d3bb 7d39            jge     chrome!IsSandboxedProcess+0x21fcf46 (00007ffc`f090d3f6)
+00007ffc`f090d3bd c201c4          ret     0C401h
+00007ffc`f090d3c0 e269            loop    chrome!IsSandboxedProcess+0x21fcf7b (00007ffc`f090d42b)
+00007ffc`f090d3c2 00d4            add     ah,dl
+00007ffc`f090d3c4 c4e27900c4      vpshufb xmm0,xmm0,xmm4
+00007ffc`f090d3c9 c5f160e3        vpunpcklbw xmm4,xmm1,xmm3
+00007ffc`f090d3cd c4e25900253a51830a vpshufb xmm4,xmm4,xmmword ptr [chrome!sqlite3_dbdata_init+0x4041230 (00007ffc`fb142510)]
+00007ffc`f090d3d6 c5f962c2        vpunpckldq xmm0,xmm0,xmm2
+00007ffc`f090d3da c4e27900153d51830a vpshufb xmm2,xmm0,xmmword ptr [chrome!sqlite3_dbdata_init+0x4041240 (00007ffc`fb142520)]
+00007ffc`f090d3e3 c5d9ebd2        vpor    xmm2,xmm4,xmm2
+00007ffc`f090d3e7 c4817a7f143c    vmovdqu xmmword ptr [r12+r15],xmm2
+00007ffc`f090d3ed c5e160c0        vpunpcklbw xmm0,xmm3,xmm0
+00007ffc`f090d3f1 c4e27900053651830a vpshufb xmm0,xmm0,xmmword ptr [chrome!sqlite3_dbdata_init+0x4041250 (00007ffc`fb142530)]
+00007ffc`f090d3fa c5f960c1        vpunpcklbw xmm0,xmm0,xmm1
+00007ffc`f090d3fe c4e27900053951830a vpshufb xmm0,xmm0,xmmword ptr [chrome!sqlite3_dbdata_init+0x4041260 (00007ffc`fb142540)]
+00007ffc`f090d407 c48179d6443c10  vmovq   mmword ptr [r12+r15+10h],xmm0
+00007ffc`f090d40e 488b842488020000 mov     rax,qword ptr [rsp+288h]
+00007ffc`f090d416 4831e8          xor     rax,rbp
+00007ffc`f090d419 488b0d208c300c  mov     rcx,qword ptr [chrome!sqlite3_dbdata_init+0x5b14d60 (00007ffc`fcc16040)]
+00007ffc`f090d420 4839c1          cmp     rcx,rax
+00007ffc`f090d423 0f85000f0000    jne     chrome!IsSandboxedProcess+0x21fde79 (00007ffc`f090e329)
+00007ffc`f090d429 c5f828b510020000 vmovaps xmm6,xmmword ptr [rbp+210h]
+00007ffc`f090d431 c5f828bd20020000 vmovaps xmm7,xmmword ptr [rbp+220h]
+00007ffc`f090d439 c578288530020000 vmovaps xmm8,xmmword ptr [rbp+230h]
+00007ffc`f090d441 c578288d40020000 vmovaps xmm9,xmmword ptr [rbp+240h]
+00007ffc`f090d449 c578289550020000 vmovaps xmm10,xmmword ptr [rbp+250h]
+00007ffc`f090d451 c578289d60020000 vmovaps xmm11,xmmword ptr [rbp+260h]
+00007ffc`f090d459 c57828a570020000 vmovaps xmm12,xmmword ptr [rbp+270h]
+00007ffc`f090d461 c57828ad80020000 vmovaps xmm13,xmmword ptr [rbp+280h]
+00007ffc`f090d469 c57828b590020000 vmovaps xmm14,xmmword ptr [rbp+290h]
+00007ffc`f090d471 c57828bda0020000 vmovaps xmm15,xmmword ptr [rbp+2A0h]
+00007ffc`f090d479 488da5b8020000  lea     rsp,[rbp+2B8h]
+00007ffc`f090d480 5b              pop     rbx
+00007ffc`f090d481 5f              pop     rdi
+00007ffc`f090d482 5e              pop     rsi
+00007ffc`f090d483 415c            pop     r12
+00007ffc`f090d485 415d            pop     r13
+00007ffc`f090d487 415e            pop     r14
+00007ffc`f090d489 415f            pop     r15
+00007ffc`f090d48b 5d              pop     rbp
+chrome!IsSandboxedProcess+0x21fcfdc:
+00007ffc`f090d48c c5f877          vzeroupper
+00007ffc`f090d48f c3              ret
+00007ffc`f090d490 4883c308        add     rbx,8
+00007ffc`f090d494 420fb6043f      movzx   eax,byte ptr [rdi+r15]
+00007ffc`f090d499 c5f96ec0        vmovd   xmm0,eax
+00007ffc`f090d49d c4a37920443f0301 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+3],1
+00007ffc`f090d4a5 c4a37920443f0602 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+6],2
+00007ffc`f090d4ad c4a37920443f0903 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+9],3
+00007ffc`f090d4b5 c4a37920443f0c04 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+0Ch],4
+00007ffc`f090d4bd c4a37920443f0f05 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+0Fh],5
+00007ffc`f090d4c5 c4a37920443f1206 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+12h],6
+00007ffc`f090d4cd c4a37920443f1507 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+15h],7
+00007ffc`f090d4d5 c4e27d31c0      vpmovzxbd ymm0,xmm0
+00007ffc`f090d4da c5fc5bc0        vcvtdq2ps ymm0,ymm0
+00007ffc`f090d4de c4e27d180d6994820a vbroadcastss ymm1,dword ptr [chrome!sqlite3_dbdata_init+0x4035670 (00007ffc`fb136950)]
+00007ffc`f090d4e7 c5fc59c1        vmulps  ymm0,ymm0,ymm1
+00007ffc`f090d4eb c5fc29842440020000 vmovaps ymmword ptr [rsp+240h],ymm0
+00007ffc`f090d4f4 420fb6443f01    movzx   eax,byte ptr [rdi+r15+1]
+00007ffc`f090d4fa c5f96ec0        vmovd   xmm0,eax
+00007ffc`f090d4fe c4a37920443f0401 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+4],1
+00007ffc`f090d506 c4a37920443f0702 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+7],2
+00007ffc`f090d50e c4a37920443f0a03 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+0Ah],3
+00007ffc`f090d516 c4a37920443f0d04 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+0Dh],4
+00007ffc`f090d51e c4a37920443f1005 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+10h],5
+00007ffc`f090d526 c4a37920443f1306 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+13h],6
+00007ffc`f090d52e c4a37920443f1607 vpinsrb xmm0,xmm0,byte ptr [rdi+r15+16h],7
+00007ffc`f090d536 c4e27d31c0      vpmovzxbd ymm0,xmm0
+00007ffc`f090d53b c5fc5bc0        vcvtdq2ps ymm0,ymm0
+00007ffc`f090d53f c5fc59c1        vmulps  ymm0,ymm0,ymm1
+00007ffc`f090d543 c5fc29842420020000 vmovaps ymmword ptr [rsp+220h],ymm0
+00007ffc`f090d54c 420fb6443f02    movzx   eax,byte ptr [rdi+r15+2]
+00007ffc`f090d552 c5f96ec0        vmovd   xmm0,eax
+==RSPMEM==
+00003674`006a6808  00007ffc`ed04439e 00000000`00000000
+00003674`006a6818  00000000`00000000 00000000`00000000
+00003674`006a6828  00000000`00000000 00000000`000001a8
+00003674`006a6838  00000000`0000000f 00000000`00000005
+00003674`006a6848  00000000`00000013 00000000`0000000f
+00003674`006a6858  00000000`00000000 00003674`01d39a00
+00003674`006a6868  00007ffc`eebb4ef1 41180000`41080000
+00003674`006a6878  41380000`41280000 3ff00000`00000000
+00003674`006a6888  00000000`00000000 00003674`014e4000
+00003674`006a6898  00007ffc`f0875388 00800000`3f800000
+00003674`006a68a8  00000002`00000001 00000007`00000003
+00003674`006a68b8  00000000`00000005 0000d424`2a75068b
+00003674`006a68c8  00007ffc`fb1418d0 00000000`00000000
+00003674`006a68d8  00000000`00000003 00000000`0000000a
+00003674`006a68e8  00000000`00000001 00007ffc`fb1418d0
+00003674`006a68f8  00003674`006a6e40 00007ffc`fb1418d0
+==FUNCENTRY==
+00007ffc`fcbd8188  851f6b01 0029686b 002a7863
+==CALLERS==
+Debugger function entry 00000297`ae1def80 for:
+(00007ffc`f71012e0)   chrome!sqlite3_dbdata_init+0xc11c43   |  (00007ffc`f71012e0)   chrome!sqlite3_dbdata_init
+
+BeginAddress      = 00000000`0c982ea0
+EndAddress        = 00000000`0c982f5e
+UnwindInfoAddress = 00000000`11842244
+
+Unwind info at 00007ffc`fcbd2244, 16 bytes
+  version 1, flags 0, prolog 12, codes 9
+  00: offs 12, unwind op 1, op info 0	UWOP_ALLOC_LARGE FrameOffset: 160.
+  02: offs b, unwind op 0, op info 3	UWOP_PUSH_NONVOL reg: rbx.
+  03: offs a, unwind op 0, op info 7	UWOP_PUSH_NONVOL reg: rdi.
+  04: offs 9, unwind op 0, op info 6	UWOP_PUSH_NONVOL reg: rsi.
+  05: offs 8, unwind op 0, op info c	UWOP_PUSH_NONVOL reg: r12.
+  06: offs 6, unwind op 0, op info d	UWOP_PUSH_NONVOL reg: r13.
+  07: offs 4, unwind op 0, op info e	UWOP_PUSH_NONVOL reg: r14.
+  08: offs 2, unwind op 0, op info f	UWOP_PUSH_NONVOL reg: r15.
+Debugger function entry 00000297`ae1def80 for:
+(00007ffc`f29615e0)   chrome!CrashForExceptionInNonABICompliantCodeRange+0x4565f52   |  (00007ffc`f71012e0)   chrome!sqlite3_dbdata_init
+
+BeginAddress      = 00000000`0bb374a0
+EndAddress        = 00000000`0bb375dc
+UnwindInfoAddress = 00000000`1183df58
+
+Unwind info at 00007ffc`fcbcdf58, 16 bytes
+  version 1, flags 0, prolog 10, codes 9
+  00: offs 10, unwind op 2, op info 8	UWOP_ALLOC_SMALL.
+  01: offs c, unwind op 0, op info 3	UWOP_PUSH_NONVOL reg: rbx.
+  02: offs b, unwind op 0, op info 5	UWOP_PUSH_NONVOL reg: rbp.
+  03: offs a, unwind op 0, op info 7	UWOP_PUSH_NONVOL reg: rdi.
+  04: offs 9, unwind op 0, op info 6	UWOP_PUSH_NONVOL reg: rsi.
+  05: offs 8, unwind op 0, op info c	UWOP_PUSH_NONVOL reg: r12.
+  06: offs 6, unwind op 0, op info d	UWOP_PUSH_NONVOL reg: r13.
+  07: offs 4, unwind op 0, op info e	UWOP_PUSH_NONVOL reg: r14.
+  08: offs 2, unwind op 0, op info f	UWOP_PUSH_NONVOL reg: r15.
+quit:
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'

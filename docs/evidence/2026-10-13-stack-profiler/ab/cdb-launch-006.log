@@ -1,0 +1,177 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\chromium-1247\chrome-win64
+Opened log file 'C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\cdb\main1-006.log'
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.000 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.015 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 46
+
+Microsoft (R) Windows Debugger Version 10.0.29661.1004 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\runs\main1\006-on\profile\Crashpad\reports\7e5cea7a-06a8-4161-bf83-af25ad7dcefa.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\chromium-1247\chrome-win64
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Symbol search path is: srv*C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\symbols*https://msdl.microsoft.com/download/symbols
+Executable search path is: C:\Source\SixFive7\BrowserAI\.work\shot-diag-scratch\chromium-1247\chrome-win64
+Windows 10 Version 26300 (9550) MP (32 procs) Free x64
+Product: WinNt
+Edition build lab: Windows NT 10.0.26300.9550
+Debug session time: Tue Oct 13 00:30:28.000 2026 (UTC + 2:00)
+System Uptime: 0 days 8:12:31.047
+Process Uptime: 0 days 0:00:12.000
+.NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script successfully loaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'
+...............................................................
+..........................
+Loading unloaded module list
+..........................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr
+(7bfc.1a954): Access violation - code c0000005 (first/second chance not available)
+ReadVirtual() failed in GetXStateConfiguration() first read attempt (error == 0.)
+Invalid mini-dump Miscellaneous information in InitializeConfiguration()
+For analysis of this file, run !analyze -v
+*** WARNING: Unable to verify checksum for ntdll.dll
+ntdll!NtDelayExecution+0x14:
+00007ffe`8e8e2244 c3              ret
+0:011> .ecxr; kn 6; .echo ==CXR==; .cxr @r14; .echo ==RVA==; ? @rip - chrome; .fnent @rip; ub @rip L14; u @rip L3; q
+rax=0000000000000000 rbx=0000000000000001 rcx=00007ffe8e7a0161
+rdx=00007ffd22c88630 rsi=00000039221fe9c8 rdi=00007ffd22c88630
+rip=00007ffe8e7a0191 rsp=00000039221fe800 rbp=00007ffd11440000
+ r8=ffffffffffffff85  r9=0000000000000115 r10=0000000000000006
+r11=0000000000000000 r12=0000000000000018 r13=00007ffd11440000
+r14=00000039221fedb0 r15=00007ffe8e780000
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00010246
+ntdll!RtlpUnwindPrologue+0x381:
+00007ffe`8e7a0191 4d8b4108        mov     r8,qword ptr [r9+8] ds:00000000`0000011d=????????????????
+ # Child-SP          RetAddr               Call Site
+00 00000039`221fe800 00007ffe`8e79f549     ntdll!RtlpUnwindPrologue+0x381
+01 00000039`221fe8b0 00007ffe`8e7a13cb     ntdll!RtlpxVirtualUnwind+0x109
+*** WARNING: Unable to verify checksum for KERNEL32.DLL
+02 00000039`221fe960 00007ffe`8d1d7218     ntdll!RtlVirtualUnwind+0x15b
+*** WARNING: Unable to verify checksum for chrome.dll
+03 00000039`221fea00 00007ffd`1ddc2f23     KERNEL32!RtlVirtualUnwindStub+0x38
+04 00000039`221fea50 00007ffd`1ddc2e75     chrome!sqlite3_dbdata_init+0xc11c43
+05 00000039`221febf0 00007ffd`1cf77532     chrome!sqlite3_dbdata_init+0xc11b95
+==CXR==
+rax=0000c0109b099594 rbx=0000000000000000 rcx=0000c0109b099594
+rdx=00000039171fd280 rsi=0000000000000780 rdi=0000000000000000
+rip=00007ffd16924350 rsp=00005c2404aa7408 rbp=0000000000000005
+ r8=00007ffd16eeb350  r9=00000039171fd000 r10=00007ffd128dac10
+r11=00000039171fce40 r12=0000000000000050 r13=00000039171fd250
+r14=00000039171fd018 r15=0000000000000002
+iopl=0         nv up ei pl zr na pe nc
+cs=0033  ss=002b  ds=0000  es=0000  fs=0000  gs=0000             efl=00000246
+chrome!IsSandboxedProcess+0x2163ea0:
+00007ffd`16924350 c5f877          vzeroupper
+==RVA==
+Evaluate expression: 89015120 = 00000000`054e4350
+Debugger function entry 00000227`14711b60 for:
+(00007ffd`147c04b0)   chrome!IsSandboxedProcess+0x2163ea0   |  (00007ffd`18a115e0)   chrome!CrashForExceptionInNonABICompliantCodeRange
+
+BeginAddress      = 00000000`054e41e0
+EndAddress        = 00000000`054e5635
+UnwindInfoAddress = 00000000`11848630
+
+Unwind info at 00007ffd`22c88630, 42 bytes
+  version 1, flags 0, prolog 6b, codes 1f
+  frame reg 5 (rbp), frame offs 80h
+  00: offs 6b, unwind op 8, op info 6	UWOP_SAVE_XMM128 FrameOffset: 190 reg: xmm6.
+  02: offs 63, unwind op 8, op info 7	UWOP_SAVE_XMM128 FrameOffset: 1a0 reg: xmm7.
+  04: offs 5b, unwind op 8, op info 8	UWOP_SAVE_XMM128 FrameOffset: 1b0 reg: xmm8.
+  06: offs 53, unwind op 8, op info 9	UWOP_SAVE_XMM128 FrameOffset: 1c0 reg: xmm9.
+  08: offs 4b, unwind op 8, op info a	UWOP_SAVE_XMM128 FrameOffset: 1d0 reg: xmm10.
+  0a: offs 43, unwind op 8, op info b	UWOP_SAVE_XMM128 FrameOffset: 1e0 reg: xmm11.
+  0c: offs 3b, unwind op 8, op info c	UWOP_SAVE_XMM128 FrameOffset: 1f0 reg: xmm12.
+  0e: offs 33, unwind op 8, op info d	UWOP_SAVE_XMM128 FrameOffset: 200 reg: xmm13.
+  10: offs 2b, unwind op 8, op info e	UWOP_SAVE_XMM128 FrameOffset: 210 reg: xmm14.
+  12: offs 23, unwind op 8, op info f	UWOP_SAVE_XMM128 FrameOffset: 220 reg: xmm15.
+  14: offs 1b, unwind op 3, op info 0	UWOP_SET_FPREG.
+  15: offs 13, unwind op 1, op info 0	UWOP_ALLOC_LARGE FrameOffset: 238.
+  17: offs c, unwind op 0, op info 3	UWOP_PUSH_NONVOL reg: rbx.
+  18: offs b, unwind op 0, op info 7	UWOP_PUSH_NONVOL reg: rdi.
+  19: offs a, unwind op 0, op info 6	UWOP_PUSH_NONVOL reg: rsi.
+  1a: offs 9, unwind op 0, op info c	UWOP_PUSH_NONVOL reg: r12.
+  1b: offs 7, unwind op 0, op info d	UWOP_PUSH_NONVOL reg: r13.
+  1c: offs 5, unwind op 0, op info e	UWOP_PUSH_NONVOL reg: r14.
+  1d: offs 3, unwind op 0, op info f	UWOP_PUSH_NONVOL reg: r15.
+  1e: offs 1, unwind op 0, op info 5	UWOP_PUSH_NONVOL reg: rbp.
+chrome!IsSandboxedProcess+0x2163e37:
+00007ffd`169242e7 0f85c0110000    jne     chrome!IsSandboxedProcess+0x2164ffd (00007ffd`169254ad)
+00007ffd`169242ed c5f828b510010000 vmovaps xmm6,xmmword ptr [rbp+110h]
+00007ffd`169242f5 c5f828bd20010000 vmovaps xmm7,xmmword ptr [rbp+120h]
+00007ffd`169242fd c578288530010000 vmovaps xmm8,xmmword ptr [rbp+130h]
+00007ffd`16924305 c578288d40010000 vmovaps xmm9,xmmword ptr [rbp+140h]
+00007ffd`1692430d c578289550010000 vmovaps xmm10,xmmword ptr [rbp+150h]
+00007ffd`16924315 c578289d60010000 vmovaps xmm11,xmmword ptr [rbp+160h]
+00007ffd`1692431d c57828a570010000 vmovaps xmm12,xmmword ptr [rbp+170h]
+00007ffd`16924325 c57828ad80010000 vmovaps xmm13,xmmword ptr [rbp+180h]
+00007ffd`1692432d c57828b590010000 vmovaps xmm14,xmmword ptr [rbp+190h]
+00007ffd`16924335 c57828bda0010000 vmovaps xmm15,xmmword ptr [rbp+1A0h]
+00007ffd`1692433d 488da5b8010000  lea     rsp,[rbp+1B8h]
+00007ffd`16924344 5b              pop     rbx
+00007ffd`16924345 5f              pop     rdi
+00007ffd`16924346 5e              pop     rsi
+00007ffd`16924347 415c            pop     r12
+00007ffd`16924349 415d            pop     r13
+00007ffd`1692434b 415e            pop     r14
+00007ffd`1692434d 415f            pop     r15
+00007ffd`1692434f 5d              pop     rbp
+chrome!IsSandboxedProcess+0x2163ea0:
+00007ffd`16924350 c5f877          vzeroupper
+00007ffd`16924353 c3              ret
+00007ffd`16924354 488d8c24e0000000 lea     rcx,[rsp+0E0h]
+quit:
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\atlmfc.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\concurrency.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\stl.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\windows.natvis'
+NatVis script unloaded from 'C:\Program Files\WindowsApps\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe\amd64\Visualizers\winrt.natvis'

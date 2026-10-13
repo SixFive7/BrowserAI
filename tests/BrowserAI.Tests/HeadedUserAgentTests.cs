@@ -64,8 +64,10 @@ internal sealed class HeadedUserAgentTests
     }
 
     /// <summary>
-    /// A hidden Chromium's config carries the switch, after BrowserAI's own five; a
+    /// A hidden Chromium's config carries the switch, after BrowserAI's own six; a
     /// headed one, a Firefox one and a hidden one with nothing to send carry none.
+    /// <i>Corrected 2026-10-13 (previously "after BrowserAI's own five"), the maintainer's
+    /// 129 a.</i>
     /// </summary>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -75,7 +77,7 @@ internal sealed class HeadedUserAgentTests
         var headed = HeadedUserAgent.Headed(Hidden)!;
 
         // Joined, so the order is part of what is compared: the switch comes after
-        // BrowserAI's own five.
+        // BrowserAI's own six (five until 2026-10-13, 129 a).
         static string? argumentsOf(GeneratedConfig config) =>
             JsonNode.Parse(config.Json)!["browser"]!["launchOptions"]!["args"] is JsonArray arguments
                 ? string.Join(" | ", arguments.Select(argument => (string?)argument))
