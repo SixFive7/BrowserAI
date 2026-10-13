@@ -318,6 +318,13 @@ is named as candidates and says so.
       call's start; beside it the same with the server still answering, and the same with
       Chromium, enough times each to tell a stall from a slow start. Then the row in the
       hazard index gains the result, and a fix or a stated reason.
+      ⚠️ *Added 2026-10-13 by addition:* the rig is written and has not run,
+      [`docs/probes/2026-10-13-restore-stall`](docs/probes/2026-10-13-restore-stall/README.md).
+      Its first batch is five resumes of each of four arms, the three above and one more,
+      Firefox on a page whose answers carry none of the dashboard's headers, with the rule
+      for what follows written beside the counts; and a replay of every stalled profile with
+      Playwright's protocol log and Firefox's own logs on, which BrowserAI's child cannot
+      have, is what says where a stalled start waits.
 - [ ] **Check whether Chromium sends anywhere the minidump a crash leaves in a session's
       profile, after the release.** The maintainer's 133 a of 2026-10-13, in his words
       verbatim, *"133 a"*. A Chrome for Testing that crashes writes a minidump of the
