@@ -4284,7 +4284,10 @@ internal sealed class SessionManager : IAsyncDisposable
             // in this answer to tell it the session had come back headless.
             // ⚠️ Corrected 2026-10-10, the texts polish, page #58 (previously "true -- a
             // window is open for this run"): no browser has started when init or resume
-            // answers, so the line says the parameter's own words.
+            // answers, so the line says the parameter's own words. ⚠️ Corrected 2026-10-13,
+            // a reading of the texts of 161 (previously "no browser has started when init or
+            // resume answers", unqualified): a Firefox session's resume has started its
+            // browser by the time it answers, and the parameter's words are true of both.
             .Append("  headed: ").Append(session.Settings.Headed ? "true -- this run's browser has a visible window" : "false")
             .Append('\n')
 

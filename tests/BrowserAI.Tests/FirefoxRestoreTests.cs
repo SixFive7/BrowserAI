@@ -28,6 +28,16 @@ namespace BrowserAI.Tests;
 /// what the resume asked of the child and what it said are both readable. The real-browser
 /// arm is the one a stalled launch would fail.
 /// </para>
+/// <para>
+/// <b>Watched red on 2026-10-13, in filtered runs before the change went in</b>: the arms that
+/// resume a session against <c>SessionManager.cs</c> as it stood at <c>f509229d</c>, alone and
+/// with the other three files 161 changed; the four arms of the start's own reading against
+/// five planted strings in <see cref="FirefoxRestore"/>; and the two arms of the waits, the
+/// arm of a start that fails, the arm whose blank page is not first and the arm of the error
+/// page's codes against the tree
+/// with each wait taken out and the texts and codes of the reading of that day not yet in.
+/// The runs and their counts are in <c>DECISIONS.md</c>, under 161.
+/// </para>
 /// </remarks>
 internal sealed class FirefoxRestoreTests
 {
@@ -189,8 +199,8 @@ internal sealed class FirefoxRestoreTests
 
         // And the answer says so, in the child's own lines.
         await Assert.That(text).Contains("this resume started the browser, and Firefox's session restore reopened 2 tabs. The blank page the browser starts on was closed");
-        await Assert.That(text).Contains($"- 0: (current) [{Reopened.Title}]({Reopened.Url})");
-        await Assert.That(text).Contains($"- 1: [{Unreachable.Title}]({Unreachable.Url}) -- Firefox's error page: nothing answered at this address");
+        await Assert.That(text).Contains(new UpstreamTab(0, IsCurrent: true, Reopened.Title, Reopened.Url, Crashed: false).Line);
+        await Assert.That(text).Contains($"{new UpstreamTab(1, IsCurrent: false, Unreachable.Title, Unreachable.Url, Crashed: false).Line} -- Firefox's error page: nothing answered at this address");
         await Assert.That(text).DoesNotContain($"({Reopened.Url}) -- Firefox's error page");
         await Assert.That(text).DoesNotContain(SessionManager.WhatTheFirstBrowserCallReopens);
 
@@ -244,7 +254,9 @@ internal sealed class FirefoxRestoreTests
 
         // The session is open: the resume did what it is for, and its browser is the next call's to start.
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(text);
-        await Assert.That(text).Contains("its browser did not start: TimeoutError: async initializeServer: Timeout 180000ms exceeded. The next browser call starts it again.");
+        await Assert.That(text).Contains(
+            "its browser did not start: TimeoutError: async initializeServer: Timeout 180000ms exceeded. The next browser call starts it again and acts on the blank page it starts on. "
+            + "A tab Firefox reopens appears in browser_tabs once it is up, with the blank page beside it.");
         await Assert.That(sessions.SessionChildren[^1].ToolCallsReceived.Count(tool => tool == FirefoxRestore.TabsTool)).IsEqualTo(1);
     }
 
@@ -290,16 +302,135 @@ internal sealed class FirefoxRestoreTests
 
         held.SetResult();
 
-        var resumed = await rig.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
-        var navigated = await rig.Client.AwaitAsync(navigateId, "browser_navigate");
+        // Both answers at once: the call goes on as soon as the start ends, so its answer
+        // can come back before the resume's, which is written after the start.
+        var answers = await rig.Client.AwaitManyAsync([resumeId, navigateId]);
+        var resumed = answers.Single(answer => answer.Id == resumeId).Envelope;
+        var navigated = answers.Single(answer => answer.Id == navigateId).Envelope;
 
-        await Assert.That((bool?)resumed.Result?["isError"]).IsNotEqualTo(true).Because(TextOf(resumed.Result));
-        await Assert.That((bool?)navigated.Result?["isError"]).IsNotEqualTo(true).Because(TextOf(navigated.Result));
+        await Assert.That((bool?)resumed["result"]?["isError"]).IsNotEqualTo(true).Because(resumed.ToJsonString());
+        await Assert.That(navigated["error"]).IsNull().Because(navigated.ToJsonString());
+        await Assert.That((bool?)navigated["result"]?["isError"]).IsNotEqualTo(true).Because(navigated.ToJsonString());
 
         var calls = child.ToolCallsReceived.ToList();
 
         await Assert.That(calls.IndexOf("browser_navigate")).IsGreaterThan(calls.LastIndexOf(FirefoxRestore.TabsTool));
         await Assert.That(tabs.Actions).Contains("close 0");
+    }
+
+    /// <summary>
+    /// The agent's own close made while the resume is still starting the browser waits for
+    /// the start, so the start's last list is not sent after the close, and the browser the
+    /// close shuts is the one the start left.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheAgentsCloseMadeWhileTheResumeStartsTheBrowserWaitsForTheStart()
+    {
+        var tabs = new FakeFirefoxTabs([Reopened]);
+        var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(held.Task), tabs.DocumentRead());
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = await ClosedFirefoxSessionAsync(sessions, rig, "restore-close-gate", holdsASession: true);
+        var children = sessions.SessionChildren.Count;
+
+        var resumeId = await rig.Client.BeginAsync("tools/call", Call(SessionToolSurface.Resume, ResumeArguments(directory)));
+
+        await WaitUntilAsync(
+            () => sessions.SessionChildren.Count > children && sessions.SessionChildren[^1].ToolCallsReceived.Contains(FirefoxRestore.TabsTool),
+            "the resume never asked its new child for the tabs");
+
+        var child = sessions.SessionChildren[^1];
+
+        var closeId = await rig.Client.BeginAsync("tools/call", Call(SessionToolSurface.Close, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite closing while the resume is still starting the browser",
+        }));
+
+        await WaitUntilAsync(
+            () => rig.Logs.Records.Any(record => record.Message.StartsWith($"'{SessionToolSurface.Close}' ", StringComparison.Ordinal)
+                    && record.Message.Contains("waits for the session's resume to finish starting its browser", StringComparison.Ordinal))
+                || child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool),
+            "the close neither reached the child nor said it was waiting");
+
+        await Assert.That(child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool)
+            .Because("the close reached the child while the resume was still starting the browser");
+
+        held.SetResult();
+
+        var answers = await rig.Client.AwaitManyAsync([resumeId, closeId]);
+        var resumed = answers.Single(answer => answer.Id == resumeId).Envelope;
+        var closed = answers.Single(answer => answer.Id == closeId).Envelope;
+
+        await Assert.That((bool?)resumed["result"]?["isError"]).IsNotEqualTo(true).Because(resumed.ToJsonString());
+        await Assert.That((bool?)closed["result"]?["isError"]).IsNotEqualTo(true).Because(closed.ToJsonString());
+
+        var calls = child.ToolCallsReceived.ToList();
+
+        await Assert.That(calls.IndexOf(LiveSession.BrowserCloseTool)).IsGreaterThan(calls.LastIndexOf(FirefoxRestore.TabsTool));
+        await Assert.That(tabs.Actions).Contains("close 0");
+    }
+
+    /// <summary>
+    /// A resumed Firefox session whose blank page is not the first tab the child lists:
+    /// nothing is closed, and the answer says so without counting the tabs Firefox reopened.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-13 with the texts of 161.</b> The blank page was the first tab in 30 of
+    /// 30 resumes of the rig of that day, so this branch was never measured; it is also the
+    /// answer when the <c>select</c> or the <c>close</c> fails.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFirefoxResumeWhoseBlankPageIsNotListedFirstClosesNothingAndSaysSo()
+    {
+        var tabs = new FakeFirefoxTabs([Reopened], blankPageFirst: false);
+
+        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(), tabs.DocumentRead());
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = await ClosedFirefoxSessionAsync(sessions, rig, "restore-blank-last", holdsASession: true);
+        var text = TextOf(await ResumeAsync(rig, directory));
+
+        await Assert.That(tabs.Actions).DoesNotContain("close 0").Because(text);
+        await Assert.That(tabs.Now.Tabs.Count).IsEqualTo(2);
+        await Assert.That(text).Contains("this resume started the browser, and Firefox's session restore reopened tabs of the session's last run. Nothing was closed, so the tabs are:\n");
+        await Assert.That(text).Contains(new UpstreamTab(0, IsCurrent: false, Reopened.Title, Reopened.Url, Crashed: false).Line);
+        await Assert.That(text).DoesNotContain("reopened 2 tabs");
+    }
+
+    /// <summary>
+    /// Only Firefox's network error page for an address that gave no answer marks a tab: a
+    /// connection refused, a timeout, a reset, an interruption, or a name that did not
+    /// resolve. Firefox shows the same page for answers it could not use, and those tabs are
+    /// listed without the mark.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-13 with the texts of 161</b>, on the reader's fact 2 of that day: the
+    /// sentence the mark adds says nothing answered, which is false for a redirect loop, a
+    /// server error or a failed TLS handshake, and the codes are read from the page's
+    /// <c>e=</c>.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task OnlyTheErrorPageOfAnAddressThatGaveNoAnswerMarksATab()
+    {
+        static UpstreamTab tabAt(int index) => new(index, index is 0, "a title in any language", $"http://127.0.0.1:{index + 1}/", Crashed: false);
+
+        string[] codes = ["connectionFailure", "netTimeout", "netReset", "netInterrupt", "dnsNotFound", "redirectLoop", "serverError", "nssFailure2", "netOffline"];
+
+        var tabs = codes.Select((_, index) => tabAt(index)).ToList();
+        List<(string Url, string? DocumentUri)> pages =
+            [.. codes.Select((code, index) => ($"http://127.0.0.1:{index + 1}/", $"about:neterror?e={code}&u=http%3A//127.0.0.1%3A{index + 1}/&c=UTF-8"))];
+
+        await Assert.That(FirefoxRestore.Match(tabs, pages)).IsEquivalentTo([0, 1, 2, 3, 4]);
+
+        // An error page that names no code marks nothing, and nor does a certificate error.
+        await Assert.That(FirefoxRestore.Match([tabAt(0)], [("http://127.0.0.1:1/", "about:neterror?u=http%3A//127.0.0.1%3A1/")])).IsEmpty();
+        await Assert.That(FirefoxRestore.Match([tabAt(0)], [("http://127.0.0.1:1/", "about:certerror?e=nssBadCert&u=http%3A//127.0.0.1%3A1/")])).IsEmpty();
     }
 
     /// <summary>
@@ -407,7 +538,7 @@ internal sealed class FirefoxRestoreTests
 
             await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(text);
             await Assert.That(text).Contains("this resume started the browser, and Firefox's session restore reopened 1 tab");
-            await Assert.That(text).Contains($"]({site.Url}) -- Firefox's error page");
+            await Assert.That(text).Contains($"{site.Url}) -- Firefox's error page");
 
             // The first browser call is answered, on the reopened tab and not on a blank page.
             var snapshot = await CallAsync(rig, "browser_snapshot", new JsonObject
@@ -445,6 +576,9 @@ internal sealed class FirefoxRestoreTests
             {
                 child.Tools[FirefoxRestore.TabsTool] = tabs;
                 child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
+
+                // A browser call an arm makes once the start has ended.
+                child.Tools["browser_navigate"] = new FakeToolBehaviour();
 
                 if (documents is not null)
                 {

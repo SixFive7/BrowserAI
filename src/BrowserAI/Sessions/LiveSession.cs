@@ -1186,6 +1186,11 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 
         // 161, 2026-10-13: a resume still starting this session's browser finishes first, so
         // its tab list is not sent after the close and does not start the browser again.
+        if (!BrowserStartSettled.IsCompleted)
+        {
+            ProxyLog.WaitsForTheBrowserStart(Logger, cause is SessionCloseCause.SettingsChanged ? SessionToolSurface.Resume : SessionToolSurface.Close, Location.FullPath);
+        }
+
         await BrowserStartSettled.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period)

@@ -1466,7 +1466,11 @@ internal static class SessionErrors
             // the resume reopens the tabs that were open, with"): a Firefox session's resume
             // starts its browser and reopens the tabs itself since that day.
             _ when CloseReasons.WasACleanClose(closure.Cause) =>
-                "Kept: the profile on disk, with its persistent cookies, localStorage and IndexedDB, and the tabs that were open, with their history, sessionStorage, typed text and session cookies, which reopen when the browser starts again: at the resume in a Firefox session, at the first browser call after it in a Chromium one. "
+                // ⚠️ 2026-10-13, a reading of the texts of 161 (previously "...session
+                // cookies, which reopen when the browser starts again: ..."): the tabs
+                // reopen in a sentence of their own, as in the close's own answer.
+                "Kept: the profile on disk, with its persistent cookies, localStorage and IndexedDB, and the tabs that were open, with their history, sessionStorage, typed text and session cookies. "
+                + "The tabs reopen when the browser starts again: at the resume in a Firefox session, at the first browser call after it in a Chromium one. "
                 + "Lost: refs from earlier snapshots, so call browser_tabs and browser_snapshot before you act; which tab was selected; and a page that was the answer to a form POST, which does not come back as it was.",
 
             SessionCloseCause.WindowClosed =>

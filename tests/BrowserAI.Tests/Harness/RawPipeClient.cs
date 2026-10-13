@@ -247,20 +247,40 @@ internal sealed class RawPipeClient : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(requests);
 
-        var outstanding = new HashSet<int>();
+        var ids = new List<int>(requests.Count);
 
         foreach (var (method, parameters) in requests)
         {
-            _ = outstanding.Add(await BeginAsync(method, parameters));
+            ids.Add(await BeginAsync(method, parameters));
         }
 
-        var answers = new List<(int, JsonObject)>(requests.Count);
+        return await AwaitManyAsync(ids);
+    }
+
+    /// <summary>
+    /// Waits for the answers to several requests <see cref="BeginAsync"/> sent, and returns
+    /// them <b>in the order they arrived</b>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-13 with the maintainer's 161</b>, for a test whose requests go out at
+    /// different moments and whose answers may come back in either order: awaiting one with
+    /// <see cref="AwaitAsync"/> discards the other's answer when it arrives first, and the
+    /// second wait then has nothing left to read until its hang detector fires.
+    /// </remarks>
+    /// <param name="ids">The ids those calls returned.</param>
+    /// <returns>The answers, in arrival order, each with the id it answers.</returns>
+    public async Task<IReadOnlyList<(int Id, JsonObject Envelope)>> AwaitManyAsync(IReadOnlyCollection<int> ids)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+
+        var outstanding = new HashSet<int>(ids);
+        var answers = new List<(int, JsonObject)>(ids.Count);
 
         while (outstanding.Count is not 0)
         {
-            var frame = await ReadOneAsync($"{outstanding.Count} of {requests.Count} outstanding answers")
+            var frame = await ReadOneAsync($"{outstanding.Count} of {ids.Count} outstanding answers")
                 ?? throw new InvalidOperationException(
-                    $"The peer closed its end with {outstanding.Count} of {requests.Count} answers still owed.");
+                    $"The peer closed its end with {outstanding.Count} of {ids.Count} answers still owed.");
 
             if (frame.Length is 0)
             {

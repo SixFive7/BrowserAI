@@ -1061,7 +1061,13 @@ internal static class SessionToolSurface
             // ⚠️ 2026-10-13, the maintainer's 161 (previously "until {Resume} opens it again,
             // and the first browser call after that reopens the tabs;"): a Firefox session's
             // resume starts its browser and reopens the tabs itself since that day.
-            + $"After this, every browser call that names the session is refused, saying who closed it and why, until {Resume} opens it again, and the tabs reopen when the browser starts again: at that {Resume} in a Firefox session, at the first browser call after it in a Chromium one; {CatchUp}, {ChangePurpose}, {Destroy} and this tool still answer it. "
+            // ⚠️ 2026-10-13, a reading of the texts of 161 (previously "...until {Resume}
+            // opens it again, and the tabs reopen when the browser starts again: at that
+            // {Resume} in a Firefox session, at the first browser call after it in a
+            // Chromium one; {CatchUp}, ..."): the sentence is split, so the tools that still
+            // answer follow the session they answer, as in the close's own answer.
+            + $"After this, every browser call that names the session is refused, saying who closed it and why, until {Resume} opens it again; {CatchUp}, {ChangePurpose}, {Destroy} and this tool still answer it. "
+            + $"The tabs reopen when the browser starts again: at that {Resume} in a Firefox session, at the first browser call after it in a Chromium one. "
             + "Call it when the work in a session is done for now and the session should stay resumable, or to free what an open browser holds. "
             + $"To delete the session and everything in it, call {Destroy} instead.",
             new JsonObject

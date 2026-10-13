@@ -42,14 +42,18 @@ internal sealed class FakeFirefoxTabs
     /// <param name="reopened">The tabs Firefox reopens, in the order they come up.</param>
     /// <param name="listsBeforeTheRestore">How many lists hold the blank page alone before the reopened tabs are up.</param>
     /// <param name="errorPages">The addresses whose tab shows Firefox's network error page, which the read of every tab's document URI says.</param>
-    public FakeFirefoxTabs(IReadOnlyList<(string Title, string Url)> reopened, int listsBeforeTheRestore = 1, IReadOnlyCollection<string>? errorPages = null)
+    /// <param name="blankPageFirst">Whether the reopened tabs are listed after the blank page, as every resume of the rig of 2026-10-13 listed them, or before it.</param>
+    public FakeFirefoxTabs(IReadOnlyList<(string Title, string Url)> reopened, int listsBeforeTheRestore = 1, IReadOnlyCollection<string>? errorPages = null, bool blankPageFirst = true)
     {
         ArgumentNullException.ThrowIfNull(reopened);
 
         _reopened = [.. reopened];
         _listsBeforeTheRestore = listsBeforeTheRestore;
         _errorPages = [.. errorPages ?? []];
+        _blankPageFirst = blankPageFirst;
     }
+
+    private readonly bool _blankPageFirst;
 
     private readonly HashSet<string> _errorPages;
 
@@ -142,7 +146,17 @@ internal sealed class FakeFirefoxTabs
 
                     if (!_restored && _lists > _listsBeforeTheRestore)
                     {
-                        _tabs.AddRange(_reopened);
+                        if (_blankPageFirst)
+                        {
+                            _tabs.AddRange(_reopened);
+                        }
+                        else
+                        {
+                            // Before the blank page, which stays the current tab.
+                            _tabs.InsertRange(0, _reopened);
+                            _current += _reopened.Count;
+                        }
+
                         _restored = true;
                     }
 
@@ -181,7 +195,8 @@ internal sealed class FakeFirefoxTabs
                     .Append(tab == _current ? " (current)" : string.Empty)
                     .Append(" [")
                     .Append(_tabs[tab].Title)
-                    .Append("](")
+                    .Append(']')
+                    .Append('(')
                     .Append(_tabs[tab].Url)
                     .Append(')');
             }
