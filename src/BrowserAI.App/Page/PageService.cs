@@ -128,6 +128,9 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
     /// awaited (decision 54, 2026-10-11).
     /// </summary>
     private readonly SemaphoreSlim _starting = new(1, 1);
+
+    /// <summary>Taken by a push for as long as it draws and sends, so the tabs receive their states in the order they were drawn.</summary>
+    private readonly SemaphoreSlim _pushing = new(1, 1);
     private int _disposed;
     private readonly PageFacts _facts;
     private readonly IPageSessions _sessions;
@@ -578,6 +581,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
 
         StopReadingUsage();
         _starting.Dispose();
+        _pushing.Dispose();
     }
 
     /// <summary>
@@ -744,7 +748,52 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable
             PageContent.Fragment(View(stream.Page, stream.Subject), stream.Page, stream.Tab, OccasionFor(stream.Tab), _clock.GetUtcNow()))));
 
     /// <summary>Sends every tab what it shows now.</summary>
-    private void Push() => Tabs?.Broadcast(StateFor);
+    /// <summary>Sends every tab a state drawn now.</summary>
+    /// <remarks>
+    /// ⚠️ <b>One broadcast at a time since 2026-10-13</b> (previously each push drew and sent
+    /// on its caller's thread, and nothing put two of them in order): two pushes on two
+    /// threads could draw an older view and a newer one and send them the other way round,
+    /// so a tab showed the older view until the next change, which the gate over
+    /// <c>e092de31</c> found. A push now waits its turn on <see cref="_pushing"/>, awaited
+    /// and never blocking a worker (54), and draws when its turn comes, so the last state a
+    /// tab receives is drawn from the newest model. The lock is the broadcast's, one for all
+    /// the tabs, because a broadcast already draws its tabs one after another.
+    /// </remarks>
+    private void Push() => _ = DrawAndSendInTurnAsync();
+
+    private async Task DrawAndSendInTurnAsync()
+    {
+        try
+        {
+            await _pushing.WaitAsync().ConfigureAwait(false);
+        }
+        catch (ObjectDisposedException)
+        {
+            // The page is gone, and its tabs with it.
+            return;
+        }
+
+        try
+        {
+            Tabs?.Broadcast(StateFor);
+        }
+        finally
+        {
+            ReleasePushing();
+        }
+    }
+
+    private void ReleasePushing()
+    {
+        try
+        {
+            _ = _pushing.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Disposed with the page while this push drew, and nothing waits for it now.
+        }
+    }
 
     private async Task StreamAsync(HttpContext context, string query)
     {

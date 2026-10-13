@@ -58,6 +58,13 @@ more* link to its detail; nothing else depends on it.
   arm went red twice. A seam BrowserAI leaves unset holds that connection open for the arm
   until the stop has taken its list.
 
+### Fixed
+
+- 🐛 **The dashboard no longer shows an older view after a newer one.**
+  When two changes landed at once, such as a browser closing while a folder's size was being
+  measured, a tab could show the view from before the newer change until the next one came.
+  Each tab now receives its views in the order they were drawn.
+
 ## [2.0.0] - 2026-10-13
 
 BrowserAI gives an AI agent a real browser on Windows. It is one program now, and

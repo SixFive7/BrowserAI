@@ -204,7 +204,18 @@ internal sealed class RelayRig : IAsyncDisposable
     public async Task<WireFrame> NextAsync()
     {
         using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
-        var frame = await Client.ReadFrameAsync(hang.Token);
+        byte[]? frame;
+
+        try
+        {
+            frame = await Client.ReadFrameAsync(hang.Token);
+        }
+        catch (OperationCanceledException waited) when (hang.IsCancellationRequested)
+        {
+            // ⚠️ Since 2026-10-13: a read the hang detector ends says what the engine held, so
+            // the next one explains itself; the gate at e092de31 met one that said nothing.
+            throw new TimeoutException($"The relay wrote no frame within the hang detector. The engine held: {EngineState()}", waited);
+        }
 
         return frame is null
             ? throw new InvalidOperationException($"The relay closed the client's output with no further frame; its run is {await DescribeAsync(Running)}.")
@@ -337,6 +348,54 @@ internal sealed class RelayRig : IAsyncDisposable
             _logs.Dispose();
             _stop.Dispose();
         }
+    }
+
+    /// <summary>
+    /// What the engine holds, read through reflection for a failure message: its phase, every
+    /// held call's deadline and whether that deadline was asked about, whether a question to the
+    /// finder is out and another is owed, its pending work, its epoch, and each timer's due time
+    /// against the clock's.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read in the harness and never in the product</b>: the fields are the engine's own, and a
+    /// name that moves reads as absent here, which costs a failure message its detail and no arm.
+    /// </remarks>
+    /// <returns>The state, on one line per part.</returns>
+    private string EngineState()
+    {
+        const System.Reflection.BindingFlags Fields = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var type = Engine.GetType();
+        var text = new System.Text.StringBuilder();
+
+        string field(string name) => type.GetField(name, Fields)?.GetValue(Engine)?.ToString() ?? "(absent)";
+
+        _ = text.Append("phase ").Append(field("_phase"))
+            .Append(", explaining ").Append(field("_explaining"))
+            .Append(", explain again ").Append(field("_explainAgain"))
+            .Append(", pending ").Append(field("_pending"))
+            .Append(", epoch ").Append(field("_epoch"))
+            .Append(", clock at tick ").Append(Clock.GetTimestamp());
+
+        if (type.GetField("_held", Fields)?.GetValue(Engine) is System.Collections.IEnumerable held)
+        {
+            foreach (var call in held)
+            {
+                var kind = call.GetType();
+                _ = text.Append("; held, deadline ").Append(kind.GetProperty("Deadline")?.GetValue(call))
+                    .Append(", asked ").Append(kind.GetProperty("DeadlineAsked")?.GetValue(call));
+            }
+        }
+
+        if (type.GetField("_timers", Fields)?.GetValue(Engine) is System.Collections.IDictionary timers)
+        {
+            foreach (System.Collections.DictionaryEntry entry in timers)
+            {
+                var due = entry.Value?.GetType().GetProperty("DueAt")?.GetValue(entry.Value);
+                _ = text.Append("; timer ").Append(entry.Key).Append(" due at tick ").Append(due ?? "(none)");
+            }
+        }
+
+        return text.ToString();
     }
 
     private static async Task<string> DescribeAsync(Task<RelayEnd> running) => running.Status switch
