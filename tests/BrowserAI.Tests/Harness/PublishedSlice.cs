@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Xml.Linq;
 using BrowserAI.Hosting;
 
 namespace BrowserAI.Tests.Harness;
@@ -200,6 +201,129 @@ internal static class PublishedSlice
     /// </remarks>
     public static FileInfo PayloadProvenanceStamp { get; } = new(
         Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "package-lock.json"));
+
+    /// <summary>
+    /// What every product project compiles into the binary, read once: the files, and the items
+    /// that could not be resolved to one.
+    /// </summary>
+    /// <remarks>
+    /// <b>Declared above <see cref="FreshnessInputs"/>, and that is load-bearing.</b> Static
+    /// initialisers run in textual order, so declared below it this would still be unread when
+    /// that list is made, the shape <c>RepositoryLayout</c>'s own remark records.
+    /// </remarks>
+    private static readonly (IReadOnlyList<FileInfo> Files, IReadOnlyList<string> Problems) CompiledIn = ReadCompiledIn();
+
+    /// <summary>
+    /// Every file a product project compiles into the binary as a resource, which a publish
+    /// older than it does not carry.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The maintainer's 147 b, 2026-10-13, in his words verbatim: <i>"147 b"</i></b>: the
+    /// inputs are derived from the projects' <c>EmbeddedResource</c> items. Since 2026-10-08 the
+    /// binary compiles in <c>CHANGELOG.md</c> for the dashboard's What is new page, and
+    /// <c>upstream-snapshots/tools-list.json</c> and <c>tool-verdicts.json</c> for the tool list
+    /// it answers with, and none of the three was an input here, so an edit to one of them after
+    /// a publish left the slice reading fresh. Found by a reading of this type on 2026-10-13.
+    /// </para>
+    /// <para>
+    /// <b>Read from the copies of the project files the suite carries</b>
+    /// (<see cref="RepositoryCopy.ProductProjects"/>), because a static initialiser cannot await
+    /// a file read. Each item's <c>Include</c> is resolved by <see cref="CompiledInBy"/> against
+    /// its project's directory. An item that reading cannot resolve is a line in
+    /// <see cref="CompiledInProblems"/>, which <c>CompiledInFilesTests</c> holds empty, so it is
+    /// a red run and never a file nobody watches.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<FileInfo> CompiledInFiles => CompiledIn.Files;
+
+    /// <summary>The <c>EmbeddedResource</c> items <see cref="CompiledInFiles"/> could not resolve, one line each.</summary>
+    public static IReadOnlyList<string> CompiledInProblems => CompiledIn.Problems;
+
+    /// <summary>
+    /// The files one project's <c>EmbeddedResource</c> items compile in, as paths from the
+    /// repository's root with forward slashes, and the items that name no file this can find.
+    /// </summary>
+    /// <remarks>
+    /// <b>The shapes this tree writes, and a refusal for every other.</b> A path relative to the
+    /// project's directory, several of them joined by <c>;</c>, and one led by
+    /// <c>$(MSBuildThisFileDirectory)</c> or <c>$(MSBuildProjectDirectory)</c>, both of which are
+    /// that directory. A wildcard, any other property, an item list or metadata, and a path that
+    /// leaves the repository are each a problem naming the item. An item with no
+    /// <c>Include</c>, an <c>Update</c> or a <c>Remove</c>, adds no file and is passed over.
+    /// </remarks>
+    /// <param name="projectPath">The project file's path from the repository's root, with forward slashes.</param>
+    /// <param name="projectText">The project file's text.</param>
+    /// <returns>The files, in the order the project names them, and the problems.</returns>
+    internal static (IReadOnlyList<string> Paths, IReadOnlyList<string> Problems) CompiledInBy(string projectPath, string projectText)
+    {
+        ArgumentNullException.ThrowIfNull(projectPath);
+        ArgumentNullException.ThrowIfNull(projectText);
+
+        var directory = Path.GetDirectoryName(projectPath.Replace('/', Path.DirectorySeparatorChar)) ?? string.Empty;
+        var paths = new List<string>();
+        var problems = new List<string>();
+
+        foreach (var item in XDocument.Parse(projectText).Descendants().Where(static element => element.Name.LocalName is "EmbeddedResource"))
+        {
+            if (item.Attribute("Include")?.Value is not { Length: > 0 } include)
+            {
+                continue;
+            }
+
+            foreach (var part in include.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                var spelled = part
+                    .Replace("$(MSBuildThisFileDirectory)", string.Empty, StringComparison.OrdinalIgnoreCase)
+                    .Replace("$(MSBuildProjectDirectory)\\", string.Empty, StringComparison.OrdinalIgnoreCase)
+                    .Replace("$(MSBuildProjectDirectory)/", string.Empty, StringComparison.OrdinalIgnoreCase);
+
+                if (spelled.AsSpan().ContainsAny("$@%*?"))
+                {
+                    problems.Add($"{projectPath}: EmbeddedResource Include=\"{part}\" is a shape PublishedSlice.CompiledInBy does not resolve, so a publish older than the file it names would read as fresh. Resolve it there.");
+                    continue;
+                }
+
+                var full = Path.GetFullPath(Path.Combine(RepositoryLayout.Root.FullName, directory, spelled.Replace('/', Path.DirectorySeparatorChar)));
+                var relative = Path.GetRelativePath(RepositoryLayout.Root.FullName, full).Replace('\\', '/');
+
+                if (relative.StartsWith("../", StringComparison.Ordinal) || Path.IsPathRooted(relative))
+                {
+                    problems.Add($"{projectPath}: EmbeddedResource Include=\"{part}\" names '{full}', outside the repository, which no freshness input can watch.");
+                    continue;
+                }
+
+                paths.Add(relative);
+            }
+        }
+
+        return (paths, problems);
+    }
+
+    /// <summary>Reads what every product project the suite carries a copy of compiles in.</summary>
+    /// <returns>The files, each once and ordered, and the problems.</returns>
+    private static (IReadOnlyList<FileInfo> Files, IReadOnlyList<string> Problems) ReadCompiledIn()
+    {
+        var paths = new List<string>();
+        var problems = new List<string>();
+
+        foreach (var (path, resource) in RepositoryCopy.ProductProjects())
+        {
+            var (files, unresolved) = CompiledInBy(path, RepositoryCopy.Text(resource));
+
+            paths.AddRange(files);
+            problems.AddRange(unresolved);
+        }
+
+        IReadOnlyList<FileInfo> watched =
+        [
+            .. paths.Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.Ordinal)
+                .Select(static path => new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, path.Replace('/', Path.DirectorySeparatorChar)))),
+        ];
+
+        return (watched, problems);
+    }
 
     /// <summary>
     /// Every file that goes into the published binary, and whose being newer

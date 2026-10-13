@@ -38,6 +38,31 @@ internal static class RepositoryCopy
     /// <summary>The committed tool verdicts.</summary>
     public const string ToolVerdicts = "tool-verdicts.json";
 
+    /// <summary>Where the product's project files are, and the prefix their copies are compiled in under.</summary>
+    public const string ProductProjectPrefix = "src/";
+
+    /// <summary>
+    /// Every product project file the suite carries: its path from the repository's root, with
+    /// forward slashes, and the name its copy is compiled in under.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-13 with the maintainer's 147 b, in his words verbatim: <i>"147 b"</i></b>:
+    /// <see cref="PublishedSlice.CompiledInFiles"/> reads the files each project compiles into the
+    /// binary out of these copies. The project file compiles them in with a glob, so a project
+    /// added under <c>src</c> is carried with the rest, and the names are read back from the
+    /// assembly and not typed here; MSBuild spells the folder part of a glob's name with a
+    /// backslash, which the path turns into a slash.
+    /// </remarks>
+    /// <returns>The projects, ordered by path.</returns>
+    public static IReadOnlyList<(string Path, string Resource)> ProductProjects() =>
+    [
+        .. typeof(RepositoryCopy).Assembly.GetManifestResourceNames()
+            .Select(static resource => (Path: resource.Replace('\\', '/'), Resource: resource))
+            .Where(static project => project.Path.StartsWith(ProductProjectPrefix, StringComparison.Ordinal)
+                && project.Path.EndsWith(".csproj", StringComparison.Ordinal))
+            .OrderBy(static project => project.Path, StringComparer.Ordinal),
+    ];
+
     /// <summary>The bytes of one of the files, as the build compiled them in.</summary>
     /// <param name="relativePath">The file, one of this type's constants.</param>
     /// <returns>The bytes.</returns>

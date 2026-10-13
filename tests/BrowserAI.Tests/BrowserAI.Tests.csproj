@@ -57,6 +57,11 @@
     <EmbeddedResource Include="..\..\upstream-snapshots\browsers.json" LogicalName="upstream-snapshots/browsers.json" />
     <EmbeddedResource Include="..\..\build\New-Release.ps1" LogicalName="build/New-Release.ps1" />
     <EmbeddedResource Include="..\..\tool-verdicts.json" LogicalName="tool-verdicts.json" />
+    <!-- Every product project file, for the files each one compiles into the binary, which
+         PublishedSlice counts among the inputs of a publish: the maintainer's 147 b of
+         2026-10-13. A glob, so that a project added under src is carried with the rest;
+         CompiledInFilesTests holds the copies to the projects the tree holds. -->
+    <EmbeddedResource Include="..\..\src\**\*.csproj" LogicalName="src/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- The upstream-review gate: four snapshots regenerated from the resolved
