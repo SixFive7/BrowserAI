@@ -41,7 +41,8 @@ more* link to its detail; nothing else depends on it.
 BrowserAI gives an AI agent a real browser on Windows. It is one program now, and
 it runs in the background from the moment you sign in. It holds every session, so
 a session outlives the client that drove it. A Start Menu click opens its
-dashboard in your own browser. BrowserAI also registers itself with Codex.
+dashboard in your own browser. BrowserAI registers itself with Codex as well as
+Claude Code.
 
 Since 2026-09-30 Claude Code opens its connections a new way, and 1.1.0 gave
 those connections no BrowserAI tools. This version fixes that. It also removes the
@@ -343,7 +344,7 @@ not have is refused.
   2026-10-04 had no BrowserAI tool to call. BrowserAI offers revision `2025-11-25` alone now, and
   Claude Code falls back to the handshake it used before.
 
-- 🐛 **`browserai_catch_up`'s last file written leaves out BrowserAI's own record files.**
+- 🐛 **`browserai_catch_up`'s *last file written* leaves out BrowserAI's own record files.**
   Its own read of a closed session's record writes a file beside it, so a closed session read as
   written 0 seconds ago. The lock, the record and the three files SQLite keeps beside it no longer
   count; a file of the same name inside the profile is the browser's and still does.
@@ -357,7 +358,7 @@ not have is refused.
   Such a launch waited out Playwright's 180 s timeout, as 4 of 133 measured launches did. BrowserAI
   now starts Firefox with its check for a held Shift key switched off.
 
-- 🐛 **A Chromium browser no longer crashes, now and then, during a full-page screenshot of a long page.**
+- 🐛 **A Chromium browser no longer crashes during a full-page screenshot of a long page.**
   Chrome for Testing samples its own threads in its first 30 s and from time to time after that, and
   a sample that met one particular instruction ended the browser. Full-page screenshots of a
   16,384 px page lost the browser in 5 of 10 measured launches. BrowserAI now starts Chromium with
