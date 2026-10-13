@@ -466,7 +466,7 @@ internal sealed class DashboardTests
     /// <summary>
     /// The conversations page and the home are sent a new state when a conversation
     /// connects, when a session opens and when its browser closes, read by the watch once a
-    /// second; a second that changes nothing sends nothing.
+    /// second; a second that changes nothing sends no changed view.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -513,18 +513,22 @@ internal sealed class DashboardTests
             rig.Sessions.Snapshot = Busy(checkoutOpen: false);
             rig.Clock.Advance(PageService.HoldsWatchPeriod);
 
-            await Assert.That(await StateContainingAsync(conversations, "No browser open. A call that names the session opens it again.")).IsNotNull();
+            var closed = await StateContainingAsync(conversations, "No browser open. A call that names the session opens it again.");
 
-            // A second that changes nothing sends nothing: the next state is the barrier's.
+            await Assert.That(closed).IsNotNull();
+
+            // A second that changes nothing sends no change: every state before the barrier's
+            // is the closed view again, byte for byte but for its live figures. ⚠️ Since
+            // 2026-10-13 (previously "sends nothing: the next state is the barrier's"): one
+            // change can send the same view more than once, the sessions' refresh and then the
+            // folder measurement that change started, and under load the second of them landed
+            // after the close's state, in the gate over 03ed35ca.
             rig.Clock.Advance(PageService.HoldsWatchPeriod);
 
             holds.Snapshot = new UpdateHoldSnapshot(Now, UpdateHoldState.Held, "9.9.9", [], [], []);
             rig.Clock.Advance(PageService.HoldsWatchPeriod);
 
-            var next = await conversations.NextNamedAsync(PageEvents.State);
-
-            await Assert.That(next).IsNotNull();
-            await Assert.That(next!.Member("html")).Contains("9.9.9").Because("a second that changed nothing sent a state of its own");
+            await Assert.That(await BarrierAfterTheSameViewAsync(conversations, closed!)).Contains("9.9.9");
         }
 
         // The home, in a tab of its own: every conversation ends, and the home says so.
@@ -824,6 +828,46 @@ internal sealed class DashboardTests
                 ClientVersion = "2.1.300",
             },
         ]);
+
+    /// <summary>
+    /// Reads states until the one that carries the barrier's version, holding every state
+    /// before it to the view the arm last saw, byte for byte but for its live figures: a view
+    /// sent again passes, and a changed one fails.
+    /// </summary>
+    /// <param name="stream">The tab's stream.</param>
+    /// <param name="view">The view the arm last saw.</param>
+    /// <returns>The barrier's state, or an empty string when the stream ended first.</returns>
+    private static async Task<string> BarrierAfterTheSameViewAsync(RawEventStream stream, string view)
+    {
+        var expected = WithoutLiveFigures(view);
+
+        while (await stream.NextNamedAsync(PageEvents.State) is { } state)
+        {
+            var html = state.Member("html");
+
+            if (html.Contains("9.9.9", StringComparison.Ordinal))
+            {
+                return html;
+            }
+
+            await Assert.That(WithoutLiveFigures(html)).IsEqualTo(expected).Because("a second that changed nothing sent a changed view of its own");
+        }
+
+        return string.Empty;
+    }
+
+    /// <summary>A state's html with the text of every live figure taken out, and nothing else.</summary>
+    /// <remarks>
+    /// <b>Those elements, and only those</b>: each that carries <c>data-usage</c> or
+    /// <c>data-usage-chart</c>. The usage events own them, and the page's script writes each new
+    /// reading's words and charts into them in place, so a state drawn after a reading has
+    /// landed carries other figures than one drawn before it with nothing else changed. Every
+    /// other byte is compared.
+    /// </remarks>
+    /// <param name="html">The state's html.</param>
+    /// <returns>The html with each live figure's element left empty.</returns>
+    private static string WithoutLiveFigures(string html) =>
+        Regex.Replace(html, @"(?<open><(?<tag>[a-z]+)\b[^>]*\bdata-usage(?:-chart)?=""[^""]*""[^>]*>)(?s:.*?)(?<close></\k<tag>>)", "${open}${close}");
 
     /// <summary>Reads states off a stream until one carries the text.</summary>
     internal static async Task<string?> StateContainingAsync(RawEventStream stream, string text)

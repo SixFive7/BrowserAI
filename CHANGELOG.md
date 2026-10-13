@@ -46,6 +46,12 @@ more* link to its detail; nothing else depends on it.
   run. The arm now asks BrowserAI's own reader, which answers that no record is there yet, and
   waits for the dismissed notice to read as seen.
 
+- ✅ **The conversations page's push arm takes a view sent again for what it is.**
+  It held that the state after a quiet second was the update's, and a change can send the same
+  view twice, the second time after the arm had moved on. It now reads states until the
+  update's and holds each before it to the view it last saw, all but the live CPU and memory
+  figures, which the page writes in place.
+
 ## [2.0.0] - 2026-10-13
 
 BrowserAI gives an AI agent a real browser on Windows. It is one program now, and
