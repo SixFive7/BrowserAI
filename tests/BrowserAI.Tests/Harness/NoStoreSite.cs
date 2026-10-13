@@ -28,6 +28,9 @@ namespace BrowserAI.Tests.Harness;
 /// </remarks>
 internal sealed class NoStoreSite : IAsyncDisposable
 {
+    /// <summary>The title the page carries.</summary>
+    public const string Title = "no-store page";
+
     private readonly TcpListener _listener;
     private readonly CancellationTokenSource _stopping = new();
     private readonly Task _serving;
@@ -50,9 +53,6 @@ internal sealed class NoStoreSite : IAsyncDisposable
 
     /// <summary>How many requests the site has answered.</summary>
     public int Requests => Volatile.Read(ref _requests);
-
-    /// <summary>The title the page carries.</summary>
-    public const string Title = "no-store page";
 
     /// <summary>Binds a loopback port of the system's choosing and starts answering.</summary>
     /// <returns>The running site.</returns>
@@ -96,6 +96,7 @@ internal sealed class NoStoreSite : IAsyncDisposable
 
         if (Interlocked.Exchange(ref _disposed, 1) is 0)
         {
+            _listener.Dispose();
             _stopping.Dispose();
         }
     }

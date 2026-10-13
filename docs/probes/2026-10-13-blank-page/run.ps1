@@ -17,6 +17,10 @@ other change is reported, and the lock is released, on failure too.
 
 Stages: 'blank' runs blank.mjs once per arm per round, arms interleaved in every round;
 'repro' runs repro.mjs once, the reproduction for the report to Playwright.
+
+-HeldBy names the pid of a holder of this lane that holds the suite lock already, for a stage
+run inside a longer hold: the launcher then takes and releases nothing, and runs only once the
+lock's owner.txt names this lane and that pid.
 #>
 [CmdletBinding()]
 param(
@@ -27,7 +31,8 @@ param(
     [string] $Payload,
     [string] $Scratch = (Join-Path $env:USERPROFILE 'Downloads\tmp-restore-stall'),
     [int] $CensusSeconds = 5,
-    [int] $LockWaitMinutes = 240
+    [int] $LockWaitMinutes = 240,
+    [int] $HeldBy = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -273,9 +278,18 @@ $env:PWTEST_SERVER_REGISTRY = $registry
 $env:MOZ_DISABLE_SAFE_MODE_KEY = '1'
 
 try {
-    Enter-SuiteLock
-    $taken = $true
-    Write-Line "took the suite lock as: $owner" | Out-Null
+    if ($HeldBy -ne 0) {
+        $read = if (Test-Path -LiteralPath $ownerFile) { [string](Get-Content -LiteralPath $ownerFile -Raw) } else { '' }
+        if (-not ($read.Contains('firefox-restore') -and $read.Contains("pid=$HeldBy"))) {
+            throw "The suite lock is not held by this lane's holder $HeldBy, it reads: $read. Nothing was run."
+        }
+        Write-Line "the suite lock is held by this lane's holder, pid $HeldBy, and stays with it" | Out-Null
+    }
+    else {
+        Enter-SuiteLock
+        $taken = $true
+        Write-Line "took the suite lock as: $owner" | Out-Null
+    }
 
     $mozillaBefore = Read-MozillaValues
     ($mozillaBefore.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" }) |

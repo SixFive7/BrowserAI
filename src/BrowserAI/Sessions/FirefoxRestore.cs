@@ -166,7 +166,7 @@ internal static class FirefoxRestore
 
         if (!HoldsASession(live.Config.ProfileDirectory))
         {
-            FirefoxRestoreLog.Started(live.Logger, live.Location.FullPath, clock.GetElapsedTime(started), tabs.Count, closed: false);
+            Say(live, clock.GetElapsedTime(started), tabs.Count, closed: false);
 
             return new FirefoxStart(FirefoxStartOutcome.NothingToReopen, tabs, ClosedTheBlankPage: false, Unreachable: [], Failure: null, ServerEnded: false);
         }
@@ -238,11 +238,11 @@ internal static class FirefoxRestore
         var outcome = closed || tabs.Count > 1 ? FirefoxStartOutcome.Reopened : FirefoxStartOutcome.NothingCameUp;
 
         // Which reopened tabs show Firefox's error page, read once for all of them.
-        IReadOnlyList<int> unreachable = outcome is FirefoxStartOutcome.Reopened && live.Closed is null && !live.CloseIsInFlight
+        var unreachable = outcome is FirefoxStartOutcome.Reopened && live.Closed is null && !live.CloseIsInFlight
             ? await ErrorPagesAsync(live, tabs, clock, cancellationToken).ConfigureAwait(false)
             : [];
 
-        FirefoxRestoreLog.Started(live.Logger, live.Location.FullPath, clock.GetElapsedTime(started), tabs.Count, closed);
+        Say(live, clock.GetElapsedTime(started), tabs.Count, closed);
 
         return new FirefoxStart(outcome, tabs, closed, unreachable, Failure: null, ServerEnded: false);
     }
@@ -339,6 +339,19 @@ internal static class FirefoxRestore
         return text
             .Append("Browser calls act on the current tab until browser_tabs selects another. Refs from earlier snapshots do not carry over: take a browser_snapshot before you act.")
             .ToString();
+    }
+
+    /// <summary>Writes the start's one Information line, when the session's log takes it.</summary>
+    /// <param name="live">The session.</param>
+    /// <param name="elapsed">How long the start and the wait took.</param>
+    /// <param name="tabs">How many tabs the child listed last.</param>
+    /// <param name="closed">Whether Playwright's blank page was closed.</param>
+    private static void Say(LiveSession live, TimeSpan elapsed, int tabs, bool closed)
+    {
+        if (live.Logger.IsEnabled(LogLevel.Information))
+        {
+            FirefoxRestoreLog.Started(live.Logger, live.Location.FullPath, elapsed, tabs, closed);
+        }
     }
 
     private static string Count(int tabs) =>
