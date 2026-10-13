@@ -20,6 +20,14 @@ const line = (text = '') => out.push(text);
 
 line(`# ${batch}`);
 
+const navigate = await read(join(batch, 'navigate', 'result.json'));
+if (navigate) {
+  line();
+  line('| Variant | The navigation | URL after it | Wait for load | ms | document.documentURI |');
+  line('|---|---|---|---|--:|---|');
+  for (const row of navigate.rows) line(`| ${row.name} | ${row.navigation} | ${row.urlAfter} | ${row.load} | ${row.loadMs} | ${String(row.documentURI).slice(0, 60)} |`);
+}
+
 const repro = await read(join(batch, 'repro', 'result.json'));
 if (repro) {
   line();
@@ -29,6 +37,17 @@ if (repro) {
     if ('load' in row) line(`| ${row.name} | goto: ${row.goto}; load: ${row.load} | ${row.loadMs} | ${row.pageUrl} |`);
     else line(`| ${row.name} | ${row.outcome} | ${row.ms} | ${(row.pages ?? []).join(', ')} |`);
   }
+}
+
+for (const name of names.filter((each) => each.startsWith('issue-'))) {
+  let printed;
+  try { printed = await readFile(join(batch, name, 'node.stdout.txt'), 'utf8'); } catch { printed = '(no node.stdout.txt)'; }
+  line();
+  line(`${name}, what the script printed:`);
+  line();
+  line('```');
+  line(printed.trimEnd());
+  line('```');
 }
 
 const urlsOf = (tabs) => (tabs ?? []).map((tab) => `${tab.current ? '*' : ''}${tab.url === 'about:blank' ? 'blank' : tab.url.replace(/^http:\/\/127\.0\.0\.1:(\d+)\/[^?]*/, ':$1')}${tab.title ? ` "${tab.title}"` : ''}`).join(', ');
@@ -43,12 +62,20 @@ const recoveryOf = (probe) => {
   return recovery.windows.map((window) => `selected ${window.selected} of [${window.tabs.map((tab) => (tab.entries.at(-1) ?? '?').replace(/^http:\/\/127\.0\.0\.1:(\d+)\/[^?]*/, ':$1').replace('about:blank', 'blank')).join(', ')}]`).join('; ');
 };
 
+// The repetitions are the folders of a 'blank' batch; the other stages' batches have none.
+const repetitions = [];
+for (const name of names) if ((await read(join(batch, name, 'result.json')))?.arm) repetitions.push(name);
+if (repetitions.length === 0) {
+  process.stdout.write(`${out.join('\n')}\n`);
+  process.exit(0);
+}
+
 const byArm = new Map();
 line();
 line('| Repetition | Resume | Launch ms | First list | First reopened tab listed after | Listed last before the tidy | Firefox selected before the tidy | Current before | Tidy | Current after | Snapshot | Others | Saved after the close |');
 line('|---|--:|--:|---|--:|---|---|---|---|---|---|---|---|');
 
-for (const name of names) {
+for (const name of repetitions) {
   const result = await read(join(batch, name, 'result.json'));
   if (!result) continue;
   if (!byArm.has(result.arm)) byArm.set(result.arm, []);
@@ -67,7 +94,7 @@ for (const name of names) {
 line();
 line('| Repetition | Resume | One read of every tab, ms | Tabs | ms per tab | Document URIs | One tab at a time, ms per tab |');
 line('|---|--:|--:|--:|--:|---|---|');
-for (const name of names) {
+for (const name of repetitions) {
   const result = await read(join(batch, name, 'result.json'));
   for (const cycle of result?.cycles ?? []) {
     const all = cycle.documentRead;

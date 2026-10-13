@@ -3,7 +3,13 @@
 
 # 2026-10-13 -- a Firefox session's restore with Playwright's blank page kept, and the reproduction for Playwright
 
-⚠️ **Written 2026-10-13 and not run yet. No number in this file comes from it.**
+⚠️ **Written 2026-10-13 before it ran, and run the same day**, four batches under the suite's
+lock, each in `.work\blank-page\runs\<name>`: `blank`, 15:31:48Z to 15:49:52Z; `repro`, 15:49:52Z
+to 15:50:50Z; `navigate`, 15:52:02Z to 15:52:24Z; and `issue`, 16:02:21Z to 16:03:24Z. *Corrected
+2026-10-13 (previously "Written 2026-10-13 and not run yet. No number in this file comes from
+it.")*. What they measured is in
+[the timings article](../../../kb/playwright/provisioning-and-timings.md) and the batches are cut
+into [`docs/evidence/2026-10-13-blank-page`](../../evidence/2026-10-13-blank-page/README.md).
 
 **Why it exists.** The maintainer's 161 of 2026-10-13, in his words verbatim, *"161 your
 recommendation"*, puts Playwright's blank page back into a Firefox session's launch, so the
@@ -68,6 +74,22 @@ whether a missing `load` on an error page reaches anything but the persistent la
 script the report carries is the first variant, with `import { firefox } from 'playwright-core'`
 for the line that loads the payload's copy here.
 
+**The `navigate` stage**, written after the `repro` stage, whose `goto` to a refused address
+failed and left the page on `about:blank` in both browsers, so its wait for `load` said nothing
+about an error page: through `playwright-core` alone, with every launch option at its default,
+a page on a live address navigates itself to a refused one with `window.location.href`, which
+is a navigation Firefox shows its error page for, as it does for a restored tab, and then waits
+for `load`, in Firefox and in Chromium.
+
+**The `issue` stage** runs the two scripts the report carries, `issue\repro.mjs` and
+`issue\restore.mjs`, which are the code of the report below the two-line header, each from a
+folder of the batch whose `node_modules` holds a `playwright-core` that re-exports the
+payload's, so that the bare import resolves as it does after an `npm install`. `go.mjs` starts
+each one once the step's node process is in its job, since neither waits for a go file of its
+own. `issue\repro.mjs` runs a second time with Chromium, the one copy with lines changed: the
+import, and the launch, which takes `channel: 'chromium'` because the scratch root holds
+Chromium's full build and no headless shell.
+
 ## What is here
 
 | File | What it does |
@@ -75,7 +97,11 @@ for the line that loads the payload's copy here.
 | `run.ps1` | The launcher: checks the rig's files, takes the suite lock and proves the take, copies the payload's pinned browsers into the scratch browsers root unless they are there already, runs each step as one node process in a `KILL_ON_JOB_CLOSE` job of its own with a census of it, takes out the Firefox launcher values the run added, and releases the lock, on failure too |
 | `blank.mjs` | One repetition of the `blank` stage |
 | `repro.mjs` | The `repro` stage |
-| `summarize.mjs` | The tables of a batch |
+| `navigate.mjs` | The `navigate` stage |
+| `issue/repro.mjs`, `issue/restore.mjs` | The two scripts the report to Playwright carries, as the `issue` stage runs them |
+| `go.mjs` | Waits for the go file, then runs a script as `node <file>` would |
+| `summarize.mjs` | The tables of a batch, and what each script of an `issue` batch printed |
+| `cut.mjs` | Cuts the batches into an evidence directory, the way the restore-stall rig's does |
 
 `RigJob.cs` and `lib.mjs` are the restore-stall rig's, in
 [`../2026-10-13-restore-stall`](../2026-10-13-restore-stall/README.md), used as they stand and
@@ -98,8 +124,13 @@ the port probe, Firefox's session files decoded and the child's environment bloc
   `windowsHide: true` with its standard streams piped, and the one `Start-Process` passes
   `-NoNewWindow`.
 - **The child's environment is BrowserAI's block**, `childEnvironment` in `lib.mjs`, with
-  `MOZ_DISABLE_SAFE_MODE_KEY` set, and the `repro` stage's node process inherits the launcher's,
-  with the same variable set, because `playwright-core` 1.64.0-alpha does not set it itself.
+  `MOZ_DISABLE_SAFE_MODE_KEY` set, and the `repro`, `navigate` and `issue` stages' node
+  processes inherit the launcher's, with the same variable set, because `playwright-core`
+  1.64.0-alpha does not set it itself. For the `issue` stage `TEMP` and `TMP` name the batch's
+  `tmp` folder, where `restore.mjs` makes its profile under `os.tmpdir()`; the other two stages
+  that launch through `playwright-core` alone leave them as they are, so the browsers they
+  launch put their temporary profile under the user's `%TEMP%`, which Playwright removes when
+  the browser closes.
 - ⚠️ **Firefox records every executable path it runs from** under
   `HKCU\Software\Mozilla\Firefox\Launcher`; the launcher takes out afterwards only the values
   that name the scratch folder and were not there before, and reports every other change in
@@ -116,11 +147,18 @@ pwsh -NoProfile -NonInteractive -File docs\probes\2026-10-13-blank-page\run.ps1 
 <payload>\node\node.exe docs\probes\2026-10-13-blank-page\summarize.mjs .work\blank-page\runs\blank
 pwsh -NoProfile -NonInteractive -File docs\probes\2026-10-13-blank-page\run.ps1 -Stage repro -Name repro
 <payload>\node\node.exe docs\probes\2026-10-13-blank-page\summarize.mjs .work\blank-page\runs\repro
+pwsh -NoProfile -NonInteractive -File docs\probes\2026-10-13-blank-page\run.ps1 -Stage navigate -Name navigate
+pwsh -NoProfile -NonInteractive -File docs\probes\2026-10-13-blank-page\run.ps1 -Stage issue -Name issue
+node docs\probes\2026-10-13-blank-page\cut.mjs docs\evidence\<date>-blank-page .work\blank-page\runs\<name> ...
 ```
+
+`-HeldBy <pid>` runs a stage inside a hold of the lock taken by a longer-lived holder, which is
+how the four batches of 2026-10-13 ran.
 
 **What it costs.** A resume is about 45 s: 12 s of lists, up to 25 s twice for a session write,
 and the rest calls of a second or less; a repetition is two resumes and a first run, about a
 minute and a half, so the default batch of fifteen repetitions holds the lock for about 25
 minutes. The `repro` stage is four persistent launches, one of which waits out its 30 s, and two
 browsers that each wait up to 30 s for a `load`: about two minutes. One headless browser and a
-node child at a time.
+node child at a time. Measured on 2026-10-13, launcher included: the `blank` batch took 18 min 4 s,
+`repro` 57 s, `navigate` 22 s and `issue` 62 s.

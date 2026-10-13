@@ -323,15 +323,20 @@ internal static class SessionTimes
 
     /// <summary>
     /// How long a Firefox session's tab list must stay the same, once a reopened tab is up,
-    /// before its resume says what came back: 1 s. The value <c>FirefoxRestore.StartAsync</c>
+    /// before its resume says what came back: 3 s. The value <c>FirefoxRestore.StartAsync</c>
     /// reads.
     /// </summary>
     /// <remarks>
-    /// <b>Chosen 2026-10-13 with the maintainer's 161.</b> The tabs of one restore come up one
-    /// by one as each page commits or fails, so the first one listed is not yet all of them;
-    /// a second with no change is four lists in a row that agree.
+    /// <b>Chosen 2026-10-13 with the maintainer's 161, against the rig of that day</b>
+    /// <i>(previously 1 s, chosen before the rig ran)</i>. The tabs of one restore come up one by
+    /// one as each page commits or fails: in the rig's resumes a page whose server answered was
+    /// listed with the launch or a quarter of a second after it, and a page whose server had
+    /// ended about 1.8 s after the launch answered, so a session with both had its live tabs
+    /// listed well before its dead one, and a second with no change would have answered without
+    /// the dead one. Three seconds is the slower of the two with more than half again for a
+    /// machine slower than the one measured.
     /// </remarks>
-    public static TimeSpan FirefoxRestoreQuiet { get; } = TimeSpan.FromSeconds(1);
+    public static TimeSpan FirefoxRestoreQuiet { get; } = TimeSpan.FromSeconds(3);
 
     /// <summary>
     /// The longest a Firefox session's resume waits for Firefox's session restore once the

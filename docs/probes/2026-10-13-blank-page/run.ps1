@@ -16,15 +16,22 @@ the job is ended, the Firefox launcher values the run added are taken out again 
 other change is reported, and the lock is released, on failure too.
 
 Stages: 'blank' runs blank.mjs once per arm per round, arms interleaved in every round;
-'repro' runs repro.mjs once, the reproduction for the report to Playwright.
+'repro' runs repro.mjs once, the reproduction for the report to Playwright; 'navigate' runs
+navigate.mjs once, written after the repro stage; 'issue' runs the two scripts the report
+carries, issue\repro.mjs and issue\restore.mjs, as they are, each from a folder of the batch
+whose node_modules holds a playwright-core that re-exports the payload's, so that the bare
+import resolves; and issue\repro.mjs a second time with Chromium, the one copy with lines
+changed, which are the import, the call and the launch options, since the scratch root holds
+Chromium's full build and no headless shell. TEMP and TMP point into the batch for that stage,
+so the profile restore.mjs makes under os.tmpdir() is written there.
 
--HeldBy names the pid of a holder of this lane that holds the suite lock already, for a stage
-run inside a longer hold: the launcher then takes and releases nothing, and runs only once the
-lock's owner.txt names this lane and that pid.
+-HeldBy names the pid of a holder that holds the suite lock already for the runs of 161, for a
+stage run inside a longer hold: the launcher then takes and releases nothing, and runs only
+once the lock's owner.txt names firefox-restore and that pid.
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)] [ValidateSet('blank', 'repro')] [string] $Stage,
+    [Parameter(Mandatory)] [ValidateSet('blank', 'repro', 'navigate', 'issue')] [string] $Stage,
     [Parameter(Mandatory)] [ValidatePattern('^[a-z0-9-]+$')] [string] $Name,
     [string] $Arms = 'one-dead,one-alive,three-mixed,none,fresh',
     [int] $Rounds = 3,
@@ -74,7 +81,7 @@ foreach ($required in $nodeExe, $cli, $browsersJson, $template, (Join-Path $sibl
 # 1. The rig's own files, before the lock: a C# or JavaScript mistake costs nobody the lock.
 Add-Type -Path (Join-Path $sibling 'RigJob.cs')
 
-foreach ($script in 'blank.mjs', 'repro.mjs', 'summarize.mjs') {
+foreach ($script in 'blank.mjs', 'repro.mjs', 'navigate.mjs', 'summarize.mjs', 'go.mjs', 'issue\repro.mjs', 'issue\restore.mjs') {
     & $nodeExe --check (Join-Path $rig $script)
     if ($LASTEXITCODE -ne 0) { throw "node --check failed for $script; nothing was run." }
 }
@@ -281,9 +288,9 @@ try {
     if ($HeldBy -ne 0) {
         $read = if (Test-Path -LiteralPath $ownerFile) { [string](Get-Content -LiteralPath $ownerFile -Raw) } else { '' }
         if (-not ($read.Contains('firefox-restore') -and $read.Contains("pid=$HeldBy"))) {
-            throw "The suite lock is not held by this lane's holder $HeldBy, it reads: $read. Nothing was run."
+            throw "The suite lock is not held by the holder $HeldBy, it reads: $read. Nothing was run."
         }
-        Write-Line "the suite lock is held by this lane's holder, pid $HeldBy, and stays with it" | Out-Null
+        Write-Line "the suite lock is held by the holder, pid $HeldBy, and stays with it" | Out-Null
     }
     else {
         Enter-SuiteLock
@@ -321,10 +328,53 @@ try {
             }
         }
     }
+    elseif ($Stage -eq 'issue') {
+        # Each script runs from a folder of its own whose node_modules holds a playwright-core
+        # that re-exports the payload's, which is what the bare import meets after an npm install.
+        $index = ([Uri] (Join-Path $playwrightCore 'index.mjs')).AbsoluteUri
+        $temp = Join-Path $batch 'tmp'
+        New-Item -ItemType Directory -Force -Path $temp | Out-Null
+        $savedTemp, $savedTmp = $env:TEMP, $env:TMP
+        $env:TEMP = $temp
+        $env:TMP = $temp
+        $steps = [ordered]@{
+            'issue-repro-firefox' = @{ Script = 'repro.mjs'; Edits = @() }
+            'issue-restore' = @{ Script = 'restore.mjs'; Edits = @() }
+            'issue-repro-chromium' = @{ Script = 'repro.mjs'; Edits = @(
+                    , @("import { firefox } from 'playwright-core';", "import { chromium } from 'playwright-core';")
+                    , @('await firefox.launch({ headless: true });', "await chromium.launch({ headless: true, channel: 'chromium' });")
+                )
+            }
+        }
+
+        try {
+            foreach ($step in $steps.GetEnumerator()) {
+                $folder = Join-Path $batch $step.Key
+                $module = Join-Path $folder 'node_modules\playwright-core'
+                New-Item -ItemType Directory -Force -Path $module | Out-Null
+                Set-Content -LiteralPath (Join-Path $module 'package.json') -Encoding utf8 -Value '{ "name": "playwright-core", "type": "module", "exports": "./index.mjs" }'
+                Set-Content -LiteralPath (Join-Path $module 'index.mjs') -Encoding utf8 -Value "export * from '$index';"
+                $text = Get-Content -LiteralPath (Join-Path $rig "issue\$($step.Value.Script)") -Raw
+
+                foreach ($edit in $step.Value.Edits) {
+                    if (-not $text.Contains($edit[0])) { throw "issue\$($step.Value.Script) has no '$($edit[0])' to change for $($step.Key); nothing of it was run." }
+                    $text = $text.Replace($edit[0], $edit[1])
+                }
+
+                $copy = Join-Path $folder $step.Value.Script
+                Set-Content -LiteralPath $copy -Value $text -Encoding utf8 -NoNewline
+                $code = Invoke-Step $folder @((Join-Path $rig 'go.mjs'), '--script', $copy)
+                Write-Line "$($step.Key) exit code: $code" | Out-Null
+            }
+        }
+        finally {
+            $env:TEMP, $env:TMP = $savedTemp, $savedTmp
+        }
+    }
     else {
-        $out = Join-Path $batch 'repro'
-        $code = Invoke-Step $out @((Join-Path $rig 'repro.mjs'), '--playwright-core', $playwrightCore, '--out', $out)
-        Write-Line "repro exit code: $code" | Out-Null
+        $out = Join-Path $batch $Stage
+        $code = Invoke-Step $out @((Join-Path $rig "$Stage.mjs"), '--playwright-core', $playwrightCore, '--out', $out)
+        Write-Line "$Stage exit code: $code" | Out-Null
     }
 }
 finally {
