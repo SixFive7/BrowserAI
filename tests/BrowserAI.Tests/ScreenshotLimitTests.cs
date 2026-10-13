@@ -234,15 +234,24 @@ internal sealed class ScreenshotLimitTests
     /// (b) are there to answer.
     /// </description></item>
     /// </list>
+    /// <para>
+    /// ⚠️ <b>The maintainer's 132 b, 2026-10-13, in his words verbatim:</b> <i>"132 b - after you used the data to report to the upstreams"</i>.
+    /// (a) stays: the kept rig and event 14 named the cause at the release run's red at
+    /// <c>44368995</c>, Chromium's own stack sampling profiler crashing the browser, which every
+    /// Chromium launch now keeps from starting (<see cref="StackProfilerTests"/>). (b) and (c) are
+    /// taken out, once the reports upstream had what (a) kept: Chromium wrote nothing about that
+    /// crash to its standard error, and the profiler sampled the first 30 s of every browser whatever
+    /// ran beside it, so the arm runs among the others again and its time alone is off the critical
+    /// path. <i>Added 2026-10-13 by addition.</i>
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    [NotInParallel]
     public async Task AgainstARealChromiumAPageOnePixelPastTheLineIsRefusedAndOneAtItIsNot()
     {
         await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
-        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true, chromiumLogging: true);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
 
         try
         {
@@ -267,7 +276,7 @@ internal sealed class ScreenshotLimitTests
     /// <returns>The assertion task.</returns>
     private static async Task TakeBothSidesOfTheLineAsync(McpTestHarness rig, string directory)
     {
-        _ = await InitAsync(rig, directory, ProvisionedBrowsers.Chromium, debug: true);
+        _ = await InitAsync(rig, directory, ProvisionedBrowsers.Chromium);
 
         foreach (var height in new[] { ScreenshotLimit.LargestFaithfulSide + 1, ScreenshotLimit.LargestFaithfulSide })
         {
@@ -378,9 +387,8 @@ internal sealed class ScreenshotLimitTests
     /// <param name="rig">The rig.</param>
     /// <param name="directory">The session directory.</param>
     /// <param name="browser">The family.</param>
-    /// <param name="debug">Whether the session's own log runs at debug level, which carries its child's standard error.</param>
     /// <returns>The answer.</returns>
-    private static async Task<JsonObject> InitAsync(McpTestHarness rig, string directory, string browser, bool debug = false)
+    private static async Task<JsonObject> InitAsync(McpTestHarness rig, string directory, string browser)
     {
         var answer = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
@@ -391,7 +399,6 @@ internal sealed class ScreenshotLimitTests
             ["transcript"] = false,
             ["captureNetwork"] = false,
             ["idleMinutes"] = 10,
-            ["debug"] = debug,
         });
 
         if ((bool?)answer["isError"] is true)

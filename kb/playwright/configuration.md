@@ -1110,6 +1110,10 @@ followed by Chromium's own `pid:tid:MMDD/HHMMSS.mmm:LEVEL:file(line)]` prefix, a
 `44368995`, carried the same `WARNING` and nothing else from the browser before its end,
 which was a crash Chromium logs nothing about; what named it was the minidump the crash
 left in the kept profile. See [the section below](#chrome-for-testing-samples-its-own-stacks-and-the-sampler-can-crash-the-browser----measured-2026-10-13).
+⚠️ *Added 2026-10-13 a second time by addition:* the maintainer's 132 b took the switch and the
+variable off that arm, and `RigSessionEnvironment.WithChromiumLoggingAsync` with them, so no arm
+starts Chromium with its own log now; what Playwright does with a browser's standard error is
+unchanged.
 
 ## Chrome for Testing samples its own stacks, and the sampler can crash the browser -- measured 2026-10-13
 

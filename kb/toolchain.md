@@ -686,7 +686,9 @@ the attribute: +13.6 s to +40.3 s, 26.7 s, overlapped by 535 other arms. The mai
 where its whole time alone is added to the run's critical path. **The first run with the
 attribute**, a filtered one of 281 arms the same day, ran it from +66.5 s to +70.5 s, 4.0 s,
 overlapped by none, starting the moment the last arm that overlapped another ended and as
-the only arm of the run that no other overlapped.
+the only arm of the run that no other overlapped. ⚠️ *Added 2026-10-13 by addition:* the
+maintainer's 132 b took the attribute off that arm again, so it runs among the others in the
+first phase; what TUnit does with a keyless arm is unchanged.
 
 **To re-establish it**, run the suite and read the report TUnit writes beside it,
 `TestResults\BrowserAI.Tests-windows-net10.0.tunit-report.json`: every arm under
