@@ -1,0 +1,2 @@
+{"t":"2026-10-13T06:40:33.874Z","event":"call","from":"child","tool":"browser_tabs","ms":180016,"isError":true,"text":"### Error TimeoutError: async initializeServer: Timeout 180000ms exceeded. Call log:  - <launching> %USERPROFILE%\\Downloads\\tmp-restore-stall\\data-root\\browsers\\firefox-1553\\firefox\\firefox.exe -"}
+{"t":"2026-10-13T06:40:34.325Z","event":"replay","variant":"as-is","outcome":"the start waited out the launch timeout","ms":180016}

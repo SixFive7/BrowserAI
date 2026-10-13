@@ -1,0 +1,5 @@
+added and removed: Launcher|%USERPROFILE%\Downloads\tmp-restore-stall\data-root\browsers\firefox-1553\firefox\firefox.exe|Image = 1790534950
+added and removed: Launcher|%USERPROFILE%\Downloads\tmp-restore-stall\data-root\browsers\firefox-1553\firefox\firefox.exe|Blocklist = %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-62B99BA32A2B81E1
+added and removed: Launcher|%USERPROFILE%\Downloads\tmp-restore-stall\data-root\browsers\firefox-1553\firefox\firefox.exe|Launcher = 591567380257
+added and removed: Launcher|%USERPROFILE%\Downloads\tmp-restore-stall\data-root\browsers\firefox-1553\firefox\firefox.exe|Browser = 591567632921
+added and removed: Launcher|%USERPROFILE%\Downloads\tmp-restore-stall\data-root\browsers\firefox-1553\firefox\firefox.exe|Telemetry = 0

@@ -1,0 +1,15 @@
+1791873449680	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+1791873449681	SessionStore	DEBUG	Last session save attempt: 542ms ago
+1791873449681	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+1791873449685	SessionStore	DEBUG	SessionSave run called during shutdown
+1791873449786	SessionStore	DEBUG	SessionSaver writing state during shutdown
+1791873449812	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+1791873449817	SessionStore	DEBUG	SessionWriter.write wrote 1042 bytes in 3ms
+1791873449818	SessionStore.LogManager	DEBUG	Flushing file log
+1791873449818	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873448660.txt: 1791873449818
+1791873449826	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+1791873449828	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-04-ff-dead-2-revived\profile\sessionstore-logs\success-sessionrestore-1791873448660.txt
+1791873449828	SessionStore.LogManager	TRACE	onCopyComplete: 1791873449828
+1791873449828	SessionStore.LogManager	TRACE	Running cleanup.
+1791873449828	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009449828
+1791873449829	SessionStore.LogManager	DEBUG	Done deleting files.

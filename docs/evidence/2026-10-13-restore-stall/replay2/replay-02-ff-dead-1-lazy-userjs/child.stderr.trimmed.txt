@@ -1,0 +1,124 @@
+2026-10-13T12:24:56.551Z pw:api => async initializeServer started
+2026-10-13T12:24:56.554Z pw:browser <launching> %USERPROFILE%\Downloads\tmp-restore-stall\data-root\browsers\firefox-1553\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay2\replay-02-ff-dead-1-lazy-userjs\profile -juggler-pipe
+2026-10-13T12:24:56.562Z pw:browser <launched> pid=33724
+2026-10-13T12:24:56.633Z pw:browser [pid=33724][err] *** You are running in headless mode.
+2026-10-13T12:24:56.778Z pw:browser [pid=33724][out] 
+2026-10-13T12:24:56.778Z pw:browser [pid=33724][out] Juggler listening to the pipe
+2026-10-13T12:24:56.779Z pw:protocol SEND ► {"method":"Browser.enable","params":{"attachToDefaultContext":true,"userPrefs":[{"name":"toolkit.winRegisterApplicationRestart","value":false},{"name":"signon.rememberSignons","value":false},{"name":"browser.sessionstore.resume_session_once","value":true},{"name":"browser.sessionstore.restore_on_demand","value":true},{"name":"browser.sessionstore.restore_tabs_lazily","value":true},{"name":"browser.sessionstore.loglevel","value":"All"},{"name":"browser.sessionstore.log.appender.console","value":"All"},{"name":"browser.sessionstore.log.appender.dump","value":"All"},{"name":"browser.sessionstore.log.appender.file.logOnSuccess","value":true}]},"id":1}
+2026-10-13T12:24:56.779Z pw:protocol SEND ► {"method":"Browser.getInfo","id":2}
+2026-10-13T12:24:56.781Z pw:protocol SEND ► {"method":"Browser.setInitScripts","params":{"scripts":[]},"id":3}
+2026-10-13T12:24:56.781Z pw:protocol SEND ► {"method":"Browser.setDownloadOptions","params":{"downloadOptions":{"behavior":"saveToDisk","downloadsDir":"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay2\\replay-02-ff-dead-1-lazy-userjs\\downloads"}},"id":4}
+2026-10-13T12:24:56.781Z pw:protocol SEND ► {"method":"Browser.setDefaultViewport","params":{"viewport":{"viewportSize":{"width":1920,"height":1080},"deviceScaleFactor":1,"isMobile":false}},"id":5}
+2026-10-13T12:24:56.781Z pw:protocol SEND ► {"method":"Browser.setLocaleOverride","params":{"locale":"nl-NL"},"id":6}
+2026-10-13T12:24:56.781Z pw:protocol SEND ► {"method":"Browser.setTimezoneOverride","params":{"timezoneId":"Europe/Berlin"},"id":7}
+2026-10-13T12:24:56.781Z pw:protocol SEND ► {"method":"Browser.setExtraHTTPHeaders","params":{"headers":[]},"id":8}
+2026-10-13T12:24:56.781Z pw:protocol SEND ► {"method":"Browser.setColorScheme","params":{"colorScheme":"light"},"id":9}
+2026-10-13T12:24:56.818Z pw:protocol ◀ RECV {"id":2,"result":{"version":"Firefox/156.0","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0"}}
+2026-10-13T12:24:56.818Z pw:protocol ◀ RECV {"id":3}
+2026-10-13T12:24:56.818Z pw:protocol ◀ RECV {"id":4}
+2026-10-13T12:24:56.818Z pw:protocol ◀ RECV {"id":5}
+2026-10-13T12:24:56.818Z pw:protocol ◀ RECV {"id":6}
+2026-10-13T12:24:56.820Z pw:protocol ◀ RECV {"id":7}
+2026-10-13T12:24:56.820Z pw:protocol ◀ RECV {"id":8}
+2026-10-13T12:24:56.820Z pw:protocol ◀ RECV {"id":9}
+2026-10-13T12:24:56.820Z pw:protocol SEND ► {"method":"Browser.setReducedMotion","params":{"reducedMotion":"no-preference"},"id":10}
+2026-10-13T12:24:56.822Z pw:protocol ◀ RECV {"id":10}
+2026-10-13T12:24:56.822Z pw:protocol SEND ► {"method":"Browser.setForcedColors","params":{"forcedColors":"none"},"id":11}
+2026-10-13T12:24:56.839Z pw:protocol ◀ RECV {"id":11}
+2026-10-13T12:24:56.839Z pw:protocol SEND ► {"method":"Browser.setContrast","params":{"contrast":"no-preference"},"id":12}
+2026-10-13T12:24:56.894Z pw:protocol ◀ RECV {"id":12}
+2026-10-13T12:24:57.033Z pw:browser [pid=33724][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.45522) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+2026-10-13T12:24:57.248Z pw:browser [pid=33724][err] [ERROR shell_windows::limited_access_features] Error generating feature token: NS_ERROR_FAILURE
+2026-10-13T12:24:57.256Z pw:browser [pid=33724][err] JavaScript error: , line 0: SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data
+2026-10-13T12:24:57.266Z pw:browser [pid=33724][err] [ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: "Unspecified error" }
+2026-10-13T12:24:57.358Z pw:browser [pid=33724][out] console.error: services.settings: 
+2026-10-13T12:24:57.358Z pw:browser [pid=33724][out]   Message: EmptyDatabaseError: "main/nimbus-desktop-experiments" has not been synced yet
+2026-10-13T12:24:57.358Z pw:browser [pid=33724][out]   Stack:
+2026-10-13T12:24:57.358Z pw:browser [pid=33724][out]     EmptyDatabaseError@resource://services-settings/Database.sys.mjs:19:5
+2026-10-13T12:24:57.358Z pw:browser [pid=33724][out] list@resource://services-settings/Database.sys.mjs:96:13
+2026-10-13T12:24:57.358Z pw:browser [pid=33724][out] 
+2026-10-13T12:24:57.383Z pw:browser [pid=33724][err] [ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: "Unspecified error" }
+2026-10-13T12:24:57.416Z pw:browser [pid=33724][err] [ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: "Unspecified error" }
+2026-10-13T12:24:57.447Z pw:browser [pid=33724][out] console.error: [Exception... "Component returned failure code: 0x80070057 (NS_ERROR_ILLEGAL_VALUE) [nsIWinTaskbar.getTaskbarProgress]"  nsresult: "0x80070057 (NS_ERROR_ILLEGAL_VALUE)"  location: "JS frame :: moz-src:///browser/components/downloads/DownloadsTaskbar.sys.mjs :: #windowsAttachIndicator :: line 181"  data: no]
+2026-10-13T12:24:57.453Z pw:protocol ◀ RECV {"method":"Browser.attachedToTarget","params":{"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4","targetInfo":{"targetId":"ce6517f3-e6f7-446f-b5cf-7c08436908ed","type":"page"}}}
+2026-10-13T12:24:57.454Z pw:protocol SEND ► {"method":"Page.setInitScripts","params":{"scripts":[{"script":"(() => {\n      \n    })();","worldName":"__playwright_utility_world__"}]},"id":13,"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.454Z pw:protocol ◀ RECV {"method":"Page.frameAttached","params":{"frameId":"mainframe-2"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.455Z pw:protocol ◀ RECV {"method":"Runtime.executionContextsCleared","params":{},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.455Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-1","auxData":{"frameId":"mainframe-2","name":""}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.455Z pw:protocol ◀ RECV {"method":"Runtime.executionContextDestroyed","params":{"executionContextId":"id-1"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.455Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-2","auxData":{"frameId":"mainframe-2","name":""}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.455Z pw:protocol ◀ RECV {"method":"Page.navigationStarted","params":{"frameId":"mainframe-2","navigationId":"nav-6442450945"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.455Z pw:protocol ◀ RECV {"id":1}
+2026-10-13T12:24:57.456Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-3","auxData":{"frameId":"mainframe-2","name":"__playwright_utility_world__"}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.457Z pw:protocol ◀ RECV {"id":13,"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:57.957Z pw:api   "networkidle" event fired
+2026-10-13T12:24:59.182Z pw:browser [pid=33724][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Page.frameAttached","params":{"frameId":"mainframe-2"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Runtime.executionContextsCleared","params":{},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-1","auxData":{"frameId":"mainframe-2","name":""}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-2","auxData":{"frameId":"mainframe-2","name":"__playwright_utility_world__"}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Runtime.executionContextDestroyed","params":{"executionContextId":"id-1"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Runtime.executionContextDestroyed","params":{"executionContextId":"id-2"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-3","auxData":{"frameId":"mainframe-2","name":""}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-4","auxData":{"frameId":"mainframe-2","name":"__playwright_utility_world__"}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Page.navigationStarted","params":{"frameId":"mainframe-2","navigationId":"nav-6442450945"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.238Z pw:protocol ◀ RECV {"method":"Network.requestFailed","params":{"requestId":"6442450945","errorCode":"NS_ERROR_CONNECTION_REFUSED"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.241Z pw:protocol ◀ RECV {"method":"Page.navigationAborted","params":{"frameId":"mainframe-2","navigationId":"nav-6442450945","errorText":"NS_ERROR_CONNECTION_REFUSED"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.241Z pw:protocol ◀ RECV {"method":"Page.ready","sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.246Z pw:protocol ◀ RECV {"method":"Page.navigationStarted","params":{"frameId":"mainframe-2","navigationId":"nav-15032385537"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.249Z pw:protocol ◀ RECV {"method":"Runtime.console","params":{"args":[{"value":"[JavaScript Warning: \"“127.0.0.1” has been classified as a bounce tracker. If it does not receive user activation within the next 3,600 seconds it will have its state purged.\"]"}],"type":"warn","executionContextId":"id-4","location":{"lineNumber":0,"columnNumber":0,"url":""}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.270Z pw:protocol ◀ RECV {"method":"Runtime.executionContextDestroyed","params":{"executionContextId":"id-3"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.270Z pw:protocol ◀ RECV {"method":"Runtime.executionContextDestroyed","params":{"executionContextId":"id-4"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.270Z pw:protocol ◀ RECV {"method":"Page.navigationCommitted","params":{"frameId":"mainframe-2","navigationId":"nav-15032385537","url":"http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1","name":""},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.271Z pw:api   "commit" event fired
+2026-10-13T12:24:59.271Z pw:api   navigated to "http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1"
+2026-10-13T12:24:59.271Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-5","auxData":{"frameId":"mainframe-2","name":""}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.271Z pw:protocol ◀ RECV {"method":"Runtime.executionContextCreated","params":{"executionContextId":"id-6","auxData":{"frameId":"mainframe-2","name":"__playwright_utility_world__"}},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.277Z pw:browser [pid=33724][out] console.warn: services.settings: #fetchAttachment: Forcing fallbackToDump to false due to Utils.LOAD_DUMPS being false
+2026-10-13T12:24:59.279Z pw:browser [pid=33724][out] console.error: (new NotFoundError("Could not find fa0fc42c-d91d-fca7-34eb-806ff46062dc in cache or dump", "resource://services-settings/Attachments.sys.mjs", 48))
+2026-10-13T12:24:59.279Z pw:browser [pid=33724][out] console.warn: "Unable to find the attachment for" "fa0fc42c-d91d-fca7-34eb-806ff46062dc"
+2026-10-13T12:24:59.316Z pw:protocol ◀ RECV {"method":"Page.eventFired","params":{"frameId":"mainframe-2","name":"DOMContentLoaded"},"sessionId":"9d254770-8a04-4453-9a7d-a4a1ff4aa7f4"}
+2026-10-13T12:24:59.316Z pw:api   "domcontentloaded" event fired
+2026-10-13T12:24:59.770Z pw:api   "networkidle" event fired
+2026-10-13T12:25:14.551Z pw:browser [pid=33724][out] 1791894314551	SessionStore	DEBUG	SessionWriter.write wrote 1073 bytes in 4ms
+2026-10-13T12:25:14.551Z pw:browser [pid=33724][out] 1791894314551	SessionStore.LogManager	DEBUG	Flushing file log
+2026-10-13T12:25:14.551Z pw:browser [pid=33724][out] 1791894314551	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791894296632.txt: 1791894314551
+2026-10-13T12:25:14.555Z pw:browser [pid=33724][out] 1791894314556	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay2\replay-02-ff-dead-1-lazy-userjs\profile\sessionstore-logs\success-sessionrestore-1791894296632.txt
+2026-10-13T12:25:14.555Z pw:browser [pid=33724][out] 1791894314556	SessionStore.LogManager	TRACE	onCopyComplete: 1791894314556
+2026-10-13T12:25:14.556Z pw:browser [pid=33724][out] 1791894314556	SessionStore.LogManager	TRACE	Running cleanup.
+2026-10-13T12:25:14.556Z pw:browser [pid=33724][out] 1791894314556	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791030314556
+2026-10-13T12:25:14.556Z pw:browser [pid=33724][out] 1791894314557	SessionStore.LogManager	DEBUG	Done deleting files.
+2026-10-13T12:25:26.936Z pw:browser [pid=33724][out] console.error: services.settings: 
+2026-10-13T12:25:26.936Z pw:browser [pid=33724][out]   Message: EmptyDatabaseError: "main/nimbus-desktop-experiments" has not been synced yet
+2026-10-13T12:25:26.936Z pw:browser [pid=33724][out]   Stack:
+2026-10-13T12:25:26.936Z pw:browser [pid=33724][out]     EmptyDatabaseError@resource://services-settings/Database.sys.mjs:19:5
+2026-10-13T12:25:26.936Z pw:browser [pid=33724][out] list@resource://services-settings/Database.sys.mjs:96:13
+2026-10-13T12:25:26.936Z pw:browser [pid=33724][out] 
+2026-10-13T12:25:30.666Z pw:browser [pid=33724][out] 1791894330666	SessionStore	DEBUG	SessionWriter.write wrote 1070 bytes in 3ms
+2026-10-13T12:26:58.051Z pw:browser [pid=33724][out] console.warn: WindowsJumpLists: "Failed to fetch favicon for " "http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1" [Exception... "Failure"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "<unknown>"  data: no]
+2026-10-13T12:27:56.553Z pw:browser [pid=33724] <gracefully close start>
+2026-10-13T12:27:56.556Z pw:api <= async initializeServer failed
+2026-10-13T12:27:56.557Z pw:browser [pid=33724][out] 1791894476557	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+2026-10-13T12:27:56.557Z pw:browser [pid=33724][out] 1791894476557	SessionStore	DEBUG	Last session save attempt: 145891ms ago
+2026-10-13T12:27:56.557Z pw:browser [pid=33724][out] 1791894476557	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+2026-10-13T12:27:56.560Z pw:browser [pid=33724][out] 1791894476560	SessionStore	DEBUG	SessionSave run called during shutdown
+2026-10-13T12:27:56.560Z pw:browser [pid=33724][out] 1791894476561	SessionStore	DEBUG	SessionSaver writing state during shutdown
+2026-10-13T12:27:56.562Z pw:browser [pid=33724] <forcefully close>
+2026-10-13T12:27:56.562Z pw:browser [pid=33724] <kill>
+2026-10-13T12:27:56.562Z pw:browser [pid=33724] <will force kill>
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] console.error: "Given tab is not restoring."
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476588	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476591	SessionStore	DEBUG	SessionWriter.write wrote 1074 bytes in 29ms
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476592	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476606	SessionStore.LogManager	DEBUG	Flushing file log
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476606	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791894296632.txt: 1791894476606
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476618	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay2\replay-02-ff-dead-1-lazy-userjs\profile\sessionstore-logs\success-sessionrestore-1791894296632.txt
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476618	SessionStore.LogManager	TRACE	onCopyComplete: 1791894476618
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476618	SessionStore.LogManager	TRACE	Running cleanup.
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476618	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791030476618
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][out] 1791894476619	SessionStore.LogManager	DEBUG	Done deleting files.
+2026-10-13T12:27:57.150Z pw:browser [pid=33724][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+2026-10-13T12:27:57.152Z pw:browser [pid=33724] <process did exit: exitCode=0, signal=null>
+2026-10-13T12:27:57.152Z pw:browser [pid=33724] starting temporary directories cleanup
+2026-10-13T12:27:57.153Z pw:browser [pid=33724] finished temporary directories cleanup
+2026-10-13T12:27:57.153Z pw:browser [pid=33724] <gracefully close end>

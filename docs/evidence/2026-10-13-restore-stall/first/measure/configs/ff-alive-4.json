@@ -1,0 +1,53 @@
+{
+  "browser": {
+    "browserName": "firefox",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\sessions\\first\\ff-alive-4\\profile",
+    "launchOptions": {
+      "firefoxUserPrefs": {
+        "toolkit.winRegisterApplicationRestart": false,
+        "signon.rememberSignons": false,
+        "browser.sessionstore.resume_session_once": true,
+        "browser.sessionstore.restore_on_demand": false,
+        "browser.sessionstore.restore_tabs_lazily": false
+      },
+      "ignoreDefaultArgs": [
+        "about:blank"
+      ],
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\sessions\\first\\ff-alive-4\\downloads"
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "locale": "nl-NL",
+      "timezoneId": "Europe/Berlin",
+      "ignoreHTTPSErrors": false
+    }
+  },
+  "capabilities": [
+    "config",
+    "vision",
+    "devtools",
+    "storage",
+    "network",
+    "pdf",
+    "testing"
+  ],
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\sessions\\first\\ff-alive-4\\output",
+  "saveSession": false,
+  "allowUnrestrictedFileAccess": false,
+  "console": {
+    "level": "debug"
+  },
+  "snapshot": {
+    "boxes": false
+  },
+  "codegen": "none",
+  "filePaths": "absolute",
+  "timeouts": {
+    "idle": 0
+  },
+  "webmcp": true
+}

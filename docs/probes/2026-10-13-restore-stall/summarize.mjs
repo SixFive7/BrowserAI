@@ -165,7 +165,8 @@ async function summariseMeasure(batch, lines) {
   for (const row of rows) {
     const view = row.first ? browserDuring(census, join(row.dir, 'profile'), row.first.startedAt, row.first.answeredAt) : null;
     lines.push(`${row.name}: ${row.outcome ?? 'threw'}; idle close ${row.idleClose?.afterNavigateMs ?? '-'} ms after the navigation; port at resume ${row.portAtResume?.state ?? '-'}; first ${row.first?.ms ?? '-'} ms; second ${row.second?.ms ?? '-'} ms ${row.second ? (row.secondStalled ? 'stalled' : row.second.isError ? 'failed' : 'answered') : ''}; browser in the census: ${view ? JSON.stringify(view) : '-'}`);
-    if (row.firstStalled && row.firstCallLog) lines.push(`  call log, last line: ${row.firstCallLog.trim().split('\n').pop()}`);
+    if (row.firstStalled && row.firstCallLog) lines.push(`  call log, last line: ${row.firstCallLog.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '').trim().split('\n').pop().trim()}`);
+    if (row.againResume) lines.push(`  resumed again${row.againRefusals ? ` after ${row.againRefusals} refusal(s) five seconds apart` : ''}: ${row.againResume.isError ? `refused: ${row.againResume.text.replace(/\s+/g, ' ').slice(0, 120)}` : `first call ${row.againFirst?.ms ?? '-'} ms, ${row.againStalled ? 'waited out the launch timeout again' : row.againFirst?.isError ? 'failed another way' : 'answered'}`}`);
   }
 }
 
@@ -190,8 +191,10 @@ function openWait(messages) {
   const ready = ofPage.some((entry) => entry.message.method === 'Page.ready');
   const mainFrame = ofPage.find((entry) => entry.message.method === 'Page.frameAttached' && !entry.message.params?.parentFrameId)?.message.params.frameId ?? null;
   const loaded = ofPage.some((entry) => entry.message.method === 'Page.eventFired' && entry.message.params?.name === 'load' && (!mainFrame || entry.message.params.frameId === mainFrame));
+  // An event has a method; an answer to a command sent on the page's session has an id.
   const events = ofPage.map((entry) => {
-    const { method, params } = entry.message;
+    const { method, params, id } = entry.message;
+    if (method === undefined) return `${entry.t.slice(11, 23)} (the answer to command ${id})`;
     const detail = params?.url ?? params?.errorText ?? params?.name ?? '';
     return `${entry.t.slice(11, 23)} ${method}${detail ? ` ${String(detail).slice(0, 120)}` : ''}`;
   });

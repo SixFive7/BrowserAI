@@ -1,0 +1,786 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 2.0.1-alpha.0.1 started. pid=73036 image=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe cwd=%USERPROFILE%\Downloads\tmp-restore-stall\data-root sqlite=3.54.0 sqliteBuild=intended
+warn: BrowserAI.Startup[4]
+      This BrowserAI was started with --data-root, so its data root is %USERPROFILE%\Downloads\tmp-restore-stall\data-root, not the one under %LocalAppData%. Its browsers, session index and log are there.
+info: BrowserAI.Background[1]
+      BrowserAI's background serves \\.\pipe\BrowserAI-Background-restore-stall-21024-42676bbafda0; it was started with no --started-by, and its record is %USERPROFILE%\Downloads\tmp-restore-stall\data-root\background\BrowserAI-Background-restore-stall-21024-42676bbafda0.json.
+info: BrowserAI.Background.BackgroundServer[1]
+      The background serves \\.\pipe\BrowserAI-Background-restore-stall-21024-42676bbafda0.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=25.1ms processes=706/553 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=60 titled=12 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=1 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=0 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after BrowserAI started, which collects what a run that was killed left behind, detached and not awaited: reaper=107620@134363673277289910.
+info: BrowserAI.Background.BackgroundServer[2]
+      Relay 23068-1 connected, for restore-stall-rig (client pid 21024).
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'initialize' request handler completed in 0.1468ms.
+info: BrowserAI.Sessions.SessionManager[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1 under Global\BrowserAI-FD6DFEDBBB82FFE9DA68D97237660070.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 70348 in 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1\output'.
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending method 'initialize' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] waiting for response to request '1' for method 'initialize'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID '1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] Request response received for method initialize
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Client (BrowserAI 2.0.1-alpha.0.1) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+dbug: ModelContextProtocol.Client.McpClient[1374391956]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending message.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Client (BrowserAI 2.0.1-alpha.0.1) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Forwarding 'tools/list' to the child as browserai-FD6DFEDB-1. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending method 'tools/list' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] waiting for response to request 'browserai-FD6DFEDB-1' for method 'tools/list'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID 'browserai-FD6DFEDB-1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] Request response received for method tools/list
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Session open at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: opening the page this session will be resumed on
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      Forwarding 'tools/call' to the child as browserai-FD6DFEDB-2. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      playwright-mcp[FD6DFEDB] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      playwright-mcp[FD6DFEDB] waiting for response to request 'browserai-FD6DFEDB-2' for method 'tools/call'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID '(no id)'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcNotification message from channel.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID 'browserai-FD6DFEDB-2'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      playwright-mcp[FD6DFEDB] Request response received for method tools/call
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Forwarding 'tools/call' to the child as browserai-FD6DFEDB-3. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] waiting for response to request 'browserai-FD6DFEDB-3' for method 'tools/call'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID 'browserai-FD6DFEDB-3'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] Request response received for method tools/call
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB]: pid 70348 exited with code 0.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a session's browser was closed for being idle, detached and not awaited: reaper=9304@134363673905464862.
+info: BrowserAI.Sessions.BrowserIdleTimer[60]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Browser server ended after 00:01:00 idle on the session at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1, node child included. Processes in that child's job: 9 ? 0. Browser calls are refused until browserai_resume starts a new one.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1 by the process that already held its guard, PID 73036 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 72452 in 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1\output'.
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending method 'initialize' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] waiting for response to request '1' for method 'initialize'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID '1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] Request response received for method initialize
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Client (BrowserAI 2.0.1-alpha.0.1) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+dbug: ModelContextProtocol.Client.McpClient[1374391956]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending message.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Client (BrowserAI 2.0.1-alpha.0.1) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Forwarding 'tools/list' to the child as browserai-FD6DFEDB-1. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending method 'tools/list' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] waiting for response to request 'browserai-FD6DFEDB-1' for method 'tools/list'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID 'browserai-FD6DFEDB-1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] Request response received for method tools/list
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Session open at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.SessionManager[47]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      browserai_resume: resuming the session after its idle close
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: the first browser call after the resume, the one that starts the browser
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      Forwarding 'tools/call' to the child as browserai-FD6DFEDB-2. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      playwright-mcp[FD6DFEDB] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      playwright-mcp[FD6DFEDB] waiting for response to request 'browserai-FD6DFEDB-2' for method 'tools/call'.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0815ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0758ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0744ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0645ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0725ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0817ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0765ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0794ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0732ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0498ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0642ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0551ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0519ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0583ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0921ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0552ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0623ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0591ms.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID 'browserai-FD6DFEDB-2'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      playwright-mcp[FD6DFEDB] Request response received for method tools/call
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_snapshot: the call after the first, to see whether the session answers now
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      Forwarding 'tools/call' to the child as browserai-FD6DFEDB-3. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      playwright-mcp[FD6DFEDB] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      playwright-mcp[FD6DFEDB] waiting for response to request 'browserai-FD6DFEDB-3' for method 'tools/call'.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] message processing canceled.
+fail: BrowserAI.Sessions.LiveSession[3]
+      The child did not answer 'tools/call' for caller request 8.
+      System.Threading.Tasks.TaskCanceledException: A task was canceled.
+         at ModelContextProtocol.McpSessionHandler.<SendRequestAsync>d__47.MoveNext() + 0x530
+      --- End of stack trace from previous location ---
+         at ModelContextProtocol.Client.McpClientImpl.<SendRequestAsync>d__40.MoveNext() + 0x89
+      --- End of stack trace from previous location ---
+         at BrowserAI.Proxy.ChildConnection.<AskAsync>d__25.MoveNext() + 0x203
+warn: BrowserAI.Sessions.LiveSession[14]
+      The browser of C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1 ended with exit code 0 (0x00000000) while 'browser_snapshot' was running; BrowserAI had not asked it to close.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a resume ended a session's browser server to start a new one, detached and not awaited: reaper=74820@134363675764935823.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1 by the process that already held its guard, PID 73036 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 101420 in 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1\output'.
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending method 'initialize' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] waiting for response to request '1' for method 'initialize'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID '1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] Request response received for method initialize
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Client (BrowserAI 2.0.1-alpha.0.1) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+dbug: ModelContextProtocol.Client.McpClient[1374391956]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending message.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Client (BrowserAI 2.0.1-alpha.0.1) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Forwarding 'tools/list' to the child as browserai-FD6DFEDB-1. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] sending method 'tools/list' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] waiting for response to request 'browserai-FD6DFEDB-1' for method 'tools/list'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID 'browserai-FD6DFEDB-1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] Request response received for method tools/list
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      Session open at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.SessionManager[47]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      browserai_resume: resuming again, as the answer after the stall asks
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: the first browser call after the second resume
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      Forwarding 'tools/call' to the child as browserai-FD6DFEDB-2. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      playwright-mcp[FD6DFEDB] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      playwright-mcp[FD6DFEDB] waiting for response to request 'browserai-FD6DFEDB-2' for method 'tools/call'.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[FD6DFEDB]: pid 72452 exited with code 0.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID '(no id)'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcNotification message from channel.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] transport received message with ID 'browserai-FD6DFEDB-2'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      playwright-mcp[FD6DFEDB] Request response received for method tools/call
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1
+      playwright-mcp[FD6DFEDB] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[FD6DFEDB]: pid 101420 exited with code 0.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=112324@134363675792778860.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1 by the process that already held its guard, PID 73036 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-1; 0 item(s) could not be removed.
+info: BrowserAI.Sessions.SessionManager[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2 under Global\BrowserAI-98E2F3253F1B85494EA393E0E7DAA192.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 115724 in 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2\output'.
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending method 'initialize' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] waiting for response to request '1' for method 'initialize'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID '1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] Request response received for method initialize
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Client (BrowserAI 2.0.1-alpha.0.1) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+dbug: ModelContextProtocol.Client.McpClient[1374391956]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending message.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Client (BrowserAI 2.0.1-alpha.0.1) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Forwarding 'tools/list' to the child as browserai-98E2F325-1. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending method 'tools/list' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] waiting for response to request 'browserai-98E2F325-1' for method 'tools/list'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID 'browserai-98E2F325-1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] Request response received for method tools/list
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Session open at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: opening the page this session will be resumed on
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      Forwarding 'tools/call' to the child as browserai-98E2F325-2. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      playwright-mcp[98E2F325] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      playwright-mcp[98E2F325] waiting for response to request 'browserai-98E2F325-2' for method 'tools/call'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID '(no id)'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcNotification message from channel.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID 'browserai-98E2F325-2'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      playwright-mcp[98E2F325] Request response received for method tools/call
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Forwarding 'tools/call' to the child as browserai-98E2F325-3. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] waiting for response to request 'browserai-98E2F325-3' for method 'tools/call'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID 'browserai-98E2F325-3'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] Request response received for method tools/call
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325]: pid 115724 exited with code 0.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a session's browser was closed for being idle, detached and not awaited: reaper=75308@134363676449799671.
+info: BrowserAI.Sessions.BrowserIdleTimer[60]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Browser server ended after 00:01:00 idle on the session at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2, node child included. Processes in that child's job: 9 ? 0. Browser calls are refused until browserai_resume starts a new one.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2 by the process that already held its guard, PID 73036 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 127104 in 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2\output'.
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending method 'initialize' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] waiting for response to request '1' for method 'initialize'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID '1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] Request response received for method initialize
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Client (BrowserAI 2.0.1-alpha.0.1) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+dbug: ModelContextProtocol.Client.McpClient[1374391956]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending message.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Client (BrowserAI 2.0.1-alpha.0.1) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Forwarding 'tools/list' to the child as browserai-98E2F325-1. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending method 'tools/list' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] waiting for response to request 'browserai-98E2F325-1' for method 'tools/list'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID 'browserai-98E2F325-1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] Request response received for method tools/list
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Session open at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.SessionManager[47]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      browserai_resume: resuming the session after its idle close
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: the first browser call after the resume, the one that starts the browser
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      Forwarding 'tools/call' to the child as browserai-98E2F325-2. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      playwright-mcp[98E2F325] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      playwright-mcp[98E2F325] waiting for response to request 'browserai-98E2F325-2' for method 'tools/call'.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.063ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0721ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0512ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0611ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0563ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.076ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0598ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.064ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.048ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0818ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0684ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0608ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0578ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0601ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0587ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0589ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.061ms.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 2.0.1-alpha.0.1), Client (restore-stall-rig 1) method 'ping' request handler completed in 0.0611ms.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID 'browserai-98E2F325-2'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      playwright-mcp[98E2F325] Request response received for method tools/call
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_snapshot: the call after the first, to see whether the session answers now
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      Forwarding 'tools/call' to the child as browserai-98E2F325-3. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      playwright-mcp[98E2F325] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      playwright-mcp[98E2F325] waiting for response to request 'browserai-98E2F325-3' for method 'tools/call'.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] message processing canceled.
+fail: BrowserAI.Sessions.LiveSession[3]
+      The child did not answer 'tools/call' for caller request 16.
+      System.Threading.Tasks.TaskCanceledException: A task was canceled.
+         at ModelContextProtocol.McpSessionHandler.<SendRequestAsync>d__47.MoveNext() + 0x530
+      --- End of stack trace from previous location ---
+         at ModelContextProtocol.Client.McpClientImpl.<SendRequestAsync>d__40.MoveNext() + 0x89
+      --- End of stack trace from previous location ---
+         at BrowserAI.Proxy.ChildConnection.<AskAsync>d__25.MoveNext() + 0x203
+warn: BrowserAI.Sessions.LiveSession[14]
+      The browser of C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2 ended with exit code 0 (0x00000000) while 'browser_snapshot' was running; BrowserAI had not asked it to close.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a resume ended a session's browser server to start a new one, detached and not awaited: reaper=20924@134363678309640287.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2 by the process that already held its guard, PID 73036 -- this process. Nothing was taken from anybody.
+fail: BrowserAI.Sessions.SessionManager[44]
+      Session at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2 was locked but its browser runtime could not be started; the lock has been released.
+      BrowserAI.Runtime.FirefoxProfileLockedException: The Firefox profile at 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2\profile' is held open by another process, so no browser was started and nothing was changed. Windows names the holder: PID 70520, running since 2026-10-13T14:23:50.8892339+02:00 (Windows describes it as 'Nightly'). BrowserAI checks 'parent.lock' itself before launching, because nothing downstream does: Playwright's profile check reads Chromium's lock file only, and Firefox answers a collision by putting a dialog on the Windows desktop and blocking the launch for up to three minutes -- on a machine with nobody at the keyboard that is a hang with no message anywhere. Wait for that browser to close and call the same tool again on the same session, or call browserai_init on a different directory to run a second one beside it. A 'parent.lock' left behind by a crashed Firefox is not a lock -- Firefox never deletes the file, and this check reads the live handle, not the file's existence, so a stale one costs nothing.
+         at BrowserAI.Runtime.ChildLaunch.<CreateAsync>d__2.MoveNext() + 0x691
+      --- End of stack trace from previous location ---
+         at BrowserAI.Sessions.SessionManager.<OpenAsync>d__89.MoveNext() + 0xea1
+info: BrowserAI.Sessions.SessionManager[8]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2; the guard stays so a later reader can say who had it.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[98E2F325]: pid 127104 exited with code 0.
+info: BrowserAI.Sessions.SessionManager[12]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2 by the process that already held its guard, PID 73036 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 90820 in 'C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2\output'.
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending method 'initialize' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] waiting for response to request '1' for method 'initialize'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID '1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] Request response received for method initialize
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Client (BrowserAI 2.0.1-alpha.0.1) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+dbug: ModelContextProtocol.Client.McpClient[1374391956]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending message.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Client (BrowserAI 2.0.1-alpha.0.1) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Forwarding 'tools/list' to the child as browserai-98E2F325-1. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] sending method 'tools/list' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] waiting for response to request 'browserai-98E2F325-1' for method 'tools/list'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID 'browserai-98E2F325-1'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] Request response received for method tools/list
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      Session open at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2, headed: False; created by this connection: False.
+info: BrowserAI.Sessions.SessionManager[47]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      browserai_resume: resuming again once the profile is free
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: the first browser call after the second resume
+dbug: BrowserAI.Proxy.ChildConnection[6]
+      Forwarding 'tools/call' to the child as browserai-98E2F325-2. cancellable=True
+dbug: ModelContextProtocol.Client.McpClient[1344454274]
+      playwright-mcp[98E2F325] sending method 'tools/call' request.
+dbug: ModelContextProtocol.Client.McpClient[2125972309]
+      playwright-mcp[98E2F325] waiting for response to request 'browserai-98E2F325-2' for method 'tools/call'.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID '(no id)'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcNotification message from channel.
+dbug: BrowserAI.Protocol.ChildProcessSession[1000831420]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] transport received message with ID 'browserai-98E2F325-2'.
+dbug: ModelContextProtocol.Client.McpClient[330297028]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] read JsonRpcResponse message from channel.
+dbug: ModelContextProtocol.Client.McpClient[638581630]
+      playwright-mcp[98E2F325] Request response received for method tools/call
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2
+      playwright-mcp[98E2F325] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[98E2F325]: pid 90820 exited with code 0.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=113816@134363678390092505.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2 by the process that already held its guard, PID 73036 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\sessions\again\ff-dead-again-wait-2; 0 item(s) could not be removed.
+info: BrowserAI.Protocol.PipeServerTransport[4]
+      BrowserAI relay 23068-1: the peer closed its end of the connection.
+info: BrowserAI.Background.BackgroundServer[3]
+      Relay 23068-1 disconnected; 0 relay(s) and 0 session(s) are left.
+info: BrowserAI.Background.BackgroundServer[8]
+      Process 21024 asked the background to stop.
+info: BrowserAI.Background[20]
+      The background was asked to stop: every session closes cleanly, each within a minute, and then it ends.
+info: BrowserAI.Background[3]
+      The background is ending with 0 session(s), each asked to close its browser first, and 0 relay(s).

@@ -1,0 +1,11 @@
+file:///C:/Source/SixFive7/BrowserAI/.work/wt/after-125b/docs/probes/2026-10-13-restore-stall/replay.mjs:54
+if (!VARIANTS.includes(args.variant)) throw new Error(`unknown variant ${args.variant}`);
+                                            ^
+
+Error: unknown variant none
+    at file:///C:/Source/SixFive7/BrowserAI/.work/wt/after-125b/docs/probes/2026-10-13-restore-stall/replay.mjs:54:45
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.21.0

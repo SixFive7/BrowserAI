@@ -325,6 +325,15 @@ is named as candidates and says so.
       for what follows written beside the counts; and a replay of every stalled profile with
       Playwright's protocol log and Firefox's own logs on, which BrowserAI's child cannot
       have, is what says where a stalled start waits.
+      ⚠️ *Added 2026-10-13 by addition, a second time:* measured, in
+      [the kb](kb/playwright/provisioning-and-timings.md#a-firefox-session-resumed-onto-a-page-that-can-neither-load-nor-come-back-from-the-cache-waits-out-the-180-s-launch----measured-2026-10-13):
+      a Firefox session resumed onto a restored page served with `Cache-Control: no-store`,
+      whose server has ended, waits out the 180 s, 14 of 14, and no other resume did, 0 of 20;
+      the hazard row has the result. **What is left is the second half, a fix or a stated
+      reason**, and the replays bound it: keeping Playwright's blank page for Firefox, or
+      switching Firefox's restore off in the profile's `user.js` before the launch, started the
+      stalled profile; switching it off or making it lazy through `firefoxUserPrefs`, and making
+      it lazy in a `user.js`, did not. Which to take is the decision this item waits on.
 - [ ] **Check whether Chromium sends anywhere the minidump a crash leaves in a session's
       profile, after the release.** The maintainer's 133 a of 2026-10-13, in his words
       verbatim, *"133 a"*. A Chrome for Testing that crashes writes a minidump of the

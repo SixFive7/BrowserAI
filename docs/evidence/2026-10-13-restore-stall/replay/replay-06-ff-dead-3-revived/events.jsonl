@@ -1,0 +1,3 @@
+{"t":"2026-10-13T06:40:39.732Z","event":"notification","from":"child","method":"notifications/tools/list_changed"}
+{"t":"2026-10-13T06:40:39.744Z","event":"call","from":"child","tool":"browser_tabs","ms":1042,"isError":false,"text":"### Result - 0: (current) [restore-stall page](http://127.0.0.1:60739/3mBaO1owWG0dfm1hjnDL_eCg-pB7QotmJ2EJZGm4YDU/?tab=1)"}
+{"t":"2026-10-13T06:40:40.282Z","event":"replay","variant":"revived","outcome":"the call was answered","ms":1042}

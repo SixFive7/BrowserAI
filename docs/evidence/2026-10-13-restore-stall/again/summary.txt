@@ -1,0 +1,16 @@
+# .work/restore-stall/runs/again
+versions: {"t":"2026-10-13T12:15:27.628Z","event":"versions","node":"v24.21.0","mcp":"0.0.83","playwrightCore":"1.64.0-alpha-1790635538000","browsers":[{"name":"chromium","revision":"1247","browserVersion":"155.0.8059.12"},{"name":"firefox","revision":"1553","browserVersion":"156.0"}],"arms":["ff-dead-again-wait"],"armRounds":{"ff-dead-again-wait":2},"rounds":2,"idleMinutes":1,"retryAfterStall":2,"warmup":"no"}
+build: exe=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe | productVersion=2.0.1-alpha.0.1 | fileVersion=2.0.1.0 | commit=02ad1585cd35f927c3630d19f8b3a4f15d7434ab | stage=measure arms=ff-dead-again-wait rounds=2 idleMinutes=1 warmup=False retryAfterStall=2 from= max=3
+
+| Arm | Resumes measured | First start waited out 180 s | 95% interval | Fisher p against ff-dead | Answered first starts, min / median / max | Stalled starts | After a stall, the second call | Restore named the page | Safe mode seen |
+|---|--:|--:|---|--:|---|---|---|--:|--:|
+| ff-dead-again-wait | 2 | 2 | 0.16 to 1.00 | - | - | 180013 / 180014 / 180015 ms | failed, failed | 2 of 2 | 0 |
+
+ff-dead-again-wait-1: the first start waited out the launch timeout; idle close 60352 ms after the navigation; port at resume refused; first 180015 ms; second 43 ms failed; browser in the census: {"snapshots":36,"processes":8,"contentProcesses":6,"safeMode":false,"mainPid":90808,"mainCpuMs":1516}
+  call log, last line: - [pid=122752][out] console.warn: WindowsJumpLists: "Failed to fetch favicon for " "http://127.0.0.1:62519/nmOwm19exDeXbMUkLtbbQUiA5pJOpDwR28PFL2TVRJY/?tab=1" [Exception... "Failure"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "<unknown>"  data: no]
+  resumed again: first call 1733 ms, answered
+ff-dead-again-wait-2: the first start waited out the launch timeout; idle close 60288 ms after the navigation; port at resume refused; first 180013 ms; second 101 ms failed; browser in the census: {"snapshots":36,"processes":8,"contentProcesses":6,"safeMode":false,"mainPid":57112,"mainCpuMs":1578}
+  call log, last line: - [pid=129312][out] console.warn: WindowsJumpLists: "Failed to fetch favicon for " "http://127.0.0.1:57264/ki3aaJRmHgVXHme6n2xtVdj9Dvs1iFOsUCW0nLOb_VI/?tab=1" [Exception... "Failure"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "<unknown>"  data: no]
+  resumed again after 1 refusal(s) five seconds apart: first call 1479 ms, answered
+
+lines passed over as unreadable JSON: 0

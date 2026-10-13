@@ -1,0 +1,27 @@
+2026-10-13 06:34:24.107000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef056c050: created.
+2026-10-13 06:34:24.107000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef056c050: load group 26ef0571040.
+2026-10-13 06:34:24.123000 UTC - [Child 119876: Main Thread]: D/BrowsingContext Creating 0x00000003 from IPC (origin=0x00000000)
+2026-10-13 06:34:24.123000 UTC - [Child 119876: Main Thread]: D/BrowsingContext Child: Connecting 0x00000003 to 0x00000000 (private=0, remote=1, fission=1, oa=)
+2026-10-13 06:34:24.123000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: created.
+2026-10-13 06:34:24.123000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: load group 26ef0571b80.
+2026-10-13 06:34:24.162000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: Stop() called
+2026-10-13 06:34:24.162000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader [26ef32d2400] calling 26ef8d134e0->OnLocationChange to http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1 10
+2026-10-13 06:34:24.162000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader [26ef32d2400] calling 26ef05819e0->OnLocationChange to http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1 10
+2026-10-13 06:34:24.162000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader [26ef32d2400] calling 26ef0557898->OnLocationChange to http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1 10
+2026-10-13 06:34:24.162000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader [26ef32d2400] calling 26ef32d25a8->OnLocationChange to http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1 10
+2026-10-13 06:34:24.163000 UTC - [Child 119876: Main Thread]: D/SessionHistory nsDocShell[26ef32d2400]: loading from session history
+2026-10-13 06:34:24.163000 UTC - [Child 119876: Main Thread]: D/SessionHistory nsDocShell::IsSameDocumentNavigation 26ef32d2400 false, document is uncommitted initial
+2026-10-13 06:34:24.163000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: Stop() called
+2026-10-13 06:34:24.163000 UTC - [Child 119876: Main Thread]: D/SessionHistory ChildSHistory::RemovePendingHistoryNavigations: 0
+2026-10-13 06:34:24.163000 UTC - [Child 119876: Main Thread]: D/SessionHistory Setting the loading entry on nsDocShell 26ef32d2400 to http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1
+2026-10-13 06:34:24.163000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: OnStartRequest[26ef055bc40](documentchannel:http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1) mIsLoadingDocument=false, 1 active URLs, loadFlags=2691076
+2026-10-13 06:34:26.285000 UTC - [Child 119876: Main Thread]: D/SessionHistory nsDocShell 26ef32d2400 unloading, remove dynamic subframe entries
+2026-10-13 06:34:26.285000 UTC - [Child 119876: Main Thread]: D/SessionHistory nsDocShell 26ef32d2400 unloading, no active entries
+2026-10-13 06:34:26.285000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: Stop() called
+2026-10-13 06:34:26.285000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: OnStopRequest[26ef055bc40](documentchannel:http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1) status=2152398850 mIsLoadingDocument=true, mDocumentOpenedButNotLoaded=false, mIsLoadingJavascriptURI=false, 0 active URLs, loadFlags=2691076
+2026-10-13 06:34:26.285000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: Is now idle...
+2026-10-13 06:34:26.286000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: Stop() called
+2026-10-13 06:34:26.286000 UTC - [Child 119876: Main Thread]: D/BrowsingContext Child: Preparing 0x00000003 for a process change
+2026-10-13 06:34:34.648000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: Stop() called
+2026-10-13 06:34:34.648000 UTC - [Child 119876: Main Thread]: D/DocLoader DocLoader:26ef32d2400: deleted.
+2026-10-13 06:37:23.651000 UTC - [Child 119876: Main Thread]: D/BrowsingContext Child: Detaching 0x00000003 from 0x00000000

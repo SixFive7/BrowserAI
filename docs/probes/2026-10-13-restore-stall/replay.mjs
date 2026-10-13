@@ -20,8 +20,15 @@ import {
 
 // as-is: nothing changed. revived: the same address answers again. no-restore: the
 // browser restores nothing. blank-first: Playwright's own blank page is put back.
-// lazy: Firefox restores a tab only when it is selected.
-const VARIANTS = ['as-is', 'revived', 'no-restore', 'blank-first', 'lazy'];
+// lazy: Firefox restores a tab only when it is selected. The two '-userjs' variants, added
+// after the first replays, write the same preferences into the profile's user.js before
+// the launch: Playwright hands firefoxUserPrefs over in Browser.enable, and in the first
+// replays the restore went ahead on the value the last launch had left in prefs.js.
+const VARIANTS = ['as-is', 'revived', 'no-restore', 'blank-first', 'lazy', 'no-restore-userjs', 'lazy-userjs'];
+const USER_JS_PREFERENCES = {
+  'no-restore-userjs': { 'browser.sessionstore.resume_session_once': false },
+  'lazy-userjs': { 'browser.sessionstore.restore_on_demand': true, 'browser.sessionstore.restore_tabs_lazily': true },
+};
 
 // ChildConnection.ChildProtocolVersion at 449fc340.
 const PROTOCOL = '2025-11-25';
@@ -91,6 +98,17 @@ switch (args.variant) {
     if (firefox) Object.assign(preferences, { 'browser.sessionstore.restore_on_demand': true, 'browser.sessionstore.restore_tabs_lazily': true });
     else result.notApplicable = 'Chromium has no lazy restore of its own';
     break;
+  case 'no-restore-userjs':
+  case 'lazy-userjs': {
+    if (!firefox) { result.notApplicable = 'a user.js is Firefox\'s'; break; }
+    // In Browser.enable too, so that the launch's own preferences agree with the file.
+    const chosen = USER_JS_PREFERENCES[args.variant];
+    Object.assign(preferences, chosen);
+    const lines = Object.entries(chosen).map(([name, value]) => `user_pref(${JSON.stringify(name)}, ${JSON.stringify(value)});`);
+    await writeFile(join(profile, 'user.js'), `${lines.join('\n')}\n`);
+    result.userJs = lines;
+    break;
+  }
   default:
     break;
 }

@@ -3,14 +3,19 @@
 
 # 2026-10-13 -- a resumed session's first start, after the server of its last page has ended
 
-⚠️ **Written 2026-10-13 and not run yet. No number in this file comes from it.** It is the
-measurement the open row of [the hazard index](../../../HAZARDS.md) asks for, the row of a
-Firefox session start that waited out Playwright's 180 s, which the maintainer's 125 b of
-2026-10-12 opened in his words, *"125 your recommendation"*, and which
-[`TODO.md`](../../../TODO.md) carries for after the release. Its runs will be cut into a
-batch named `docs/evidence/<date>-restore-stall/`, and what they establish goes into
-[the timings article](../../../kb/playwright/provisioning-and-timings.md), beside the
-entry on the other 180 s Firefox stall, safe mode.
+⚠️ **Written 2026-10-13 and run the same day**, *corrected 2026-10-13 by addition (previously
+"**Written 2026-10-13 and not run yet. No number in this file comes from it.**")*: three
+measuring batches and two of replays, between 05:43Z and 12:28Z. It is the measurement the
+open row of [the hazard index](../../../HAZARDS.md) asks for, the row of a Firefox session
+start that waited out Playwright's 180 s, which the maintainer's 125 b of 2026-10-12 opened
+in his words, *"125 your recommendation"*, and which [`TODO.md`](../../../TODO.md) carries
+for after the release. Its runs are cut into
+[`docs/evidence/2026-10-13-restore-stall`](../../evidence/2026-10-13-restore-stall/README.md),
+and what they establish is in
+[the timings article](../../../kb/playwright/provisioning-and-timings.md#a-firefox-session-resumed-onto-a-page-that-can-neither-load-nor-come-back-from-the-cache-waits-out-the-180-s-launch----measured-2026-10-13),
+beside the entry on the other 180 s Firefox stall, safe mode. *Previously "Its runs will be
+cut into a batch named `docs/evidence/<date>-restore-stall/`, and what they establish goes
+into the timings article", written before the runs.*
 
 **Why it exists.** Twice on 2026-10-12 a headless Firefox 156.0 session of the installed
 BrowserAI, resumed after its idle close, answered its first browser call with
@@ -46,6 +51,36 @@ Firefox writes each history entry's policy container, the content security polic
 it, into the session it restores (`SessionHistory.sys.mjs` lines 256 to 258 and 555 to 563
 in firefox-1553's `omni.ja`, read and not run), and `lib.mjs` records per entry whether one
 was written, so the plain arm is the one that tells the address from the answers.
+
+⚠️ *Added 2026-10-13 by addition, after the first batch.* **The plain arm answered another
+question than the one it was put for.** With no `Cache-Control` of its own, its page came back
+out of Firefox's cache with its server gone, title, script and clock, in each of its five
+resumes. And the session files of the first batch held no policy container for the history
+entry of either page, so what the dashboard's answers leave in a restored session is not
+what tells the two apart; what its `no-store` keeps out of the cache may be. **Two arms were
+added for that, and one for what follows a stall**, run in a second batch:
+
+| Arm | Browser | The page's answers | The server at the resume | What it separates |
+|---|---|---|---|---|
+| `ff-dead-nostore` | Firefox | the dashboard's `Cache-Control: no-store`, and nothing else | ended | the one dashboard header that keeps the page out of the cache, alone |
+| `ff-dead-cacheable` | Firefox | every dashboard header but that one | ended | the rest of them, with the page free to be cached |
+| `ff-dead-again` | Firefox | the dashboard's headers | ended | after the stall, the `browserai_resume` BrowserAI's answer to the next call asks for, and the first call after it |
+
+Five rounds of the first two, for the reason five rounds were run at all; two of the third,
+because the first batch's stall came in every one of its resumes, so a second resume either
+meets it again or does not, and two say whether that is the same both times.
+
+⚠️ *Added 2026-10-13 by addition, after the second batch.* **Both resumes of `ff-dead-again`
+were refused**: *"The Firefox profile at '...' is held open by another process"*, naming a
+Firefox that had started 36 ms into the second call. So **one arm more, in a third batch**,
+asks again every five seconds while the answer says that, up to twelve times, as a caller
+reading it would:
+
+| Arm | Browser | The page's answers | The server at the resume | What it separates |
+|---|---|---|---|---|
+| `ff-dead-again-wait` | Firefox | the dashboard's headers | ended | whether the resume after a stall gets through once the profile is free, and what its first call meets |
+
+Two rounds, for the reason the arm it extends had two.
 
 **The idle close is BrowserAI's own** and not a `browserai_close`, at `idleMinutes` 1, the
 shortest the setting takes (`IdleSetting.Of`). The sightings closed after the default ten
@@ -143,16 +178,26 @@ replays that each try one thing a fix could change: `no-restore`, the browser re
 nothing; `blank-first`, Playwright's own blank page is put back; `lazy`, Firefox restores
 a tab only when it is selected. Each is a measurement of a direction, not a fix.
 
+⚠️ *Added 2026-10-13 by addition, after the first replays.* `no-restore` and `lazy` stalled
+as `as-is` did, and the protocol log showed why that says nothing about the two options: the
+replay hands them over in `firefoxUserPrefs`, which Playwright gives the juggler Firefox in
+`Browser.enable`, and the restore went ahead on the value the last launch had left in the
+profile's `prefs.js`, although `Browser.enable` was sent 0.7 s before the restored tab was
+attached. So **two replays more**, `no-restore-userjs` and `lazy-userjs`, write the same
+preferences into the profile copy's `user.js` before the launch, which Firefox reads as it
+starts, and hand them over in `Browser.enable` as well, so that the two agree.
+
 ## What is here
 
 | File | What it does |
 |---|---|
 | `run.ps1` | The launcher. Checks the rig's own files (`Add-Type` of `RigJob.cs`, `node --check` of the scripts) before anything else; takes the suite lock by creating its directory, writes `owner.txt` and reads it back for this script's pid before it runs anything; copies the browser revisions the published payload pins out of the provisioned browsers root into the scratch data root; runs each step as one node process in a `KILL_ON_JOB_CLOSE` job of its own and writes the job's census; ends the job; takes out the Firefox launcher values the run added and reports every other registry change; releases the lock, on failure too |
 | `RigJob.cs` | The job objects, the census of a job's members, and the lock directory's atomic create, for `run.ps1` through `Add-Type`. Kernel queries only: nothing in it waits |
-| `rig.mjs` | The measure stage: the published `BrowserAI.exe --background` on a pipe of the rig's own and a relay `BrowserAI.exe --mcp` beside it, the warm-ups, and the repetitions of every arm, one session at a time. Writes `results.jsonl`, `warmup.jsonl`, `events.jsonl`, the background's and the relay's standard error, the configs and the profile snapshots |
-| `replay.mjs` | One replay of a stalled snapshot through the payload's own child, with Playwright's and Firefox's logs on, as described above. Writes `result.json`, `config.json`, `child.stderr.txt` and Firefox's log files |
+| `rig.mjs` | The measure stage: the published `BrowserAI.exe --background` on a pipe of the rig's own and a relay `BrowserAI.exe --mcp` beside it, the warm-ups, and the repetitions of every arm, one session at a time; an arm named as `name:N` runs in the first N rounds only. Writes `results.jsonl`, `warmup.jsonl`, `events.jsonl`, the background's and the relay's standard error, the configs and the profile snapshots |
+| `replay.mjs` | One replay of a stalled snapshot through the payload's own child, with Playwright's and Firefox's logs on, as described above; a `-userjs` variant writes its preferences into the profile copy's `user.js` first. Writes `result.json`, `config.json`, `child.stderr.txt` and Firefox's log files |
 | `lib.mjs` | What the two share: the MCP client, the page server, the port probe, Firefox's session files decoded, the walk of a profile, and the two environment blocks |
-| `summarize.mjs` | The tables: per arm, the resumes, the stalls with an exact 95% interval and the Fisher p against `ff-dead`, the answered and stalled start times, the second calls, whether the session files named the page, and safe mode; per replay, the outcome and which of the three waits was still open, with the page's juggler events in order |
+| `summarize.mjs` | The tables: per arm, the resumes, the stalls with an exact 95% interval and the Fisher p against `ff-dead`, the answered and stalled start times, the second calls, whether the session files named the page, and safe mode; per row, the last line of a stalled call's log and what a resume after the stall met; per replay, the outcome and which of the three waits was still open, with the page's juggler events in order |
+| `cut.mjs` | Written after the first batch: cuts the batches into the evidence folder, with `%USERPROFILE%` for the profile path and terminal escapes removed under `.trimmed.` names, a file too large to keep cut to the lines a finding rests on, every original's SHA-256 and size in `originals.sha256`, and what was done to each file in `cuts.txt`. It refuses to write a control character |
 
 ## What keeps it off the rest of the machine
 
@@ -176,8 +221,8 @@ a tab only when it is selected. Each is a measurement of a direction, not a fix.
   nothing before. What a step leaves running ends with the job; the relay and the replay's
   child are told to end by their input closing first. **Nothing is ended by pid, and nothing
   is selected by image name**: the census reads the members of the rig's own job. A search of
-  the six files for the eight spellings `ProcessSelection` keys on found none, where the
-  same search finds `GetProcessesByName` in `2026-09-14-firstrun/observe.ps1`.
+  the seven code files for the eight spellings `ProcessSelection` keys on found none, where
+  the same search finds `GetProcessesByName` in `2026-09-14-firstrun/observe.ps1`.
 - **Nothing shows a window.** Every browser is headless; every node launch passes
   `windowsHide: true` with its standard streams piped; the one `Start-Process` passes
   `-NoNewWindow`.
@@ -210,6 +255,26 @@ run.ps1 -Stage measure -Name fidelity -Arms ff-dead -Rounds 3 -IdleMinutes 10 -N
 run.ps1 -Stage replay -Name replay -From first
 ```
 
+The second batch of 2026-10-13, and the cut into the evidence folder:
+
+```
+run.ps1 -Stage measure -Name headers -Arms ff-dead-nostore,ff-dead-cacheable,ff-dead-again:2 -NoWarmup
+<payload>\node\node.exe docs\probes\2026-10-13-restore-stall\cut.mjs docs\evidence\<date>-restore-stall .work\restore-stall\runs\first .work\restore-stall\runs\headers .work\restore-stall\runs\replay
+```
+
+⚠️ *Added 2026-10-13 by addition.* The third batch and the second replays, then the cut of all
+five:
+
+```
+run.ps1 -Stage measure -Name again -Arms ff-dead-again-wait -Rounds 2 -NoWarmup
+run.ps1 -Stage replay -Name replay2 -From first -Max 1 -Variants no-restore-userjs,lazy-userjs -DirectionVariants ''
+<payload>\node\node.exe docs\probes\2026-10-13-restore-stall\cut.mjs docs\evidence\2026-10-13-restore-stall .work\restore-stall\runs\first .work\restore-stall\runs\headers .work\restore-stall\runs\replay .work\restore-stall\runs\again .work\restore-stall\runs\replay2
+```
+
+The replays of 2026-10-13 were run with `-DirectionVariants 'none'`, which the launcher took
+for a variant's name: `replay.mjs` refused it before it started anything, and that step is in
+the evidence for its refusal. An empty `-DirectionVariants` asks for none.
+
 **What it costs.** One session at a time: a repetition whose first start is answered takes
 about ninety seconds, sixty of them the idle wait, and one that stalls about four and a half
 minutes, seven and a half when its second call stalls too. The first batch is twenty
@@ -218,7 +283,25 @@ resumes and two warm-ups: about half an hour if nothing stalls, about fifty minu
 the ten-minute batch about thirty-five, the replays up to half an hour. The load is one
 headless browser, BrowserAI's two processes and a node child at a time, mostly idle during
 the waits; the copy of the browsers is about 800 MB of disk once.
+⚠️ *Added 2026-10-13 by addition, from the launchers' logs:* the lock was held 40 minutes for
+the first batch, 16 for its replays, 36 for the second batch, 9 for the third and 3 for the
+second replays.
 
 ## How the stored copies differ from the ones that ran
 
 These are the files as written on 2026-10-13, and none of them has run yet.
+
+⚠️ *Added 2026-10-13 by addition, after the runs.* **The sentence above is the commit that
+first held the rig, `02ad1585`, and every batch ran from this folder as it stood when that
+batch started.** `run.ps1` and `RigJob.cs` are as committed there, and so is `replay.mjs`
+as the first replays ran it. After the first batch, `lib.mjs` gained the `nostore` and
+`cacheable` header sets and stopped failing a row on a Chromium session file held open, which
+cost the first batch's five Chromium rows the session reading after their calls and the
+outcome a row writes after it, their calls, times and destroy recorded; `rig.mjs` gained
+the three arms of the second batch and `name:N`. After the first replays, `replay.mjs` gained
+the two `-userjs` variants. After the second batch, `rig.mjs` gained `ff-dead-again-wait`,
+and nothing else changed before the third batch and the second replays ran. `summarize.mjs`
+gained the lines about a resume after a stall and printed the answers in a replay's event
+list by their command's id, and every `summary.txt` in the evidence was printed by it as it
+stands here, after the last batch. `cut.mjs` was written after the first batch and ran after
+the last.

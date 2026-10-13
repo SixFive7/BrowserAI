@@ -1,0 +1,22 @@
+build.txt: unchanged
+browsers.txt: unchanged
+launcher.log: unchanged
+summary.txt: unchanged
+registry-replay.trimmed.txt: the profile path replaced and colour escapes removed
+registry-before.txt: not kept, it lists every value Firefox keeps for every install on the machine; 64 values
+replay-01-ff-dead-1-no-restore-userjs/result.json: unchanged
+replay-01-ff-dead-1-no-restore-userjs/config.json: unchanged
+replay-01-ff-dead-1-no-restore-userjs/events.jsonl: unchanged
+replay-01-ff-dead-1-no-restore-userjs/node.stdout.txt: unchanged
+replay-01-ff-dead-1-no-restore-userjs/node.stderr.txt: unchanged
+replay-01-ff-dead-1-no-restore-userjs/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-01-ff-dead-1-no-restore-userjs/profile/sessionstore-logs/success-sessionrestore-1791894291747.txt: unchanged
+replay-02-ff-dead-1-lazy-userjs/result.trimmed.json: the profile path replaced and colour escapes removed
+replay-02-ff-dead-1-lazy-userjs/config.json: unchanged
+replay-02-ff-dead-1-lazy-userjs/events.trimmed.jsonl: the profile path replaced and colour escapes removed
+replay-02-ff-dead-1-lazy-userjs/node.stdout.trimmed.txt: the profile path replaced and colour escapes removed
+replay-02-ff-dead-1-lazy-userjs/node.stderr.txt: unchanged
+replay-02-ff-dead-1-lazy-userjs/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-02-ff-dead-1-lazy-userjs/profile/sessionstore-logs/success-sessionrestore-1791894296632.txt: unchanged
+replay-03-ff-dead-1-none/node.stdout.txt: unchanged
+replay-03-ff-dead-1-none/node.stderr.txt: unchanged

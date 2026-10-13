@@ -192,6 +192,17 @@ const DASHBOARD_HEADERS = {
   'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'",
 };
 
+// The answers a page can be served with. 'nostore' and 'cacheable' were added after the
+// first batch, whose plain page came back from Firefox's cache with its server gone: the
+// one dashboard header that decides whether the cache may keep a page, alone, and every
+// dashboard header but that one.
+const HEADER_SETS = {
+  dashboard: DASHBOARD_HEADERS,
+  plain: {},
+  nostore: { 'Cache-Control': DASHBOARD_HEADERS['Cache-Control'] },
+  cacheable: Object.fromEntries(Object.entries(DASHBOARD_HEADERS).filter(([name]) => name !== 'Cache-Control')),
+};
+
 const PAGE_HTML = `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><title>restore-stall page</title><link rel="stylesheet" href="page.css"></head>
@@ -223,11 +234,12 @@ function listen(server, port) {
 
 // A page on 127.0.0.1 shaped like the one the sightings were on: a token in the path,
 // '?tab=1', an external script and style sheet, a clock and an event stream, served with
-// the dashboard's headers or with none of them.
+// one of the header sets above.
 export async function startPageServer({ headers = 'dashboard', port = 0, token } = {}) {
   const pathToken = token ?? randomBytes(32).toString('base64url');
   const base = `/${pathToken}/`;
-  const extra = headers === 'dashboard' ? DASHBOARD_HEADERS : {};
+  const extra = HEADER_SETS[headers];
+  if (!extra) throw new Error(`unknown header set ${headers}`);
   const streams = new Set();
   const counts = { requests: 0, sseOpened: 0, last: [] };
   const server = createServer((request, response) => {
@@ -391,7 +403,10 @@ export async function readChromiumSession(profile, token) {
   try { names = await readdir(folder); } catch { return { folder: 'Default/Sessions', missing: true }; }
   const files = [];
   for (const name of names) {
-    const buffer = await readFile(join(folder, name));
+    // A running Chromium holds its current session file open with no sharing; that file
+    // is named and not read, which the first batch's Chromium rows lost an outcome to.
+    let buffer;
+    try { buffer = await readFile(join(folder, name)); } catch (error) { files.push({ name, unread: error.code ?? String(error) }); continue; }
     files.push({ name, bytes: buffer.length, hasToken: buffer.includes(Buffer.from(token, 'latin1')) || buffer.includes(Buffer.from(token, 'utf16le')) });
   }
   return { folder: 'Default/Sessions', files };

@@ -1,0 +1,93 @@
+build.txt: unchanged
+browsers.txt: unchanged
+launcher.log: unchanged
+summary.txt: unchanged
+registry-replay.trimmed.txt: the profile path replaced and colour escapes removed
+registry-before.txt: not kept, it lists every value Firefox keeps for every install on the machine; 64 values
+replay-01-ff-dead-1-as-is/result.trimmed.json: the profile path replaced and colour escapes removed
+replay-01-ff-dead-1-as-is/config.json: unchanged
+replay-01-ff-dead-1-as-is/events.trimmed.jsonl: the profile path replaced and colour escapes removed
+replay-01-ff-dead-1-as-is/node.stdout.trimmed.txt: the profile path replaced and colour escapes removed
+replay-01-ff-dead-1-as-is/node.stderr.txt: unchanged
+replay-01-ff-dead-1-as-is/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-01-ff-dead-1-as-is/moz/moz.log.child-1.moz_log: unchanged
+replay-01-ff-dead-1-as-is/moz/moz.log.child-2.moz_log: unchanged
+replay-01-ff-dead-1-as-is/moz/moz.log.child-3.moz_log: unchanged
+replay-01-ff-dead-1-as-is/moz/moz.log.child-4.moz_log: unchanged
+replay-01-ff-dead-1-as-is/moz/moz.log.child-5.moz_log: unchanged
+replay-01-ff-dead-1-as-is/moz/moz.log.child-6.moz_log: unchanged
+replay-01-ff-dead-1-as-is/moz/moz.log.child-7.trimmed.moz_log: the profile path replaced and colour escapes removed
+replay-01-ff-dead-1-as-is/moz/moz.log.trimmed.moz_log: the profile path replaced and colour escapes removed
+replay-01-ff-dead-1-as-is/profile/sessionstore-logs/success-sessionrestore-1791873073466.txt: unchanged
+replay-02-ff-dead-1-revived/result.json: unchanged
+replay-02-ff-dead-1-revived/config.json: unchanged
+replay-02-ff-dead-1-revived/events.jsonl: unchanged
+replay-02-ff-dead-1-revived/node.stdout.txt: unchanged
+replay-02-ff-dead-1-revived/node.stderr.txt: unchanged
+replay-02-ff-dead-1-revived/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-02-ff-dead-1-revived/profile/sessionstore-logs/success-sessionrestore-1791873258425.txt: unchanged
+replay-03-ff-dead-2-as-is/result.trimmed.json: the profile path replaced and colour escapes removed
+replay-03-ff-dead-2-as-is/config.json: unchanged
+replay-03-ff-dead-2-as-is/events.trimmed.jsonl: the profile path replaced and colour escapes removed
+replay-03-ff-dead-2-as-is/node.stdout.trimmed.txt: the profile path replaced and colour escapes removed
+replay-03-ff-dead-2-as-is/node.stderr.txt: unchanged
+replay-03-ff-dead-2-as-is/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-03-ff-dead-2-as-is/moz/moz.log.child-1.moz_log: unchanged
+replay-03-ff-dead-2-as-is/moz/moz.log.child-2.moz_log: unchanged
+replay-03-ff-dead-2-as-is/moz/moz.log.child-3.moz_log: unchanged
+replay-03-ff-dead-2-as-is/moz/moz.log.child-4.moz_log: unchanged
+replay-03-ff-dead-2-as-is/moz/moz.log.child-5.moz_log: unchanged
+replay-03-ff-dead-2-as-is/moz/moz.log.child-6.moz_log: unchanged
+replay-03-ff-dead-2-as-is/moz/moz.log.child-7.trimmed.moz_log: the profile path replaced and colour escapes removed
+replay-03-ff-dead-2-as-is/moz/moz.log.trimmed.moz_log: the profile path replaced and colour escapes removed
+replay-03-ff-dead-2-as-is/profile/sessionstore-logs/success-sessionrestore-1791873263714.txt: unchanged
+replay-04-ff-dead-2-revived/result.json: unchanged
+replay-04-ff-dead-2-revived/config.json: unchanged
+replay-04-ff-dead-2-revived/events.jsonl: unchanged
+replay-04-ff-dead-2-revived/node.stdout.txt: unchanged
+replay-04-ff-dead-2-revived/node.stderr.txt: unchanged
+replay-04-ff-dead-2-revived/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-04-ff-dead-2-revived/profile/sessionstore-logs/success-sessionrestore-1791873448660.txt: unchanged
+replay-05-ff-dead-3-as-is/result.trimmed.json: the profile path replaced and colour escapes removed
+replay-05-ff-dead-3-as-is/config.json: unchanged
+replay-05-ff-dead-3-as-is/events.trimmed.jsonl: the profile path replaced and colour escapes removed
+replay-05-ff-dead-3-as-is/node.stdout.trimmed.txt: the profile path replaced and colour escapes removed
+replay-05-ff-dead-3-as-is/node.stderr.txt: unchanged
+replay-05-ff-dead-3-as-is/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-05-ff-dead-3-as-is/moz/moz.log.child-1.moz_log: unchanged
+replay-05-ff-dead-3-as-is/moz/moz.log.child-2.moz_log: unchanged
+replay-05-ff-dead-3-as-is/moz/moz.log.child-3.moz_log: unchanged
+replay-05-ff-dead-3-as-is/moz/moz.log.child-4.moz_log: unchanged
+replay-05-ff-dead-3-as-is/moz/moz.log.child-5.moz_log: unchanged
+replay-05-ff-dead-3-as-is/moz/moz.log.child-6.moz_log: unchanged
+replay-05-ff-dead-3-as-is/moz/moz.log.child-7.trimmed.moz_log: the profile path replaced and colour escapes removed
+replay-05-ff-dead-3-as-is/moz/moz.log.trimmed.moz_log: the profile path replaced and colour escapes removed
+replay-05-ff-dead-3-as-is/profile/sessionstore-logs/success-sessionrestore-1791873453956.txt: unchanged
+replay-06-ff-dead-3-revived/result.json: unchanged
+replay-06-ff-dead-3-revived/config.json: unchanged
+replay-06-ff-dead-3-revived/events.jsonl: unchanged
+replay-06-ff-dead-3-revived/node.stdout.txt: unchanged
+replay-06-ff-dead-3-revived/node.stderr.txt: unchanged
+replay-06-ff-dead-3-revived/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-06-ff-dead-3-revived/profile/sessionstore-logs/success-sessionrestore-1791873638797.txt: unchanged
+replay-07-ff-dead-1-no-restore/result.trimmed.json: the profile path replaced and colour escapes removed
+replay-07-ff-dead-1-no-restore/config.json: unchanged
+replay-07-ff-dead-1-no-restore/events.trimmed.jsonl: the profile path replaced and colour escapes removed
+replay-07-ff-dead-1-no-restore/node.stdout.trimmed.txt: the profile path replaced and colour escapes removed
+replay-07-ff-dead-1-no-restore/node.stderr.txt: unchanged
+replay-07-ff-dead-1-no-restore/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-07-ff-dead-1-no-restore/profile/sessionstore-logs/success-sessionrestore-1791873643827.txt: unchanged
+replay-08-ff-dead-1-blank-first/result.json: unchanged
+replay-08-ff-dead-1-blank-first/config.json: unchanged
+replay-08-ff-dead-1-blank-first/events.jsonl: unchanged
+replay-08-ff-dead-1-blank-first/node.stdout.txt: unchanged
+replay-08-ff-dead-1-blank-first/node.stderr.txt: unchanged
+replay-08-ff-dead-1-blank-first/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-08-ff-dead-1-blank-first/profile/sessionstore-logs/success-sessionrestore-1791873829004.txt: unchanged
+replay-09-ff-dead-1-lazy/result.trimmed.json: the profile path replaced and colour escapes removed
+replay-09-ff-dead-1-lazy/config.json: unchanged
+replay-09-ff-dead-1-lazy/events.trimmed.jsonl: the profile path replaced and colour escapes removed
+replay-09-ff-dead-1-lazy/node.stdout.trimmed.txt: the profile path replaced and colour escapes removed
+replay-09-ff-dead-1-lazy/node.stderr.txt: unchanged
+replay-09-ff-dead-1-lazy/child.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+replay-09-ff-dead-1-lazy/profile/sessionstore-logs/success-sessionrestore-1791873833988.txt: unchanged

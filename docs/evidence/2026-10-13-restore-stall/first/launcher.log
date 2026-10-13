@@ -1,0 +1,6 @@
+2026-10-13T05:43:04.8022327Z took the suite lock as: after-125b 2026-10-13T05:43:04.7687563Z restore-stall rig, stage measure, batch first, pid=116720
+2026-10-13T05:43:05.6834419Z step started: node pid 99652, output C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\first\measure
+2026-10-13T06:23:27.0516543Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T06:23:27.0527771Z measure step exit code: 0
+2026-10-13T06:23:27.1219115Z registry after measure: 7 line(s) in C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\first\registry-measure.txt
+2026-10-13T06:23:27.1337921Z released the suite lock

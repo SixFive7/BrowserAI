@@ -1,0 +1,26 @@
+build.txt: unchanged
+browsers.txt: unchanged
+launcher.log: unchanged
+summary.txt: unchanged
+registry-measure.trimmed.txt: the profile path replaced and colour escapes removed
+registry-before.txt: not kept, it lists every value Firefox keeps for every install on the machine; 64 values
+measure/results.trimmed.jsonl: the profile path replaced and colour escapes removed
+measure/events.trimmed.jsonl: the profile path replaced and colour escapes removed
+measure/relay.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+measure/background.stdout.txt: unchanged
+measure/node.stdout.trimmed.txt: the profile path replaced and colour escapes removed
+measure/node.stderr.txt: unchanged
+measure/background.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+measure/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+measure/configs/ff-dead-again-1.json: unchanged
+measure/configs/ff-dead-again-2.json: unchanged
+measure/configs/ff-dead-cacheable-1.json: unchanged
+measure/configs/ff-dead-cacheable-2.json: unchanged
+measure/configs/ff-dead-cacheable-3.json: unchanged
+measure/configs/ff-dead-cacheable-4.json: unchanged
+measure/configs/ff-dead-cacheable-5.json: unchanged
+measure/configs/ff-dead-nostore-1.json: unchanged
+measure/configs/ff-dead-nostore-2.json: unchanged
+measure/configs/ff-dead-nostore-3.json: unchanged
+measure/configs/ff-dead-nostore-4.json: unchanged
+measure/configs/ff-dead-nostore-5.json: unchanged

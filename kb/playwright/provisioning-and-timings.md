@@ -2218,6 +2218,116 @@ deterministic arm and the one to run first**: three of three stuck, no keyboard
 involved. A newer Firefox that launches under it, or a `playwright-core` that
 sets the variable itself, is the change to look for.
 
+### A Firefox session resumed onto a page that can neither load nor come back from the cache waits out the 180 s launch -- measured 2026-10-13
+
+`[FLOATS]` Firefox **156.0** (`firefox-1553`, build 20260927184314) under `playwright-core`
+**1.64.0-alpha-1790635538000** and `@playwright/mcp` **0.0.83** on node **v24.21.0** from the
+payload, driven through BrowserAI **2.0.1-alpha.0.1** published from `02ad1585`, with Chrome
+for Testing **155.0.8059.12** (`chromium-1247`) beside it; `[MACHINE]` for every time. Three
+measuring batches on 2026-10-13, one session at a time: twenty resumes between 05:43Z and
+06:23Z, twelve between 11:38Z and 12:14Z and two between 12:15Z and 12:24Z; and eleven replays,
+nine between 06:31Z and 06:47Z and two between 12:24Z and 12:28Z
+([evidence](../../docs/evidence/2026-10-13-restore-stall/README.md),
+[rig](../../docs/probes/2026-10-13-restore-stall/README.md)). The maintainer's 125 b of
+2026-10-12, in his words verbatim, *"125 your recommendation"*, which opened
+[the hazard row](../../HAZARDS.md) from two sightings of that day.
+
+**Every Firefox resume onto a page served with `Cache-Control: no-store` after its server had
+ended waited out Playwright's 180 s, 14 of 14 over the three batches, and every other resume
+started in about a second, 0 of 20.** The first browser call after BrowserAI's own idle close
+and `browserai_resume` was answered with *"TimeoutError: async initializeServer: Timeout
+180000ms exceeded."* after 180,013 to 180,030 ms, and its call log ended, 14 of 14 and as both
+sightings of 2026-10-12 did, on Firefox's jump list failing to fetch a favicon for that page:
+
+| Arm, interleaved with the others of its batch | Batch | Resumes | Waited out 180 s | First start, min / median / max |
+|---|---|--:|--:|---|
+| Firefox, the dashboard's page, its server ended | first | 5 | 5 | 180,013 / 180,014 / 180,015 ms |
+| Firefox, the same page, its server still answering | first | 5 | 0 | 960 / 984 / 1,056 ms |
+| Firefox, the same page with none of the dashboard's headers, its server ended | first | 5 | 0 | 944 / 948 / 1,013 ms |
+| Chromium, the dashboard's page, its server ended | first | 5 | 0 | 370 / 412 / 484 ms |
+| Firefox, the same page with the dashboard's `Cache-Control: no-store` and no other header, its server ended | second | 5 | 5 | 180,015 / 180,017 / 180,030 ms |
+| Firefox, the same page with every dashboard header but `Cache-Control`, its server ended | second | 5 | 0 | 961 / 1,057 / 1,192 ms |
+| Firefox, the dashboard's page, its server ended, resumed again after the stall | second and third | 4 | 4 | 180,013 / 180,015.5 / 180,017 ms |
+
+Within the first batch each other arm against the first, and within the second the arm with
+`no-store` against the arm without it, Fisher's exact two-sided p = 0.0079; an arm of 5 of 5
+has the exact 95% interval 0.48 to 1.00, and one of 0 of 5 has 0.00 to 0.52.
+
+**What tells them apart is whether the restored page can come up at all, and the second batch
+puts that on the cache alone.** With its server answering Firefox restored the page from it;
+served with no `Cache-Control` of its own, the page came back out of Firefox's cache with its
+server gone, its title, script and clock included; and Chromium showed its own error page,
+`chrome-error://chromewebdata/`, and started. The dashboard answers with `Cache-Control:
+no-store`, so with its server gone Firefox had only its error page to show. Served with that
+one header the page waited out 180 s 5 of 5, and served with every other header the dashboard
+sends, `Content-Security-Policy` and `Cross-Origin-Opener-Policy` among them, it came back from
+the cache 5 of 5, its clock running and its event stream unanswered.
+
+**Where it waits, read in Playwright's protocol log and in Firefox's own.** Replayed through
+the payload's own `@playwright/mcp` child, with the config BrowserAI wrote for the stalled
+resume and a copy of the profile taken before it, three of three stalled again (180,014 to
+180,016 ms), and three of three started in 1,042 to 1,112 ms once the same address answered
+again. In the stalled ones juggler attached the page, the restored tab's navigation was
+aborted with `NS_ERROR_CONNECTION_REFUSED` about 1.8 s later, juggler sent `Page.ready`, the
+error page's navigation committed under the page's own address and `DOMContentLoaded`
+arrived, and no `Page.eventFired` with `load` came in the 180 s after it. Firefox's `DocLoader`
+log shows the error page, `about:neterror?e=connectionFailure`, finishing with 0 active URLs
+78 ms after the failure, and its session store's own log shows the restore finished.
+Playwright's persistent launch ends in `loadDefaultContextAsIs`, which waits for its first
+page's main frame to report `load`, and since BrowserAI drops Playwright's own blank page
+(`BrowserConfiguration.DefaultPageArgument`) the restored tab is that first page.
+
+**What it is not.** Safe mode: none of the fourteen stalled browsers had a content process
+started with `-safeMode`; each had six content processes, and its browser process used 0.97 to
+2.97 s of processor time in the 180 s; thirteen of the fourteen profiles stopped growing 65 s
+into the call, at 83 or 84 files, and the fourteenth changed last at 150 s. Nor BrowserAI: the
+replays stalled without it.
+
+**What the next call meets, and the resume it asks for.** Each of the eight stalls the rig
+followed with a second call had that call answered in 43 to 134 ms with *"The browser server
+for '...' ended while 'browser_snapshot' was running ... Call browserai_resume on that
+directory to start a new browser server"*, and BrowserAI's background recorded the
+`@playwright/mcp` child as ended with exit code 0, 8 of 8. Resumed at once, as that answer
+asks, three of four were refused in 528 to 694 ms with *"The Firefox profile at '...' is held
+open by another process, so no browser was started and nothing was changed"*; the two refusals
+that named the holder named a Firefox, which Windows describes as *'Nightly'*, started 36 ms
+after the second call was sent, and the census of the step's job, read every five seconds, saw
+neither. Asked again five seconds after a refusal, or at once where there was none, both
+sessions of the third batch resumed, and the first call after it was answered in 1,733 and
+1,479 ms with one tab, `about:blank`: the stall did not come back, and the page did not either.
+
+**What the restore options change, replayed on one stalled profile.** Keeping Playwright's
+own blank page, `about:blank` taken out of `ignoreDefaultArgs`, started in 1,070 ms, with the
+restored tab beside the blank one in the session Firefox saved. Switching the restore off, or
+making it lazy, through `firefoxUserPrefs` stalled as before, 180,014 ms each: Playwright
+hands those preferences to the juggler Firefox in `Browser.enable` (the delivery
+[the resurrection article](../chromium/resurrection.md) measured on 2026-08-16), and the
+restore went ahead on the value the last launch had left in the profile's `prefs.js`,
+`browser.sessionstore.resume_session_once` true, although `Browser.enable` was sent 0.7 s
+before the restored tab was attached. Written into the copy of the profile as a `user.js`,
+which Firefox reads as it starts, the same switch, `browser.sessionstore.resume_session_once`
+false, started in 1,143 ms on `about:blank`, its `load` in the same millisecond as its
+`Page.ready`. The lazy restore written the same way,
+`browser.sessionstore.restore_on_demand` and `browser.sessionstore.restore_tabs_lazily` true,
+stalled as before, 180,018 ms: the one tab was the selected one, which a lazy restore loads at
+once, and it went to the dead address, failed with `NS_ERROR_CONNECTION_REFUSED` and committed
+the error page under it with no `load`.
+
+⚠️ **Not established:** a page on another host that cannot be reached, which the rig did not
+try; a session with more than one tab; the sightings' ten minutes of idle time, which the rig
+shortened to one (the close is the same path); a window; what started the Firefox that held
+the profile after a stall; whether a `user.js` keeps the restore off across later launches,
+which one replay cannot show; and why juggler reports no `load` for that error page, which is
+juggler's own code and was not read further.
+
+**Re-establish** with the rig: `run.ps1 -Stage measure -Name <batch>` under the suite's lock
+and `summarize.mjs` over the batch, with `-Arms ff-dead-nostore,ff-dead-cacheable,ff-dead-again:2`
+for the second batch's arms and `-Arms ff-dead-again-wait -Rounds 2` for the third's; then
+`run.ps1 -Stage replay -From <batch>` for where a stall waits, with `-Variants` naming the
+restore options to replay. A Firefox build whose juggler reports `load` for a restored error
+page, or a `playwright-core` whose persistent launch stops waiting for its first page's
+`load`, is the change to look for: the `ff-dead` arm then starts.
+
 ### What a server's start costs before its first answer -- measured 2026-10-04
 
 `[FLOATS]` on the payload, `@playwright/mcp` **0.0.83** with `playwright-core`

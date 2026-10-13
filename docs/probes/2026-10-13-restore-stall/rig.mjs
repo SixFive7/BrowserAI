@@ -26,6 +26,13 @@ const ARMS = {
   'ff-dead-plain': { family: 'firefox', headers: 'plain', serverEnds: true },
   'cr-dead': { family: 'chromium', headers: 'dashboard', serverEnds: true },
   'cr-alive': { family: 'chromium', headers: 'dashboard', serverEnds: false },
+  // Added after the first batch, whose ff-dead-plain page came back from the cache.
+  'ff-dead-nostore': { family: 'firefox', headers: 'nostore', serverEnds: true },
+  'ff-dead-cacheable': { family: 'firefox', headers: 'cacheable', serverEnds: true },
+  // Added after the first batch too: what the resume BrowserAI's answer asks for meets.
+  'ff-dead-again': { family: 'firefox', headers: 'dashboard', serverEnds: true, again: true },
+  // Added after the second batch: the same, with the second resume asked again while refused.
+  'ff-dead-again-wait': { family: 'firefox', headers: 'dashboard', serverEnds: true, again: true, retry: true },
 };
 
 // BrowserProxy.CallerProtocolVersion at 449fc340.
@@ -41,9 +48,15 @@ await waitForFile(args.go);
 await mkdir(args.out, { recursive: true });
 
 const log = new EventLog(join(args.out, 'events.jsonl'));
-const arms = args.arms.split(',').filter(Boolean);
-for (const arm of arms) if (!ARMS[arm]) throw new Error(`unknown arm ${arm}`);
 const rounds = Number(args.rounds);
+
+// An arm is named alone, for --rounds rounds, or as name:N, for its first N rounds only.
+const armRounds = new Map(args.arms.split(',').filter(Boolean).map((entry) => {
+  const [name, count] = entry.split(':');
+  return [name, count === undefined ? rounds : Number(count)];
+}));
+const arms = [...armRounds.keys()];
+for (const arm of arms) if (!ARMS[arm]) throw new Error(`unknown arm ${arm}`);
 const idleMinutes = Number(args['idle-minutes']);
 const retryAfterStall = Number(args['retry-after-stall']);
 const settings = { headed: false, transcript: false, captureNetwork: false, idleMinutes, debug: true };
@@ -56,7 +69,7 @@ log.write('versions', {
   mcp: await packageVersion('@playwright', 'mcp'),
   playwrightCore: await packageVersion('playwright-core'),
   browsers: pins.filter((pin) => ['chromium', 'firefox'].includes(pin.name)).map(({ name, revision, browserVersion }) => ({ name, revision, browserVersion })),
-  arms, rounds, idleMinutes, retryAfterStall, warmup: args.warmup,
+  arms, armRounds: Object.fromEntries(armRounds), rounds, idleMinutes, retryAfterStall, warmup: args.warmup,
 });
 
 const env = browserAiEnvironment(process.env, {
@@ -238,6 +251,26 @@ async function repetition(arm, round) {
       row.secondCallLog = row.second.isError ? callLogOf(row.second.text) : null;
     }
 
+    // After a stall, BrowserAI's answer to the next call asks for a resume; this arm makes
+    // it and times the first call after it the same way.
+    if (spec.again && row.firstStalled) {
+      row.againResume = await call('browserai_resume', { directory: dir, why: 'resuming again, as the answer after the stall asks', ...settings });
+      // Added after the second batch: there, a Firefox that had started 36 ms into the call
+      // before still held the profile when that resume came, and the resume was refused. This
+      // arm asks again every five seconds while the refusal says so, as a caller reading it
+      // would, for a minute.
+      row.againRefusals = 0;
+      while (spec.retry && row.againResume.isError && /is held open by another process/.test(row.againResume.text) && row.againRefusals < 12) {
+        row.againRefusals++;
+        await delay(5000);
+        row.againResume = await call('browserai_resume', { directory: dir, why: 'resuming again once the profile is free', ...settings });
+      }
+      if (!row.againResume.isError) {
+        row.againFirst = await call('browser_tabs', { session: dir, action: 'list', why: 'the first browser call after the second resume' });
+        row.againStalled = isStall(row.againFirst);
+      }
+    }
+
     row.sessionAfter = await readSession(spec.family, profile, server.token);
     row.outcome = row.firstStalled ? 'the first start waited out the launch timeout' : row.first.isError ? 'the first call failed another way' : 'the first call was answered';
     return row.outcome;
@@ -280,6 +313,7 @@ try {
   for (let round = 1; round <= rounds && !backgroundGone; round++) {
     for (const arm of arms) {
       if (backgroundGone) break;
+      if (round > armRounds.get(arm)) continue;
       try {
         await repetition(arm, round);
       } catch (error) {

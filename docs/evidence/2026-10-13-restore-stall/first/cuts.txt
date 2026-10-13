@@ -1,0 +1,35 @@
+build.txt: unchanged
+browsers.trimmed.txt: the profile path replaced and colour escapes removed
+launcher.log: unchanged
+summary.txt: unchanged
+registry-measure.trimmed.txt: the profile path replaced and colour escapes removed
+registry-before.txt: not kept, it lists every value Firefox keeps for every install on the machine; 62 values
+measure/results.trimmed.jsonl: the profile path replaced and colour escapes removed
+measure/warmup.trimmed.jsonl: the profile path replaced and colour escapes removed
+measure/events.trimmed.jsonl: the profile path replaced and colour escapes removed
+measure/relay.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+measure/background.stdout.txt: unchanged
+measure/node.stdout.trimmed.txt: the profile path replaced and colour escapes removed
+measure/node.stderr.txt: unchanged
+measure/background.stderr.trimmed.txt: the profile path replaced and colour escapes removed
+measure/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+measure/configs/cr-dead-1.json: unchanged
+measure/configs/cr-dead-2.json: unchanged
+measure/configs/cr-dead-3.json: unchanged
+measure/configs/cr-dead-4.json: unchanged
+measure/configs/cr-dead-5.json: unchanged
+measure/configs/ff-alive-1.json: unchanged
+measure/configs/ff-alive-2.json: unchanged
+measure/configs/ff-alive-3.json: unchanged
+measure/configs/ff-alive-4.json: unchanged
+measure/configs/ff-alive-5.json: unchanged
+measure/configs/ff-dead-1.json: unchanged
+measure/configs/ff-dead-2.json: unchanged
+measure/configs/ff-dead-3.json: unchanged
+measure/configs/ff-dead-4.json: unchanged
+measure/configs/ff-dead-5.json: unchanged
+measure/configs/ff-dead-plain-1.json: unchanged
+measure/configs/ff-dead-plain-2.json: unchanged
+measure/configs/ff-dead-plain-3.json: unchanged
+measure/configs/ff-dead-plain-4.json: unchanged
+measure/configs/ff-dead-plain-5.json: unchanged

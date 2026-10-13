@@ -1,0 +1,57 @@
+{
+  "browser": {
+    "browserName": "firefox",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-01-ff-dead-1-as-is\\profile",
+    "launchOptions": {
+      "firefoxUserPrefs": {
+        "toolkit.winRegisterApplicationRestart": false,
+        "signon.rememberSignons": false,
+        "browser.sessionstore.resume_session_once": true,
+        "browser.sessionstore.restore_on_demand": false,
+        "browser.sessionstore.restore_tabs_lazily": false,
+        "browser.sessionstore.loglevel": "All",
+        "browser.sessionstore.log.appender.console": "All",
+        "browser.sessionstore.log.appender.dump": "All",
+        "browser.sessionstore.log.appender.file.logOnSuccess": true
+      },
+      "ignoreDefaultArgs": [
+        "about:blank"
+      ],
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-01-ff-dead-1-as-is\\downloads"
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "locale": "nl-NL",
+      "timezoneId": "Europe/Berlin",
+      "ignoreHTTPSErrors": false
+    }
+  },
+  "capabilities": [
+    "config",
+    "vision",
+    "devtools",
+    "storage",
+    "network",
+    "pdf",
+    "testing"
+  ],
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-01-ff-dead-1-as-is\\output",
+  "saveSession": false,
+  "allowUnrestrictedFileAccess": false,
+  "console": {
+    "level": "debug"
+  },
+  "snapshot": {
+    "boxes": false
+  },
+  "codegen": "none",
+  "filePaths": "absolute",
+  "timeouts": {
+    "idle": 0
+  },
+  "webmcp": true
+}

@@ -1,0 +1,500 @@
+# .work/restore-stall/runs/replay
+
+replay-01-ff-dead-1-as-is: the start waited out the launch timeout; 180014 ms; child end {"code":0,"signal":null}
+  MOZ_LOG modules found in xul.dll: DocLoader:5 yes, nsDocShell:4 yes, SessionHistory:4 yes, BrowsingContext:4 yes, ProcessIsolation:4 yes
+  Page.ready came and the main frame's load never did: the wait for the load state; page targets 1; first page at -
+    06:31:14.341 Page.frameAttached
+    06:31:14.342 Runtime.executionContextsCleared
+    06:31:14.342 Runtime.executionContextCreated
+    06:31:14.342 Runtime.executionContextDestroyed
+    06:31:14.342 Runtime.executionContextCreated
+    06:31:14.342 Page.navigationStarted
+    06:31:14.349 Runtime.executionContextCreated
+    06:31:14.349 (the answer to command 13)
+    06:31:16.124 Page.frameAttached
+    06:31:16.125 Runtime.executionContextsCleared
+    06:31:16.125 Runtime.executionContextCreated
+    06:31:16.125 Runtime.executionContextCreated
+    06:31:16.125 Network.requestFailed
+    06:31:16.126 Runtime.executionContextDestroyed
+    06:31:16.126 Runtime.executionContextDestroyed
+    06:31:16.126 Runtime.executionContextCreated
+    06:31:16.126 Runtime.executionContextCreated
+    06:31:16.126 Page.navigationStarted
+    06:31:16.128 Page.navigationAborted NS_ERROR_CONNECTION_REFUSED
+    06:31:16.128 Page.ready
+    06:31:16.133 Page.navigationStarted
+    06:31:16.135 Runtime.console
+    06:31:16.154 Runtime.executionContextDestroyed
+    06:31:16.154 Runtime.executionContextDestroyed
+    06:31:16.154 Page.navigationCommitted http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1
+    06:31:16.155 Runtime.executionContextCreated
+    06:31:16.155 Runtime.executionContextCreated
+    06:31:16.201 Page.eventFired DOMContentLoaded
+  2026-10-13T06:31:31.099Z pw:browser [pid=80796][out] 1791873091099	SessionStore	DEBUG	SessionWriter.write wrote 1072 bytes in 5ms
+  2026-10-13T06:31:31.100Z pw:browser [pid=80796][out] 1791873091100	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:31:31.100Z pw:browser [pid=80796][out] 1791873091100	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873073466.txt: 1791873091100
+  2026-10-13T06:31:31.103Z pw:browser [pid=80796][out] 1791873091103	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-01-ff-dead-1-as-is\profile\sessionstore-logs\success-sessionrestore-1791873073466.txt
+  2026-10-13T06:31:31.104Z pw:browser [pid=80796][out] 1791873091103	SessionStore.LogManager	TRACE	onCopyComplete: 1791873091103
+  2026-10-13T06:31:31.104Z pw:browser [pid=80796][out] 1791873091104	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:31:31.104Z pw:browser [pid=80796][out] 1791873091104	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009091104
+  2026-10-13T06:31:31.105Z pw:browser [pid=80796][out] 1791873091105	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:31:47.178Z pw:browser [pid=80796][out] 1791873107178	SessionStore	DEBUG	SessionWriter.write wrote 1069 bytes in 4ms
+  2026-10-13T06:34:13.379Z pw:browser [pid=80796][out] 1791873253379	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:34:13.379Z pw:browser [pid=80796][out] 1791873253379	SessionStore	DEBUG	Last session save attempt: 146201ms ago
+  2026-10-13T06:34:13.380Z pw:browser [pid=80796][out] 1791873253380	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:34:13.877Z pw:browser [pid=80796][out] 1791873253385	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:34:13.877Z pw:browser [pid=80796][out] 1791873253385	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:34:13.877Z pw:browser [pid=80796][out] 1791873253414	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:34:13.877Z pw:browser [pid=80796][out] 1791873253416	SessionStore	DEBUG	SessionWriter.write wrote 1072 bytes in 28ms
+  2026-10-13T06:34:13.877Z pw:browser [pid=80796][out] 1791873253416	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:34:13.877Z pw:browser [pid=80796][out] 1791873253433	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:34:13.877Z pw:browser [pid=80796][out] 1791873253433	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873073466.txt: 1791873253433
+  2026-10-13T06:34:13.878Z pw:browser [pid=80796][out] 1791873253443	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-01-ff-dead-1-as-is\profile\sessionstore-logs\success-sessionrestore-1791873073466.txt
+  2026-10-13T06:34:13.878Z pw:browser [pid=80796][out] 1791873253444	SessionStore.LogManager	TRACE	onCopyComplete: 1791873253444
+  2026-10-13T06:34:13.878Z pw:browser [pid=80796][out] 1791873253444	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:34:13.878Z pw:browser [pid=80796][out] 1791873253444	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009253444
+  2026-10-13T06:34:13.878Z pw:browser [pid=80796][out] 1791873253444	SessionStore.LogManager	DEBUG	Done deleting files.
+
+replay-02-ff-dead-1-revived: the call was answered; 1091 ms; child end {"code":0,"signal":null}
+  every one of the three waits was answered; page targets 1; first page at -
+    06:34:19.390 Page.frameAttached
+    06:34:19.390 Runtime.executionContextsCleared
+    06:34:19.390 Runtime.executionContextCreated
+    06:34:19.390 Runtime.executionContextDestroyed
+    06:34:19.391 Runtime.executionContextCreated
+    06:34:19.391 Page.navigationStarted
+    06:34:19.391 Page.frameAttached
+    06:34:19.391 Runtime.executionContextsCleared
+    06:34:19.391 Runtime.executionContextCreated
+    06:34:19.391 Runtime.executionContextDestroyed
+    06:34:19.391 Runtime.executionContextCreated
+    06:34:19.391 Page.navigationStarted
+    06:34:19.391 Page.frameAttached
+    06:34:19.391 Runtime.executionContextsCleared
+    06:34:19.391 Runtime.executionContextCreated
+    06:34:19.391 Runtime.executionContextDestroyed
+    06:34:19.391 Runtime.executionContextCreated
+    06:34:19.392 Page.navigationStarted
+    06:34:19.392 Runtime.executionContextDestroyed
+    06:34:19.392 Page.navigationCommitted http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1
+    06:34:19.392 Runtime.executionContextCreated
+    06:34:19.392 Page.ready
+    06:34:19.393 Page.eventFired DOMContentLoaded
+    06:34:19.393 Page.eventFired load
+    06:34:19.398 Runtime.executionContextCreated
+    06:34:19.398 (the answer to command 13)
+    06:34:19.408 (the answer to command 14)
+    06:34:19.410 (the answer to command 15)
+    06:34:19.412 (the answer to command 16)
+    06:34:19.416 (the answer to command 17)
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out]       1791873259429	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259429	SessionStore	DEBUG	Last session save attempt: 558ms ago
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259430	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259434	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259548	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259571	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259576	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259576	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873258425.txt: 1791873259576
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259576	SessionStore	DEBUG	SessionWriter.write wrote 1043 bytes in 3ms
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259577	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-02-ff-dead-1-revived\profile\sessionstore-logs\success-sessionrestore-1791873258425.txt
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259578	SessionStore.LogManager	TRACE	onCopyComplete: 1791873259578
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259578	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259578	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009259578
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259584	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259584	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259589	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259590	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873258425.txt: 1791873259590
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259601	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-02-ff-dead-1-revived\profile\sessionstore-logs\success-sessionrestore-1791873258425.txt
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259601	SessionStore.LogManager	TRACE	onCopyComplete: 1791873259601
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259601	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259601	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009259601
+  2026-10-13T06:34:19.924Z pw:browser [pid=90164][out] 1791873259602	SessionStore.LogManager	DEBUG	Done deleting files.
+
+replay-03-ff-dead-2-as-is: the start waited out the launch timeout; 180014 ms; child end {"code":0,"signal":null}
+  MOZ_LOG modules found in xul.dll: DocLoader:5 yes, nsDocShell:4 yes, SessionHistory:4 yes, BrowsingContext:4 yes, ProcessIsolation:4 yes
+  Page.ready came and the main frame's load never did: the wait for the load state; page targets 1; first page at -
+    06:34:24.552 Page.frameAttached
+    06:34:24.553 Runtime.executionContextsCleared
+    06:34:24.553 Runtime.executionContextCreated
+    06:34:24.553 Runtime.executionContextDestroyed
+    06:34:24.553 Runtime.executionContextCreated
+    06:34:24.553 Page.navigationStarted
+    06:34:24.559 Runtime.executionContextCreated
+    06:34:24.560 (the answer to command 13)
+    06:34:26.349 Page.frameAttached
+    06:34:26.349 Runtime.executionContextsCleared
+    06:34:26.349 Runtime.executionContextCreated
+    06:34:26.350 Runtime.executionContextCreated
+    06:34:26.350 Runtime.executionContextDestroyed
+    06:34:26.350 Runtime.executionContextDestroyed
+    06:34:26.350 Network.requestFailed
+    06:34:26.350 Runtime.executionContextCreated
+    06:34:26.350 Runtime.executionContextCreated
+    06:34:26.351 Page.navigationStarted
+    06:34:26.353 Page.navigationAborted NS_ERROR_CONNECTION_REFUSED
+    06:34:26.353 Page.ready
+    06:34:26.357 Page.navigationStarted
+    06:34:26.362 Runtime.console
+    06:34:26.379 Runtime.executionContextDestroyed
+    06:34:26.379 Runtime.executionContextDestroyed
+    06:34:26.379 Page.navigationCommitted http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1
+    06:34:26.380 Runtime.executionContextCreated
+    06:34:26.380 Runtime.executionContextCreated
+    06:34:26.439 Page.eventFired DOMContentLoaded
+  2026-10-13T06:34:41.312Z pw:browser [pid=58008][out] 1791873281313	SessionStore	DEBUG	SessionWriter.write wrote 1068 bytes in 4ms
+  2026-10-13T06:34:41.313Z pw:browser [pid=58008][out] 1791873281313	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:34:41.313Z pw:browser [pid=58008][out] 1791873281313	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873263714.txt: 1791873281313
+  2026-10-13T06:34:41.316Z pw:browser [pid=58008][out] 1791873281317	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-03-ff-dead-2-as-is\profile\sessionstore-logs\success-sessionrestore-1791873263714.txt
+  2026-10-13T06:34:41.316Z pw:browser [pid=58008][out] 1791873281317	SessionStore.LogManager	TRACE	onCopyComplete: 1791873281317
+  2026-10-13T06:34:41.316Z pw:browser [pid=58008][out] 1791873281317	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:34:41.316Z pw:browser [pid=58008][out] 1791873281317	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009281317
+  2026-10-13T06:34:41.317Z pw:browser [pid=58008][out] 1791873281318	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:34:56.322Z pw:browser [pid=58008][out] 1791873296322	SessionStore	DEBUG	SessionWriter.write wrote 1071 bytes in 4ms
+  2026-10-13T06:37:23.629Z pw:browser [pid=58008][out] 1791873443629	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:37:23.629Z pw:browser [pid=58008][out] 1791873443629	SessionStore	DEBUG	Last session save attempt: 147307ms ago
+  2026-10-13T06:37:23.629Z pw:browser [pid=58008][out] 1791873443629	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:37:23.632Z pw:browser [pid=58008][out] 1791873443633	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:37:23.633Z pw:browser [pid=58008][out] 1791873443633	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443659	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443661	SessionStore	DEBUG	SessionWriter.write wrote 1070 bytes in 26ms
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443661	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443675	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443675	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873263714.txt: 1791873443675
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443685	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-03-ff-dead-2-as-is\profile\sessionstore-logs\success-sessionrestore-1791873263714.txt
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443685	SessionStore.LogManager	TRACE	onCopyComplete: 1791873443685
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443686	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443686	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009443686
+  2026-10-13T06:37:24.130Z pw:browser [pid=58008][out] 1791873443687	SessionStore.LogManager	DEBUG	Done deleting files.
+
+replay-04-ff-dead-2-revived: the call was answered; 1112 ms; child end {"code":0,"signal":null}
+  every one of the three waits was answered; page targets 1; first page at -
+    06:37:29.645 Page.frameAttached
+    06:37:29.645 Runtime.executionContextsCleared
+    06:37:29.646 Runtime.executionContextCreated
+    06:37:29.646 Runtime.executionContextDestroyed
+    06:37:29.646 Runtime.executionContextCreated
+    06:37:29.646 Page.navigationStarted
+    06:37:29.646 Page.frameAttached
+    06:37:29.646 Runtime.executionContextsCleared
+    06:37:29.647 Runtime.executionContextCreated
+    06:37:29.647 Runtime.executionContextDestroyed
+    06:37:29.647 Runtime.executionContextCreated
+    06:37:29.647 Page.navigationStarted
+    06:37:29.647 Page.frameAttached
+    06:37:29.647 Runtime.executionContextsCleared
+    06:37:29.647 Runtime.executionContextCreated
+    06:37:29.647 Runtime.executionContextDestroyed
+    06:37:29.647 Runtime.executionContextCreated
+    06:37:29.647 Page.navigationStarted
+    06:37:29.647 Runtime.executionContextDestroyed
+    06:37:29.647 Page.navigationCommitted http://127.0.0.1:49881/UC_VWZOHxrNtxMG5wkJAHqoR58nI1PnGGaNhSgBmVPA/?tab=1
+    06:37:29.648 Runtime.executionContextCreated
+    06:37:29.648 Page.ready
+    06:37:29.648 Page.eventFired DOMContentLoaded
+    06:37:29.648 Page.eventFired load
+    06:37:29.652 Runtime.executionContextCreated
+    06:37:29.652 (the answer to command 13)
+    06:37:29.662 (the answer to command 14)
+    06:37:29.664 (the answer to command 15)
+    06:37:29.666 (the answer to command 16)
+    06:37:29.669 (the answer to command 17)
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out]       1791873449680	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449681	SessionStore	DEBUG	Last session save attempt: 542ms ago
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449681	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449685	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449786	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449812	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449817	SessionStore	DEBUG	SessionWriter.write wrote 1042 bytes in 3ms
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449818	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449818	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873448660.txt: 1791873449818
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449826	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449828	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-04-ff-dead-2-revived\profile\sessionstore-logs\success-sessionrestore-1791873448660.txt
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449828	SessionStore.LogManager	TRACE	onCopyComplete: 1791873449828
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449828	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449828	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009449828
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449829	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449833	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449833	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873448660.txt: 1791873449833
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449844	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-04-ff-dead-2-revived\profile\sessionstore-logs\success-sessionrestore-1791873448660.txt
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449844	SessionStore.LogManager	TRACE	onCopyComplete: 1791873449844
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449844	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449844	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009449844
+  2026-10-13T06:37:30.178Z pw:browser [pid=114080][out] 1791873449845	SessionStore.LogManager	DEBUG	Done deleting files.
+
+replay-05-ff-dead-3-as-is: the start waited out the launch timeout; 180016 ms; child end {"code":0,"signal":null}
+  MOZ_LOG modules found in xul.dll: DocLoader:5 yes, nsDocShell:4 yes, SessionHistory:4 yes, BrowsingContext:4 yes, ProcessIsolation:4 yes
+  Page.ready came and the main frame's load never did: the wait for the load state; page targets 1; first page at -
+    06:37:34.841 Page.frameAttached
+    06:37:34.842 Runtime.executionContextsCleared
+    06:37:34.842 Runtime.executionContextCreated
+    06:37:34.842 Runtime.executionContextDestroyed
+    06:37:34.842 Runtime.executionContextCreated
+    06:37:34.842 Page.navigationStarted
+    06:37:34.844 Runtime.executionContextCreated
+    06:37:34.844 (the answer to command 13)
+    06:37:36.637 Page.frameAttached
+    06:37:36.637 Runtime.executionContextsCleared
+    06:37:36.637 Runtime.executionContextCreated
+    06:37:36.637 Runtime.executionContextCreated
+    06:37:36.637 Runtime.executionContextDestroyed
+    06:37:36.637 Runtime.executionContextDestroyed
+    06:37:36.637 Runtime.executionContextCreated
+    06:37:36.637 Runtime.executionContextCreated
+    06:37:36.638 Network.requestFailed
+    06:37:36.638 Page.navigationStarted
+    06:37:36.641 Page.navigationAborted NS_ERROR_CONNECTION_REFUSED
+    06:37:36.642 Page.ready
+    06:37:36.646 Page.navigationStarted
+    06:37:36.649 Runtime.console
+    06:37:36.669 Runtime.executionContextDestroyed
+    06:37:36.669 Runtime.executionContextDestroyed
+    06:37:36.670 Page.navigationCommitted http://127.0.0.1:60739/3mBaO1owWG0dfm1hjnDL_eCg-pB7QotmJ2EJZGm4YDU/?tab=1
+    06:37:36.671 Runtime.executionContextCreated
+    06:37:36.671 Runtime.executionContextCreated
+    06:37:36.729 Page.eventFired DOMContentLoaded
+  2026-10-13T06:37:51.930Z pw:browser [pid=19352][out] 1791873471929	SessionStore	DEBUG	SessionWriter.write wrote 1069 bytes in 3ms
+  2026-10-13T06:37:51.930Z pw:browser [pid=19352][out] 1791873471930	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:37:51.930Z pw:browser [pid=19352][out] 1791873471930	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873453956.txt: 1791873471930
+  2026-10-13T06:37:51.933Z pw:browser [pid=19352][out] 1791873471933	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-05-ff-dead-3-as-is\profile\sessionstore-logs\success-sessionrestore-1791873453956.txt
+  2026-10-13T06:37:51.934Z pw:browser [pid=19352][out] 1791873471933	SessionStore.LogManager	TRACE	onCopyComplete: 1791873471933
+  2026-10-13T06:37:51.934Z pw:browser [pid=19352][out] 1791873471933	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:37:51.934Z pw:browser [pid=19352][out] 1791873471934	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009471933
+  2026-10-13T06:37:51.934Z pw:browser [pid=19352][out] 1791873471934	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:38:08.047Z pw:browser [pid=19352][out] 1791873488047	SessionStore	DEBUG	SessionWriter.write wrote 1069 bytes in 4ms
+  2026-10-13T06:40:33.873Z pw:browser [pid=19352][out] 1791873633874	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:40:33.873Z pw:browser [pid=19352][out] 1791873633874	SessionStore	DEBUG	Last session save attempt: 145827ms ago
+  2026-10-13T06:40:33.874Z pw:browser [pid=19352][out] 1791873633874	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:40:33.877Z pw:browser [pid=19352][out] 1791873633878	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633878	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633908	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633910	SessionStore	DEBUG	SessionWriter.write wrote 1072 bytes in 30ms
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633910	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633925	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633925	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873453956.txt: 1791873633925
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633936	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-05-ff-dead-3-as-is\profile\sessionstore-logs\success-sessionrestore-1791873453956.txt
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633937	SessionStore.LogManager	TRACE	onCopyComplete: 1791873633937
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633937	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633937	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009633937
+  2026-10-13T06:40:34.305Z pw:browser [pid=19352][out] 1791873633938	SessionStore.LogManager	DEBUG	Done deleting files.
+
+replay-06-ff-dead-3-revived: the call was answered; 1042 ms; child end {"code":0,"signal":null}
+  every one of the three waits was answered; page targets 1; first page at -
+    06:40:39.718 Page.frameAttached
+    06:40:39.719 Runtime.executionContextsCleared
+    06:40:39.719 Runtime.executionContextCreated
+    06:40:39.719 Runtime.executionContextDestroyed
+    06:40:39.719 Runtime.executionContextCreated
+    06:40:39.719 Page.navigationStarted
+    06:40:39.720 Page.frameAttached
+    06:40:39.720 Runtime.executionContextsCleared
+    06:40:39.720 Runtime.executionContextCreated
+    06:40:39.720 Runtime.executionContextDestroyed
+    06:40:39.720 Runtime.executionContextCreated
+    06:40:39.720 Page.navigationStarted
+    06:40:39.720 Page.frameAttached
+    06:40:39.720 Runtime.executionContextsCleared
+    06:40:39.720 Runtime.executionContextCreated
+    06:40:39.720 Runtime.executionContextDestroyed
+    06:40:39.720 Runtime.executionContextCreated
+    06:40:39.720 Page.navigationStarted
+    06:40:39.720 Runtime.executionContextDestroyed
+    06:40:39.720 Page.navigationCommitted http://127.0.0.1:60739/3mBaO1owWG0dfm1hjnDL_eCg-pB7QotmJ2EJZGm4YDU/?tab=1
+    06:40:39.721 Runtime.executionContextCreated
+    06:40:39.721 Page.ready
+    06:40:39.721 Page.eventFired DOMContentLoaded
+    06:40:39.721 Page.eventFired load
+    06:40:39.726 Runtime.executionContextCreated
+    06:40:39.726 (the answer to command 13)
+    06:40:39.736 (the answer to command 14)
+    06:40:39.738 (the answer to command 15)
+    06:40:39.739 (the answer to command 16)
+    06:40:39.743 (the answer to command 17)
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out]       1791873639755	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639755	SessionStore	DEBUG	Last session save attempt: 500ms ago
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639756	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639760	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639869	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639894	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639900	SessionStore	DEBUG	SessionWriter.write wrote 1044 bytes in 4ms
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639900	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639900	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873638797.txt: 1791873639900
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639908	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-06-ff-dead-3-revived\profile\sessionstore-logs\success-sessionrestore-1791873638797.txt
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639908	SessionStore.LogManager	TRACE	onCopyComplete: 1791873639908
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639908	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639908	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009639908
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639910	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639913	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639914	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639914	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873638797.txt: 1791873639914
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639925	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-06-ff-dead-3-revived\profile\sessionstore-logs\success-sessionrestore-1791873638797.txt
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639925	SessionStore.LogManager	TRACE	onCopyComplete: 1791873639925
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639925	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639925	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009639925
+  2026-10-13T06:40:40.262Z pw:browser [pid=100384][out] 1791873639926	SessionStore.LogManager	DEBUG	Done deleting files.
+
+replay-07-ff-dead-1-no-restore: the start waited out the launch timeout; 180014 ms; child end {"code":0,"signal":null}
+  Page.ready came and the main frame's load never did: the wait for the load state; page targets 1; first page at -
+    06:40:44.702 Page.frameAttached
+    06:40:44.702 Runtime.executionContextsCleared
+    06:40:44.703 Runtime.executionContextCreated
+    06:40:44.703 Runtime.executionContextDestroyed
+    06:40:44.703 Runtime.executionContextCreated
+    06:40:44.703 Page.navigationStarted
+    06:40:44.704 Runtime.executionContextCreated
+    06:40:44.704 (the answer to command 13)
+    06:40:46.460 Page.frameAttached
+    06:40:46.460 Runtime.executionContextsCleared
+    06:40:46.460 Runtime.executionContextCreated
+    06:40:46.460 Runtime.executionContextCreated
+    06:40:46.460 Runtime.executionContextDestroyed
+    06:40:46.460 Runtime.executionContextDestroyed
+    06:40:46.461 Runtime.executionContextCreated
+    06:40:46.461 Runtime.executionContextCreated
+    06:40:46.461 Page.navigationStarted
+    06:40:46.461 Network.requestFailed
+    06:40:46.463 Page.navigationAborted NS_ERROR_CONNECTION_REFUSED
+    06:40:46.464 Page.ready
+    06:40:46.468 Page.navigationStarted
+    06:40:46.470 Runtime.console
+    06:40:46.486 Runtime.executionContextDestroyed
+    06:40:46.487 Runtime.executionContextDestroyed
+    06:40:46.487 Page.navigationCommitted http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1
+    06:40:46.488 Runtime.executionContextCreated
+    06:40:46.488 Runtime.executionContextCreated
+    06:40:46.554 Page.eventFired DOMContentLoaded
+  2026-10-13T06:41:01.424Z pw:browser [pid=102292][out] 1791873661425	SessionStore	DEBUG	SessionWriter.write wrote 1072 bytes in 4ms
+  2026-10-13T06:41:01.424Z pw:browser [pid=102292][out] 1791873661425	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:41:01.424Z pw:browser [pid=102292][out] 1791873661425	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873643827.txt: 1791873661425
+  2026-10-13T06:41:01.427Z pw:browser [pid=102292][out] 1791873661428	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-07-ff-dead-1-no-restore\profile\sessionstore-logs\success-sessionrestore-1791873643827.txt
+  2026-10-13T06:41:01.428Z pw:browser [pid=102292][out] 1791873661429	SessionStore.LogManager	TRACE	onCopyComplete: 1791873661429
+  2026-10-13T06:41:01.428Z pw:browser [pid=102292][out] 1791873661429	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:41:01.428Z pw:browser [pid=102292][out] 1791873661429	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009661429
+  2026-10-13T06:41:01.428Z pw:browser [pid=102292][out] 1791873661429	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:41:17.497Z pw:browser [pid=102292][out] 1791873677498	SessionStore	DEBUG	SessionWriter.write wrote 1069 bytes in 4ms
+  2026-10-13T06:43:43.750Z pw:browser [pid=102292][out] 1791873823750	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:43:43.750Z pw:browser [pid=102292][out] 1791873823750	SessionStore	DEBUG	Last session save attempt: 146252ms ago
+  2026-10-13T06:43:43.751Z pw:browser [pid=102292][out] 1791873823751	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823754	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823755	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823779	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823781	SessionStore	DEBUG	SessionWriter.write wrote 1072 bytes in 25ms
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823783	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823802	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823802	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873643827.txt: 1791873823802
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823812	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-07-ff-dead-1-no-restore\profile\sessionstore-logs\success-sessionrestore-1791873643827.txt
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823812	SessionStore.LogManager	TRACE	onCopyComplete: 1791873823812
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823812	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823812	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009823812
+  2026-10-13T06:43:44.182Z pw:browser [pid=102292][out] 1791873823813	SessionStore.LogManager	DEBUG	Done deleting files.
+
+replay-08-ff-dead-1-blank-first: the call was answered; 1070 ms; child end {"code":0,"signal":null}
+  every one of the three waits was answered; page targets 2; first page at -
+    06:43:49.940 Page.frameAttached
+    06:43:49.940 Runtime.executionContextsCleared
+    06:43:49.940 Runtime.executionContextCreated
+    06:43:49.941 Runtime.executionContextDestroyed
+    06:43:49.941 Runtime.executionContextCreated
+    06:43:49.941 Runtime.executionContextDestroyed
+    06:43:49.941 Page.navigationCommitted about:blank
+    06:43:49.941 Runtime.executionContextCreated
+    06:43:49.941 Page.navigationStarted
+    06:43:49.942 Page.frameAttached
+    06:43:49.942 Runtime.executionContextsCleared
+    06:43:49.942 Runtime.executionContextCreated
+    06:43:49.942 Runtime.executionContextDestroyed
+    06:43:49.942 Runtime.executionContextCreated
+    06:43:49.942 Runtime.executionContextDestroyed
+    06:43:49.942 Page.navigationCommitted about:blank
+    06:43:49.942 Runtime.executionContextCreated
+    06:43:49.942 Page.navigationStarted
+    06:43:49.942 Runtime.executionContextDestroyed
+    06:43:49.942 Page.navigationCommitted about:blank
+    06:43:49.942 Runtime.executionContextCreated
+    06:43:49.942 Page.ready
+    06:43:49.942 Page.eventFired DOMContentLoaded
+    06:43:49.942 Page.eventFired load
+    06:43:49.948 Runtime.executionContextCreated
+    06:43:49.948 (the answer to command 13)
+    06:43:49.958 (the answer to command 15)
+    06:43:49.960 (the answer to command 16)
+    06:43:49.961 (the answer to command 17)
+    06:43:49.965 (the answer to command 18)
+  2026-10-13T06:43:50.491Z pw:browser [pid=94732][out]       1791873829977	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:43:50.491Z pw:browser [pid=94732][out] 1791873829977	SessionStore	DEBUG	Last session save attempt: 501ms ago
+  2026-10-13T06:43:50.491Z pw:browser [pid=94732][out] 1791873829982	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:43:50.491Z pw:browser [pid=94732][out] 1791873830082	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830113	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830120	SessionStore	DEBUG	SessionWriter.write wrote 1309 bytes in 4ms
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830120	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830120	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873829004.txt: 1791873830120
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830128	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-08-ff-dead-1-blank-first\profile\sessionstore-logs\success-sessionrestore-1791873829004.txt
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830128	SessionStore.LogManager	TRACE	onCopyComplete: 1791873830128
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830128	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830128	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009830128
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830130	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830134	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830134	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873829004.txt: 1791873830134
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830137	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830145	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-08-ff-dead-1-blank-first\profile\sessionstore-logs\success-sessionrestore-1791873829004.txt
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830145	SessionStore.LogManager	TRACE	onCopyComplete: 1791873830145
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830146	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830146	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009830146
+  2026-10-13T06:43:50.492Z pw:browser [pid=94732][out] 1791873830146	SessionStore.LogManager	DEBUG	Done deleting files.
+
+replay-09-ff-dead-1-lazy: the start waited out the launch timeout; 180014 ms; child end {"code":0,"signal":null}
+  Page.ready came and the main frame's load never did: the wait for the load state; page targets 1; first page at -
+    06:43:54.839 Page.frameAttached
+    06:43:54.839 Runtime.executionContextsCleared
+    06:43:54.839 Runtime.executionContextCreated
+    06:43:54.839 Runtime.executionContextDestroyed
+    06:43:54.840 Runtime.executionContextCreated
+    06:43:54.840 Page.navigationStarted
+    06:43:54.840 Runtime.executionContextCreated
+    06:43:54.840 (the answer to command 13)
+    06:43:56.618 Page.frameAttached
+    06:43:56.618 Runtime.executionContextsCleared
+    06:43:56.618 Runtime.executionContextCreated
+    06:43:56.618 Runtime.executionContextCreated
+    06:43:56.618 Network.requestFailed
+    06:43:56.619 Runtime.executionContextDestroyed
+    06:43:56.619 Runtime.executionContextDestroyed
+    06:43:56.619 Runtime.executionContextCreated
+    06:43:56.619 Runtime.executionContextCreated
+    06:43:56.619 Page.navigationStarted
+    06:43:56.622 Page.navigationAborted NS_ERROR_CONNECTION_REFUSED
+    06:43:56.622 Page.ready
+    06:43:56.626 Page.navigationStarted
+    06:43:56.631 Runtime.console
+    06:43:56.644 Runtime.executionContextDestroyed
+    06:43:56.645 Runtime.executionContextDestroyed
+    06:43:56.645 Page.navigationCommitted http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1
+    06:43:56.646 Runtime.executionContextCreated
+    06:43:56.646 Runtime.executionContextCreated
+    06:43:56.706 Page.eventFired DOMContentLoaded
+  2026-10-13T06:44:11.572Z pw:browser [pid=115224][out] 1791873851572	SessionStore	DEBUG	SessionWriter.write wrote 1072 bytes in 4ms
+  2026-10-13T06:44:11.572Z pw:browser [pid=115224][out] 1791873851573	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:44:11.572Z pw:browser [pid=115224][out] 1791873851573	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873833988.txt: 1791873851573
+  2026-10-13T06:44:11.576Z pw:browser [pid=115224][out] 1791873851576	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-09-ff-dead-1-lazy\profile\sessionstore-logs\success-sessionrestore-1791873833988.txt
+  2026-10-13T06:44:11.576Z pw:browser [pid=115224][out] 1791873851577	SessionStore.LogManager	TRACE	onCopyComplete: 1791873851577
+  2026-10-13T06:44:11.576Z pw:browser [pid=115224][out] 1791873851577	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:44:11.577Z pw:browser [pid=115224][out] 1791873851577	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791009851577
+  2026-10-13T06:44:11.577Z pw:browser [pid=115224][out] 1791873851578	SessionStore.LogManager	DEBUG	Done deleting files.
+  2026-10-13T06:44:27.659Z pw:browser [pid=115224][out] 1791873867660	SessionStore	DEBUG	SessionWriter.write wrote 1072 bytes in 5ms
+  2026-10-13T06:46:53.914Z pw:browser [pid=115224][out] 1791874013913	SessionStore	DEBUG	onQuitApplicationGranted, shutdown of 1 windows will be sync? false
+  2026-10-13T06:46:53.914Z pw:browser [pid=115224][out] 1791874013914	SessionStore	DEBUG	Last session save attempt: 146254ms ago
+  2026-10-13T06:46:53.915Z pw:browser [pid=115224][out] 1791874013915	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:46:54.443Z pw:browser [pid=115224][out] 1791874013920	SessionStore	DEBUG	SessionSave run called during shutdown
+  2026-10-13T06:46:54.443Z pw:browser [pid=115224][out] 1791874013920	SessionStore	DEBUG	SessionSaver writing state during shutdown
+  2026-10-13T06:46:54.443Z pw:browser [pid=115224][out] 1791874013952	SessionStore	DEBUG	SessionSaver scheduling a state save during shutdown
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013954	SessionStore	DEBUG	SessionWriter.write wrote 1072 bytes in 31ms
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013955	SessionStore	DEBUG	SessionSaver sessionstore-state-write-complete during shutdown
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013974	SessionStore.LogManager	DEBUG	Flushing file log
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013974	SessionStore.LogManager	TRACE	Beginning stream copy to success-sessionrestore-1791873833988.txt: 1791874013974
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013984	SessionStore.LogManager	TRACE	finished copy to: C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay\replay-09-ff-dead-1-lazy\profile\sessionstore-logs\success-sessionrestore-1791873833988.txt
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013985	SessionStore.LogManager	TRACE	onCopyComplete: 1791874013985
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013985	SessionStore.LogManager	TRACE	Running cleanup.
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013985	SessionStore.LogManager	DEBUG	Log cleanup threshold time: 1791010013985
+  2026-10-13T06:46:54.444Z pw:browser [pid=115224][out] 1791874013986	SessionStore.LogManager	DEBUG	Done deleting files.
+
+lines passed over as unreadable JSON: 0

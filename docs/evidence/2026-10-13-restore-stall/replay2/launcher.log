@@ -1,0 +1,30 @@
+2026-10-13T12:15:50.6527726Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:16:50.6671965Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:17:50.6880590Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:18:50.6921610Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:19:50.6961320Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:20:50.7108648Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:21:50.7025472Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:22:50.7051272Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:23:50.7091322Z the suite lock is taken, by: after-125b 2026-10-13T12:15:27.3472888Z restore-stall rig, stage measure, batch again, pid=72516
+; trying again in a minute
+2026-10-13T12:24:50.7229473Z took the suite lock as: after-125b 2026-10-13T12:15:50.6337699Z restore-stall rig, stage replay, batch replay2, pid=34824
+2026-10-13T12:24:50.9510459Z step started: node pid 122236, output C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay2\replay-01-ff-dead-1-no-restore-userjs
+2026-10-13T12:24:55.9624905Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T12:24:55.9636027Z replay 1 (ff-dead-1, no-restore-userjs) exit code: 0
+2026-10-13T12:24:55.9827458Z step started: node pid 128976, output C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay2\replay-02-ff-dead-1-lazy-userjs
+2026-10-13T12:28:01.1347250Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T12:28:01.1360645Z replay 2 (ff-dead-1, lazy-userjs) exit code: 0
+2026-10-13T12:28:01.1579659Z step started: node pid 131360, output C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay2\replay-03-ff-dead-1-none
+2026-10-13T12:28:06.1633506Z step ended: node exit 1, 0 process(es) of the job were still running and were ended with it
+2026-10-13T12:28:06.1644519Z replay 3 (ff-dead-1, none) exit code: 1
+2026-10-13T12:28:06.2098167Z registry after replay: 7 line(s) in C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\.work\restore-stall\runs\replay2\registry-replay.txt
+2026-10-13T12:28:06.2184523Z released the suite lock

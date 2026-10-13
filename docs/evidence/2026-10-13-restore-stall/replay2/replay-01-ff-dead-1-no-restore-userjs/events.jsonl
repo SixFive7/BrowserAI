@@ -1,0 +1,3 @@
+{"t":"2026-10-13T12:24:52.750Z","event":"notification","from":"child","method":"notifications/tools/list_changed"}
+{"t":"2026-10-13T12:24:52.762Z","event":"call","from":"child","tool":"browser_tabs","ms":1143,"isError":false,"text":"### Result - 0: (current) [](about:blank)"}
+{"t":"2026-10-13T12:24:53.423Z","event":"replay","variant":"no-restore-userjs","outcome":"the call was answered","ms":1143}

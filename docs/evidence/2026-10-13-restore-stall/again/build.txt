@@ -1,0 +1,5 @@
+exe=C:\Source\SixFive7\BrowserAI\.work\wt\after-125b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+productVersion=2.0.1-alpha.0.1
+fileVersion=2.0.1.0
+commit=02ad1585cd35f927c3630d19f8b3a4f15d7434ab
+stage=measure arms=ff-dead-again-wait rounds=2 idleMinutes=1 warmup=False retryAfterStall=2 from= max=3

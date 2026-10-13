@@ -1,0 +1,195 @@
+{
+ "variant": "no-restore",
+ "family": "firefox",
+ "snapshot": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\first\\measure\\snapshots\\ff-dead-1",
+ "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\sessions\\first\\ff-dead-1",
+ "port": 57946,
+ "started": "2026-10-13T06:40:43.255Z",
+ "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-07-ff-dead-1-no-restore\\profile",
+ "portBefore": {
+  "state": "refused",
+  "code": "ECONNREFUSED",
+  "ms": 3
+ },
+ "environmentNames": [
+  "ALLUSERSPROFILE",
+  "APPDATA",
+  "COMPUTERNAME",
+  "COMSPEC",
+  "CommonProgramFiles",
+  "CommonProgramFiles(x86)",
+  "CommonProgramW6432",
+  "DEBUG",
+  "HOMEDRIVE",
+  "HOMEPATH",
+  "LOCALAPPDATA",
+  "MOZ_DISABLE_SAFE_MODE_KEY",
+  "NUMBER_OF_PROCESSORS",
+  "OS",
+  "PATH",
+  "PATHEXT",
+  "PLAYWRIGHT_BROWSERS_PATH",
+  "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD",
+  "PLAYWRIGHT_SKIP_BROWSER_GC",
+  "PROCESSOR_ARCHITECTURE",
+  "PROCESSOR_IDENTIFIER",
+  "PUBLIC",
+  "PWTEST_SERVER_REGISTRY",
+  "ProgramData",
+  "ProgramFiles",
+  "ProgramFiles(x86)",
+  "ProgramW6432",
+  "SESSIONNAME",
+  "SystemDrive",
+  "SystemRoot",
+  "TEMP",
+  "TMP",
+  "USERDOMAIN",
+  "USERNAME",
+  "USERPROFILE",
+  "windir"
+ ],
+ "handshake": {
+  "server": {
+   "name": "Playwright",
+   "version": "1.64.0-alpha-1790635538000"
+  },
+  "protocolVersion": "2025-11-25",
+  "tools": [
+   "browser_close",
+   "browser_resize",
+   "browser_get_config",
+   "browser_console_messages",
+   "browser_cookie_list",
+   "browser_cookie_get",
+   "browser_cookie_set",
+   "browser_cookie_delete",
+   "browser_cookie_clear",
+   "browser_resume",
+   "browser_highlight",
+   "browser_hide_highlight",
+   "browser_annotate",
+   "browser_handle_dialog",
+   "browser_emulate_media",
+   "browser_evaluate",
+   "browser_file_upload",
+   "browser_drop",
+   "browser_find",
+   "browser_fill_form",
+   "browser_press_key",
+   "browser_type",
+   "browser_mouse_move_xy",
+   "browser_mouse_click_xy",
+   "browser_mouse_drag_xy",
+   "browser_mouse_down",
+   "browser_mouse_up",
+   "browser_mouse_wheel",
+   "browser_navigate",
+   "browser_navigate_back",
+   "browser_network_requests",
+   "browser_network_request",
+   "browser_network_state_set",
+   "browser_pdf_save",
+   "browser_start_recording",
+   "browser_stop_recording",
+   "browser_route",
+   "browser_route_list",
+   "browser_unroute",
+   "browser_run_code_unsafe",
+   "browser_take_screenshot",
+   "browser_snapshot",
+   "browser_click",
+   "browser_drag",
+   "browser_hover",
+   "browser_select_option",
+   "browser_generate_locator",
+   "browser_storage_state",
+   "browser_set_storage_state",
+   "browser_tabs",
+   "browser_start_tracing",
+   "browser_stop_tracing",
+   "browser_verify_element_visible",
+   "browser_verify_text_visible",
+   "browser_verify_list_visible",
+   "browser_verify_value",
+   "browser_start_video",
+   "browser_stop_video",
+   "browser_video_chapter",
+   "browser_video_show_actions",
+   "browser_video_hide_actions",
+   "browser_wait_for",
+   "browser_localstorage_list",
+   "browser_localstorage_get",
+   "browser_localstorage_set",
+   "browser_localstorage_delete",
+   "browser_localstorage_clear",
+   "browser_sessionstorage_list",
+   "browser_sessionstorage_get",
+   "browser_sessionstorage_set",
+   "browser_sessionstorage_delete",
+   "browser_sessionstorage_clear"
+  ]
+ },
+ "first": {
+  "tool": "browser_tabs",
+  "startedAt": "2026-10-13T06:40:43.736Z",
+  "answeredAt": "2026-10-13T06:43:43.750Z",
+  "ms": 180014,
+  "isError": true,
+  "text": "### Error\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\nCall log:\n  - <launching> %USERPROFILE%\\Downloads\\tmp-restore-stall\\data-root\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-07-ff-dead-1-no-restore\\profile -juggler-pipe\n  - <launched> pid=102292\n  - [pid=102292][err] *** You are running in headless mode.\n  - [pid=102292][out]\n  - [pid=102292][out] Juggler listening to the pipe\n  - [pid=102292][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.467649) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt\n  - [pid=102292][err] [ERROR shell_windows::limited_access_features] Error generating feature token: NS_ERROR_FAILURE\n  - [pid=102292][err] JavaScript error: , line 0: SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data\n  - [pid=102292][err] [ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n  - [pid=102292][out] console.error: services.settings:\n  - [pid=102292][out]   Message: EmptyDatabaseError: \"main/nimbus-desktop-experiments\" has not been synced yet\n  - [pid=102292][out]   Stack:\n  - [pid=102292][out]     EmptyDatabaseError@resource://services-settings/Database.sys.mjs:19:5\n  - [pid=102292][out] list@resource://services-settings/Database.sys.mjs:96:13\n  - [pid=102292][out]\n  2 × [pid=102292][err] [ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n  - [pid=102292][out] console.error: [Exception... \"Component returned failure code: 0x80070057 (NS_ERROR_ILLEGAL_VALUE) [nsIWinTaskbar.getTaskbarProgress]\"  nsresult: \"0x80070057 (NS_ERROR_ILLEGAL_VALUE)\"  location: \"JS frame :: moz-src:///browser/components/downloads/DownloadsTaskbar.sys.mjs :: #windowsAttachIndicator :: line 181\"  data: no]\n  - [pid=102292][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]\n  - [pid=102292][out] console.warn: services.settings: #fetchAttachment: Forcing fallbackToDump to false due to Utils.LOAD_DUMPS being false\n  - [pid=102292][out] console.error: (new NotFoundError(\"Could not find fa0fc42c-d91d-fca7-34eb-806ff46062dc in cache or dump\", \"resource://services-settings/Attachments.sys.mjs\", 48))\n  - [pid=102292][out] console.warn: \"Unable to find the attachment for\" \"fa0fc42c-d91d-fca7-34eb-806ff46062dc\"\n  - [pid=102292][out] 1791873661425\tSessionStore\tDEBUG\tSessionWriter.write wrote 1072 bytes in 4ms\n  - [pid=102292][out] 1791873661425\tSessionStore.LogManager\tDEBUG\tFlushing file log\n  - [pid=102292][out] 1791873661425\tSessionStore.LogManager\tTRACE\tBeginning stream copy to success-sessionrestore-1791873643827.txt: 1791873661425\n  - [pid=102292][out] 1791873661428\tSessionStore.LogManager\tTRACE\tfinished copy to: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-07-ff-dead-1-no-restore\\profile\\sessionstore-logs\\success-sessionrestore-1791873643827.txt\n  - [pid=102292][out] 1791873661429\tSessionStore.LogManager\tTRACE\tonCopyComplete: 1791873661429\n  - [pid=102292][out] 1791873661429\tSessionStore.LogManager\tTRACE\tRunning cleanup.\n  - [pid=102292][out] 1791873661429\tSessionStore.LogManager\tDEBUG\tLog cleanup threshold time: 1791009661429\n  - [pid=102292][out] 1791873661429\tSessionStore.LogManager\tDEBUG\tDone deleting files.\n  - [pid=102292][out] console.error: \"Could not download new icon\" (new ServerInfoError(\"Server response is invalid SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data\", \"resource://services-settings/Attachments.sys.mjs\", 40))\n  - [pid=102292][out] 1791873677498\tSessionStore\tDEBUG\tSessionWriter.write wrote 1069 bytes in 4ms\n  - [pid=102292][out] console.warn: WindowsJumpLists: \"Failed to fetch favicon for \" \"http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1\" [Exception... \"Failure\"  nsresult: \"0x80004005 (NS_ERROR_FAILURE)\"  location: \"<unknown>\"  data: no]\n"
+ },
+ "firstStalled": true,
+ "firstCallLog": "Call log:\n  - <launching> %USERPROFILE%\\Downloads\\tmp-restore-stall\\data-root\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-07-ff-dead-1-no-restore\\profile -juggler-pipe\n  - <launched> pid=102292\n  - [pid=102292][err] *** You are running in headless mode.\n  - [pid=102292][out]\n  - [pid=102292][out] Juggler listening to the pipe\n  - [pid=102292][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.467649) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt\n  - [pid=102292][err] [ERROR shell_windows::limited_access_features] Error generating feature token: NS_ERROR_FAILURE\n  - [pid=102292][err] JavaScript error: , line 0: SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data\n  - [pid=102292][err] [ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n  - [pid=102292][out] console.error: services.settings:\n  - [pid=102292][out]   Message: EmptyDatabaseError: \"main/nimbus-desktop-experiments\" has not been synced yet\n  - [pid=102292][out]   Stack:\n  - [pid=102292][out]     EmptyDatabaseError@resource://services-settings/Database.sys.mjs:19:5\n  - [pid=102292][out] list@resource://services-settings/Database.sys.mjs:96:13\n  - [pid=102292][out]\n  2 × [pid=102292][err] [ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n  - [pid=102292][out] console.error: [Exception... \"Component returned failure code: 0x80070057 (NS_ERROR_ILLEGAL_VALUE) [nsIWinTaskbar.getTaskbarProgress]\"  nsresult: \"0x80070057 (NS_ERROR_ILLEGAL_VALUE)\"  location: \"JS frame :: moz-src:///browser/components/downloads/DownloadsTaskbar.sys.mjs :: #windowsAttachIndicator :: line 181\"  data: no]\n  - [pid=102292][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]\n  - [pid=102292][out] console.warn: services.settings: #fetchAttachment: Forcing fallbackToDump to false due to Utils.LOAD_DUMPS being false\n  - [pid=102292][out] console.error: (new NotFoundError(\"Could not find fa0fc42c-d91d-fca7-34eb-806ff46062dc in cache or dump\", \"resource://services-settings/Attachments.sys.mjs\", 48))\n  - [pid=102292][out] console.warn: \"Unable to find the attachment for\" \"fa0fc42c-d91d-fca7-34eb-806ff46062dc\"\n  - [pid=102292][out] 1791873661425\tSessionStore\tDEBUG\tSessionWriter.write wrote 1072 bytes in 4ms\n  - [pid=102292][out] 1791873661425\tSessionStore.LogManager\tDEBUG\tFlushing file log\n  - [pid=102292][out] 1791873661425\tSessionStore.LogManager\tTRACE\tBeginning stream copy to success-sessionrestore-1791873643827.txt: 1791873661425\n  - [pid=102292][out] 1791873661428\tSessionStore.LogManager\tTRACE\tfinished copy to: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-07-ff-dead-1-no-restore\\profile\\sessionstore-logs\\success-sessionrestore-1791873643827.txt\n  - [pid=102292][out] 1791873661429\tSessionStore.LogManager\tTRACE\tonCopyComplete: 1791873661429\n  - [pid=102292][out] 1791873661429\tSessionStore.LogManager\tTRACE\tRunning cleanup.\n  - [pid=102292][out] 1791873661429\tSessionStore.LogManager\tDEBUG\tLog cleanup threshold time: 1791009661429\n  - [pid=102292][out] 1791873661429\tSessionStore.LogManager\tDEBUG\tDone deleting files.\n  - [pid=102292][out] console.error: \"Could not download new icon\" (new ServerInfoError(\"Server response is invalid SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data\", \"resource://services-settings/Attachments.sys.mjs\", 40))\n  - [pid=102292][out] 1791873677498\tSessionStore\tDEBUG\tSessionWriter.write wrote 1069 bytes in 4ms\n  - [pid=102292][out] console.warn: WindowsJumpLists: \"Failed to fetch favicon for \" \"http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1\" [Exception... \"Failure\"  nsresult: \"0x80004005 (NS_ERROR_FAILURE)\"  location: \"<unknown>\"  data: no]\n",
+ "outcome": "the start waited out the launch timeout",
+ "childEnd": {
+  "code": 0,
+  "signal": null
+ },
+ "sessionAfter": [
+  {
+   "file": "sessionstore.jsonlz4",
+   "bytes": 1072,
+   "state": null,
+   "windows": [
+    {
+     "selected": 1,
+     "tabs": [
+      {
+       "index": 1,
+       "entries": [
+        "http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1"
+       ],
+       "policies": [
+        null
+       ]
+      }
+     ]
+    }
+   ],
+   "closedWindows": 0
+  },
+  {
+   "file": "sessionstore-backups/previous.jsonlz4",
+   "bytes": 1033,
+   "state": null,
+   "windows": [
+    {
+     "selected": 1,
+     "tabs": [
+      {
+       "index": 1,
+       "entries": [
+        "http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1"
+       ],
+       "policies": [
+        null
+       ]
+      }
+     ]
+    }
+   ],
+   "closedWindows": 0
+  }
+ ],
+ "finished": "2026-10-13T06:43:44.200Z"
+}

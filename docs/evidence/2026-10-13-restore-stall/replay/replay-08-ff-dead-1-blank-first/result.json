@@ -1,0 +1,226 @@
+{
+ "variant": "blank-first",
+ "family": "firefox",
+ "snapshot": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\first\\measure\\snapshots\\ff-dead-1",
+ "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\sessions\\first\\ff-dead-1",
+ "port": 57946,
+ "started": "2026-10-13T06:43:48.396Z",
+ "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-125b\\.work\\restore-stall\\runs\\replay\\replay-08-ff-dead-1-blank-first\\profile",
+ "portBefore": {
+  "state": "refused",
+  "code": "ECONNREFUSED",
+  "ms": 3
+ },
+ "environmentNames": [
+  "ALLUSERSPROFILE",
+  "APPDATA",
+  "COMPUTERNAME",
+  "COMSPEC",
+  "CommonProgramFiles",
+  "CommonProgramFiles(x86)",
+  "CommonProgramW6432",
+  "DEBUG",
+  "HOMEDRIVE",
+  "HOMEPATH",
+  "LOCALAPPDATA",
+  "MOZ_DISABLE_SAFE_MODE_KEY",
+  "NUMBER_OF_PROCESSORS",
+  "OS",
+  "PATH",
+  "PATHEXT",
+  "PLAYWRIGHT_BROWSERS_PATH",
+  "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD",
+  "PLAYWRIGHT_SKIP_BROWSER_GC",
+  "PROCESSOR_ARCHITECTURE",
+  "PROCESSOR_IDENTIFIER",
+  "PUBLIC",
+  "PWTEST_SERVER_REGISTRY",
+  "ProgramData",
+  "ProgramFiles",
+  "ProgramFiles(x86)",
+  "ProgramW6432",
+  "SESSIONNAME",
+  "SystemDrive",
+  "SystemRoot",
+  "TEMP",
+  "TMP",
+  "USERDOMAIN",
+  "USERNAME",
+  "USERPROFILE",
+  "windir"
+ ],
+ "handshake": {
+  "server": {
+   "name": "Playwright",
+   "version": "1.64.0-alpha-1790635538000"
+  },
+  "protocolVersion": "2025-11-25",
+  "tools": [
+   "browser_close",
+   "browser_resize",
+   "browser_get_config",
+   "browser_console_messages",
+   "browser_cookie_list",
+   "browser_cookie_get",
+   "browser_cookie_set",
+   "browser_cookie_delete",
+   "browser_cookie_clear",
+   "browser_resume",
+   "browser_highlight",
+   "browser_hide_highlight",
+   "browser_annotate",
+   "browser_handle_dialog",
+   "browser_emulate_media",
+   "browser_evaluate",
+   "browser_file_upload",
+   "browser_drop",
+   "browser_find",
+   "browser_fill_form",
+   "browser_press_key",
+   "browser_type",
+   "browser_mouse_move_xy",
+   "browser_mouse_click_xy",
+   "browser_mouse_drag_xy",
+   "browser_mouse_down",
+   "browser_mouse_up",
+   "browser_mouse_wheel",
+   "browser_navigate",
+   "browser_navigate_back",
+   "browser_network_requests",
+   "browser_network_request",
+   "browser_network_state_set",
+   "browser_pdf_save",
+   "browser_start_recording",
+   "browser_stop_recording",
+   "browser_route",
+   "browser_route_list",
+   "browser_unroute",
+   "browser_run_code_unsafe",
+   "browser_take_screenshot",
+   "browser_snapshot",
+   "browser_click",
+   "browser_drag",
+   "browser_hover",
+   "browser_select_option",
+   "browser_generate_locator",
+   "browser_storage_state",
+   "browser_set_storage_state",
+   "browser_tabs",
+   "browser_start_tracing",
+   "browser_stop_tracing",
+   "browser_verify_element_visible",
+   "browser_verify_text_visible",
+   "browser_verify_list_visible",
+   "browser_verify_value",
+   "browser_start_video",
+   "browser_stop_video",
+   "browser_video_chapter",
+   "browser_video_show_actions",
+   "browser_video_hide_actions",
+   "browser_wait_for",
+   "browser_localstorage_list",
+   "browser_localstorage_get",
+   "browser_localstorage_set",
+   "browser_localstorage_delete",
+   "browser_localstorage_clear",
+   "browser_sessionstorage_list",
+   "browser_sessionstorage_get",
+   "browser_sessionstorage_set",
+   "browser_sessionstorage_delete",
+   "browser_sessionstorage_clear"
+  ]
+ },
+ "first": {
+  "tool": "browser_tabs",
+  "startedAt": "2026-10-13T06:43:48.895Z",
+  "answeredAt": "2026-10-13T06:43:49.965Z",
+  "ms": 1070,
+  "isError": false,
+  "text": "### Result\n- 0: (current) [](about:blank)"
+ },
+ "firstStalled": false,
+ "firstCallLog": null,
+ "outcome": "the call was answered",
+ "childEnd": {
+  "code": 0,
+  "signal": null
+ },
+ "sessionAfter": [
+  {
+   "file": "sessionstore.jsonlz4",
+   "bytes": 1309,
+   "state": null,
+   "windows": [
+    {
+     "selected": 2,
+     "tabs": [
+      {
+       "index": 1,
+       "entries": [
+        "http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1"
+       ],
+       "policies": [
+        null
+       ]
+      },
+      {
+       "index": 1,
+       "entries": [
+        "about:blank"
+       ],
+       "policies": [
+        null
+       ]
+      }
+     ]
+    }
+   ],
+   "closedWindows": 0
+  },
+  {
+   "file": "sessionstore-backups/recovery.jsonlz4",
+   "bytes": 1032,
+   "state": null,
+   "windows": [
+    {
+     "selected": 1,
+     "tabs": [
+      {
+       "index": 1,
+       "entries": [
+        "http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1"
+       ],
+       "policies": [
+        null
+       ]
+      }
+     ]
+    }
+   ],
+   "closedWindows": 0
+  },
+  {
+   "file": "sessionstore-backups/previous.jsonlz4",
+   "bytes": 1033,
+   "state": null,
+   "windows": [
+    {
+     "selected": 1,
+     "tabs": [
+      {
+       "index": 1,
+       "entries": [
+        "http://127.0.0.1:57946/rjBGSOo2o22jDmZrF7EfPeanqwaiqU0PoXc19jvLfiE/?tab=1"
+       ],
+       "policies": [
+        null
+       ]
+      }
+     ]
+    }
+   ],
+   "closedWindows": 0
+  }
+ ],
+ "finished": "2026-10-13T06:43:50.515Z"
+}
