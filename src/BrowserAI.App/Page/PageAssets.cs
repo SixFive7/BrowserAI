@@ -49,6 +49,18 @@ namespace BrowserAI.App.Page;
 /// points at the card chosen; the arrow keys move between cards; and a card an address chose
 /// is the one chosen when the page opens.
 /// </para>
+/// <para>
+/// ⚠️ <b>And at any number of rows since 2026-10-13, by addition</b>, at the maintainer's
+/// request of that day, in his words verbatim: <i>"Feature request. Right now I see "There are
+/// too many conversations and sessions to draw as a map, so they are listed.". Can we make it so
+/// that this still draws on a map. The page can become longer (not wider) if need be."</i> The
+/// map's rows are a grid of their own that shares its columns, so the map grows in height and
+/// never in width; BrowserAI's column is one card down the map's whole height; when that card
+/// is taller than the room the inspector keeps below the top bar, the script marks the map
+/// <c>tall</c> and BrowserAI's own part of the card moves to the top of its column, where it
+/// stays in view as the page scrolls; and a step out of BrowserAI's column with the arrow keys
+/// lands on the row the step into it came from.
+/// </para>
 /// </remarks>
 internal static class PageAssets
 {
@@ -66,6 +78,11 @@ internal static class PageAssets
     public const int MapMinimumWidth = 1200;
 
     /// <summary>The stylesheet.</summary>
+    /// <remarks>
+    /// <b>BrowserAI's column draws its glow at a fixed height</b>, 320 px, since 2026-10-13: a
+    /// gradient sized with <c>min()</c> drew no background at all in Chromium 155
+    /// ([kb](../../../kb/windows/loopback-page.md#the-conversations-pages-map-at-forty-a-hundred-and-two-hundred-rows----measured-2026-10-13)).
+    /// </remarks>
     public static string Css { get; } = """
         :root {
           color-scheme: light dark;
@@ -260,7 +277,8 @@ internal static class PageAssets
         .hint .icon { width: 17px; height: 17px; color: var(--accent-text); }
 
         .map-layout { display: none; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; margin-bottom: 22px; }
-        .map { position: relative; display: grid; grid-template-columns: minmax(210px, 296px) minmax(40px, 0.75fr) minmax(150px, 172px) minmax(96px, 1.45fr) minmax(200px, 256px); row-gap: 14px; padding: 16px 20px 18px; border: 1px solid var(--line); border-radius: 20px; background: var(--card-2); }
+        .map { --map-columns: minmax(210px, 296px) minmax(40px, 0.75fr) minmax(150px, 172px) minmax(96px, 1.45fr) minmax(200px, 256px); position: relative; display: grid; grid-template-columns: var(--map-columns); row-gap: 14px; padding: 16px 20px 18px; border: 1px solid var(--line); border-radius: 20px; background: var(--card-2); }
+        .map-rows { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: var(--map-columns); grid-template-columns: subgrid; row-gap: 14px; }
         .wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
         .wire { fill: none; stroke-width: 2; stroke: var(--wire); stroke-linecap: round; stroke-linejoin: round; }
         .wire.w { stroke: var(--wire-w); stroke-width: 3.5; }
@@ -293,9 +311,11 @@ internal static class PageAssets
         .col-head.c1 { grid-column: 1; }
         .col-head.c3 { grid-column: 3; text-align: center; }
         .col-head.c5 { grid-column: 5; }
-        .map > .left { grid-column: 1; display: flex; flex-direction: column; gap: 6px; align-self: center; }
-        .map > .right { grid-column: 5; display: flex; flex-direction: column; gap: 14px; align-self: center; }
-        .hub-cell { grid-column: 3; display: flex; align-self: stretch; position: relative; z-index: 1; }
+        .map-rows > .left { grid-column: 1; display: flex; flex-direction: column; gap: 6px; align-self: center; }
+        .map-rows > .right { grid-column: 5; display: flex; flex-direction: column; gap: 14px; align-self: center; }
+        .hub-cell { grid-column: 3; grid-row: 2; display: flex; flex-direction: column; align-self: stretch; position: relative; z-index: 1; border-radius: 22px; border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--line-strong)); background: radial-gradient(120% 320px at 50% 0%, color-mix(in srgb, var(--seg-a) 22%, var(--card)) 0%, var(--card) 70%); box-shadow: var(--shadow); cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease; }
+        .hub-cell:hover { border-color: var(--accent-text); transform: translateY(-2px); box-shadow: var(--lift); }
+        .hub-cell:has(> .hub[aria-pressed="true"]) { border-color: var(--accent-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent), var(--shadow); }
         .group-label { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin: 0 0 7px 4px; }
         .group-label .icon { width: 13px; height: 13px; }
         .ghost { margin: 0; border: 1px dashed var(--line-strong); border-radius: 14px; padding: 12px 14px; color: var(--muted); font-size: 12.5px; }
@@ -308,7 +328,7 @@ internal static class PageAssets
         .cue { position: absolute; top: -10px; right: 12px; display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 650; letter-spacing: 0.02em; line-height: 1; padding: 3px 6px 3px 8px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--muted); transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease; }
         .cue .icon { width: 12px; height: 12px; }
         .cue .on { display: none; }
-        .node:hover .cue, .node:focus-visible .cue { border-color: var(--accent-text); color: var(--accent-text); }
+        .node:hover .cue, .node:focus-visible .cue, .hub-cell:hover .cue { border-color: var(--accent-text); color: var(--accent-text); }
         .node[aria-pressed="true"] .cue { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
         .node[aria-pressed="true"] .cue .off { display: none; }
         .node[aria-pressed="true"] .cue .on { display: inline; }
@@ -326,7 +346,10 @@ internal static class PageAssets
         .br-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--card-2); color: var(--muted); }
         .br-ic.w { background: var(--warn-soft); color: var(--warn); }
         .br-ic.h { background: var(--accent-soft); color: var(--accent-text); }
-        .hub { flex-direction: column; justify-content: center; text-align: center; gap: 6px; border-radius: 22px; padding: 18px 14px; border-color: color-mix(in srgb, var(--accent) 50%, var(--line-strong)); background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--seg-a) 22%, var(--card)) 0%, var(--card) 70%); }
+        .hub { flex: 1 1 auto; flex-direction: column; justify-content: center; text-align: center; gap: 6px; border-radius: 21px; padding: 18px 14px; border: 0; background: transparent; box-shadow: none; position: sticky; top: 86px; }
+        .hub:hover, .hub[aria-pressed="true"] { transform: none; box-shadow: none; }
+        .map.tall .hub { flex: none; }
+        .map .node { scroll-margin: 86px 0 24px; }
         .hub .brand-mark { width: 52px; height: 52px; }
         .hub-name { font-weight: 650; font-size: 16px; }
         .hub-stat { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 8px; }
@@ -335,10 +358,6 @@ internal static class PageAssets
         .upd { display: block; width: 100%; margin-top: 10px; border-radius: 12px; padding: 9px; font-size: 12.5px; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn-line); }
         .upd b { display: block; font-size: 13.5px; }
         .upd.ok { background: var(--accent-soft); color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
-        .r1 { grid-row: 2; } .r2 { grid-row: 3; } .r3 { grid-row: 4; } .r4 { grid-row: 5; }
-        .r5 { grid-row: 6; } .r6 { grid-row: 7; } .r7 { grid-row: 8; } .r8 { grid-row: 9; }
-        .rows-1 { grid-row: 2 / span 1; } .rows-2 { grid-row: 2 / span 2; } .rows-3 { grid-row: 2 / span 3; } .rows-4 { grid-row: 2 / span 4; }
-        .rows-5 { grid-row: 2 / span 5; } .rows-6 { grid-row: 2 / span 6; } .rows-7 { grid-row: 2 / span 7; } .rows-8 { grid-row: 2 / span 8; }
 
         .inspector { position: sticky; top: 76px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; max-height: calc(100vh - 96px); overflow: auto; }
         .inspector.pointing { border-color: color-mix(in srgb, var(--accent-text) 55%, var(--line)); }
@@ -554,7 +573,7 @@ internal static class PageAssets
         @media (min-width: {{WIDTH}}px) {
           .map-layout { display: grid; }
           .legend-row { display: grid; grid-template-columns: minmax(0, 1fr) 360px; }
-          .list-view:not(.crowded) { display: none; }
+          .list-view { display: none; }
         }
         @media (max-width: 980px) {
           .span-8, .span-4 { grid-column: span 12; }
@@ -578,8 +597,8 @@ internal static class PageAssets
         }
         @media (prefers-reduced-motion: reduce) {
           .pulse, .wire.live { animation: none; }
-          .node, .cue { transition: none; }
-          .node:hover { transform: none; }
+          .node, .cue, .hub-cell { transition: none; }
+          .node:hover, .hub-cell:hover { transform: none; }
         }
         """.Replace("{{WIDTH}}", MapMinimumWidth.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
 
@@ -684,9 +703,14 @@ internal static class PageAssets
             const into = document.getElementById('wires');
             if (!map || !into) { return; }
             while (into.firstChild) { into.removeChild(into.firstChild); }
+            const hub = map.querySelector('.hub-cell');
+            if (!hub) { return; }
+            // 2026-10-13: a map taller than the room the inspector keeps below the page's top
+            // bar, calc(100vh - 96px), takes BrowserAI's card from the middle of its column to
+            // the top, where the stylesheet keeps it in view as the page scrolls.
+            map.classList.toggle('tall', hub.offsetHeight > window.innerHeight - 96);
             const box = map.getBoundingClientRect();
-            const hub = map.querySelector('.hub');
-            if (!hub || box.width === 0) { return; }
+            if (box.width === 0) { return; }
             const centre = hub.getBoundingClientRect();
             const hubLeft = centre.left - box.left;
             const hubRight = centre.right - box.left;
@@ -747,28 +771,37 @@ internal static class PageAssets
           };
 
           const columnOf = (node) => (node.classList.contains('hub') ? 1 : node.closest('.left') ? 0 : 2);
+          const middleOf = (node) => { const b = node.getBoundingClientRect(); return b.top + b.height / 2; };
+          const rowOf = (node) => { const cell = node.closest('[data-row]'); return cell ? cell.dataset.row : null; };
+          // The card the arrow keys last left for BrowserAI's, whose column runs the map's
+          // whole height: a step on from BrowserAI starts from that card's row (2026-10-13).
+          let cameFrom = '';
           const toward = (from, key) => {
-            const a = from.getBoundingClientRect();
-            const ay = a.top + a.height / 2;
+            const back = from.classList.contains('hub') && cameFrom ? document.getElementById(cameFrom) : null;
+            const origin = back || from;
+            const ay = middleOf(origin);
+            const row = rowOf(origin);
             const column = columnOf(from);
             let best = null;
             let distance = Infinity;
             for (const node of main.querySelectorAll('#map .node')) {
               if (node === from) { continue; }
-              const b = node.getBoundingClientRect();
-              const by = b.top + b.height / 2;
+              const by = middleOf(node);
               const other = columnOf(node);
               let d = Infinity;
               if (key === 'ArrowUp' && other === column && by < ay) { d = ay - by; }
               if (key === 'ArrowDown' && other === column && by > ay) { d = by - ay; }
-              if (key === 'ArrowLeft' && other === column - 1) { d = Math.abs(by - ay); }
-              if (key === 'ArrowRight' && other === column + 1) { d = Math.abs(by - ay); }
+              // A step across keeps to the row it starts from, where that row has a card there.
+              if ((key === 'ArrowLeft' && other === column - 1) || (key === 'ArrowRight' && other === column + 1)) {
+                d = Math.abs(by - ay) + (row !== null && rowOf(node) === row ? 0 : 1e7);
+              }
               if (d < distance) { distance = d; best = node; }
             }
             return best;
           };
 
           const draw = (data) => {
+            const came = cameFrom;
             const active = document.activeElement;
             const focused = active && active !== main && main.contains(active) ? active.id : '';
             const open = [...main.querySelectorAll('details[open]')].map((element) => element.id).filter((id) => id);
@@ -779,13 +812,18 @@ internal static class PageAssets
             }
             tick();
             samples();
-            inspect(chosen);
+            // The lines before the choice since 2026-10-13: drawing them marks a tall map, which
+            // moves BrowserAI's card, and the inspector points at a card where it is.
             wires();
+            inspect(chosen);
             hint();
             if (focused) {
               const again = document.getElementById(focused);
               if (again) { again.focus({ preventScroll: true }); }
             }
+            // A new state keeps the row the arrow keys came into BrowserAI's column from, as it
+            // keeps the focus (2026-10-13).
+            cameFrom = came;
             if (!finished) { banner.hidden = true; }
           };
 
@@ -840,7 +878,8 @@ internal static class PageAssets
             const card = event.target.closest('[data-inspect]');
             if (card) {
               const key = card.dataset.inspect;
-              const onMap = card.classList.contains('node');
+              // A card on the map, BrowserAI's whole column included, and not a pick in the inspector.
+              const onMap = card.closest('#map') !== null;
               inspect(chosen === key && onMap ? null : key);
               if (!onMap && chosen) { document.getElementById('n-' + chosen).focus(); }
               return;
@@ -860,21 +899,27 @@ internal static class PageAssets
             }
           });
 
+          document.addEventListener('focusin', () => { cameFrom = ''; });
+
           document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && chosen !== null) { inspect(null); return; }
             const node = event.target.closest ? event.target.closest('#map .node') : null;
             if (!node || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) { return; }
             const next = toward(node, event.key);
-            if (next) { event.preventDefault(); next.focus(); }
+            if (next) {
+              event.preventDefault();
+              next.focus();
+              cameFrom = next.classList.contains('hub') ? node.id : '';
+            }
           });
 
           window.addEventListener('resize', () => { samples(); wires(); point(); });
           window.addEventListener('scroll', point, { passive: true });
           tick();
           samples();
+          wires();
           const pressed = main.querySelector('.node[aria-pressed="true"]');
           inspect(pressed ? pressed.dataset.inspect : null);
-          wires();
           hint();
           if (pressed) { pressed.scrollIntoView({ block: 'nearest' }); }
           const row = main.querySelector('.sess.chosen');

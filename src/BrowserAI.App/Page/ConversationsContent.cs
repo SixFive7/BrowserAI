@@ -9,7 +9,7 @@ namespace BrowserAI.App.Page;
 
 /// <summary>
 /// The conversations page: every conversation, BrowserAI and every session as C's live map,
-/// and the same as a list for a narrow window or a crowded day.
+/// and the same as a list for a narrow window.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -34,10 +34,18 @@ namespace BrowserAI.App.Page;
 /// </para>
 /// <para>
 /// <b>The map becomes a list below <see cref="PageAssets.MapMinimumWidth"/> pixels of
-/// window</b>, by the stylesheet, and <b>when it would be too crowded to read</b>: more than
-/// <see cref="MostMapRows"/> rows, a row being a conversation or a session no conversation
-/// uses, or more than <see cref="MostMapSessions"/> sessions. The write-up found the map
-/// crowded past about eight conversations. Past either limit the map is not drawn at all.
+/// window</b>, by the stylesheet, and only there. ⚠️ <i>Corrected 2026-10-13 (previously "and
+/// <b>when it would be too crowded to read</b>: more than <c>MostMapRows</c> rows, a row being
+/// a conversation or a session no conversation uses, or more than <c>MostMapSessions</c>
+/// sessions. The write-up found the map crowded past about eight conversations. Past either
+/// limit the map is not drawn at all."), at the maintainer's request of that day, in his words
+/// verbatim: "Feature request. Right now I see "There are too many conversations and sessions
+/// to draw as a map, so they are listed.". Can we make it so that this still draws on a map.
+/// The page can become longer (not wider) if need be."</i> The map is drawn whatever the
+/// number of rows, and it grows in height and never in width: its rows stack in a grid of
+/// their own that shares the map's columns, BrowserAI's column is one cell beside all of
+/// them, and on a map taller than the window BrowserAI's own card leaves the middle of its
+/// column for the top and stays in view as the page scrolls, as the inspector does.
 /// </para>
 /// <para>
 /// <b>It keeps the sessions page's address</b>, <c>sessions?tab=N</c>, which
@@ -49,12 +57,6 @@ namespace BrowserAI.App.Page;
 /// </remarks>
 internal static class ConversationsContent
 {
-    /// <summary>The most rows the map draws: a row is a conversation, or a session no conversation uses.</summary>
-    public const int MostMapRows = 8;
-
-    /// <summary>The most sessions the map draws.</summary>
-    public const int MostMapSessions = 12;
-
     /// <summary>What a trace is, said beside a session's traces.</summary>
     /// <remarks>The session page's line, moved here with its page on 2026-10-12.</remarks>
     private const string TracesNote = "Recordings Playwright can replay, in the session's output folder.";
@@ -98,22 +100,11 @@ internal static class ConversationsContent
                 .ToString();
         }
 
-        var rows = board.Conversations.Count + board.Unlinked.Count;
-        var crowded = rows > MostMapRows || board.All.Count > MostMapSessions;
-
-        if (!crowded)
-        {
-            _ = html.Append(Legend()).Append("<div class=\"map-layout\">\n").Append(Map(view, board, chosen)).Append(Inspector(view, board, chosen)).Append("</div>\n");
-        }
-
-        _ = html.Append(crowded ? "<div class=\"list-view crowded\">\n" : "<div class=\"list-view\">\n");
-
-        if (crowded)
-        {
-            _ = html.Append("<p class=\"small\">There are too many conversations and sessions to draw as a map, so they are listed.</p>\n");
-        }
-
-        return html.Append(List(view, board, chosen)).Append("</div>\n").ToString();
+        // The map at every count, and the list the stylesheet shows in its place in a narrow
+        // window. Corrected 2026-10-13 (previously the map past eight rows or twelve sessions
+        // was not drawn, and the list said so).
+        return html.Append(Legend()).Append("<div class=\"map-layout\">\n").Append(Map(view, board, chosen)).Append(Inspector(view, board, chosen)).Append("</div>\n")
+            .Append("<div class=\"list-view\">\n").Append(List(view, board, chosen)).Append("</div>\n").ToString();
     }
 
     /// <summary>
@@ -271,32 +262,38 @@ internal static class ConversationsContent
     // ---- The map ----------------------------------------------------------------
 
     /// <summary>The map: a column of conversations, BrowserAI, and a column of sessions, row by row.</summary>
+    /// <remarks>
+    /// <b>Its rows are a grid of their own</b> under the column heads, sharing the map's
+    /// columns, and BrowserAI's column is the one cell beside them all, so the map takes any
+    /// number of rows and grows in height only. Each row is a conversation's two cells, or a
+    /// kept session's, in that order, and the grid places each pair on a row of its own. The
+    /// cell is BrowserAI's card as well, so a click anywhere down its column chooses BrowserAI.
+    /// <i>Since 2026-10-13. Until then each row was placed by a class of its own, <c>r1</c> to
+    /// <c>r8</c>, and BrowserAI's column spanned them by another, <c>rows-1</c> to
+    /// <c>rows-8</c>: as many as the stylesheet had, and as many as the map then drew.</i>
+    /// </remarks>
     private static string Map(PageView view, PageBoard board, string? chosen)
     {
         var now = view.Now;
         var html = new StringBuilder("<div class=\"map\" id=\"map\">\n<svg class=\"wires\" id=\"wires\" aria-hidden=\"true\" focusable=\"false\"></svg>\n")
-            .Append("<div class=\"col-head c1\">Conversations</div><div class=\"col-head c3\">BrowserAI</div><div class=\"col-head c5\">Browser sessions</div>\n");
-        var rows = board.Conversations.Count + board.Unlinked.Count;
-        var row = 0;
-
-        _ = html.Append("<div class=\"hub-cell rows-").Append(Math.Max(1, rows).ToString(CultureInfo.InvariantCulture)).Append("\">").Append(Hub(view, board, chosen)).Append("</div>\n");
+            .Append("<div class=\"col-head c1\">Conversations</div><div class=\"col-head c3\">BrowserAI</div><div class=\"col-head c5\">Browser sessions</div>\n")
+            .Append("<div class=\"hub-cell\" data-inspect=\"hub\">").Append(Hub(view, board, chosen)).Append("</div>\n")
+            .Append("<div class=\"map-rows\">\n");
 
         string? lastWindow = null;
 
         foreach (var conversation in board.Conversations)
         {
-            row++;
-
             var label = conversation.Relay.Window is { } window && !string.Equals(window.Key, lastWindow, StringComparison.Ordinal)
                 ? "<div class=\"group-label\">" + PageIcons.Of("code") + PageContent.Text(window.Label()) + "</div>"
                 : string.Empty;
 
             lastWindow = conversation.Relay.Window?.Key;
 
-            _ = html.Append("<div class=\"left r").Append(row.ToString(CultureInfo.InvariantCulture)).Append("\" data-row=\"").Append(PageContent.Text(conversation.Key))
+            _ = html.Append("<div class=\"left\" data-row=\"").Append(PageContent.Text(conversation.Key))
                 .Append("\" data-line=\"").Append(StrandsOf(conversation)).Append('"').Append(conversation.Working ? " data-live=\"1\"" : string.Empty).Append('>')
                 .Append(label).Append(ConversationNode(conversation, chosen)).Append("</div>\n")
-                .Append("<div class=\"right r").Append(row.ToString(CultureInfo.InvariantCulture)).Append("\" data-row=\"").Append(PageContent.Text(conversation.Key)).Append("\">");
+                .Append("<div class=\"right\" data-row=\"").Append(PageContent.Text(conversation.Key)).Append("\">");
 
             if (conversation.Sessions.Count is 0)
             {
@@ -315,15 +312,13 @@ internal static class ConversationsContent
 
         foreach (var session in board.Unlinked)
         {
-            row++;
-
-            _ = html.Append("<div class=\"left r").Append(row.ToString(CultureInfo.InvariantCulture)).Append("\" data-row=\"s-").Append(PageContent.Text(session.Id)).Append("\" data-line=\"k\">")
+            _ = html.Append("<div class=\"left\" data-row=\"s-").Append(PageContent.Text(session.Id)).Append("\" data-line=\"k\">")
                 .Append("<p class=\"ghost\">").Append(session.Kept ? "Its conversation ended. BrowserAI keeps the session for the next one." : "No conversation is connected to it now.").Append("</p></div>\n")
-                .Append("<div class=\"right r").Append(row.ToString(CultureInfo.InvariantCulture)).Append("\" data-row=\"s-").Append(PageContent.Text(session.Id)).Append("\">")
+                .Append("<div class=\"right\" data-row=\"s-").Append(PageContent.Text(session.Id)).Append("\">")
                 .Append(SessionNode(session, working: false, now, chosen)).Append("</div>\n");
         }
 
-        return html.Append("</div>\n").ToString();
+        return html.Append("</div>\n</div>\n").ToString();
     }
 
     private static string ConversationNode(Conversation conversation, string? chosen) =>
