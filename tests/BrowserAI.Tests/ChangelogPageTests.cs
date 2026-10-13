@@ -576,14 +576,34 @@ internal sealed partial class ChangelogPageTests
 
         await Assert.That(string.Join("|", empty.Select(static release => release.Version ?? "Unreleased"))).IsEqualTo("1.0.0");
 
-        // The shipped changelog: every section heading it holds, in order.
-        var shipped = ShippedChangelog.Text()!;
-        var headings = System.Text.RegularExpressions.Regex.Matches(shipped, @"^## \[(?<version>[^\]]+)\]", System.Text.RegularExpressions.RegexOptions.Multiline)
-            .Select(static match => match.Groups["version"].Value)
-            .ToList();
+        // The shipped changelog: every section heading it holds, in order, but for an
+        // [Unreleased] heading whose section holds no entry, which the page leaves out.
+        // ⚠️ Since 2026-10-13, the maintainer's 142 c (previously every heading it holds,
+        // an empty [Unreleased] included, so a build of a stamped changelog read
+        // "Unreleased|2.0.0|..." against "2.0.0|..." here).
+        var headings = HeadingsThePageReads(ShippedChangelog.Text()!);
 
-        await Assert.That(headings.Count).IsGreaterThanOrEqualTo(4).Because("the positive control: the shipped changelog holds what is not yet released and at least three releases");
+        await Assert.That(headings.Count).IsGreaterThanOrEqualTo(4).Because("the positive control: the shipped changelog holds at least four sections the page reads");
         await Assert.That(string.Join("|", ShippedChangelog.Releases().Select(static release => release.Version ?? "Unreleased"))).IsEqualTo(string.Join("|", headings));
+    }
+
+    /// <summary>
+    /// Every section heading a changelog holds, in order, but for an <c>[Unreleased]</c> heading
+    /// whose section holds no entry: a line that opens with <c>- </c>.
+    /// </summary>
+    /// <param name="changelog">The changelog.</param>
+    /// <returns>The versions, <c>Unreleased</c> for what is not yet released.</returns>
+    private static List<string> HeadingsThePageReads(string changelog)
+    {
+        var matches = System.Text.RegularExpressions.Regex.Matches(changelog, @"^## \[(?<version>[^\]]+)\]", System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        return [.. matches
+            .Select((match, index) => (
+                Version: match.Groups["version"].Value,
+                Body: changelog[(match.Index + match.Length)..(index + 1 < matches.Count ? matches[index + 1].Index : changelog.Length)]))
+            .Where(static section => !string.Equals(section.Version, "Unreleased", StringComparison.OrdinalIgnoreCase)
+                || section.Body.Split('\n').Any(static line => line.StartsWith("- ", StringComparison.Ordinal)))
+            .Select(static section => section.Version)];
     }
 
     /// <summary>
