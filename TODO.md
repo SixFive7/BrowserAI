@@ -1431,7 +1431,15 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       and 0 of 40 with the switch. Playwright's own default for `headless: true`,
       `chromium-headless-shell`, runs no stack sampling profiler; only the full Chrome for
       Testing, which BrowserAI launches, does. Write the comment's link here once it is
-      posted. **What to do:** check both at least once a week, and read the Chromium revision
+      posted. ⚠️ *Corrected 2026-10-13 by addition (previously the two sentences
+      about the comment, "is drafted for the maintainer to post" and "Write the comment's
+      link here once it is posted", with nothing after them)*: no comment was posted. By the
+      maintainer's 134 b the report went out as a new issue that links 473587142,
+      [Chromium issue 572877174](https://issues.chromium.org/issues/572877174), on 2026-10-13 at
+      01:26:48Z, public, and the Playwright issue links it
+      [since 01:29:06Z](https://github.com/microsoft/playwright/issues/43327#issuecomment-6136092097).
+      What was posted is in [the evidence](docs/evidence/2026-10-13-stack-profiler/README.md),
+      and the two to check are #43327 and 572877174. **What to do:** check both at least once a week, and read the Chromium revision
       of every Playwright roll the daily drift check finds. **When either is answered,
       merged or released**, write what changed into this item with its date. **When a Chrome
       for Testing that a Playwright release ships may carry a fix**, run

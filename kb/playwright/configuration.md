@@ -1202,7 +1202,10 @@ restores the registers other than RBP in the stack copy; with RBP the frame regi
 0 no stack address, it does not cover this. **Playwright's own default for `headless: true`,
 `chromium-headless-shell` 155.0.8059.12, runs no `StackSamplingProfiler` thread**; the full
 Chrome for Testing, the channel BrowserAI launches, does. Reported as [microsoft/playwright#43327](https://github.com/microsoft/playwright/issues/43327)
-on 2026-10-13, and a comment on the Chromium issue is drafted for the maintainer. The
+on 2026-10-13, and a comment on the Chromium issue is drafted for the maintainer.
+⚠️ *Corrected 2026-10-13 by addition (previously the sentence before, with nothing after
+it)*: the Chromium report went out the same day at 01:26:48Z as a new issue that links
+473587142, [572877174](https://issues.chromium.org/issues/572877174), and the Playwright issue links it. The
 reports, their `cdb` readings and the dumps' digests are in
 [the evidence batch](../../docs/evidence/2026-10-13-stack-profiler/README.md).
 

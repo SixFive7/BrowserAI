@@ -1,0 +1,47 @@
+Chrome for Testing 157.0.8101.0, 156.0.8078.4 and 155.0.8059.12, win64
+Windows 11 Pro 26H2, build 26300.9550, x64, AMD Ryzen 9 5950X
+Windhawk 1.7.3 is installed. windhawk.dll is loaded in the browser process with and without the flag and is not on the crashing stack.
+
+1. `npm i playwright@1.64.0`
+2. `npx playwright install chromium`
+3. `node repro.mjs`
+
+The script launches Chrome for Testing headless 20 times, alternating plain launches with launches given `--disable-stack-profiler`, and after each launch takes full-page PNG screenshots of a 1920x16384 page for 28 s.
+
+```js
+// repro.mjs
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const url = 'data:text/html,<style>html,body{margin:0}</style><div style="height:16384px;background:rgb(48,96,192)"></div>';
+const tally = { on: { launches: 0, lost: 0, captures: 0 }, off: { launches: 0, lost: 0, captures: 0 } };
+
+for (let i = 0; i < 20; i++) {
+  const arm = i % 2 === 0 ? 'on' : 'off';
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), `profiler-${arm}-`));
+  const context = await chromium.launchPersistentContext(profile, {
+    channel: 'chromium',
+    headless: true,
+    viewport: { width: 1920, height: 1080 },
+    args: arm === 'off' ? ['--disable-stack-profiler'] : [],
+  });
+  const page = context.pages()[0];
+  const started = Date.now();
+  tally[arm].launches++;
+  try {
+    while (Date.now() - started < 28000) {
+      await page.goto(url);
+      await page.screenshot({ fullPage: true });
+      tally[arm].captures++;
+    }
+  } catch (error) {
+    tally[arm].lost++;
+    console.log(`launch ${i} (${arm}): lost at ${Date.now() - started} ms, ${error.message.split('\n')[0]}`);
+    console.log(`  dumps: ${path.join(profile, 'Crashpad', 'reports')}`);
+  }
+  await context.close().catch(() => {});
+}
+console.log(JSON.stringify(tally));
+```

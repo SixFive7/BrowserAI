@@ -1,0 +1,30 @@
+## The sample being unwound
+
+The CONTEXT handed to RtlVirtualUnwind has RIP chrome.dll+0x1d103bc and RBP 0. The function, chrome.dll+0x1d0ffb0 to +0x1d16ec0, has unwind info at +0x11c780f8: version 1, frame register RBP at offset 0x80, UWOP_SAVE_XMM128 for xmm6 to xmm15 at 0x290 to 0x320, UWOP_SET_FPREG, UWOP_ALLOC_LARGE 0x338, and eight pushes, rbp first. Its epilog:
+
+```
++0x1d103a9  lea     rsp,[rbp+2B8h]
++0x1d103b0  pop     rbx
++0x1d103b1  pop     rdi
++0x1d103b2  pop     rsi
++0x1d103b3  pop     r12
++0x1d103b5  pop     r13
++0x1d103b7  pop     r14
++0x1d103b9  pop     r15
++0x1d103bb  pop     rbp
++0x1d103bc  vzeroupper      <- RIP of the sample
++0x1d103bf  ret
+```
+
+RIP of the sample in the other builds, each on the `vzeroupper` after `pop rbp`: +0x51fb315 in 156.0.8078.4 (2 dumps), +0x557d48c (7 dumps) and +0x54e4350 (1 dump) in 155.0.8059.12.
+
+## Analysis
+
+1. An x64 epilog may hold only `add rsp` or `lea rsp`, then pops, then `ret` or `jmp`: "No other code can appear." (https://learn.microsoft.com/en-us/cpp/build/prolog-and-epilog). RtlVirtualUnwind finds an epilog by reading the code at RIP. On `vzeroupper` it finds none, takes RIP for body code and reverses the whole prolog.
+2. UWOP_SET_FPREG puts the frame base at RBP - 0x80. `pop rbp` has already run, so RBP holds the caller's value, 0 here. The frame base is -0x80 (r8), the saved xmm6 is read at -0x80 + 0x290 = 0x210 (r9), and the read of its upper half at 0x218 faults.
+3. The 0x11d dump is the same in another function: RIP chrome.dll+0x54e4350 (155.0.8059.12), RBP 5, xmm6 at 0x190, so 5 - 0x80 + 0x190 = 0x115 and the fault is at 0x11d. The GPU bot stacks in 462642963 and 450325666 show 0xffffffffffffff81 among the RtlVirtualUnwind2 arguments, which is RBP 1 minus 0x80.
+4. Each of the three builds holds 80 byte sequences 5d c5 f8 77 c3 (`pop rbp; vzeroupper; ret`) in chrome.dll .text, and 1,514 to 1,545 of `pop <reg>; vzeroupper; ret`.
+5. The sampled thread is CrBrowserMain: in the 10 dumps from 155 and 156, a register of the sample points into CrBrowserMain's stack (RDI in 9, R13 and R14 in 1). In 157 RDI points into the stack copy instead (0x46bc006bae30, RSP 0x46bc006ba808). PageHandler::ScreenshotCaptured runs the PNG encoder on the UI thread: https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/content/browser/devtools/protocol/page_handler.cc#1960
+6. The copy is walked on a ThreadPool sequence, which puts the fault on ThreadPoolForegroundWorker: https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/base/profiler/stack_sampler.cc#263. Win32UnwindFunctions::VirtualUnwind calls ::RtlVirtualUnwind directly: https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/base/profiler/win32_stack_frame_unwinder.cc#62
+7. https://chromium-review.googlesource.com/8482885 restores R12 to R15, RDI and RSI in the register rewrite. The frame register here is RBP, which was rewritten before that change, and 0 is not a stack address. 157.0.8101.0 contains the change and still lost the browser in 4 of 10 launches, every dump on +0x1d103bc.
+8. Chrome for Testing runs the profiler on every launch. GetReleaseChannel() returns nullopt unless OFFICIAL_BUILD and GOOGLE_CHROME_BRANDING are both set (https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/chrome/common/profiler/thread_profiler_configuration.cc#44), a Chrome for Testing build cannot be Chrome-branded (https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/build/config/chrome_build.gni#80), and DefaultPlatformConfiguration::GetEnableRates() then enables the profiler for 100% of launches (https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/chrome/common/profiler/thread_profiler_platform_configuration.cc#63). The startup profile samples every 100 ms for 30 s (https://chromium.googlesource.com/chromium/src/+/refs/tags/155.0.8059.12/chrome/common/profiler/thread_profiler_configuration.cc#69). chrome-headless-shell 155.0.8059.12 runs no StackSamplingProfiler thread.

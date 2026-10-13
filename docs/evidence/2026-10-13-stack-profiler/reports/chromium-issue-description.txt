@@ -1,0 +1,50 @@
+Related: https://issues.chromium.org/issues/473587142 has the same stack. Its CL https://chromium-review.googlesource.com/8482885 does not fix this case, item 7 below.
+
+## Result
+
+Launches that lost the browser, plain against `--disable-stack-profiler`:
+
+- 157.0.8101.0, `executablePath` set to the Canary download in place of `channel`: 4 of 10 (376 captures) against 0 of 10 (484 captures)
+- 156.0.8078.4, Playwright 1.64.0: 2 of 10 (449 captures) against 0 of 10 (472 captures)
+- 155.0.8059.12, Playwright 1.64.0-alpha-1790635538000: 3 of 10 (387 captures) against 0 of 10 (465 captures)
+- 155.0.8059.12, an earlier rig with a similar loop over 1920x16385 and 1920x16384 pages and other launch options: 5 of 10 (287 captures) against 0 of 10 (439 captures)
+- Pooled: 14 of 40 against 0 of 40, Fisher one-sided p = 0.000015
+
+Every lost browser left a Crashpad dump. 14 of 14 show the crash below.
+
+## Crash
+
+EXCEPTION_ACCESS_VIOLATION reading 0x218 (one 155 dump: 0x11d), browser process, thread ThreadPoolForegroundWorker, StackSamplingProfiler thread present. Stack from 157.0.8101.0:
+
+```
+ntdll!RtlpUnwindPrologue+0x381    mov r8,qword ptr [r9+8]    r8=ffffffffffffff80 r9=0000000000000210
+ntdll!RtlpxVirtualUnwind+0x109
+ntdll!RtlVirtualUnwind+0x15b
+KERNEL32!RtlVirtualUnwindStub+0x38
+chrome.dll+0xcd2d653
+chrome.dll+0xcd2d5a5
+chrome.dll+0xbeb3bc2
+chrome.dll+0xbebe107
+chrome.dll+0xbebe5e0
+chrome.dll+0xbebeabc
+chrome.dll+0x5d66b72
+chrome.dll+0x503eac4
+chrome.dll+0x3cc9691
+chrome.dll+0x3cc8108
+chrome.dll+0x3cc698d
+chrome.dll+0x62388
+chrome.dll+0x925cb6
+KERNEL32!BaseThreadInitThunk+0x17
+ntdll!RtlUserThreadStart+0x2c
+```
+
+chrome.dll.pdb: 34FA074407D33B8C4C4C44205044422E age 1 (157.0.8101.0), CA1F7CEA1842AEC34C4C44205044422E age 1 (156.0.8078.4), 728441B965B003FE4C4C44205044422E age 1 (155.0.8059.12). ntdll.dll 10.0.26100.9549.
+
+## Ask
+
+- Make the Windows unwinder survive this epilog shape. One way: when the bytes at RIP are c5 f8 77 c3 (`vzeroupper; ret`), the pops are done, so unwind it as a `ret` (RIP from [RSP], RSP + 8) without calling RtlVirtualUnwind.
+- Or turn the profiler off in Chrome for Testing.
+
+Minidumps of all three builds are available on request. They hold process memory, so none is attached.
+
+The unwind detail and the analysis follow below.
