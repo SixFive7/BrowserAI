@@ -80,20 +80,20 @@ internal sealed class FirefoxRestoreTests
     [Test]
     public async Task TheBlankPageGoesOnlyWhenItIsFirstAndAReopenedTabIsListed()
     {
-        static List<UpstreamTab> Tabs(params string[] urls) =>
+        static List<UpstreamTab> listing(params string[] urls) =>
             [.. urls.Select((url, index) => new UpstreamTab(index, index is 0, string.Empty, url, Crashed: false))];
 
-        await Assert.That(FirefoxRestore.TheBlankPageCanGo(Tabs("about:blank"), out _)).IsFalse();
-        await Assert.That(FirefoxRestore.TheBlankPageCanGo(Tabs("http://127.0.0.1:1/", "about:blank"), out _)).IsFalse();
+        await Assert.That(FirefoxRestore.TheBlankPageCanGo(listing("about:blank"), out _)).IsFalse();
+        await Assert.That(FirefoxRestore.TheBlankPageCanGo(listing("http://127.0.0.1:1/", "about:blank"), out _)).IsFalse();
 
-        await Assert.That(FirefoxRestore.TheBlankPageCanGo(Tabs("about:blank", "http://127.0.0.1:1/"), out var one)).IsTrue();
+        await Assert.That(FirefoxRestore.TheBlankPageCanGo(listing("about:blank", "http://127.0.0.1:1/"), out var one)).IsTrue();
         await Assert.That(one).IsEqualTo(1);
 
         // A blank tab the last run left open is reopened too, and is passed over for a page.
-        await Assert.That(FirefoxRestore.TheBlankPageCanGo(Tabs("about:blank", "about:blank", "http://127.0.0.1:1/"), out var two)).IsTrue();
+        await Assert.That(FirefoxRestore.TheBlankPageCanGo(listing("about:blank", "about:blank", "http://127.0.0.1:1/"), out var two)).IsTrue();
         await Assert.That(two).IsEqualTo(2);
 
-        await Assert.That(FirefoxRestore.TheBlankPageCanGo(Tabs("about:blank", "about:blank"), out var blank)).IsTrue();
+        await Assert.That(FirefoxRestore.TheBlankPageCanGo(listing("about:blank", "about:blank"), out var blank)).IsTrue();
         await Assert.That(blank).IsEqualTo(1);
     }
 
@@ -129,7 +129,7 @@ internal sealed class FirefoxRestoreTests
     [Test]
     public async Task TheDocumentReadIsMatchedToTheTabListAndOnlyTheErrorPageMarksATab()
     {
-        static UpstreamTab Tab(int index, string url) => new(index, index is 0, "a title in any language", url, Crashed: false);
+        static UpstreamTab tabAt(int index, string url) => new(index, index is 0, "a title in any language", url, Crashed: false);
 
         var pages = FirefoxRestore.ParsePages(
             "### Result\n"
@@ -141,13 +141,13 @@ internal sealed class FirefoxRestoreTests
         await Assert.That(pages.Count).IsEqualTo(3);
 
         // In the same order: by position.
-        await Assert.That(FirefoxRestore.Match([Tab(0, "http://127.0.0.1:1/"), Tab(1, "http://127.0.0.1:2/"), Tab(2, "http://127.0.0.1:3/")], pages))
-            .IsEquivalentTo(new[] { 0 });
+        await Assert.That(FirefoxRestore.Match([tabAt(0, "http://127.0.0.1:1/"), tabAt(1, "http://127.0.0.1:2/"), tabAt(2, "http://127.0.0.1:3/")], pages))
+            .IsEquivalentTo([0]);
 
         // In another order, or with a tab the read did not see: by address.
-        await Assert.That(FirefoxRestore.Match([Tab(0, "http://127.0.0.1:2/"), Tab(1, "http://127.0.0.1:1/")], pages))
-            .IsEquivalentTo(new[] { 1 });
-        await Assert.That(FirefoxRestore.Match([Tab(0, "http://127.0.0.1:9/")], pages).Count).IsEqualTo(0);
+        await Assert.That(FirefoxRestore.Match([tabAt(0, "http://127.0.0.1:2/"), tabAt(1, "http://127.0.0.1:1/")], pages))
+            .IsEquivalentTo([1]);
+        await Assert.That(FirefoxRestore.Match([tabAt(0, "http://127.0.0.1:9/")], pages).Count).IsEqualTo(0);
 
         // An answer that holds no list marks nothing.
         await Assert.That(FirefoxRestore.ParsePages("### Error\nTimeoutError: something").Count).IsEqualTo(0);
@@ -176,7 +176,7 @@ internal sealed class FirefoxRestoreTests
 
         // The child was asked to start the browser, to list until the reopened tabs were up,
         // to make the first reopened tab current and to close the blank page, in that order.
-        var actions = tabs.Actions;
+        var actions = tabs.Actions.ToList();
 
         await Assert.That(actions[0]).IsEqualTo("list");
         await Assert.That(actions).Contains("select 1");
@@ -184,7 +184,7 @@ internal sealed class FirefoxRestoreTests
 
         var (left, current) = tabs.Now;
 
-        await Assert.That(left.Select(tab => tab.Url)).IsEquivalentTo(new[] { Reopened.Url, Unreachable.Url });
+        await Assert.That(left.Select(tab => tab.Url)).IsEquivalentTo([Reopened.Url, Unreachable.Url]);
         await Assert.That(left[current].Url).IsEqualTo(Reopened.Url);
 
         // And the answer says so, in the child's own lines.
@@ -217,7 +217,7 @@ internal sealed class FirefoxRestoreTests
         var directory = await ClosedFirefoxSessionAsync(sessions, rig, "restore-nothing", holdsASession: false);
         var text = TextOf(await ResumeAsync(rig, directory));
 
-        await Assert.That(tabs.Actions).IsEquivalentTo(new[] { "list" });
+        await Assert.That(tabs.Actions).IsEquivalentTo(["list"]);
         await Assert.That(tabs.DocumentReads).IsEqualTo(0);
         await Assert.That(text).Contains("Firefox had no tabs of this session to reopen, so the browser shows one blank page.");
     }
