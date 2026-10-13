@@ -428,16 +428,33 @@ internal static class BrowserConfiguration
     public const string StackProfilerSwitch = "--disable-stack-profiler";
 
     /// <summary>
-    /// The argument Playwright adds to open one blank page at launch, which every
-    /// session launch tells it to leave out.
+    /// The argument Playwright adds to open one blank page at launch, which a Chromium
+    /// session's launch tells it to leave out.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Without this the restore piles tabs up</b>: the browser reopens the last
     /// session and Playwright adds its own blank page beside it, so every close and
     /// resume adds one more. Measured 2026-10-03 with
     /// <see cref="RestoreLastSessionSwitch"/> and the Firefox session-store
     /// preferences, both families: the variants that kept the blank page grew by
     /// one tab per cycle and the ones that dropped it did not.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Chromium's only since 2026-10-13, the maintainer's 161</b>, in his words
+    /// verbatim: <i>"161 your recommendation"</i> <i>(previously left out of both families'
+    /// launches)</i>. Playwright's persistent launch waits for its first page's
+    /// <c>load</c>, and with this page left out a Firefox session's first page was the tab
+    /// its restore reopened. Juggler sends no <c>load</c> for Firefox's error page, so a
+    /// reopened page that could neither load nor come back from the cache held the launch
+    /// for Playwright's whole 180 s, 14 of 14
+    /// (<see href="../../../kb/playwright/provisioning-and-timings.md#a-firefox-session-resumed-onto-a-page-that-can-neither-load-nor-come-back-from-the-cache-waits-out-the-180-s-launch----measured-2026-10-13">kb</see>).
+    /// A Firefox launch keeps the page, so the launch waits for it alone, and the pile-up this
+    /// remark began with is answered by the resume: it starts the browser and closes the page
+    /// once a reopened tab is up (<see cref="Sessions.FirefoxRestore"/>). It comes out of
+    /// Firefox's launch again once Playwright stops waiting on such a tab, which the TODO's
+    /// watch item checks.
+    /// </para>
     /// </remarks>
     public const string DefaultPageArgument = "about:blank";
 
@@ -741,7 +758,9 @@ internal static class BrowserConfiguration
 
         // Added 2026-10-03 with the session restore: without it the restore piles
         // up a blank tab per cycle, so a generator that dropped it would degrade
-        // every resume and fail nothing else.
+        // every resume and fail nothing else. ⚠️ Empty for Firefox since
+        // 2026-10-13, the maintainer's 161, and still required of both families:
+        // the empty list is the decision that a Firefox launch keeps the page.
         "browser.launchOptions.ignoreDefaultArgs",
         "browser.launchOptions.headless",
         "browser.launchOptions.downloadsPath",
@@ -966,23 +985,46 @@ internal static class BrowserConfiguration
             {
                 // ⚠️ The one lever that prevents browser resurrection instead
                 // of cleaning up after it, and it is written on EVERY Firefox
-                // launch. Upstream writes these into the profile's `user.js`
-                // before the browser starts, so the preference is in force at
-                // the moment `nsAppRunner` decides whether to register -- which
-                // is why a pref delivered this way works where a runtime one
-                // would be too late.
+                // launch. Firefox reads it at run time and unregisters itself
+                // when it is false.
+                //
+                // ⚠️ HOW THESE ARRIVE, corrected 2026-10-13 by the maintainer's
+                // 162 b, in his words verbatim: "162 b" (previously "Upstream
+                // writes these into the profile's `user.js` before the browser
+                // starts, so the preference is in force at the moment
+                // `nsAppRunner` decides whether to register -- which is why a
+                // pref delivered this way works where a runtime one would be too
+                // late."). Playwright's juggler launcher writes no `user.js`: it
+                // hands these to Firefox in `Browser.enable`, once the browser
+                // has started, measured 2026-08-16 (a driven profile held no
+                // `user.js` at all) and seen again in the protocol logs of
+                // 2026-10-13. So a preference Firefox reads at run time is in
+                // force before the first page Playwright drives, and one Firefox
+                // reads only as it starts takes effect from the profile's second
+                // launch, on the value the first left in `prefs.js`. This one
+                // is the run-time kind: the browser registers for a moment and
+                // then unregisters (kb/chromium/resurrection.md).
                 writer.WriteStartObject("firefoxUserPrefs");
                 writer.WriteBoolean(FirefoxProfile.RestartRegistrationPreference, false);
 
-                // The password-save doorhanger. Same delivery and the same
-                // reason: a pref in `user.js` is in force before the first
-                // navigation. See FirefoxProfile.RememberSignonsPreference for
-                // what was and was not established about it.
+                // The password-save doorhanger. The same delivery, in force
+                // before the first navigation Playwright makes. See
+                // FirefoxProfile.RememberSignonsPreference for what was and was
+                // not established about it. Corrected 2026-10-13, 162 b
+                // (previously "Same delivery and the same reason: a pref in
+                // `user.js` is in force before the first navigation.").
                 writer.WriteBoolean(FirefoxProfile.RememberSignonsPreference, false);
 
-                // The session restore, delivered the same way and for the same
-                // reason: in force before the browser decides what to open. See
-                // FirefoxSessionRestorePreferences.
+                // The session restore, delivered the same way, and the
+                // start-up kind: Firefox decides what to restore before
+                // `Browser.enable` arrives, so a profile's first launch restores
+                // on what `prefs.js` held and every later one on what the launch
+                // before it left there. Measured 2026-10-13: switched off through
+                // these preferences alone, the restore went ahead all the same.
+                // See FirefoxSessionRestorePreferences. Corrected 2026-10-13,
+                // 162 b (previously "The session restore, delivered the same way
+                // and for the same reason: in force before the browser decides
+                // what to open.").
                 foreach (var (name, value) in FirefoxSessionRestorePreferences)
                 {
                     writer.WriteBoolean(name, value);
@@ -1014,10 +1056,23 @@ internal static class BrowserConfiguration
                 writer.WriteEndArray();
             }
 
-            // Both families. A restored session plus Playwright's own blank page
-            // is one tab more after every close; see DefaultPageArgument.
+            // A restored session plus Playwright's own blank page is one tab
+            // more after every close; see DefaultPageArgument.
+            //
+            // ⚠️ CHROMIUM ONLY since 2026-10-13, the maintainer's 161
+            // (previously both families). A Firefox launch keeps the page, so the
+            // launch waits for it and not for a restored tab, and its resume closes
+            // it once a reopened tab is up. The key is still written for Firefox,
+            // empty, for the reason the keys below are: an omission records no
+            // decision and browser_get_config cannot read back a key the file
+            // never carried.
             writer.WriteStartArray("ignoreDefaultArgs");
-            writer.WriteStringValue(DefaultPageArgument);
+
+            if (!IsFirefox(request.Browser))
+            {
+                writer.WriteStringValue(DefaultPageArgument);
+            }
+
             writer.WriteEndArray();
 
             writer.WriteBoolean("headless", request.Headless);

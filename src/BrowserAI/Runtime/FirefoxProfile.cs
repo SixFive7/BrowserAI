@@ -84,10 +84,22 @@ internal static class FirefoxProfile
     /// front of a page is a page it cannot read.</b> Firefox asks after a form
     /// POST that looks like a sign-in, and the ask is a doorhanger over the
     /// content area of the session's own window. <c>signon.rememberSignons</c>
-    /// is the switch, and it is written through <c>firefoxUserPrefs</c> for the
-    /// same reason <see cref="RestartRegistrationPreference"/> is: upstream
-    /// writes these into the profile's <c>user.js</c> before the browser starts,
-    /// so it is in force on the first navigation and not one page late.
+    /// is the switch, and it is written through <c>firefoxUserPrefs</c> as
+    /// <see cref="RestartRegistrationPreference"/> is: Playwright hands these to
+    /// Firefox in <c>Browser.enable</c> once the browser has started, before the
+    /// first page it drives, so the switch is in force on the first navigation
+    /// Playwright makes and not one page late.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-13 by the maintainer's 162 b, in his words verbatim:
+    /// "162 b" (previously "for the same reason <see cref="RestartRegistrationPreference"/>
+    /// is: upstream writes these into the profile's <c>user.js</c> before the browser
+    /// starts, so it is in force on the first navigation and not one page late")</i>.
+    /// No <c>user.js</c> is written on Playwright's juggler path: a driven profile held
+    /// none, measured 2026-08-16 (kb/chromium/resurrection.md), and the protocol logs of
+    /// 2026-10-13 show the preferences arriving in <c>Browser.enable</c>. A preference
+    /// Firefox reads only as it starts therefore takes effect from a profile's second
+    /// launch, on what the first left in <c>prefs.js</c>.
     /// </para>
     /// <para>
     /// ⚠️ <b>THE BEHAVIOURAL EVIDENCE HERE IS WEAKER THAN CHROMIUM'S, AND IT IS

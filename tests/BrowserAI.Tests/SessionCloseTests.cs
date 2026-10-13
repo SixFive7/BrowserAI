@@ -1362,6 +1362,51 @@ internal sealed class SessionCloseTests
 
         await Assert.That(after).Contains(site.Url("first"));
         await Assert.That(after).Contains(site.Url("second"));
+
+        // ⚠️ AND NOTHING BESIDE THEM, ACROSS A SECOND CLOSE AND RESUME, since 2026-10-13, the
+        // maintainer's 161, in his words verbatim: "161 your recommendation". A Firefox launch
+        // keeps Playwright's blank page since that day and its resume closes it once a reopened
+        // tab is up, so a blank page left beside the two would be one more tab after every
+        // close; a Chromium launch still leaves the page out. Both families are held to the
+        // same count.
+        await Assert.That(UpstreamTab.ParseList(after).Count).IsEqualTo(2).Because(after);
+        await Assert.That(after).DoesNotContain(BrowserConfiguration.DefaultPageArgument);
+
+        var closedAgain = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite closing the browser a second time",
+        });
+
+        await Assert.That((bool?)closedAgain["isError"]).IsNotEqualTo(true).Because(TextOf(closedAgain));
+
+        var resumedAgain = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite resuming a second time to see the tabs do not grow",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        await Assert.That((bool?)resumedAgain["isError"]).IsNotEqualTo(true).Because(TextOf(resumedAgain));
+
+        var again = string.Empty;
+        waited.Restart();
+
+        while (!(again.Contains(site.Url("first"), StringComparison.Ordinal) && again.Contains(site.Url("second"), StringComparison.Ordinal)))
+        {
+            if (waited.Elapsed > TestDefaults.BrowserHang)
+            {
+                throw new TimeoutException($"the browser resumed a second time never listed both tabs it had; the last listing was:{Environment.NewLine}{again}");
+            }
+
+            again = TextOf(await TabsAsync(rig, directory));
+        }
+
+        await Assert.That(UpstreamTab.ParseList(again).Count).IsEqualTo(2).Because(again);
+        await Assert.That(again).DoesNotContain(BrowserConfiguration.DefaultPageArgument);
     }
 
     /// <summary>

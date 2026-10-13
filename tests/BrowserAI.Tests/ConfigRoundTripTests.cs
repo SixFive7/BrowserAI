@@ -161,11 +161,14 @@ internal sealed class ConfigRoundTripTests
         // the tabs on disk (kb, durability, 2026-10-03).
         await Assert.That(arguments).Contains("--hide-crash-restore-bubble");
 
-        foreach (var family in new[] { chromium, firefox })
-        {
-            await Assert.That(string.Join(",", family["browser"]!["launchOptions"]!["ignoreDefaultArgs"]!.AsArray().Select(node => (string?)node)))
-                .IsEqualTo("about:blank");
-        }
+        // ⚠️ Chromium alone leaves Playwright's blank page out since 2026-10-13, the
+        // maintainer's 161, in his words verbatim: "161 your recommendation" (previously
+        // both families). A Firefox launch keeps it, so the launch waits for that page and
+        // not for a restored tab Firefox's error page holds without a load, and the key is
+        // still written, empty.
+        await Assert.That(string.Join(",", chromium["browser"]!["launchOptions"]!["ignoreDefaultArgs"]!.AsArray().Select(node => (string?)node)))
+            .IsEqualTo(BrowserConfiguration.DefaultPageArgument);
+        await Assert.That(firefox["browser"]!["launchOptions"]!["ignoreDefaultArgs"]!.AsArray().Count).IsEqualTo(0);
 
         var preferences = firefox["browser"]!["launchOptions"]!["firefoxUserPrefs"]!;
 

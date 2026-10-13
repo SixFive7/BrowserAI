@@ -529,12 +529,17 @@ internal sealed class FirefoxTests
         await Assert.That(browsers.Count).IsGreaterThan(0);
         await Assert.That(browsers.All(process => string.Equals(process.ImagePath, BrowserAiPaths.FirefoxExecutable, StringComparison.OrdinalIgnoreCase))).IsTrue();
 
-        // ⚠️ Restart registration, asked of the live processes. Upstream writes
-        // firefoxUserPrefs into the profile's user.js BEFORE the browser starts,
-        // so the preference is in force at the moment Firefox decides whether to
-        // register -- and the control for this assertion is
-        // `BrowserContainmentTests`, which launches Firefox from a hand-written
-        // config with no preference and measures exactly one registration.
+        // ⚠️ Restart registration, asked of the live processes. Playwright hands
+        // firefoxUserPrefs to Firefox in `Browser.enable`, once the browser has
+        // started, and Firefox reads this preference at run time and unregisters
+        // itself, so what is asked here is the steady state -- and the control for
+        // this assertion is `BrowserContainmentTests`, which launches Firefox from
+        // a hand-written config with no preference and measures exactly one
+        // registration. Corrected 2026-10-13 by the maintainer's 162 b, verbatim
+        // "162 b" (previously "Upstream writes firefoxUserPrefs into the profile's
+        // user.js BEFORE the browser starts, so the preference is in force at the
+        // moment Firefox decides whether to register"); the remark further down
+        // says how it was found.
         var registered = browsers
             .Select(process => (process.ProcessId, process.ImagePath, Result: RestartRegistration.Of(process.ProcessId)))
 

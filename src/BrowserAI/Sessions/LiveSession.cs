@@ -559,6 +559,9 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     private SessionClosure? _closed;
     private long _lastActivity;
 
+    /// <summary>The start of this session's browser by its resume, completed when there is none; see <see cref="BrowserStartSettled"/>.</summary>
+    private Task _browserStart = Task.CompletedTask;
+
     /// <summary>The process's check of the person's input, for a visible session; <see langword="null"/> otherwise.</summary>
     private readonly VisibleInputWatch? _inputWatch;
 
@@ -750,6 +753,42 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
         }
 
         return close;
+    }
+
+    /// <summary>
+    /// Completes once no start of this session's browser by its resume is running: at once
+    /// for every session but a resumed Firefox one, and for that one once
+    /// <see cref="FirefoxRestore.StartAsync"/> has ended, however it ended.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>161, decided 2026-10-13 by the maintainer</b>: a resumed Firefox session's browser
+    /// is started by the resume, which closes Playwright's blank page once a reopened tab is
+    /// up. A forwarded call that names the session waits for that start before it goes to the
+    /// child, and so does the agent's own close, because a call that reached the child first
+    /// would run on the blank page or on a tab being closed, and a list the start sent after a
+    /// close would start the browser again.
+    /// </para>
+    /// <para>
+    /// <b>Bounded by the start itself</b>: Playwright's own launch timeout, then
+    /// <see cref="SessionTimes.FirefoxRestoreWait"/>. Nothing the start does waits on a call
+    /// that waits here, so the two cannot wait on each other.
+    /// </para>
+    /// </remarks>
+    public Task BrowserStartSettled => Volatile.Read(ref _browserStart);
+
+    /// <summary>
+    /// Marks the start of this session's browser by its resume as running, before the session
+    /// is published, so no call can reach the child ahead of it.
+    /// </summary>
+    /// <returns>What the resume completes once the start has ended, on every path.</returns>
+    public TaskCompletionSource BeginTheBrowserStart()
+    {
+        var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        Volatile.Write(ref _browserStart, start.Task);
+
+        return start;
     }
 
     /// <summary>
@@ -1144,6 +1183,10 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     public async Task<AgentClose> CloseForTheAgentAsync(CallerConnection by, string why, CancellationToken cancellationToken, SessionCloseCause cause = SessionCloseCause.Caller)
     {
         ArgumentNullException.ThrowIfNull(by);
+
+        // 161, 2026-10-13: a resume still starting this session's browser finishes first, so
+        // its tab list is not sent after the close and does not start the browser again.
+        await BrowserStartSettled.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period)
         {

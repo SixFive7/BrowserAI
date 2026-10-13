@@ -308,6 +308,46 @@ internal static class SessionTimes
     public static TimeSpan FolderSizesFreshFor { get; } = TimeSpan.FromMinutes(1);
 
     /// <summary>
+    /// How often a Firefox session's resume asks its browser server for the tab list
+    /// while Firefox's session restore reopens the tabs: 250 ms. The value
+    /// <c>FirefoxRestore.StartAsync</c> waits between two of its <c>browser_tabs</c> lists.
+    /// </summary>
+    /// <remarks>
+    /// <b>Chosen 2026-10-13 with the maintainer's 161</b>, in his words verbatim: <i>"161
+    /// your recommendation"</i>. One list is one call to the session's own child, which
+    /// answered in milliseconds in the replays of that day, and a reopened tab was up about
+    /// 1.8 s after the browser attached it; a quarter of a second puts the end of the wait
+    /// within a quarter of a second of the restore's end, at four calls a second.
+    /// </remarks>
+    public static TimeSpan FirefoxRestorePoll { get; } = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// How long a Firefox session's tab list must stay the same, once a reopened tab is up,
+    /// before its resume says what came back: 1 s. The value <c>FirefoxRestore.StartAsync</c>
+    /// reads.
+    /// </summary>
+    /// <remarks>
+    /// <b>Chosen 2026-10-13 with the maintainer's 161.</b> The tabs of one restore come up one
+    /// by one as each page commits or fails, so the first one listed is not yet all of them;
+    /// a second with no change is four lists in a row that agree.
+    /// </remarks>
+    public static TimeSpan FirefoxRestoreQuiet { get; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// The longest a Firefox session's resume waits for Firefox's session restore once the
+    /// browser is up: 10 s. The value <c>FirefoxRestore.StartAsync</c> stops at.
+    /// </summary>
+    /// <remarks>
+    /// <b>Chosen 2026-10-13 with the maintainer's 161</b>, against the replays of that day:
+    /// the reopened tab of a page whose server had ended came up 1.78 to 1.79 s after the
+    /// browser attached it, the time a new content process took to start, and one whose
+    /// server answered came up within milliseconds. Ten seconds is more than five times the
+    /// slower of the two, for a machine slower than the one measured, and it is what a resume
+    /// costs when a profile that holds a session file reopens nothing.
+    /// </remarks>
+    public static TimeSpan FirefoxRestoreWait { get; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>
     /// Upstream's own idle timeout, in milliseconds: one hour, which no launch writes
     /// since 2026-10-08. The value of <c>BrowserConfiguration.IdleTimeoutMilliseconds</c>.
     /// </summary>

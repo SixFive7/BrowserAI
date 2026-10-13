@@ -234,6 +234,13 @@ internal sealed class SessionManager : IAsyncDisposable
     /// 2026-10-03: refs from earlier snapshots were invalid in every run, and the
     /// selected tab was not reliably the one that had been.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>A Chromium session's since 2026-10-13, the maintainer's 161</b>, in his words
+    /// verbatim: <i>"161 your recommendation"</i>. A resumed Firefox session's browser is
+    /// started by the resume, whose answer says what came back in
+    /// <see cref="FirefoxRestore.Note"/>'s words, and this note is a Firefox session's only
+    /// when its browser is not installed yet and the first browser call still starts it.
+    /// </para>
     /// </remarks>
     public const string WhatTheFirstBrowserCallReopens =
         "the first browser call after this starts the browser, and its own session restore reopens the tabs this profile last recorded, if any. "
@@ -1858,7 +1865,19 @@ internal sealed class SessionManager : IAsyncDisposable
 
             // Every resume that reaches this line starts a child, and the
             // browser that child starts reopens what its profile last recorded.
-            notes.Add(WhatTheFirstBrowserCallReopens);
+            //
+            // ⚠️ A FIREFOX SESSION'S BROWSER IS STARTED BY THIS RESUME, since 2026-10-13, the
+            // maintainer's 161, in his words verbatim: "161 your recommendation". The open
+            // below starts it, closes Playwright's blank page once a reopened tab is up, and
+            // says what came back in place of this note, which only a Chromium session, or a
+            // Firefox one whose browser could not be started yet, still gets. See
+            // FirefoxRestore.
+            var startTheBrowser = BrowserConfiguration.IsFirefox(record.Browser);
+
+            if (!startTheBrowser)
+            {
+                notes.Add(WhatTheFirstBrowserCallReopens);
+            }
 
             // Ownership moves here, by the mechanism `init` documents.
             var held = claim;
@@ -1881,7 +1900,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 movedFrom,
                 why,
                 noticeGiven,
-                unrecorded).ConfigureAwait(false);
+                unrecorded,
+                startTheBrowser).ConfigureAwait(false);
         }
         finally
         {
@@ -3752,7 +3772,8 @@ internal sealed class SessionManager : IAsyncDisposable
         string? movedFrom = null,
         string? why = null,
         bool noticeGiven = false,
-        Statement<RecordedClose>? unrecorded = null)
+        Statement<RecordedClose>? unrecorded = null,
+        bool startTheBrowser = false)
     {
         // Nothing below is owned by anyone until the session is in the
         // dictionary, and the finally disposes whatever is left. That is the only
@@ -3763,6 +3784,9 @@ internal sealed class SessionManager : IAsyncDisposable
         SessionLock? acquired = null;
         ChildConnection? child = null;
         LiveSession? session = null;
+
+        // 161: the gate a resume's start of a Firefox browser holds, completed on every path.
+        TaskCompletionSource? browserStart = null;
 
         try
         {
@@ -3878,6 +3902,13 @@ internal sealed class SessionManager : IAsyncDisposable
             };
 #pragma warning restore CA2000
 
+            // 161: marked BEFORE it is published, so a call that names the session waits for
+            // the start below and never reaches the child ahead of it.
+            if (startTheBrowser)
+            {
+                browserStart = session.BeginTheBrowserStart();
+            }
+
             // Attached BEFORE it is published, so no other connection can meet it
             // with nobody driving it and take it over.
             session.AttachTo(connection);
@@ -3916,6 +3947,26 @@ internal sealed class SessionManager : IAsyncDisposable
             if (why is not null)
             {
                 SessionToolLog.Why(sessionLogger, SessionToolSurface.Resume, why);
+            }
+
+            // ⚠️ 161, 2026-10-13: a resumed Firefox session's browser is started here, and the
+            // answer says what Firefox reopened. A browser that is not installed yet cannot
+            // be started, and the session then answers as a Chromium one does, with its
+            // browser started by the first browser call. See FirefoxRestore.
+            if (startTheBrowser)
+            {
+                try
+                {
+                    var started = await TheBrowserIsInstalledAsync(request.Browser).ConfigureAwait(false)
+                        ? FirefoxRestore.Note(await FirefoxRestore.StartAsync(session, _environment.Clock, cancellationToken).ConfigureAwait(false))
+                        : WhatTheFirstBrowserCallReopens;
+
+                    notes = [.. notes, started];
+                }
+                finally
+                {
+                    _ = browserStart?.TrySetResult();
+                }
             }
 
             // ⚠️ F5 a, 2026-10-08: every answer that opens a visible window ends with the
@@ -3976,6 +4027,9 @@ internal sealed class SessionManager : IAsyncDisposable
         }
         finally
         {
+            // 161: a start that never ran, or ended by a throw, lets every waiting call go on.
+            _ = browserStart?.TrySetResult();
+
             if (!handedOver)
             {
                 if (session is not null)
@@ -4023,6 +4077,36 @@ internal sealed class SessionManager : IAsyncDisposable
         ProvisionedBrowsers.ExecutableWithin(browser) is { } within
             ? Path.Combine(await _environment.Provisioner.DirectoryForAsync(browser).ConfigureAwait(false), within)
             : null;
+
+    /// <summary>
+    /// Whether a family's browser is installed, asked without starting anything, so a resume
+    /// knows whether it can start a session's browser itself.
+    /// </summary>
+    /// <remarks>
+    /// <b>161, 2026-10-13.</b> A resume that started a browser still being provisioned would
+    /// wait inside the child's own launch for the whole download, which is what
+    /// <see cref="ProvisioningRefusalAsync"/> keeps every browser call from doing. A probe
+    /// that cannot answer is read as not installed: the session then answers as a Chromium
+    /// one does, and its first browser call meets the provisioning refusal with its own words.
+    /// </remarks>
+    /// <param name="browser">The family.</param>
+    /// <returns>Whether its browser is installed.</returns>
+    private async Task<bool> TheBrowserIsInstalledAsync(string browser)
+    {
+        try
+        {
+            var status = _environment.ProvisioningProbe?.Invoke(browser) ?? await _environment.Provisioner.PeekAsync(browser).ConfigureAwait(false);
+
+            return status.State is ProvisioningState.Installed;
+        }
+#pragma warning disable CA1031 // A probe that throws leaves the start to the first browser call, which names its own cause.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            SessionToolLog.ProvisioningUnreadable(_logger, browser, failure);
+            return false;
+        }
+    }
 
     /// <summary>
     /// Writes the opening's statement, after the close nobody recorded when there is

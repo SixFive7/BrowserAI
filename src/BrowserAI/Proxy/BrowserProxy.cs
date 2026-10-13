@@ -1008,6 +1008,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // ⚠️ A RESUMED FIREFOX SESSION'S BROWSER IS STARTED BY ITS RESUME, since 2026-10-13,
+        // the maintainer's 161, in his words verbatim: "161 your recommendation". The start
+        // closes Playwright's blank page once a reopened tab is up, so a call that reached the
+        // child before it ended would run on the blank page or on a tab being closed. It
+        // waits here, before every refusal below, so the session it is then asked about is
+        // the one the start left. See FirefoxRestore.
+        if (!live.BrowserStartSettled.IsCompleted)
+        {
+            ProxyLog.WaitsForTheBrowserStart(live.Logger, tool, live.Location.FullPath);
+        }
+
+        await live.BrowserStartSettled.WaitAsync(cancellationToken).ConfigureAwait(false);
+
         // ⚠️ A CLOSED SESSION REFUSES EVERY FORWARDED CALL UNTIL
         // `browserai_resume`, P2 a and P3 b, the maintainer's words of
         // 2026-10-03, verbatim: "p2 a / p3 b". Added that day. Before it, the
@@ -2069,6 +2082,23 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' on the session at {Session} returned a screenshot larger than Chromium captures faithfully, so it was refused and not handed over. Chromium's issue: https://issues.chromium.org/issues/41347676")]
     public static partial void ScreenshotPastChromiumsLimit(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// A call named a Firefox session whose resume is still starting its browser, and waits
+    /// for that start before it goes on.
+    /// </summary>
+    /// <remarks>
+    /// <b>161, 2026-10-13.</b> Information, because the call's caller waits for as long as
+    /// the start takes, and a reader of the log looking at a slow call needs to find why.
+    /// </remarks>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 29,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' on the session at {Session} waits for the session's resume to finish starting its browser before it goes on.")]
+    public static partial void WaitsForTheBrowserStart(ILogger logger, string tool, string session);
 
     /// <summary>
     /// A connection called a tool before it ever asked for a tool list, so the

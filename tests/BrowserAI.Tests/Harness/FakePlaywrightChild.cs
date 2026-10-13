@@ -26,6 +26,19 @@ internal sealed record FakeToolBehaviour
     /// </remarks>
     public string? RawResult { get; init; }
 
+    /// <summary>
+    /// The literal JSON of the response's <c>result</c>, made from the call's own
+    /// <c>arguments</c> when the call arrives, in place of <see cref="RawResult"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-13 with the maintainer's 161</b>, for a tool whose answer depends on
+    /// what was called before it: upstream's <c>browser_tabs</c> answers every action with
+    /// the tab list as that action left it, and the resume that starts a Firefox session's
+    /// browser lists, selects and closes. Still a string, so what reaches the caller is still
+    /// attributable to the proxy and not to a serialiser of the double's.
+    /// </remarks>
+    public Func<JsonNode?, string>? RawResultFor { get; init; }
+
     /// <summary>A JSON-RPC error code to answer with instead of a result.</summary>
     public int? ErrorCode { get; init; }
 
@@ -715,7 +728,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
 
         var frame = behaviour.ErrorCode is { } code
             ? Error(id, code, behaviour.ErrorMessage, behaviour.RawErrorData)
-            : Result(id, behaviour.RawResult ?? """{"content":[{"type":"text","text":"ok"}]}""");
+            : Result(id, behaviour.RawResultFor?.Invoke(request?["params"]?["arguments"]) ?? behaviour.RawResult ?? """{"content":[{"type":"text","text":"ok"}]}""");
 
         // A close takes the browser down before it answers, as upstream's does, and
         // the browser exits cleanly.

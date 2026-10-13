@@ -203,9 +203,16 @@ internal sealed partial class NumbersIndexTests
     /// <para>
     /// <b>The maintainer's question, R, 2026-10-08, verbatim:</b> <i>"Do all these
     /// timeouts work within both the claude or codex timeouts?"</i> The table that answered
-    /// it, answered in turn with <i>"r ok"</i>, names four waits, and they are these four.
+    /// it, answered in turn with <i>"r ok"</i>, names four waits, and they are the first four.
     /// Nothing here can find a fifth: a new wait inside a tool call joins this list by
     /// hand.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A fifth joined on 2026-10-13 by hand, the maintainer's 161</b>:
+    /// <see cref="SessionTimes.FirefoxRestoreWait"/>, the wait a resumed Firefox session's
+    /// resume makes for Firefox's session restore. It comes after Playwright's own launch,
+    /// whose 180 s is upstream's and is not in this list, and the two together are 190 s,
+    /// inside the stricter limit too.
     /// </para>
     /// <para>
     /// <b>Not planted red against the product</b>, because no number in the tree breaks
@@ -223,6 +230,7 @@ internal sealed partial class NumbersIndexTests
             ("RelayConstants.HangBound", RelayConstants.HangBound),
             ("SessionTimes.BrowserCloseCap", SessionTimes.BrowserCloseCap),
             ("SessionTimes.PageToolBudget", SessionTimes.PageToolBudget),
+            ("SessionTimes.FirefoxRestoreWait", SessionTimes.FirefoxRestoreWait),
         ];
 
         await Assert.That(string.Join(Environment.NewLine, Outside(waits, ClientLimits.StricterToolCall))).IsEmpty();
