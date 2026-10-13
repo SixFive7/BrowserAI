@@ -791,6 +791,50 @@ while the parent was still running. The parent rewrote it at its own session end
 so the copy a gate log appends was never wrong -- but anyone reading the file
 during that window got the child's.
 
+### A release run gates the cut it ships
+
+**The maintainer's 103 e, his words of 2026-10-12 verbatim: *"103 your
+recommendation"*, which was b for 2.0.0 and e afterwards.** *Added 2026-10-13.*
+Since 2026-10-08 the changelog is compiled into the binary for the dashboard's What
+is new page, so the stamp changes the program a person installs, and until the
+running order changed the six release runs drove a binary built before it: a
+pre-release version, an `[Unreleased]` section, and no tag for the page's links.
+[The running order](RELEASING.md#the-order-the-last-six-steps-are-executed-in----and-it-is-not-the-numbering)
+now stamps, seals and tags before the publishes and the pack, and
+`ReleaseCutTests.AReleaseRunGatesTheStampedTaggedCommitAndTheProgramThatShips` is what
+a run can read of that order. **In a release run it fails unless:**
+
+- the tag exactly at HEAD is `v` and the newest dated section of `CHANGELOG.md`;
+- `[Unreleased]` holds no entry, so nothing the release ships reads as not yet
+  released;
+- that section is dated the day `drift-check.json` was last taken, both being the
+  day of the cut;
+- the test host, the published slice and the release publish in
+  `artifacts\publish-release` were each built as that version, so none was built
+  before the tag;
+- the slice and the release publish each carry this tree's `CHANGELOG.md` byte for
+  byte, which is 103 b's search for the stamped heading, made over the whole file in
+  every run;
+- and the full package that ships carries the release publish, which
+  `ReleaseLayout.MismatchBetweenAsync` compares by SHA-256.
+
+**An ordinary run gates no cut**, so it holds the judgement over readings it builds,
+each fault alone, and the byte search over the test host's own `BrowserAI.App`
+assembly, which carries the changelog as a resource, with a copy one byte different
+as the control that the search can come back empty. That a published binary carries
+the changelog as one run of its bytes was measured on 2026-10-13
+([kb](kb/toolchain.md#a-resource-the-build-compiles-in-is-one-run-of-its-bytes-in-the-published-binary----measured-2026-10-13)).
+
+**It is a test and not a refusal from the session hook**, as the filter's is: a
+filter that deselects it makes the run a filtered one, which a release run refuses
+from the session hook already, so a release run that reaches its end green has run
+this arm. *The build's choice, for his review.*
+
+**What it cannot see**: whether the tag is pushed, which comes after the go; whether
+the six runs were six, since each run reads only itself; and whether the lookups
+behind the drift check's stamp were taken, which is the honesty rule
+`drift-check.json` carries.
+
 
 ## Two executables, and what each half of the suite can see
 

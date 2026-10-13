@@ -59,6 +59,103 @@ The sequence, in order, no step skippable:
 
 #### The order the last six steps are executed in -- and it is not the numbering
 
+⚠️ **SINCE 2026-10-13 THE SIX RUNS COME AFTER THE STAMP AND THE TAG, AND THE PACK BEFORE
+THEM IS THE PACK THAT SHIPS -- the maintainer's 103 e, his words of 2026-10-12 verbatim:
+*"103 your recommendation"*, which was b for 2.0.0 and e afterwards.** *Added 2026-10-13
+by addition (previously the six steps further down, from "Pack for the gate, first" to
+"Publish", were the running order, and the gate ran at the release content minus the
+stamp).* Since 2026-10-08 the changelog is compiled into the binary for the dashboard's
+What is new page, so the stamp changes the program a person installs. In the old order
+the gated binary carried `[Unreleased]` and a pre-release version, the shipped one the
+stamped section, the release's own version and links at its tag, and no run saw that page
+inside the program that ships. The order is now:
+
+1. **The drift check of the day, committed, and the clock.** [Item 3](#3-upstream-drift-adjudicated)'s
+   check is taken on the day of the cut and committed before the stamp, so the tag rides a
+   commit that carries it; `build/New-Release.ps1` refuses a stale one at step 4. The cut
+   and the go fall on one day, [his 102 a](DECISIONS.md#licence-release-policy-and-the-tool-surface),
+   and the stamp now comes before the runs, so the clock is read here: stamp only when
+   steps 4 to 6 can end before local midnight, and otherwise wait for 00:00 and take the
+   check of the new day first. A release run took 11 min 21 s to 11 min 35 s on the
+   night of 2026-10-12, by the runs' own summaries. *If the six runs end after midnight all the
+   same, the cut is made again on the new day, as after a red: the build's choice, for his
+   review.*
+2. **[Item 10](#10-the-changelogs-unreleased-section-is-not-empty): the stamp and the
+   seal, one commit.** A new section, by the command, which dates it by the local clock at
+   the moment it is made. This commit is the cut.
+3. **[Item 9](#9-the-version-is-derived-and-000-is-refused): the tag, on that commit, in
+   this checkout only.** It is pushed at step 6 and never before the go. With it at HEAD
+   MinVer derives the release's own version, so every binary step 4 builds is that version
+   and its What is new page reads the stamped section as its own, with its links at the
+   tag; `ChangelogPageTests.EveryLinkTheShippedReleasesDrawIntoTheRepositoryOpensAFileItsRefHolds`
+   reads each of those links through git at that tag, and is red without it. Item 9's two
+   commands are recorded here. *The tag before the runs, and not after them, is the build's
+   choice, for his review.*
+4. **The slice, then the clean pack.** Publish the slice; delete the four files of the
+   shipping feed that step 5 of the old order below names, keeping `archive/` and
+   `test-pack/`; and run `build/New-Release.ps1` with no `-AllowPreRelease`. It publishes
+   the release into `artifacts\publish-release`, packs it, archives the full package,
+   writes the resolved-set manifest and generates
+   [the body](#the-release-body-is-generated-and-its-rendering-is-checked-before-it-is-published).
+   This pack is the one that ships, and the release gate's drivers pack the suite's
+   installer from the same publish. A filtered pass over `AppendOnlyRecordTests`,
+   `ChangelogTests`, `ChangelogPageTests`, `RecordedCountTests` and
+   `DocumentationLinkTests` here costs minutes and finds a seal pasted wrong before the
+   first of the six runs does: iteration, not evidence.
+5. **[Item 8](#8-run-everything): the six runs, at the cut.** Each one fails, in
+   `ReleaseCutTests.AReleaseRunGatesTheStampedTaggedCommitAndTheProgramThatShips`, unless
+   the tag exactly at HEAD names the newest dated section, `[Unreleased]` holds no entry,
+   that section is dated the day of the drift check, the test host, the slice and the
+   release publish were each built as the release's version, both published binaries carry
+   this tree's `CHANGELOG.md` byte for byte, and the full package carries the release
+   publish. That is 103 b's search for the stamped heading, made over the whole changelog
+   in every one of the six runs ([Testing](TESTING.md#a-release-run-gates-the-cut-it-ships)).
+   The body goes to its readers and to the maintainer while the runs go
+   ([his 101 b](DECISIONS.md#licence-release-policy-and-the-tool-surface)), so a go given
+   ahead of the runs is given on the body that ships.
+6. **Publish, after his go.** Push the stamp commit and the tag, publish with
+   `gh release create`, `--verify-tag` and the three assets step 4 declared, and verify the
+   feed over HTTP by polling the body, as step 6 of the old order below says. The What is
+   new page's links answer on GitHub from the moment the tag is pushed, which is before the
+   release exists.
+
+**A red stops the cut, [his 100 a](DECISIONS.md#licence-release-policy-and-the-tool-surface),
+and the cut is made again.** The cause is found and the fix planted red. *Then, as the
+build's choice for his review*: the stamp commit is reverted, the fix lands as any change
+does, with its entry under `[Unreleased]` when it has one, and steps 1 to 5 run again. The
+new stamp is dated by the clock at that moment, so a retry after local midnight carries
+the new day, after the drift check of that day. The tag moves with `git tag -f` in this
+checkout, which drafts nothing because it was never pushed. The shipping feed already
+holds this version and `build/Test-ReleaseVersion.ps1` refuses an equal one, which is why
+step 4 deletes the four files first, every time.
+
+**The two reds that set the old order stay green in this one.**
+`ChangelogTests.TheChangelogHasAnUnreleasedSectionWithEntriesInIt` accepts an empty
+`[Unreleased]` when the tag exactly at HEAD names the newest dated section, which is the
+state step 3 leaves for the whole of step 5; and
+`UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest` needs a published
+release, and the previous one stays published until step 6.
+
+**The 1.1.0 cut ran in this order without its being written down**: stamped, tagged in
+its checkout at `ba5220f`, `80c0c38` and then `d3aabf1`, packed from the tagged commit,
+then six runs of 784 cases each, all green
+([the session's ledger](docs/ledger/2026-09-22-release-session.md)). That does not measure
+the suite of a later cut at a tagged commit: the What is new page and its arms arrived
+from 2026-10-08, two of them on 2026-10-12, and one of those two was red on any stamped
+tree until 2026-10-13 (`ChangelogPageTests.EveryReleaseTheChangelogHoldsIsReadInItsOrder`,
+which expected an empty `[Unreleased]` in the page's list of releases).
+
+**What this order costs.** The date is chosen before the runs and not after them, so a cut
+that overruns midnight is made again, where the old order waited for 00:00 and stamped
+after green; and a red costs a stamp, a seal, a tag move and a pack on top of the six
+runs it already cost. **The gate's six-step sequence above is unchanged in what it
+asks**; its step 6 is split, and the pack and the record of the resolved set come before
+step 3 now, with only the publish after step 5.
+
+*The order of 2026-09-15 to 2026-10-13 follows, kept as written: its steps name refusals
+that still exist, and its re-pack and publish steps are still how steps 4 and 6 above are
+taken.*
+
 ⚠️ ***Corrected 2026-09-15 by addition (previously this section ended at "Manual
 governs step 5 alone", and the checklist's numbering was the only order
 recorded anywhere).*** Items 8-13 are **numbered** in the order a reader needs
@@ -761,6 +858,11 @@ does not restate them.
 before the stamp and the tag -- see
 [the order the last six steps are executed in](#the-order-the-last-six-steps-are-executed-in----and-it-is-not-the-numbering).
 Run in the numbered order it goes red on two things that are not defects.
+*Corrected 2026-10-13 by addition, the maintainer's 103 e (previously "executed
+third, after a pack exists and before the stamp and the tag"): it is executed fifth,
+after the stamp, the tag and the pack that ships, and
+`ReleaseCutTests.AReleaseRunGatesTheStampedTaggedCommitAndTheProgramThatShips` fails a
+release run taken in any other order.*
 
 Five things to record, not assume, because each is easy to skim past.
 *Corrected 2026-08-24 (previously "Three things") -- the list had reached four
@@ -842,6 +944,8 @@ before this and nobody had re-read the number:*
   tree that has never been packed fails for want of an artefact and not for
   anything about the code. Run [item 7's publish and pack](#7-build-clean)
   first; the gate then exercises the installer that is about to be published.
+  *Added 2026-10-13 by addition: since the maintainer's 103 e that pack is the
+  release's own, made at the tagged stamp commit, step 4 of the running order.*
   ⚠️ **The arm refuses to run when an Add/Remove entry for the TEST pack id
   already exists**, because `--installto` would repoint that entry and the
   uninstall would delete it -- so a leftover of the suite's own reports the
@@ -1028,6 +1132,11 @@ already passed this item; what is recorded here is which version that was.
 untagged build carries its own `-alpha.N.M` suffix, which is the whole of *never
 self-update from a build that is not a release* -- so a version with a suffix
 means the tag for this release has not been created yet.
+⚠️ *Added 2026-10-13 by addition, the maintainer's 103 e: the tag is created before
+the six runs now, and they read it.*
+`ReleaseCutTests.AReleaseRunGatesTheStampedTaggedCommitAndTheProgramThatShips` fails a
+release run whose test host, slice or release publish carries a suffix, or whose HEAD
+carries no tag naming the newest dated section.
 
 **Evidence:** the version the build stamped, and the tag it came from -- **two
 commands, because the first does not answer the second**:
@@ -1141,7 +1250,9 @@ section **or** when nothing under `src/` or `tests/` has landed since the
 changelog was last written. The second clause is what covers the interval this
 checklist occupies -- stamped, gate running, tag not yet placed -- which the first
 one cannot describe, and it expires the moment a product or test change lands
-without an entry.
+without an entry. *Added 2026-10-13 by addition, the maintainer's 103 e: the tag is
+placed before the six runs now, so the first clause covers the gate, and the second
+the minutes between the stamp and the tag.*
 
 **Evidence:** the unreleased section's contents, moved under the version being
 cut, and the seal line added beside it.
@@ -1201,6 +1312,9 @@ Re-measured 2026-09-16 over the `1.0.0` section as it stands: folded is
 ⚠️ **RUN IT AFTER THE TAG IS MOVED AND BEFORE PUBLISH**, which is where the
 running order above already puts it -- step 4 creates the tag, step 5 re-packs
 (and `New-Release.ps1` generates the body as its last step), step 6 publishes.
+*Corrected 2026-10-13 by addition, the maintainer's 103 e (previously "step 4 creates
+the tag, step 5 re-packs"): step 3 places the tag and step 4's pack generates the
+body, before the six runs, so its readers have it while the runs go.*
 **The generator refuses anything else**, because a line range is only true of one
 file: the changelog on disk must match `HEAD`, and a tag `v<version>`, if it
 exists, must be at `HEAD`. Either failing is a refusal naming both the tag's
@@ -1431,6 +1545,8 @@ live **outside** a test run, and both must be true at release time:
   hypothetical one. ⚠️ **Equal is neither of the two**, and the re-pack step is
   where that bites -- see
   [the order the last six steps are executed in](#the-order-the-last-six-steps-are-executed-in----and-it-is-not-the-numbering).
+  *Added 2026-10-13 by addition: since the maintainer's 103 e it bites at step 4 of a
+  cut made again after a red, which deletes the four files first.*
 
 **Evidence:** the archived package path, and the validation rule's text.
 

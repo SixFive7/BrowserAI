@@ -825,6 +825,41 @@ place.*
 common controls: a reader that had stopped finding resources reports every
 property absent, which is indistinguishable from a binary that declares none.
 
+### A resource the build compiles in is one run of its bytes in the published binary -- measured 2026-10-13
+
+**`CHANGELOG.md`, which the dashboard's What is new page reads, sits in the
+published `BrowserAI.exe` exactly as the file holds it**: one contiguous run of its
+UTF-8 bytes, which a byte search over the file finds with no reading of the image's
+layout. Measured 2026-10-13 on two NativeAOT publishes of one tree, built as
+`1.1.1-alpha.0.430` with ILC 10.0.12 on Windows 10.0.26300: the slice under
+`src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\` and the release publish
+in `artifacts\publish-release\`, each 27,573,760 bytes, carried all 439,086 bytes of
+the changelog at offset 13,841,819, and a string no binary holds was not found in
+either, which is the control that the search can come back empty. `EmbeddedResource`
+hands the same resource out at run time as one span of the mapped image, which is
+the same fact read from the other side.
+
+**Why it is written down**: since the maintainer's 103 e,
+`ReleaseCutTests.AReleaseRunGatesTheStampedTaggedCommitAndTheProgramThatShips` holds
+every release run to it on both published binaries, so the six runs of a cut check
+that the program that ships carries the stamped changelog. A toolchain that stopped
+storing a resource this way would turn that arm red at the next cut, and would not
+pass it, which is why this entry carries no floats marker: the arm re-establishes it
+at every cut.
+
+Re-establish it by hand with the bytes mapped one to one onto characters, so an
+ordinal string search is a byte search:
+
+```powershell
+$latin = [System.Text.Encoding]::Latin1
+$exe = $latin.GetString([System.IO.File]::ReadAllBytes('src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe'))
+$exe.IndexOf($latin.GetString([System.IO.File]::ReadAllBytes('CHANGELOG.md')), [System.StringComparison]::Ordinal)
+```
+
+An offset of zero or more is the changelog the binary carries; `-1` is a binary
+published before the changelog's last edit, or a toolchain that no longer stores it
+whole.
+
 ## Compiling a vendored C library into the publish
 
 **The SQLite amalgamation compiles into a static library and links into
