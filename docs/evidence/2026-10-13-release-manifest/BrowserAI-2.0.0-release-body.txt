@@ -1,0 +1,84 @@
+BrowserAI gives an AI agent a real browser on Windows. It is one program now, and it runs in the background from the moment you sign in. It holds every session, so a session outlives the client that drove it. A Start Menu click opens its dashboard in your own browser. BrowserAI registers itself with Codex as well as Claude Code.
+
+Since 2026-09-30 Claude Code opens its connections a new way, and 1.1.0 gave those connections no BrowserAI tools. This version fixes that. It also removes the configuration window, where clicking a link planted in a project file could run something.
+
+A project's `.mcp.json` that names `BrowserAI.Server.exe` has to be set up again from the dashboard. A copy installed outside `%LocalAppData%\BrowserAI.app` sets nothing up: uninstall it and run the installer again without `--installto`. For an agent, `browserai_init` and `browserai_resume` require four settings, `browserai_catch_up` requires a `why`, `tracing` is `transcript`, `browserai_set_purpose` is `browserai_change_purpose`, and an argument a tool does not have is refused.
+
+### Added
+
+- ✨ **A Start Menu click opens BrowserAI's dashboard, a page in your own browser.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L64-L85)
+- ✨ **The dashboard's folder buttons open the folder in front of your browser.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L87-L94)
+- ✨ **The dashboard's home shows the CPU and memory BrowserAI's own processes use, as they change.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L96-L104)
+- ✨ **After an update, the dashboard's home says so until you have seen what is new.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L106-L108)
+- ✨ **BrowserAI registers itself with Codex as well as Claude Code.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L110-L118)
+- ✨ **A downloaded update that has to wait says so in a toast that counts down to its install.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L120-L128)
+- ✨ **`browserai_close` closes a session's browser and keeps the session.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L130-L134)
+- ✨ **Each session's browser closes after its own idle time, which `idleMinutes` sets.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L136-L142)
+- ✨ **A session outlives the client that drove it, until its own idle close.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L144-L147)
+- ✨ **Every close of a session's browser is recorded with its reason, and the agent is told it.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L149-L153)
+- ✨ **A resumed session gets its tabs back.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L155-L161)
+- ✨ **A resume that changes a session's settings is held back once, then reopens the browser with them.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L163-L168)
+- ✨ **After an update, a client still holding the old tool list is told so once, with what to do.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L170-L175)
+- ✨ **`browserai_catch_up` names every file in a session that can hold something sensitive.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L177-L180)
+- ✨ **A broken install is shown to you in a toast and on every page of the dashboard.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L182-L186)
+- ✨ **The dashboard and the toast name each conversation the way its client shows it.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L188-L194)
+- 📝 **The README says what to do when an update leaves no BrowserAI.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L196-L200)
+- 📝 **Why BrowserAI does not expose Playwright's own dashboard is written down.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L202-L205)
+
+### Changed
+
+- 💥 **BrowserAI is one program, `BrowserAI.exe`, and a client starts it with `--mcp`.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L209-L214)
+- 💥 **One BrowserAI runs in the background from sign-in, and each client hands its calls to it.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L216-L224)
+- 💥 **BrowserAI works only when it is installed in `%LocalAppData%\BrowserAI.app`.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L226-L230)
+- 💥 **`browserai_init` and `browserai_resume` require the four settings a person notices.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L232-L236)
+- 💥 **`browserai_catch_up` requires a `why`, and a call without one is refused.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L238-L239)
+- 💥 **`tracing` is `transcript` now, and a call that sends `tracing` is refused.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L241-L244)
+- 💥 **An argument a tool does not have is refused, with the tool's whole definition.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L246-L249)
+- 💥 **`browserai_set_purpose` is `browserai_change_purpose` now, with no alias.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L251-L252)
+- 🔧 **A call to a tool BrowserAI does not have is told so, with a line for every tool it does have.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L254-L256)
+- 🔧 **The server instructions keep only what spans tools, and six tools carry a BrowserAI note.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L258-L261)
+- 🔧 **The tool descriptions, the answers and the log were rewritten.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L263-L268)
+- 🔧 **Snapshots carry no bounding boxes unless the call asks for them.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L270-L273)
+- 🔧 **`browserai_list` no longer measures every session it names, and says how old its sizes are.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L275-L280)
+- ⚡ **The tool list no longer waits for Playwright to start, and none starts until a session opens.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L282-L285)
+- 🔒 **A session's browser keeps its temporary files inside the session.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L287-L290)
+- 🔧 **A hidden Chromium sends the user agent a visible one sends.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L292-L295)
+- 🔧 **The browser no longer offers to save a password, because nobody can answer the offer.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L297-L300)
+- 🔧 **Every clean close gives the browser up to a minute to write what it holds.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L302-L305)
+- 🔧 **`mcp-registration.json` records one entry per client.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L307-L309)
+- ⬆️ **`@playwright/mcp` moves to 0.0.83 with Chromium 155, and Velopack to 1.2.161.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L311-L317)
+- ⬆️ **SQLite 3.54.0 is compiled into BrowserAI, up from 3.53.4.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L319-L320)
+- 📦 **A release publishes three files: the installer, the full package and the update feed.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L322-L324)
+
+### Removed
+
+- 🗑️ **The configuration window is gone, and with it a link a project file could use to run something.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L328-L331)
+- 🗑️ **Eight more of Playwright's tools are no longer offered.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L333-L339)
+
+### Fixed
+
+- 🐛 **Claude Code sessions have BrowserAI's tools again.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L343-L347)
+- 🐛 **`browserai_catch_up`'s *last file written* leaves out BrowserAI's own record files.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L349-L352)
+- 🐛 **A Chromium screenshot past 16,384 px on a side is refused, where it came back repeated.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L354-L357)
+- 🐛 **A Firefox started while Shift is held no longer stalls in safe mode.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L359-L361)
+- 🐛 **A Chromium browser no longer crashes during a full-page screenshot of a long page.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L363-L367)
+- 🐛 **A call whose Playwright ends under it is answered with what happened and how to go on.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L369-L371)
+- 🐛 **A resume or a shutdown that meets a close in flight waits for it, and what the close saves is kept.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L373-L375)
+- 🐛 **Playwright's own registry of browsers no longer grows without end.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L377-L380)
+- 🐛 **The installer's log carries what each install, update and uninstall hook did.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L382-L383)
+- 🐛 **A failed removal offers the command that removes BrowserAI, where it offered the one that adds it.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L385-L386)
+- 🐛 **A browser download that finishes just as BrowserAI checks on it no longer crashes BrowserAI.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L388-L391)
+- 🐛 **A refusal for a session another BrowserAI is opening names that session's purpose.** [read more](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md?plain=1#L393-L397)
+
+---
+
+| Icon | Meaning | Icon | Meaning |
+|---|---|---|---|
+| ✨ | new capability | 🐛 | fix |
+| 🔧 | behaviour or configuration change | 🔒 | security or permissions |
+| 🗑️ | removal or deprecation | 💥 | breaking, or the reader must act |
+| 📝 | documentation | ✅ | tests and the gate |
+| 📦 | packaging, installer, release pipeline | ⚡ | performance |
+| ♻️ | refactor with no behaviour change | ⬆️ | dependency move |
+
+The full changelog for this release: [CHANGELOG.md](https://github.com/SixFive7/BrowserAI/blob/v2.0.0/CHANGELOG.md#200---2026-10-13)

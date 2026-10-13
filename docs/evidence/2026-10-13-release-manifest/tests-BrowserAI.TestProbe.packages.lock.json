@@ -1,0 +1,69 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0-windows7.0": {
+      "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[*, )",
+        "resolved": "5.6.0",
+        "contentHash": "Kcobt3pnOdO0A+6CKiMHZdTEluJpsfxiV20axtZdmfBQnDmiWTKPJADlgAfdTuKNAnVarrkJa0UEGwuOo91muw=="
+      },
+      "SourceGear.sqlite3": {
+        "type": "Direct",
+        "requested": "[*, )",
+        "resolved": "3.53.4",
+        "contentHash": "aXPX39R0Vgivhi95Z82TRenG56bSOs+Hnt8h1GV0nmfuRaANObd3LC44eoZwszmQqALjaV3ZnBQRej8m5E0L4Q=="
+      },
+      "Microsoft.Extensions.AI.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.8.3",
+        "contentHash": "K0B05oApxmviWalNHPMBBcRC7erKiDATz3ENNR/jqTR9JwIwLRefgDhj2jCRwL1aca99pXUe0qyQC73/xIuZig=="
+      },
+      "ModelContextProtocol.Core": {
+        "type": "Transitive",
+        "resolved": "2.2.0",
+        "contentHash": "FeBfXU6T8k+jw4afg4sfxdEX2rL/e5oKOk9ROOGztu9k47+7Bz08sdaToYt2XvMY1opNbwxYQOFMj6wH9TInhA==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.8.3"
+        }
+      },
+      "browserai": {
+        "type": "Project",
+        "dependencies": {
+          "BrowserAI.App": "[1.0.0, )",
+          "BrowserAI.Core": "[1.0.0, )",
+          "ModelContextProtocol": "[*, )",
+          "Velopack": "[*, )"
+        }
+      },
+      "browserai.app": {
+        "type": "Project",
+        "dependencies": {
+          "BrowserAI.Core": "[1.0.0, )",
+          "Velopack": "[*, )"
+        }
+      },
+      "browserai.core": {
+        "type": "Project",
+        "dependencies": {
+          "Velopack": "[*, )"
+        }
+      },
+      "ModelContextProtocol": {
+        "type": "CentralTransitive",
+        "requested": "[*, )",
+        "resolved": "2.2.0",
+        "contentHash": "4Pb9u02Nwsp0poueDsqNdyGRojFxOYpljB7zDBsq+aHL+Afou3OgxlBc3GWFVnsRMRJrUtWqDh3s6k2JgPzmrQ==",
+        "dependencies": {
+          "ModelContextProtocol.Core": "[2.2.0]"
+        }
+      },
+      "Velopack": {
+        "type": "CentralTransitive",
+        "requested": "[*, )",
+        "resolved": "1.2.161",
+        "contentHash": "OpHNacIumnkhaaX3ZlQ/TCR4YPOJvud2/PAOoWb6o+mIrLwIVA275I5wAgt4q/1O2VrJeDwR1qFQyqzG4lUArg=="
+      }
+    }
+  }
+}

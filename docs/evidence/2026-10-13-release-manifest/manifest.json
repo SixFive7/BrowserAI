@@ -1,0 +1,110 @@
+{
+  "_what_this_is": "The resolved set this release was cut from. RELEASING.md item 11. Copied, never transcribed: every version below was read back out of the file beside it.",
+  "_override": "null means this release took the newest resolve. A block means a HUMAN held an upstream back -- DECISIONS.md, \"Every release builds against the latest Playwright, and only a human may say otherwise\". The key is always present, because an absent key is not a statement.",
+  "_pulledForward": "THE OPPOSITE OF `override`, and the two are never the same thing. `override` is a dependency HELD BACK from what a resolve returned; this is a dependency the payload ships PULLED FORWARD of what the packages in it declare for themselves, which is what an npm `overrides` entry in build/payload/package.json does. null means no override was in force. A block names, per overridden package, the version that SHIPPED (read from payload.package-lock.json), the version the override PINNED TO (read from payload.package.json) and what each package in the lock DECLARES for itself -- and a declared version at or above the pin is the exit condition, the day the override is deleted. The key is always present, for the same reason `override` is. npm writes no `overrides` block into the lock it produces, so the copied payload.package.json beside this file is the only record that one was in force.",
+  "writtenUtc": "2026-10-13T05:33:35.3145086Z",
+  "version": "2.0.0",
+  "tag": "v2.0.0-0-g8e972fbd",
+  "channel": "win",
+  "package": {
+    "name": "BrowserAI.app-2.0.0-full.nupkg",
+    "bytes": 55570740,
+    "sha256": "70cf3daa13178f4f32ba0f87036b4e318e0ec0c317951cf59b97778cf00cd42a"
+  },
+  "override": null,
+  "pulledForward": null,
+  "files": {
+    "src-BrowserAI.packages.lock.json": {
+      "from": "src/BrowserAI/packages.lock.json",
+      "bytes": 3110
+    },
+    "tests-BrowserAI.Tests.packages.lock.json": {
+      "from": "tests/BrowserAI.Tests/packages.lock.json",
+      "bytes": 15713
+    },
+    "tests-BrowserAI.TestProbe.packages.lock.json": {
+      "from": "tests/BrowserAI.TestProbe/packages.lock.json",
+      "bytes": 2243
+    },
+    "payload.package-lock.json": {
+      "from": "build/payload/package-lock.json",
+      "bytes": 1815
+    },
+    "payload.package.json": {
+      "from": "build/payload/package.json",
+      "bytes": 2228
+    },
+    "payload.json": {
+      "from": "payload/payload.json",
+      "bytes": 1131
+    },
+    "browsers.json": {
+      "from": "upstream-snapshots/browsers.json",
+      "bytes": 1137
+    },
+    "tool-verdicts.json": {
+      "from": "tool-verdicts.json",
+      "bytes": 18883
+    }
+  },
+  "resolved": {
+    "nuget": {
+      "ModelContextProtocol": "2.2.0",
+      "Velopack": "1.2.161",
+      "MinVer": "8.0.0",
+      "TUnit": "1.74.0"
+    },
+    "npm": {
+      "@playwright/mcp": "0.0.83",
+      "playwright-core": "1.64.0-alpha-1790635538000"
+    },
+    "node": {
+      "version": "v24.21.0",
+      "lts": "Krypton",
+      "sha256": "158f7685b44de51f6c0df1d153526cbcd3e1bc739a8dfc607721cef75de9e541"
+    },
+    "registerai": {
+      "version": "0.3.0",
+      "tag": "v0.3.0",
+      "source": "release",
+      "sha256": "4200388652296856edb94c81f25c92a4cf8502ac202803248b754bdb5400431d"
+    },
+    "toolVerdicts": {
+      "schemaVersion": 1,
+      "judgedAgainst": {
+        "@playwright/mcp": "0.0.83",
+        "playwright-core": "1.64.0-alpha-1790635538000"
+      }
+    },
+    "browsers": {
+      "chromium": {
+        "revision": "1247",
+        "browserVersion": "155.0.8059.12"
+      },
+      "chromium-headless-shell": {
+        "revision": "1247",
+        "browserVersion": "155.0.8059.12"
+      },
+      "firefox": {
+        "revision": "1553",
+        "browserVersion": "156.0"
+      },
+      "webkit": {
+        "revision": "2368",
+        "browserVersion": "26.6"
+      },
+      "ffmpeg": {
+        "revision": "1011",
+        "browserVersion": null
+      },
+      "winldd": {
+        "revision": "1007",
+        "browserVersion": null
+      },
+      "android": {
+        "revision": "1001",
+        "browserVersion": null
+      }
+    }
+  }
+}
