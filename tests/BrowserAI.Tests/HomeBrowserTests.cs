@@ -127,11 +127,13 @@ internal sealed class HomeBrowserTests
             await Assert.That(await evaluateAsync("() => { document.getElementById('b-dismiss-updated').click(); const folding = document.getElementById('fold-updated').getAnimations(); folding.forEach((animation) => animation.pause()); return 'folding=' + folding.length; }"))
                 .DoesNotContain("folding=0").Because("the notice folds away with a transition, which a reduced-motion setting would switch off");
 
-            var record = Path.Combine(rig.Facts.DataRoot, UpdateNoticeFile.FileName);
-
             // The record is written after the state is sent to every tab, so once it says seen
             // the state is in this tab's stream, and a reading sent after it arrives after it.
-            await Assert.That(await WaitForAsync(async () => File.Exists(record) && (await File.ReadAllTextAsync(record)).Trim() is "9.0.0 seen")).IsTrue();
+            // ⚠️ Read through the product's own reader since 2026-10-13: the record is replaced
+            // by a move, and a read that meets the move, or another process holding the new
+            // file, is refused with a sharing violation, which the reader answers as no record
+            // yet and the bare read of the records gate at 3626ec67 threw.
+            await Assert.That(await WaitForAsync(async () => await UpdateNoticeFile.ReadAsync(rig.Facts.DataRoot) is { Version: "9.0.0", Seen: true })).IsTrue();
 
             rig.Usage.Reading = new UsageReading(new ProcessCounters(8_000_000, 61 * 1024 * 1024, 30 * 1024 * 1024), [], [], 4);
             rig.Clock.Advance(PageService.UsageInterval);
