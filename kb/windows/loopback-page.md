@@ -321,6 +321,49 @@ report the rig's `stop.ps1` wrote. **Re-establish** with
 [the rig](../../docs/probes/2026-10-11-link-start/README.md), in a scratch Firefox
 profile; a new Firefox or Windows build is a new measurement.
 
+## The conversations page's map at forty, a hundred and two hundred rows -- measured 2026-10-13
+
+`[MACHINE]` The page as the maintainer's request of 2026-10-13 left it, which draws its map at
+every count ([the decision](../../DECISIONS.md#the-map-at-any-number-of-conversations-decided-2026-10-13)),
+served by the suite's page rig with invented conversations and sessions and read in a headless
+browser of the provisioned set through BrowserAI's own tools, at a window of 1440 by 1170:
+`chromium-1247` (Chrome for Testing 155.0.8059.12) and `firefox-1553` (Firefox 156.0), with
+`playwright-core` 1.64.0-alpha-1790635538000, `@playwright/mcp` 0.0.83, and BrowserAI
+2.0.1-alpha.0.46 built from the tree of `fbbd0e91`. A **redraw** is the script's work on a window
+resize: the line samples, the lines and their words, and the inspector's pointer. A **replace** is
+the page's main part set again from its own markup and redrawn, with the layout after it, which
+is what a new state costs a tab less the reading of the event.
+
+| Rows | Sessions | Lines | Words on lines | Elements | Main part, Chromium and Firefox | Page height |
+|--:|--:|--:|--:|--:|--:|--:|
+| 40 | 63 | 122 | 67 | 8,409 | 547,875 and 558,059 characters | 5,854 px |
+| 100 | 158 | 302 | 167 | 20,706 | 1,350,997 and 1,376,275 characters | 13,705 px |
+| 200 | 317 | 601 | 334 | 41,264 | 2,695,707 and 2,744,714 characters | 26,815 px |
+
+The median and the slowest of seven runs, in milliseconds; Firefox's clock read whole
+milliseconds here:
+
+| Rows | Chromium redraw | Chromium replace | Firefox redraw | Firefox replace |
+|--:|--:|--:|--:|--:|
+| 40 | 13.3, 14.2 | 36.6, 55.7 | 26, 28 | 61, 68 |
+| 100 | 37.4, 52.1 | 101.6, 129.3 | 65, 75 | 150, 165 |
+| 200 | 96.8, 118.9 | 235.8, 265.0 | 147, 170 | 294, 309 |
+
+Firefox's page heights were within 4 px of Chromium's, and the script marked the map tall at
+every count above.
+
+⚠️ **A gradient sized with `min()` drew nothing in Chromium.** The column's background was first
+`radial-gradient(120% min(70%, 320px) at 50% 0%, ...)`: Firefox drew the card and its glow, and
+Chromium 155 drew no background for the column at all, so the map's own colour showed through it
+and the grey of BrowserAI's three counts vanished into it, in every Chromium screenshot of the
+first run. With the size written `120% 320px`, both engines drew it. What in the declaration
+Chromium refused was not isolated further.
+
+**Re-establish** with [the rig](../../docs/design/map-at-any-count-2026-10-13/tools/TallMapShots.cs):
+copy it into `tests/BrowserAI.Tests`, publish the tree, run the suite filtered to its class under
+the suite lock, and read `.work/shots/timings-chromium.txt` and `timings-firefox.txt`. A new
+browser, a new machine or a change to the page is a new measurement.
+
 ## Chrome for Testing calls Google while idle, and one switch stops it -- measured 2026-10-01
 
 `[FLOATS]` Chrome for Testing 154.0.8037.0 on a local page for eight idle

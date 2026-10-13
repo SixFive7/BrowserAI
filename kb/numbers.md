@@ -258,8 +258,6 @@ long as a relay holds a call and then answers with a refusal, and the row for
 | `PageListener.MaximumConnections` | `64` | How many connections the page's listener holds at once, every open tab's event stream included | **Chosen**, nothing measured | The code says nothing about why | Line written 2026-10-03 | A judgement, nothing to re-run |
 | `PageListener.MaximumHeaderBytes` | `8 KiB` | How large a request's header block to the page may be | **Chosen**, nothing measured | The code says nothing about why | Line written 2026-10-03 | A judgement, nothing to re-run |
 | `LinkScheme.LongestLink` | `512` | The longest link a folder link's start reads; a longer one is refused as not one of the page's, in `PageLinks.Parse` | **Chosen**, nothing measured | A link the page draws is the scheme, a verb, one or two names of letters, digits, hyphens and underscores, and the 43-character token: the link to the data folder is 79 characters with the shipping scheme, as the link start's own log line counted it on 2026-10-12. Nothing was weighed against 512 | Line written 2026-10-12, the maintainer's 70 a | A judgement, nothing to re-run |
-| `ConversationsContent.MostMapRows` | `8` | The most rows the conversations page draws as a map, a row being a conversation or a session no conversation uses; past it the page lists them and says why | **Chosen** | The write-up of the five directions found the map crowded past about eight conversations, drawn at 1440x900 | Line written 2026-10-11, for the maintainer's 40 a | A judgement, nothing to re-run; [the directions](../docs/design/dashboard-2026-10-11/README.md) |
-| `ConversationsContent.MostMapSessions` | `12` | The most sessions the conversations page draws as a map; past it the page lists them and says why | **Chosen** | Set beside `ConversationsContent.MostMapRows`, at one and a half sessions a row; nothing measured | Line written 2026-10-11, for the maintainer's 40 a | A judgement, nothing to re-run |
 | `PageAssets.MapMinimumWidth` | `1200` | The narrowest window, in CSS pixels, the conversations page draws its map in; below it the page shows the list | **Chosen** against the stylesheet | Variant C's five columns at their least are 696 px, room for a line's word between BrowserAI and the sessions, and with the map's 40 px of padding, the 360 px inspector, the 18 px between them and the page's 64 px of padding the page needs 1,178 px, which a 1,200 px window still has beside its scrollbar. *Corrected 2026-10-12 by addition, for the maintainer's 60 (previously "The map's five columns at their least are 672 px, and with the map's own padding, the 360 px inspector beside it, the gap between them and the page's padding the page needs about 1,150 px"): the value did not move* | Line written 2026-10-11, for the maintainer's 40 a; its arithmetic redone 2026-10-12 against variant C's stylesheet | A judgement, nothing to re-run |
 | `NamedPipes.OutBufferBytes` | `64 KiB` | How much of a reply a pipe buffers before a server's write waits for its client to read | **Chosen** against a measurement | A description with twenty sessions is 4,858 bytes, so a reply fits many times over | Measured and chosen 2026-09-24 | The same kb entry |
 | `NamedPipes.InBufferBytes` | `4 KiB` | How much of a request a pipe buffers | **Chosen** | A request is one short line | Line written 2026-09-24 | A judgement, nothing to re-run |
@@ -296,3 +294,18 @@ lists no conversation: `OverviewContent.RowsShown`, `4`, how many conversations 
 *Right now* card listed before it left the rest to the conversations page. Its row read
 **Chosen**: direction A's mockup listed four, `slice(0, 4)` in its script, and the card
 linked the rest, in a line written 2026-10-11 for the maintainer's 40 a.
+
+**Two more rows were deleted on 2026-10-13, with the numbers they described**, at the
+maintainer's request of that day, in his words verbatim *"Feature request. Right now I see
+"There are too many conversations and sessions to draw as a map, so they are listed.". Can we
+make it so that this still draws on a map. The page can become longer (not wider) if need
+be."*: `ConversationsContent.MostMapRows`, `8`, the most rows the conversations page drew as a
+map, a row being a conversation or a session no conversation uses, past which the page listed
+them and said why; and `ConversationsContent.MostMapSessions`, `12`, the most sessions it drew
+as a map. The first read **Chosen**: the write-up of the five directions found the map crowded
+past about eight conversations, drawn at 1440x900. The second read **Chosen** as well, set
+beside the first at one and a half sessions a row with nothing measured. Both lines were
+written 2026-10-11, for the maintainer's 40 a. Since 2026-10-13 the map is drawn at every
+count and grows in height only, and the narrowest window it is drawn in,
+`PageAssets.MapMinimumWidth`, whose row above is not part of this deletion, is all that
+decides whether the page shows the list.

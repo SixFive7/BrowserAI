@@ -39,7 +39,8 @@ each thing that needs the person, and five cards, *Right now*, *Update*, *Claude
 conversations page** is direction C's map inside A's page: conversations on the left, BrowserAI in
 the middle and browser sessions on the right, joined by lines, with an inspector beside the map
 for the card chosen. Below 1200 pixels of window, or with more than eight rows or twelve sessions,
-it is A's list. The other pages are A's: one session, Claude Code and Codex, storage, this
+it is A's list. *Changed 2026-10-13 by addition, at the maintainer's request of that day: below 1200 pixels of
+window only, since the map is drawn at every count ([the decision](../../../DECISIONS.md#the-map-at-any-number-of-conversations-decided-2026-10-13)).* The other pages are A's: one session, Claude Code and Codex, storage, this
 install, the update and what is new.
 
 **The screenshots in [`built/`](built/home-light.png) are the build's own page**: the product's

@@ -105,6 +105,14 @@ more* link to its detail; nothing else depends on it.
   there. The run's end removes every record keyed by its own test host now, and the snapshot a
   gate takes before and after each run names any such record left behind, which stops the gate.
 
+- 🔧 **The conversations page now draws its map however many conversations there are.**
+  Past eight conversations, or twelve browser sessions, the page used to list them and say
+  there were too many to draw. Now the map is drawn at every count, and the page grows longer
+  for it and never wider. On a map taller than the window, BrowserAI's own card moves to the top
+  of its column and stays in view as you scroll, beside the details of the card you chose, and a
+  step out of BrowserAI's column with the arrow keys comes back to the row you came from. Only a
+  window narrower than 1,200 pixels still shows the list.
+
 ### Fixed
 
 - 🐛 **A Firefox session resumed after its last page's server stopped no longer waits 3 minutes and fails.**
