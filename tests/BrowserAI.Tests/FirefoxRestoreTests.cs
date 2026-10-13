@@ -36,7 +36,8 @@ namespace BrowserAI.Tests;
 /// arm of a start that fails, the arm whose blank page is not first and the arm of the error
 /// page's codes against the tree
 /// with each wait taken out and the texts and codes of the reading of that day not yet in.
-/// The runs and their counts are in <c>DECISIONS.md</c>, under 161.
+/// The arm of a slow launch was red against the wait as it counted from the start of the
+/// browser. The runs and their counts are in <c>DECISIONS.md</c>, under 161.
 /// </para>
 /// </remarks>
 internal sealed class FirefoxRestoreTests
@@ -470,6 +471,56 @@ internal sealed class FirefoxRestoreTests
     }
 
     /// <summary>
+    /// A resumed Firefox session whose browser takes longer to start than the whole wait: the
+    /// wait for the restore counts from the first list's answer, with the browser up, so the
+    /// tab Firefox reopens after it is still waited for, and the blank page still goes.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-13, with the wait's start moved to the first list's answer</b>, after
+    /// the PowerShell half of the gate at <c>f4778400</c>, a full run under a tight commit
+    /// charge, met a restore that had not come up 10 s after the browser's start. The launch
+    /// is the first list held while the session's clock moves past the wait.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFirefoxResumeWhoseBrowserStartsSlowlyStillWaitsTheWholeWaitForTheRestore()
+    {
+        var clock = new ManualClock();
+        var tabs = new FakeFirefoxTabs([Reopened]);
+        var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(held.Task), tabs.DocumentRead(), clock);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = await ClosedFirefoxSessionAsync(sessions, rig, "restore-slow-launch", holdsASession: true);
+        var children = sessions.SessionChildren.Count;
+
+        var resumeId = await rig.Client.BeginAsync("tools/call", Call(SessionToolSurface.Resume, ResumeArguments(directory)));
+        var resumed = rig.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
+
+        await WaitUntilAsync(
+            () => sessions.SessionChildren.Count > children && sessions.SessionChildren[^1].ToolCallsReceived.Contains(FirefoxRestore.TabsTool),
+            "the resume never asked its new child for the tabs");
+
+        // The launch: the first list, held while the session's clock moves past the whole wait.
+        clock.Advance(SessionTimes.FirefoxRestoreWait + SessionTimes.FirefoxRestorePoll);
+        held.SetResult();
+
+        await WaitUntilAsync(
+            () =>
+            {
+                clock.Advance(SessionTimes.FirefoxRestorePoll);
+                return resumed.IsCompleted;
+            },
+            "the resume never answered, however far the clock was moved");
+
+        var text = TextOf((await resumed).Result);
+
+        await Assert.That(text).Contains("this resume started the browser, and Firefox's session restore reopened 1 tab. The blank page the browser starts on was closed");
+        await Assert.That(tabs.Actions).Contains("close 0");
+    }
+
+    /// <summary>
     /// Against a <b>real</b> Firefox: a session resumed after the server of its last page has
     /// ended, the page served with <c>Cache-Control: no-store</c>, starts, and its resume
     /// names the tab Firefox could not reach.
@@ -537,10 +588,54 @@ internal sealed class FirefoxRestoreTests
             var text = TextOf(resumed);
 
             await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(text);
-            await Assert.That(text).Contains("this resume started the browser, and Firefox's session restore reopened 1 tab");
-            await Assert.That(text).Contains($"{site.Url}) -- Firefox's error page");
 
-            // The first browser call is answered, on the reopened tab and not on a blank page.
+            // ⚠️ 2026-10-13 (previously the reopened answer alone was held): the resume answers
+            // once the reopened tab is up and the list has held, or once the wait has run out on
+            // a machine busy enough that the tab came up later. Both are true, and which one a
+            // run meets is the machine's load: the PowerShell half of the gate at `f4778400`, a
+            // full run under a tight commit charge, met the second. Holding the first alone was
+            // a claim about how fast a busy machine is.
+            var reopened = text.Contains("this resume started the browser, and Firefox's session restore reopened 1 tab", StringComparison.Ordinal);
+
+            if (reopened)
+            {
+                await Assert.That(text).Contains($"{site.Url}) -- Firefox's error page");
+            }
+            else
+            {
+                await Assert.That(text).Contains($"no tab of the session's last run had come up after {SessionErrors.Duration(SessionTimes.FirefoxRestoreWait)}");
+            }
+
+            // Either way the reopened tab comes up, and it shows Firefox's error page for an
+            // address that gave no answer, which is what the resume keys its sentence on.
+            var listed = await ListUntilAsync(rig, directory, site.Url);
+            var tab = UpstreamTab.ParseList(listed).Single(each => each.Url == site.Url);
+
+            if (reopened)
+            {
+                await Assert.That(listed).DoesNotContain("about:blank");
+            }
+
+            var selected = await CallAsync(rig, "browser_tabs", new JsonObject
+            {
+                ["session"] = directory,
+                ["why"] = "the suite making the reopened tab current",
+                ["action"] = "select",
+                ["index"] = tab.Index,
+            });
+
+            await Assert.That((bool?)selected["isError"]).IsNotEqualTo(true).Because(TextOf(selected));
+
+            var read = await CallAsync(rig, "browser_evaluate", new JsonObject
+            {
+                ["session"] = directory,
+                ["why"] = "the suite reading what the reopened tab shows",
+                ["function"] = "() => document.documentURI",
+            });
+
+            await Assert.That(TextOf(read)).Contains($"{FirefoxRestore.ErrorPagePrefix}?e=connectionFailure");
+
+            // A browser call is answered, on the reopened tab.
             var snapshot = await CallAsync(rig, "browser_snapshot", new JsonObject
             {
                 ["session"] = directory,
@@ -548,16 +643,6 @@ internal sealed class FirefoxRestoreTests
             });
 
             await Assert.That((bool?)snapshot["isError"]).IsNotEqualTo(true).Because(TextOf(snapshot));
-
-            var listed = TextOf(await CallAsync(rig, "browser_tabs", new JsonObject
-            {
-                ["session"] = directory,
-                ["why"] = "the suite reading which tabs are open",
-                ["action"] = "list",
-            }));
-
-            await Assert.That(listed).Contains(site.Url);
-            await Assert.That(listed).DoesNotContain("about:blank");
         }
     }
 
@@ -664,6 +749,41 @@ internal sealed class FirefoxRestoreTests
     private static string TextOf(JsonObject? result) =>
         string.Concat((result?["content"]?.AsArray() ?? [])
             .Select(block => (string?)block?["text"] ?? string.Empty));
+
+    /// <summary>
+    /// Lists a session's tabs until one of them is at <paramref name="url"/>, bounded by the
+    /// suite's hang detector, and returns that list.
+    /// </summary>
+    /// <param name="rig">The harness.</param>
+    /// <param name="directory">The session.</param>
+    /// <param name="url">The address a tab must be at.</param>
+    /// <returns>The first list that holds such a tab.</returns>
+    private static async Task<string> ListUntilAsync(McpTestHarness rig, string directory, string url)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            var listed = TextOf(await CallAsync(rig, "browser_tabs", new JsonObject
+            {
+                ["session"] = directory,
+                ["why"] = "the suite waiting for the tab the restore reopens",
+                ["action"] = "list",
+            }));
+
+            if (listed.Contains(url, StringComparison.Ordinal))
+            {
+                return listed;
+            }
+
+            if (waited.Elapsed > TestDefaults.ProcessHang)
+            {
+                throw new TimeoutException($"no tab at {url} came up -- after {waited.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)} s. The last list: {listed}");
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(250));
+        }
+    }
 
     /// <summary>Waits for an event, bounded by the suite's hang detector and by no number written here.</summary>
     /// <param name="condition">The event.</param>

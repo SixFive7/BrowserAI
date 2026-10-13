@@ -341,7 +341,8 @@ internal static class SessionTimes
 
     /// <summary>
     /// The longest a Firefox session's resume waits for Firefox's session restore, counted
-    /// from the start of the browser: 10 s. The value <c>FirefoxRestore.StartAsync</c> stops at.
+    /// from the first list's answer, with the browser up: 10 s. The value
+    /// <c>FirefoxRestore.StartAsync</c> stops at.
     /// </summary>
     /// <remarks>
     /// <b>Chosen 2026-10-13 with the maintainer's 161</b>, against the replays of that day:
@@ -355,6 +356,11 @@ internal static class SessionTimes
     /// list, which is the call that starts the browser, so the 10 s include the launch,
     /// 1,088 to 2,376 ms in the rig's 30 resumes. A list that fails, or a close, ends the wait
     /// before it.
+    /// ⚠️ <i>Corrected 2026-10-13 a second time, by addition (previously "counted from the
+    /// start of the browser")</i>: the wait counts from the first list's answer since the same
+    /// day, so a slow launch no longer eats it. The case that decided it is the PowerShell half
+    /// of the gate at <c>f4778400</c>, a full run with the commit charge at 88 to 89%, whose
+    /// real-Firefox resume met no reopened tab 10 s after the browser's start.
     /// </remarks>
     public static TimeSpan FirefoxRestoreWait { get; } = TimeSpan.FromSeconds(10);
 

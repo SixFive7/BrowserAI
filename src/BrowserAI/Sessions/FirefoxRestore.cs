@@ -158,7 +158,7 @@ internal static class FirefoxRestore
         // The countdown is held while the start runs, as it is under a forwarded call.
         using var driving = live.Driving(TabsTool, arguments: null);
 
-        var started = clock.GetTimestamp();
+        var began = clock.GetTimestamp();
         var first = await AskAsync(live, "list", index: null, cancellationToken).ConfigureAwait(false);
 
         if (first.Failure is { } failure)
@@ -171,11 +171,18 @@ internal static class FirefoxRestore
         // A browser is up now, so its end is watched, as after a forwarded call.
         live.WatchTheBrowser();
 
+        // ⚠️ 2026-10-13 (previously the wait counted from before the first list): the wait for
+        // Firefox's restore counts from here, with the browser up, so a slow launch keeps the
+        // whole of it. Decided after the PowerShell half of the gate at f4778400, a full run
+        // under a tight commit charge, met a restore that had not come up 10 s after the
+        // browser's start.
+        var up = clock.GetTimestamp();
+
         var tabs = first.Tabs;
 
         if (!HoldsASession(live.Config.ProfileDirectory))
         {
-            Say(live, clock.GetElapsedTime(started), tabs.Count, closed: false);
+            Say(live, clock.GetElapsedTime(began), tabs.Count, closed: false);
 
             return new FirefoxStart(FirefoxStartOutcome.NothingToReopen, tabs, ClosedTheBlankPage: false, Unreachable: [], Failure: null, ServerEnded: false);
         }
@@ -210,7 +217,7 @@ internal static class FirefoxRestore
                 changed = clock.GetTimestamp();
             }
 
-            if (clock.GetElapsedTime(started) >= SessionTimes.FirefoxRestoreWait)
+            if (clock.GetElapsedTime(up) >= SessionTimes.FirefoxRestoreWait)
             {
                 break;
             }
@@ -251,7 +258,7 @@ internal static class FirefoxRestore
             ? await ErrorPagesAsync(live, tabs, clock, cancellationToken).ConfigureAwait(false)
             : [];
 
-        Say(live, clock.GetElapsedTime(started), tabs.Count, closed);
+        Say(live, clock.GetElapsedTime(began), tabs.Count, closed);
 
         return new FirefoxStart(outcome, tabs, closed, unreachable, Failure: null, ServerEnded: false);
     }
