@@ -280,6 +280,7 @@ internal sealed partial class AppendOnlyRecordTests
         new("CHANGELOG.md#0.1.0", 3691, "06cc0bf329ac09ccefe767e0f967a7a8a123f94693be8d044189d7e9a262efa7", "bb565ea0ffbac9ba51823dd1c3737b263bd1e0453c86d2b38ed8fa7b271c2a39"),
         new("CHANGELOG.md#1.0.0", 342298, "bda41f54fa002c43aaa9e24d3a61b02ad55ba105f199d1c6e7e6aa2a3ac8d378", "329069eb5a4f188bc0967505525f8558e1d54726d4f2a5b680b196f5393c3ebe"),
         new("CHANGELOG.md#1.1.0", 65555, "9aacb1bf3421013dafae5ee5a8624ee7e2b1460836b058a43a8ff681b62ee63c", "7d81b6e9a41df62a3258146255c56ecfb8af9685e78feec1c5f1158b9e1784e5"),
+        new("CHANGELOG.md#2.0.0", 24477, "6ec3e6c07843a297ea19849042def2c5b2a9df133809c78a650ffae863933bdf", "c962ccdc1f74b6410eab498b14fdd567f2b91a5ebf7df3815ab849ac80159d67"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39697, "0b7cdccb8d7784118eabe52b86894d10b292c078ed75545ca1adec10d5a0d43b", "9bf8d7cae9df67b961bb7079d327e573c0c8ad994646e7406c1cd604323cfe81"),
         new("docs/reviews/2026-08-18-adversarial-processes.md", 28565, "19a20cc649fe8bbe28099c206bcfe2736838e8abbeef1b50ce6ec5cd1398b995", "b37235076bc2c506e539a41bc0c43e703ad58b57d637b63b22ad7727bcd28cd1"),
         new("docs/reviews/2026-08-18-truncation-findings.md", 14209, "ca661b3f8e57cf219598035fc8bcb4368fab16c37904f9589194aad2d1d7dd93", "ffa615e2ae80a9611439819df97a6abfd28fec19279df7a59330f1729cd2d5df"),

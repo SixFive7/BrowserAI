@@ -38,6 +38,8 @@ more* link to its detail; nothing else depends on it.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-13
+
 BrowserAI gives an AI agent a real browser on Windows. It is one program now, and
 it runs in the background from the moment you sign in. It holds every session, so
 a session outlives the client that drove it. A Start Menu click opens its
@@ -277,7 +279,7 @@ not have is refused.
   that old. A folder that cannot be read is *"could not be measured"* in the listing, as on the
   page, and what a junction inside a session points at is no longer counted in its size.
 
-- ⚡ **The tool list is answered at once, and no Playwright starts until a session opens.**
+- ⚡ **The tool list no longer waits for Playwright to start, and none starts until a session opens.**
   It is compiled into BrowserAI, and each session's own Playwright is checked against it before
   any page exists; one that differs refuses the session as a broken install and names the first
   tool that differs.
