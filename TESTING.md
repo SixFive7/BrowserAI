@@ -2079,6 +2079,19 @@ consequences a reader has to carry:
   [item 1](RELEASING.md#1-everything-re-resolved-to-latest-and-green) re-resolves
   the payload and [item 8](RELEASING.md#8-run-everything) runs the suite, so the
   rebuild always comes first and the re-publish is always owed.
+
+  ⚠️ **AND A FILE THE BINARY COMPILES IN OBSOLETES IT AS WELL -- *added 2026-10-13 by
+  addition, the maintainer's words verbatim: "147 b"*.** Since 2026-10-08 the one
+  executable compiles in `CHANGELOG.md` for the What is new page and
+  `upstream-snapshots/tools-list.json` and `tool-verdicts.json` for the tool list,
+  and until 2026-10-13 none of them was an input of `PublishedSlice.EnsureFresh`, so an
+  edit to one after a publish left every slice arm driving a binary that did not carry
+  it, reading `FRESH`. The inputs now include every product project's
+  `EmbeddedResource` items, read from copies of the project files the suite carries,
+  so a later one is covered without a change here, and
+  `CompiledInFilesTests.TheFreshnessCheckWatchesEveryFileAProductProjectCompilesIn`
+  holds them to the projects. **Publish the slice again after a changelog edit**, which
+  most changes make.
 - **Nothing builds a contributor's pull request any more.** For a public
   repository that is the real cost of the removal: 54% of this project's
   enforcement is a test or a release-phase check, and a pull request can now break

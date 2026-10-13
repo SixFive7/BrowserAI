@@ -356,6 +356,14 @@ internal static class PublishedSlice
     /// stops covering something: it fails loudly when it fires and says
     /// nothing at all about what it never looked at.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Five kinds since 2026-10-13</b>, the maintainer's 147 b, in his words verbatim:
+    /// <i>"147 b"</i> (<i>previously "Four kinds"</i>): every file a product project compiles
+    /// into the binary as a resource, <see cref="CompiledInFiles"/>, derived from the projects'
+    /// <c>EmbeddedResource</c> items. An edit to <c>CHANGELOG.md</c>,
+    /// <c>upstream-snapshots/tools-list.json</c> or <c>tool-verdicts.json</c> after a publish now
+    /// makes the publish stale, as an edit to a <c>.cs</c> file does.
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<FileInfo> FreshnessInputs { get; } =
     [
@@ -363,6 +371,7 @@ internal static class PublishedSlice
         .. RepositoryLayout.BuildFiles,
         .. RepositoryLayout.VendoredSourceFiles,
         PayloadProvenanceStamp,
+        .. CompiledInFiles,
     ];
 
     /// <summary>
