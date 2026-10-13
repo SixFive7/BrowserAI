@@ -58,6 +58,24 @@ more* link to its detail; nothing else depends on it.
   arm went red twice. A seam BrowserAI leaves unset holds that connection open for the arm
   until the stop has taken its list.
 
+- 📦 **A release's six test runs now follow the stamp and the tag, so they test the program that ships.**
+  The release checklist's running order changed. The day's drift check comes first, then the
+  changelog's stamp and its seal in one commit, then the tag on that commit, then the one pack, which
+  is the pack that ships, then the six runs, then the publish. Until now the runs tested a build made
+  before the stamp, whose What is new page showed a development version and the changes not yet
+  released. A release run now fails unless its commit is that tagged stamp, and every binary it tests
+  and ships was built from it and carries the stamped changelog. A red reverts the stamp and the cut
+  is made again, and so does a cut whose runs end after local midnight. The first cut in this order is
+  rehearsed once, in a scratch copy at a version no release carries. The test of the What is new
+  page's list of releases also reads the changelog as a stamp leaves it, on every run.
+
+- ✅ **A published build older than a file it compiles in now reads as stale to the suite.**
+  BrowserAI compiles in three files of this repository: the changelog for the What is new page, and
+  the tool list and the tool verdicts it answers with. The suite drives a published build only when
+  it is newer than everything that goes into it, and those three were not counted, so a build
+  published before an edit to one of them was still driven. The list now comes from the projects'
+  own resources, so a file compiled in later is counted without a change.
+
 ### Fixed
 
 - 🐛 **The dashboard no longer shows an older view after a newer one.**

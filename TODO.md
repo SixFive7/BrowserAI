@@ -246,19 +246,6 @@ is named as candidates and says so.
       both revisions, a test sends both openings to the published binary, and
       the pin offers both.
 
-- [ ] **Reorder the release checklist so the six runs follow the stamp, the maintainer's 103 e.**
-      Since 2026-10-08 the changelog is compiled into the binary, so the stamp, which
-      [the running order](RELEASING.md#the-order-the-last-six-steps-are-executed-in----and-it-is-not-the-numbering)
-      puts after the six runs, changes what the shipped binary shows a person: the gated
-      binary carries `[Unreleased]`, the shipped one the stamped section with its links at
-      the tag. For 2.0.0 the shipped `BrowserAI.exe` is searched for its stamped heading
-      after the clean re-pack, his 103 b. **What to do:** after the release, move the stamp
-      and its seal before the six runs, so they gate the shipped content but for its
-      version string, and keep green the two arms that set today's order: the changelog's
-      empty `[Unreleased]` and the production feed, which needs a published release.
-      [`DECISIONS.md`](DECISIONS.md#licence-release-policy-and-the-tool-surface) has the
-      decision.
-
 - [ ] **A row of the coverage block naming the cut each release run gated, the maintainer's 146.**
       His words of 2026-10-13 verbatim: *"146 your recommendation"*, which was
       `ReleaseCutTests.AReleaseRunGatesTheStampedTaggedCommitAndTheProgramThatShips` now and
