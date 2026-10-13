@@ -136,9 +136,14 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       predate the explanation**: re-verification row 34, the stuck-launch
       paragraph in `kb/playwright/provisioning-and-timings.md`, README's sentence
       about it and the HAZARDS six-run-gate row. Each is corrected by addition.
-- [ ] **Two remarks say `firefoxUserPrefs` are written to `user.js`**, at
+- [x] **Two remarks say `firefoxUserPrefs` are written to `user.js`**, at
       `BrowserConfiguration.cs:725-731` and `FirefoxProfile.cs:87-90`; upstream
-      sends them at runtime, in `Browser.enable`.
+      sends them at runtime, in `Browser.enable`. *Done 2026-10-13 by the
+      maintainer's 162 b, in his words verbatim: "162 b". Both remarks, and the same
+      sentence in `FirefoxTests`, say now that Playwright hands the preferences over in
+      `Browser.enable` once the browser has started, so one Firefox reads only as it
+      starts takes effect from a profile's second launch
+      ([`DECISIONS.md`](DECISIONS.md#a-resumed-firefox-sessions-browser-started-by-its-resume-decided-2026-10-13)).*
 - [ ] **The "Residue outside the app root" item further down may already be
       answered.** T7 c built the reap on 2026-09-24 (`ad4537b`, on `master`).
       Check what the item still leaves open, then retire it with a pointer to
@@ -334,6 +339,14 @@ is named as candidates and says so.
       switching Firefox's restore off in the profile's `user.js` before the launch, started the
       stalled profile; switching it off or making it lazy through `firefoxUserPrefs`, and making
       it lazy in a `user.js`, did not. Which to take is the decision this item waits on.
+      ⚠️ *Added 2026-10-13 by addition, a third time:* decided, the maintainer's 161, in his
+      words verbatim: *"161 your recommendation"*. A Firefox launch keeps Playwright's blank
+      page, and a resumed Firefox session's browser is started by its resume, which closes the
+      page once a reopened tab is up and says what came back; the stall is reported to
+      Playwright, and a watch item under *Upstream asks* below undoes the change when Playwright
+      fixes it
+      ([`DECISIONS.md`](DECISIONS.md#a-resumed-firefox-sessions-browser-started-by-its-resume-decided-2026-10-13)).
+      The item closes once the change has passed its gate.
 - [ ] **Check whether Chromium sends anywhere the minidump a crash leaves in a session's
       profile, after the release.** The maintainer's 133 a of 2026-10-13, in his words
       verbatim, *"133 a"*. A Chrome for Testing that crashes writes a minidump of the
@@ -1470,6 +1483,32 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       open, with no labels and no reply beyond the cross-link of 01:29:06Z. **Read both again**
       with an anonymous GET of `https://issues.chromium.org/action/issues/572877174` and
       `gh issue view 43327 --repo microsoft/playwright`.
+- [ ] **WATCH the report to Playwright on a Firefox persistent launch that waits out its
+      timeout on a restored tab Firefox's error page holds, and put Playwright's blank page
+      back out of a Firefox launch when it is fixed.** The maintainer's 161 of 2026-10-13, in
+      his words verbatim: *"161 your recommendation"*, which took direction d beside the change
+      it undoes. Playwright's persistent launch waits for its first page's `load`, and juggler
+      sends `Page.ready` and `DOMContentLoaded` for Firefox's error page and never `load`, so a
+      launch whose first page was a restored tab whose page could neither load nor come back
+      from the cache waited out its 180 s, 14 of 14
+      ([kb](kb/playwright/provisioning-and-timings.md#a-firefox-session-resumed-onto-a-page-that-can-neither-load-nor-come-back-from-the-cache-waits-out-the-180-s-launch----measured-2026-10-13),
+      [the hazard index](HAZARDS.md)). Since 161 a Firefox launch keeps the blank page
+      (`BrowserConfiguration.DefaultPageArgument` is left out of Chromium's alone) and a
+      resumed Firefox session's browser is started by its resume (`FirefoxRestore`). The report
+      is drafted for the maintainer's account, with the rig's replay as its reproduction; write
+      its link here once it is posted. **What to do:** check it at least once a week, and bring
+      any question from the Playwright team to the maintainer, because a reply goes out under
+      his name. **When a `playwright-core` or a Firefox build that a Playwright release ships
+      may carry a fix**, either juggler reporting `load` for an error page or the persistent
+      launch no longer waiting for the full load of a tab it did not open, run
+      [the replay](docs/probes/2026-10-13-restore-stall/README.md) of a stalled profile with
+      the blank page left out, `run.ps1 -Stage replay` as its README says. If it starts, measured
+      and never inferred from the issue's state, put `DefaultPageArgument` back into both
+      families' `ignoreDefaultArgs`, give a Firefox session's start back to its first browser
+      call, turn `FirefoxRestoreTests` round or retire it with a remark, correct the kb entry
+      and [re-verification row 222](kb/re-verification.md) with dated previously clauses, and
+      close this item. If the issue closes without a fix, record the reason in the kb entry and
+      close this item.
 
 ---
 

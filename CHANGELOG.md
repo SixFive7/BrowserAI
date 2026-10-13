@@ -107,6 +107,15 @@ more* link to its detail; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **A Firefox session resumed after the server of its last page stopped no longer waits three minutes and fails.**
+  When a Firefox session was resumed and its last page had been on a server that no longer
+  answered, served so that Firefox could not bring it back from its cache, the first browser
+  call waited three minutes and then failed with a timeout. Now `browserai_resume` starts a
+  Firefox session's browser itself, and its answer lists the tabs Firefox reopened, which one
+  browser calls act on, and any tab that shows Firefox's error page because nothing answered
+  at its address. A Chromium session is unchanged.
+  [`DECISIONS.md`](DECISIONS.md) has the decision, the maintainer's 161.
+
 - 🐛 **The dashboard no longer shows an older view after a newer one.**
   When two changes landed at once, such as a browser closing while a folder's size was being
   measured, a tab could show the view from before the newer change until the next one came.

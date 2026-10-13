@@ -1103,6 +1103,25 @@ thread pool waits on, only while a session is in it, and reads the desktop throu
 `Interop/InputActivity`; a visible session's `BrowserIdleTimer` runs the check once
 more before it decides. The in-process rig's desktop is `Harness/RigDesktop`.
 
+⚠️ **Added 2026-10-13, the maintainer's 161.** A resumed Firefox session's browser is
+started by its resume and not by its first browser call. `BrowserConfiguration` leaves
+Playwright's blank page out of a Chromium launch alone, so a Firefox launch waits for that
+page and not for a restored tab, and `SessionManager.OpenAsync`, asked by
+`SessionManager.ResumeAsync` for a Firefox session whose browser is installed
+(`SessionManager.TheBrowserIsInstalledAsync`), runs `Sessions/FirefoxRestore.StartAsync`
+once the session is published: `browser_tabs` lists, which starts the browser, then lists
+again on `SessionTimes.FirefoxRestorePoll` until a reopened tab is up and the list has held
+for `SessionTimes.FirefoxRestoreQuiet`, bounded by `SessionTimes.FirefoxRestoreWait`, then
+selects the first reopened tab and closes the blank page, and `FirefoxRestore.Note` writes
+what came back into the resume's answer, reading upstream's tab lines through
+`UpstreamTab`. A profile with none of `FirefoxRestore.SessionFiles` is read once. The start
+holds the countdown through `LiveSession.Driving` and arms the browser's watch as a
+forwarded call does, and it is a gate: `LiveSession.BeginTheBrowserStart` marks it before
+the session is published, `LiveSession.BrowserStartSettled` completes when it ends, and
+`BrowserProxy` and `LiveSession.CloseForTheAgentAsync` wait for it before they reach the
+child. A Chromium session, and a Firefox one whose browser is still being provisioned,
+starts its browser at the first browser call, as before.
+
 ### `browserai_page_tool`, and how a page tool's name is resolved
 
 | Concern | Implemented by |
