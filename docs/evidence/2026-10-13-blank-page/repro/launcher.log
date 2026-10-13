@@ -1,0 +1,5 @@
+2026-10-13T15:49:54.6144127Z the suite lock is held by this lane's holder, pid 125396, and stays with it
+2026-10-13T15:49:54.7709892Z step started: node pid 115052, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\repro\repro
+2026-10-13T15:50:49.8294547Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:50:49.8308521Z repro exit code: 0
+2026-10-13T15:50:49.8816852Z registry after repro: 5 line(s) in C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\repro\registry-repro.txt

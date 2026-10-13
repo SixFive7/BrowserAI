@@ -1,0 +1,5 @@
+2026-10-13T15:52:04.0126078Z the suite lock is held by this lane's holder, pid 125396, and stays with it
+2026-10-13T15:52:04.1635027Z step started: node pid 79664, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\navigate\navigate
+2026-10-13T15:52:24.1880120Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:52:24.1904087Z navigate exit code: 0
+2026-10-13T15:52:24.2410089Z registry after navigate: 5 line(s) in C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\navigate\registry-navigate.txt

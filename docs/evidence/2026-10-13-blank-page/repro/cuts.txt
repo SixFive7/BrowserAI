@@ -1,0 +1,11 @@
+build.txt: unchanged
+browsers.txt: unchanged
+launcher.log: unchanged
+summary.txt: unchanged
+registry-repro.trimmed.txt: the profile path replaced and colour escapes removed
+registry-before.txt: not kept, it lists every value Firefox keeps for every install on the machine; 64 values
+repro/result.json: unchanged
+repro/events.jsonl: unchanged
+repro/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+repro/node.stdout.txt: unchanged
+repro/node.stderr.txt: unchanged

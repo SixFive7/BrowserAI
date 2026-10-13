@@ -1,0 +1,153 @@
+build.txt: unchanged
+browsers.trimmed.txt: the profile path replaced and colour escapes removed
+launcher.log: unchanged
+summary.txt: unchanged
+registry-blank.trimmed.txt: the profile path replaced and colour escapes removed
+registry-before.txt: not kept, it lists every value Firefox keeps for every install on the machine; 62 values
+01-one-dead-1/result.json: unchanged
+01-one-dead-1/config.json: unchanged
+01-one-dead-1/events.jsonl: unchanged
+01-one-dead-1/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+01-one-dead-1/node.stdout.txt: unchanged
+01-one-dead-1/node.stderr.txt: unchanged
+01-one-dead-1/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 77 of 201, each cut at 1500 characters; the profile path replaced
+01-one-dead-1/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1109 of 1596, each cut at 1500 characters; the profile path replaced
+01-one-dead-1/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1109 of 1595, each cut at 1500 characters; the profile path replaced
+01-one-dead-1/profile: not kept, a browser's whole state
+02-one-alive-1/result.json: unchanged
+02-one-alive-1/config.json: unchanged
+02-one-alive-1/events.jsonl: unchanged
+02-one-alive-1/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+02-one-alive-1/node.stdout.txt: unchanged
+02-one-alive-1/node.stderr.txt: unchanged
+02-one-alive-1/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 77 of 208, each cut at 1500 characters; the profile path replaced
+02-one-alive-1/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1193 of 1704, each cut at 1500 characters; the profile path replaced
+02-one-alive-1/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1193 of 1704, each cut at 1500 characters; the profile path replaced
+02-one-alive-1/profile: not kept, a browser's whole state
+03-three-mixed-1/result.json: unchanged
+03-three-mixed-1/config.json: unchanged
+03-three-mixed-1/events.jsonl: unchanged
+03-three-mixed-1/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+03-three-mixed-1/node.stdout.txt: unchanged
+03-three-mixed-1/node.stderr.txt: unchanged
+03-three-mixed-1/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 236 of 527, each cut at 1500 characters; the profile path replaced
+03-three-mixed-1/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 2413 of 3415, each cut at 1500 characters; the profile path replaced
+03-three-mixed-1/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 2413 of 3414, each cut at 1500 characters; the profile path replaced
+03-three-mixed-1/profile: not kept, a browser's whole state
+04-none-1/result.json: unchanged
+04-none-1/config.json: unchanged
+04-none-1/events.jsonl: unchanged
+04-none-1/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+04-none-1/node.stdout.txt: unchanged
+04-none-1/node.stderr.txt: unchanged
+04-none-1/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 56 of 147, each cut at 1500 characters; the profile path replaced
+04-none-1/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1213 of 1726, each cut at 1500 characters; the profile path replaced
+04-none-1/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1189 of 1699, each cut at 1500 characters; the profile path replaced
+04-none-1/profile: not kept, a browser's whole state
+05-fresh-1/result.json: unchanged
+05-fresh-1/config.json: unchanged
+05-fresh-1/events.jsonl: unchanged
+05-fresh-1/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+05-fresh-1/node.stdout.txt: unchanged
+05-fresh-1/node.stderr.txt: unchanged
+05-fresh-1/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 588 of 884, each cut at 1500 characters; the profile path replaced
+05-fresh-1/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1189 of 1694, each cut at 1500 characters; the profile path replaced
+05-fresh-1/profile: not kept, a browser's whole state
+06-one-dead-2/result.json: unchanged
+06-one-dead-2/config.json: unchanged
+06-one-dead-2/events.jsonl: unchanged
+06-one-dead-2/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+06-one-dead-2/node.stdout.txt: unchanged
+06-one-dead-2/node.stderr.txt: unchanged
+06-one-dead-2/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 77 of 208, each cut at 1500 characters; the profile path replaced
+06-one-dead-2/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1097 of 1575, each cut at 1500 characters; the profile path replaced
+06-one-dead-2/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1121 of 1611, each cut at 1500 characters; the profile path replaced
+06-one-dead-2/profile: not kept, a browser's whole state
+07-one-alive-2/result.json: unchanged
+07-one-alive-2/config.json: unchanged
+07-one-alive-2/events.jsonl: unchanged
+07-one-alive-2/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+07-one-alive-2/node.stdout.txt: unchanged
+07-one-alive-2/node.stderr.txt: unchanged
+07-one-alive-2/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 77 of 208, each cut at 1500 characters; the profile path replaced
+07-one-alive-2/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1193 of 1704, each cut at 1500 characters; the profile path replaced
+07-one-alive-2/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1217 of 1736, each cut at 1500 characters; the profile path replaced
+07-one-alive-2/profile: not kept, a browser's whole state
+08-three-mixed-2/result.json: unchanged
+08-three-mixed-2/config.json: unchanged
+08-three-mixed-2/events.jsonl: unchanged
+08-three-mixed-2/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+08-three-mixed-2/node.stdout.txt: unchanged
+08-three-mixed-2/node.stderr.txt: unchanged
+08-three-mixed-2/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 235 of 526, each cut at 1500 characters; the profile path replaced
+08-three-mixed-2/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 2365 of 3351, each cut at 1500 characters; the profile path replaced
+08-three-mixed-2/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 2413 of 3414, each cut at 1500 characters; the profile path replaced
+08-three-mixed-2/profile: not kept, a browser's whole state
+09-none-2/result.json: unchanged
+09-none-2/config.json: unchanged
+09-none-2/events.jsonl: unchanged
+09-none-2/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+09-none-2/node.stdout.txt: unchanged
+09-none-2/node.stderr.txt: unchanged
+09-none-2/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 56 of 147, each cut at 1500 characters; the profile path replaced
+09-none-2/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1189 of 1694, each cut at 1500 characters; the profile path replaced
+09-none-2/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1189 of 1694, each cut at 1500 characters; the profile path replaced
+09-none-2/profile: not kept, a browser's whole state
+10-fresh-2/result.json: unchanged
+10-fresh-2/config.json: unchanged
+10-fresh-2/events.jsonl: unchanged
+10-fresh-2/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+10-fresh-2/node.stdout.txt: unchanged
+10-fresh-2/node.stderr.txt: unchanged
+10-fresh-2/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 564 of 852, each cut at 1500 characters; the profile path replaced
+10-fresh-2/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1189 of 1694, each cut at 1500 characters; the profile path replaced
+10-fresh-2/profile: not kept, a browser's whole state
+11-one-dead-3/result.json: unchanged
+11-one-dead-3/config.json: unchanged
+11-one-dead-3/events.jsonl: unchanged
+11-one-dead-3/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+11-one-dead-3/node.stdout.txt: unchanged
+11-one-dead-3/node.stderr.txt: unchanged
+11-one-dead-3/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 77 of 208, each cut at 1500 characters; the profile path replaced
+11-one-dead-3/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1109 of 1591, each cut at 1500 characters; the profile path replaced
+11-one-dead-3/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1109 of 1590, each cut at 1500 characters; the profile path replaced
+11-one-dead-3/profile: not kept, a browser's whole state
+12-one-alive-3/result.json: unchanged
+12-one-alive-3/config.json: unchanged
+12-one-alive-3/events.jsonl: unchanged
+12-one-alive-3/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+12-one-alive-3/node.stdout.txt: unchanged
+12-one-alive-3/node.stderr.txt: unchanged
+12-one-alive-3/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 77 of 208, each cut at 1500 characters; the profile path replaced
+12-one-alive-3/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1193 of 1704, each cut at 1500 characters; the profile path replaced
+12-one-alive-3/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1193 of 1704, each cut at 1500 characters; the profile path replaced
+12-one-alive-3/profile: not kept, a browser's whole state
+13-three-mixed-3/result.json: unchanged
+13-three-mixed-3/config.json: unchanged
+13-three-mixed-3/events.jsonl: unchanged
+13-three-mixed-3/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+13-three-mixed-3/node.stdout.txt: unchanged
+13-three-mixed-3/node.stderr.txt: unchanged
+13-three-mixed-3/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 235 of 526, each cut at 1500 characters; the profile path replaced
+13-three-mixed-3/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 2413 of 3420, each cut at 1500 characters; the profile path replaced
+13-three-mixed-3/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 2413 of 3414, each cut at 1500 characters; the profile path replaced
+13-three-mixed-3/profile: not kept, a browser's whole state
+14-none-3/result.json: unchanged
+14-none-3/config.json: unchanged
+14-none-3/events.jsonl: unchanged
+14-none-3/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+14-none-3/node.stdout.txt: unchanged
+14-none-3/node.stderr.txt: unchanged
+14-none-3/prepare.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 56 of 154, each cut at 1500 characters; the profile path replaced
+14-none-3/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1213 of 1726, each cut at 1500 characters; the profile path replaced
+14-none-3/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1213 of 1726, each cut at 1500 characters; the profile path replaced
+14-none-3/profile: not kept, a browser's whole state
+15-fresh-3/result.json: unchanged
+15-fresh-3/config.json: unchanged
+15-fresh-3/events.jsonl: unchanged
+15-fresh-3/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+15-fresh-3/node.stdout.txt: unchanged
+15-fresh-3/node.stderr.txt: unchanged
+15-fresh-3/resume-1.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 588 of 884, each cut at 1500 characters; the profile path replaced
+15-fresh-3/resume-2.stderr.trimmed.txt: the lines of each page's attach, its main frame's commits, aborts, readiness, DOMContentLoaded and load, the launch and the API calls, 1213 of 1726, each cut at 1500 characters; the profile path replaced
+15-fresh-3/profile: not kept, a browser's whole state

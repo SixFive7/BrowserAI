@@ -1,0 +1,2791 @@
+{
+ "arm": "one-dead",
+ "round": 1,
+ "started": "2026-10-13T15:31:51.678Z",
+ "config": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\firefox-restore\\.work\\blank-page\\runs\\blank\\01-one-dead-1\\config.json",
+ "pages": [
+  {
+   "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+   "ends": true
+  }
+ ],
+ "cycles": [
+  {
+   "cycle": 1,
+   "handshake": {
+    "server": {
+     "name": "Playwright",
+     "version": "1.64.0-alpha-1790635538000"
+    },
+    "protocolVersion": "2025-11-25",
+    "tools": [
+     "browser_close",
+     "browser_resize",
+     "browser_get_config",
+     "browser_console_messages",
+     "browser_cookie_list",
+     "browser_cookie_get",
+     "browser_cookie_set",
+     "browser_cookie_delete",
+     "browser_cookie_clear",
+     "browser_resume",
+     "browser_highlight",
+     "browser_hide_highlight",
+     "browser_annotate",
+     "browser_handle_dialog",
+     "browser_emulate_media",
+     "browser_evaluate",
+     "browser_file_upload",
+     "browser_drop",
+     "browser_find",
+     "browser_fill_form",
+     "browser_press_key",
+     "browser_type",
+     "browser_mouse_move_xy",
+     "browser_mouse_click_xy",
+     "browser_mouse_drag_xy",
+     "browser_mouse_down",
+     "browser_mouse_up",
+     "browser_mouse_wheel",
+     "browser_navigate",
+     "browser_navigate_back",
+     "browser_network_requests",
+     "browser_network_request",
+     "browser_network_state_set",
+     "browser_pdf_save",
+     "browser_start_recording",
+     "browser_stop_recording",
+     "browser_route",
+     "browser_route_list",
+     "browser_unroute",
+     "browser_run_code_unsafe",
+     "browser_take_screenshot",
+     "browser_snapshot",
+     "browser_click",
+     "browser_drag",
+     "browser_hover",
+     "browser_select_option",
+     "browser_generate_locator",
+     "browser_storage_state",
+     "browser_set_storage_state",
+     "browser_tabs",
+     "browser_start_tracing",
+     "browser_stop_tracing",
+     "browser_verify_element_visible",
+     "browser_verify_text_visible",
+     "browser_verify_list_visible",
+     "browser_verify_value",
+     "browser_start_video",
+     "browser_stop_video",
+     "browser_video_chapter",
+     "browser_video_show_actions",
+     "browser_video_hide_actions",
+     "browser_wait_for",
+     "browser_localstorage_list",
+     "browser_localstorage_get",
+     "browser_localstorage_set",
+     "browser_localstorage_delete",
+     "browser_localstorage_clear",
+     "browser_sessionstorage_list",
+     "browser_sessionstorage_get",
+     "browser_sessionstorage_set",
+     "browser_sessionstorage_delete",
+     "browser_sessionstorage_clear"
+    ]
+   },
+   "listings": [
+    {
+     "afterMs": 1477,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 1732,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 1989,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2249,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2505,
+     "ms": 4,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2761,
+     "ms": 4,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3021,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3280,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3549,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3807,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4068,
+     "ms": 10,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4325,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4581,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4838,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5094,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5351,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5607,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5864,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6134,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6391,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6650,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6907,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7166,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7422,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7680,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7938,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8194,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8459,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8716,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8973,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9233,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9490,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9748,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10004,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10262,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10519,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10788,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11047,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11303,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11560,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11816,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 12073,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "launch": {
+    "tool": "browser_tabs",
+    "startedAt": "2026-10-13T15:31:56.283Z",
+    "answeredAt": "2026-10-13T15:31:57.489Z",
+    "ms": 1206,
+    "isError": false,
+    "text": "### Result\n- 0: (current) [](about:blank)",
+    "tabs": [
+     {
+      "index": 0,
+      "current": true,
+      "title": "",
+      "url": "about:blank",
+      "crashed": false
+     }
+    ]
+   },
+   "selectedBeforeTheTidy": {
+    "waitedMs": 4018,
+    "files": [
+     {
+      "file": "sessionstore-backups/recovery.jsonlz4",
+      "bytes": 1476,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/previous.jsonlz4",
+      "bytes": 1232,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     }
+    ]
+   },
+   "currentBeforeTheTidy": {
+    "ms": 881,
+    "isError": false,
+    "value": {
+     "visibility": "visible",
+     "hidden": false,
+     "documentURI": "about:blank",
+     "title": "",
+     "href": "about:blank"
+    }
+   },
+   "tidy": {
+    "select": {
+     "ms": 326,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": false,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": true,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    "close": {
+     "ms": 13,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    }
+   },
+   "currentAfterTheTidy": {
+    "ms": 538,
+    "isError": false,
+    "value": {
+     "visibility": "visible",
+     "hidden": false,
+     "documentURI": "about:neterror?e=connectionFailure&u=http%3A//127.0.0.1%3A60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/%3Ftab%3D1&c=UTF-8&captivePortalState=unknown&d=Firefox%20can%E2%80%99t%20establish%20a%20connection%20to%20the%20server%20at%20127.0.0.1%3A60437.&a=",
+     "title": "Problem loading page",
+     "href": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+    }
+   },
+   "snapshot": {
+    "ms": 43,
+    "isError": false,
+    "head": "### Page\n- Page URL: http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1\n- Page Title: Problem loading page\n### Snapshot\n```yaml\n- article [ref=e3]:\n  - generic [ref=e6]:\n    - heading \"Unable to connect\" [level=1] [ref=e7]\n    - paragraph [ref=e8]:\n      - text: Nightly can’t "
+   },
+   "documentRead": {
+    "ms": 507,
+    "isError": false,
+    "tabs": 1,
+    "msPerTab": 507,
+    "pages": [
+     {
+      "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+      "documentURI": "about:neterror?e=connectionFailure&u=http%3A//127.0.0.1%3A60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/%3Ftab%3D1&c=UTF-8&captivePortalState=unknown&d=Firefox%20can%E2%80%99t%20establish%20a%20connection%20to%20the%20server%20at%20127.0.0.1%3A60437.&a="
+     }
+    ]
+   },
+   "others": [],
+   "finalTabs": [
+    {
+     "index": 0,
+     "current": true,
+     "title": "Problem loading page",
+     "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+     "crashed": false
+    }
+   ],
+   "selectedAfterTheTidy": {
+    "waitedMs": 13048,
+    "files": [
+     {
+      "file": "sessionstore-backups/recovery.jsonlz4",
+      "bytes": 1268,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/recovery.baklz4",
+      "bytes": 1476,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/previous.jsonlz4",
+      "bytes": 1232,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     }
+    ]
+   },
+   "close": {
+    "tool": "browser_close",
+    "startedAt": "2026-10-13T15:32:27.746Z",
+    "answeredAt": "2026-10-13T15:32:27.975Z",
+    "ms": 229,
+    "isError": false,
+    "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+   },
+   "end": {
+    "code": 0,
+    "signal": null
+   },
+   "saved": [
+    {
+     "file": "sessionstore.jsonlz4",
+     "bytes": 1271,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/recovery.jsonlz4",
+     "bytes": 1268,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/recovery.baklz4",
+     "bytes": 1476,
+     "state": null,
+     "windows": [
+      {
+       "selected": 2,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        },
+        {
+         "index": 1,
+         "entries": [
+          "about:blank"
+         ],
+         "policies": [
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/previous.jsonlz4",
+     "bytes": 1232,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    }
+   ]
+  },
+  {
+   "cycle": 2,
+   "handshake": {
+    "server": {
+     "name": "Playwright",
+     "version": "1.64.0-alpha-1790635538000"
+    },
+    "protocolVersion": "2025-11-25",
+    "tools": [
+     "browser_close",
+     "browser_resize",
+     "browser_get_config",
+     "browser_console_messages",
+     "browser_cookie_list",
+     "browser_cookie_get",
+     "browser_cookie_set",
+     "browser_cookie_delete",
+     "browser_cookie_clear",
+     "browser_resume",
+     "browser_highlight",
+     "browser_hide_highlight",
+     "browser_annotate",
+     "browser_handle_dialog",
+     "browser_emulate_media",
+     "browser_evaluate",
+     "browser_file_upload",
+     "browser_drop",
+     "browser_find",
+     "browser_fill_form",
+     "browser_press_key",
+     "browser_type",
+     "browser_mouse_move_xy",
+     "browser_mouse_click_xy",
+     "browser_mouse_drag_xy",
+     "browser_mouse_down",
+     "browser_mouse_up",
+     "browser_mouse_wheel",
+     "browser_navigate",
+     "browser_navigate_back",
+     "browser_network_requests",
+     "browser_network_request",
+     "browser_network_state_set",
+     "browser_pdf_save",
+     "browser_start_recording",
+     "browser_stop_recording",
+     "browser_route",
+     "browser_route_list",
+     "browser_unroute",
+     "browser_run_code_unsafe",
+     "browser_take_screenshot",
+     "browser_snapshot",
+     "browser_click",
+     "browser_drag",
+     "browser_hover",
+     "browser_select_option",
+     "browser_generate_locator",
+     "browser_storage_state",
+     "browser_set_storage_state",
+     "browser_tabs",
+     "browser_start_tracing",
+     "browser_stop_tracing",
+     "browser_verify_element_visible",
+     "browser_verify_text_visible",
+     "browser_verify_list_visible",
+     "browser_verify_value",
+     "browser_start_video",
+     "browser_stop_video",
+     "browser_video_chapter",
+     "browser_video_show_actions",
+     "browser_video_hide_actions",
+     "browser_wait_for",
+     "browser_localstorage_list",
+     "browser_localstorage_get",
+     "browser_localstorage_set",
+     "browser_localstorage_delete",
+     "browser_localstorage_clear",
+     "browser_sessionstorage_list",
+     "browser_sessionstorage_get",
+     "browser_sessionstorage_set",
+     "browser_sessionstorage_delete",
+     "browser_sessionstorage_clear"
+    ]
+   },
+   "listings": [
+    {
+     "afterMs": 1440,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 1696,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 1953,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2208,
+     "ms": 4,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2466,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2721,
+     "ms": 4,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2981,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3250,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3508,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3768,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4025,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4283,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4539,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4796,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5054,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5311,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5569,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5825,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6083,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6340,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6597,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6854,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7114,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7371,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7642,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7899,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8157,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8419,
+     "ms": 11,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8678,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8935,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9192,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9449,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9706,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9975,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10231,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10490,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10748,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11005,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11261,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11517,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11774,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 12031,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "launch": {
+    "tool": "browser_tabs",
+    "startedAt": "2026-10-13T15:32:28.348Z",
+    "answeredAt": "2026-10-13T15:32:29.531Z",
+    "ms": 1183,
+    "isError": false,
+    "text": "### Result\n- 0: (current) [](about:blank)",
+    "tabs": [
+     {
+      "index": 0,
+      "current": true,
+      "title": "",
+      "url": "about:blank",
+      "crashed": false
+     }
+    ]
+   },
+   "selectedBeforeTheTidy": {
+    "waitedMs": 4006,
+    "files": [
+     {
+      "file": "sessionstore-backups/recovery.jsonlz4",
+      "bytes": 1474,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/recovery.baklz4",
+      "bytes": 1476,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/previous.jsonlz4",
+      "bytes": 1271,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     }
+    ]
+   },
+   "currentBeforeTheTidy": {
+    "ms": 934,
+    "isError": false,
+    "value": {
+     "visibility": "visible",
+     "hidden": false,
+     "documentURI": "about:blank",
+     "title": "",
+     "href": "about:blank"
+    }
+   },
+   "tidy": {
+    "select": {
+     "ms": 316,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": false,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": true,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    "close": {
+     "ms": 10,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "Problem loading page",
+       "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+       "crashed": false
+      }
+     ]
+    }
+   },
+   "currentAfterTheTidy": {
+    "ms": 547,
+    "isError": false,
+    "value": {
+     "visibility": "visible",
+     "hidden": false,
+     "documentURI": "about:neterror?e=connectionFailure&u=http%3A//127.0.0.1%3A60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/%3Ftab%3D1&c=UTF-8&captivePortalState=unknown&d=Firefox%20can%E2%80%99t%20establish%20a%20connection%20to%20the%20server%20at%20127.0.0.1%3A60437.&a=",
+     "title": "Problem loading page",
+     "href": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+    }
+   },
+   "snapshot": {
+    "ms": 48,
+    "isError": false,
+    "head": "### Page\n- Page URL: http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1\n- Page Title: Problem loading page\n### Snapshot\n```yaml\n- article [ref=e3]:\n  - generic [ref=e6]:\n    - heading \"Unable to connect\" [level=1] [ref=e7]\n    - paragraph [ref=e8]:\n      - text: Nightly can’t "
+   },
+   "documentRead": {
+    "ms": 507,
+    "isError": false,
+    "tabs": 1,
+    "msPerTab": 507,
+    "pages": [
+     {
+      "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+      "documentURI": "about:neterror?e=connectionFailure&u=http%3A//127.0.0.1%3A60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/%3Ftab%3D1&c=UTF-8&captivePortalState=unknown&d=Firefox%20can%E2%80%99t%20establish%20a%20connection%20to%20the%20server%20at%20127.0.0.1%3A60437.&a="
+     }
+    ]
+   },
+   "others": [],
+   "finalTabs": [
+    {
+     "index": 0,
+     "current": true,
+     "title": "Problem loading page",
+     "url": "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1",
+     "crashed": false
+    }
+   ],
+   "selectedAfterTheTidy": {
+    "waitedMs": 14047,
+    "files": [
+     {
+      "file": "sessionstore-backups/recovery.jsonlz4",
+      "bytes": 1268,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/recovery.baklz4",
+      "bytes": 1474,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/previous.jsonlz4",
+      "bytes": 1271,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     }
+    ]
+   },
+   "close": {
+    "tool": "browser_close",
+    "startedAt": "2026-10-13T15:33:00.806Z",
+    "answeredAt": "2026-10-13T15:33:00.975Z",
+    "ms": 169,
+    "isError": false,
+    "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+   },
+   "end": {
+    "code": 0,
+    "signal": null
+   },
+   "saved": [
+    {
+     "file": "sessionstore.jsonlz4",
+     "bytes": 1271,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/recovery.jsonlz4",
+     "bytes": 1268,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/recovery.baklz4",
+     "bytes": 1474,
+     "state": null,
+     "windows": [
+      {
+       "selected": 2,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        },
+        {
+         "index": 1,
+         "entries": [
+          "about:blank"
+         ],
+         "policies": [
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/previous.jsonlz4",
+     "bytes": 1271,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    }
+   ]
+  }
+ ],
+ "prepare": {
+  "handshake": {
+   "server": {
+    "name": "Playwright",
+    "version": "1.64.0-alpha-1790635538000"
+   },
+   "protocolVersion": "2025-11-25",
+   "tools": [
+    "browser_close",
+    "browser_resize",
+    "browser_get_config",
+    "browser_console_messages",
+    "browser_cookie_list",
+    "browser_cookie_get",
+    "browser_cookie_set",
+    "browser_cookie_delete",
+    "browser_cookie_clear",
+    "browser_resume",
+    "browser_highlight",
+    "browser_hide_highlight",
+    "browser_annotate",
+    "browser_handle_dialog",
+    "browser_emulate_media",
+    "browser_evaluate",
+    "browser_file_upload",
+    "browser_drop",
+    "browser_find",
+    "browser_fill_form",
+    "browser_press_key",
+    "browser_type",
+    "browser_mouse_move_xy",
+    "browser_mouse_click_xy",
+    "browser_mouse_drag_xy",
+    "browser_mouse_down",
+    "browser_mouse_up",
+    "browser_mouse_wheel",
+    "browser_navigate",
+    "browser_navigate_back",
+    "browser_network_requests",
+    "browser_network_request",
+    "browser_network_state_set",
+    "browser_pdf_save",
+    "browser_start_recording",
+    "browser_stop_recording",
+    "browser_route",
+    "browser_route_list",
+    "browser_unroute",
+    "browser_run_code_unsafe",
+    "browser_take_screenshot",
+    "browser_snapshot",
+    "browser_click",
+    "browser_drag",
+    "browser_hover",
+    "browser_select_option",
+    "browser_generate_locator",
+    "browser_storage_state",
+    "browser_set_storage_state",
+    "browser_tabs",
+    "browser_start_tracing",
+    "browser_stop_tracing",
+    "browser_verify_element_visible",
+    "browser_verify_text_visible",
+    "browser_verify_list_visible",
+    "browser_verify_value",
+    "browser_start_video",
+    "browser_stop_video",
+    "browser_video_chapter",
+    "browser_video_show_actions",
+    "browser_video_hide_actions",
+    "browser_wait_for",
+    "browser_localstorage_list",
+    "browser_localstorage_get",
+    "browser_localstorage_set",
+    "browser_localstorage_delete",
+    "browser_localstorage_clear",
+    "browser_sessionstorage_list",
+    "browser_sessionstorage_get",
+    "browser_sessionstorage_set",
+    "browser_sessionstorage_delete",
+    "browser_sessionstorage_clear"
+   ]
+  },
+  "calls": [
+   {
+    "tool": "browser_tabs",
+    "startedAt": "2026-10-13T15:31:52.700Z",
+    "answeredAt": "2026-10-13T15:31:55.103Z",
+    "ms": 2403,
+    "isError": false,
+    "text": "### Result\n- 0: (current) [](about:blank)"
+   },
+   {
+    "tool": "browser_navigate",
+    "startedAt": "2026-10-13T15:31:55.105Z",
+    "answeredAt": "2026-10-13T15:31:55.484Z",
+    "ms": 379,
+    "isError": false,
+    "text": "### Page\n- Page URL: http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1\n- Page Title: restore-stall page\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\firefox-restore\\.work\\blank-page\\runs\\blank\\01-one-dead-1\\output\\page-2026-10-13T15-31-55-482Z.yml)"
+   },
+   {
+    "tool": "browser_tabs",
+    "startedAt": "2026-10-13T15:31:55.485Z",
+    "answeredAt": "2026-10-13T15:31:55.490Z",
+    "ms": 5,
+    "isError": false,
+    "text": "### Result\n- 0: (current) [restore-stall page](http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1)"
+   },
+   {
+    "tool": "browser_close",
+    "startedAt": "2026-10-13T15:31:55.490Z",
+    "answeredAt": "2026-10-13T15:31:55.900Z",
+    "ms": 410,
+    "isError": false,
+    "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+   }
+  ],
+  "end": {
+   "code": 0,
+   "signal": null
+  },
+  "session": [
+   {
+    "file": "sessionstore.jsonlz4",
+    "bytes": 1232,
+    "state": null,
+    "windows": [
+     {
+      "selected": 1,
+      "tabs": [
+       {
+        "index": 2,
+        "entries": [
+         "about:blank",
+         "http://127.0.0.1:60437/jfHMmNjyMr-OujY45QFYdWhRZN5_vAJIjP2AGsuDS_Q/?tab=1"
+        ],
+        "policies": [
+         null,
+         null
+        ]
+       }
+      ]
+     }
+    ],
+    "closedWindows": 0
+   }
+  ]
+ },
+ "portsAfterTheEnd": [
+  {
+   "state": "refused",
+   "code": "ECONNREFUSED",
+   "ms": 2
+  }
+ ],
+ "outcome": "measured",
+ "finished": "2026-10-13T15:33:00.993Z"
+}

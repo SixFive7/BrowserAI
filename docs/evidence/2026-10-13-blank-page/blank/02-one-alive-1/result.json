@@ -1,0 +1,2883 @@
+{
+ "arm": "one-alive",
+ "round": 1,
+ "started": "2026-10-13T15:33:01.764Z",
+ "config": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\firefox-restore\\.work\\blank-page\\runs\\blank\\02-one-alive-1\\config.json",
+ "pages": [
+  {
+   "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+   "ends": false
+  }
+ ],
+ "cycles": [
+  {
+   "cycle": 1,
+   "handshake": {
+    "server": {
+     "name": "Playwright",
+     "version": "1.64.0-alpha-1790635538000"
+    },
+    "protocolVersion": "2025-11-25",
+    "tools": [
+     "browser_close",
+     "browser_resize",
+     "browser_get_config",
+     "browser_console_messages",
+     "browser_cookie_list",
+     "browser_cookie_get",
+     "browser_cookie_set",
+     "browser_cookie_delete",
+     "browser_cookie_clear",
+     "browser_resume",
+     "browser_highlight",
+     "browser_hide_highlight",
+     "browser_annotate",
+     "browser_handle_dialog",
+     "browser_emulate_media",
+     "browser_evaluate",
+     "browser_file_upload",
+     "browser_drop",
+     "browser_find",
+     "browser_fill_form",
+     "browser_press_key",
+     "browser_type",
+     "browser_mouse_move_xy",
+     "browser_mouse_click_xy",
+     "browser_mouse_drag_xy",
+     "browser_mouse_down",
+     "browser_mouse_up",
+     "browser_mouse_wheel",
+     "browser_navigate",
+     "browser_navigate_back",
+     "browser_network_requests",
+     "browser_network_request",
+     "browser_network_state_set",
+     "browser_pdf_save",
+     "browser_start_recording",
+     "browser_stop_recording",
+     "browser_route",
+     "browser_route_list",
+     "browser_unroute",
+     "browser_run_code_unsafe",
+     "browser_take_screenshot",
+     "browser_snapshot",
+     "browser_click",
+     "browser_drag",
+     "browser_hover",
+     "browser_select_option",
+     "browser_generate_locator",
+     "browser_storage_state",
+     "browser_set_storage_state",
+     "browser_tabs",
+     "browser_start_tracing",
+     "browser_stop_tracing",
+     "browser_verify_element_visible",
+     "browser_verify_text_visible",
+     "browser_verify_list_visible",
+     "browser_verify_value",
+     "browser_start_video",
+     "browser_stop_video",
+     "browser_video_chapter",
+     "browser_video_show_actions",
+     "browser_video_hide_actions",
+     "browser_wait_for",
+     "browser_localstorage_list",
+     "browser_localstorage_get",
+     "browser_localstorage_set",
+     "browser_localstorage_delete",
+     "browser_localstorage_clear",
+     "browser_sessionstorage_list",
+     "browser_sessionstorage_get",
+     "browser_sessionstorage_set",
+     "browser_sessionstorage_delete",
+     "browser_sessionstorage_clear"
+    ]
+   },
+   "listings": [
+    {
+     "afterMs": 1425,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 1685,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 1946,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2203,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2460,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2717,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2975,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3233,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3489,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3746,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4012,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4269,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4525,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4783,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5040,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5297,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5554,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5811,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6069,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6335,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6592,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6849,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7106,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7363,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7620,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7877,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8136,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8393,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8664,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8923,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9181,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9438,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9694,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9950,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10208,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10465,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10723,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10990,
+     "ms": 11,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11249,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11508,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11765,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 12021,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "launch": {
+    "tool": "browser_tabs",
+    "startedAt": "2026-10-13T15:33:05.572Z",
+    "answeredAt": "2026-10-13T15:33:06.736Z",
+    "ms": 1164,
+    "isError": false,
+    "text": "### Result\n- 0: (current) [](about:blank)\n- 1: [restore-stall page](http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1)",
+    "tabs": [
+     {
+      "index": 0,
+      "current": true,
+      "title": "",
+      "url": "about:blank",
+      "crashed": false
+     },
+     {
+      "index": 1,
+      "current": false,
+      "title": "restore-stall page",
+      "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+      "crashed": false
+     }
+    ]
+   },
+   "selectedBeforeTheTidy": {
+    "waitedMs": 4014,
+    "files": [
+     {
+      "file": "sessionstore-backups/recovery.jsonlz4",
+      "bytes": 1432,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/previous.jsonlz4",
+      "bytes": 1231,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     }
+    ]
+   },
+   "currentBeforeTheTidy": {
+    "ms": 934,
+    "isError": false,
+    "value": {
+     "visibility": "visible",
+     "hidden": false,
+     "documentURI": "about:blank",
+     "title": "",
+     "href": "about:blank"
+    }
+   },
+   "tidy": {
+    "select": {
+     "ms": 317,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": false,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": true,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    "close": {
+     "ms": 12,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    }
+   },
+   "currentAfterTheTidy": {
+    "ms": 508,
+    "isError": false,
+    "value": {
+     "visibility": "visible",
+     "hidden": false,
+     "documentURI": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+     "title": "restore-stall page",
+     "href": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+    }
+   },
+   "snapshot": {
+    "ms": 41,
+    "isError": false,
+    "head": "### Page\n- Page URL: http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1\n- Page Title: restore-stall page\n### Snapshot\n```yaml\n- main [ref=e2]:\n  - heading \"restore-stall\" [level=1] [ref=e3]\n  - paragraph [ref=e4]: seconds 16, events 16\n```"
+   },
+   "documentRead": {
+    "ms": 508,
+    "isError": false,
+    "tabs": 1,
+    "msPerTab": 508,
+    "pages": [
+     {
+      "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+      "documentURI": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+     }
+    ]
+   },
+   "others": [],
+   "finalTabs": [
+    {
+     "index": 0,
+     "current": true,
+     "title": "restore-stall page",
+     "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+     "crashed": false
+    }
+   ],
+   "selectedAfterTheTidy": {
+    "waitedMs": 13046,
+    "files": [
+     {
+      "file": "sessionstore-backups/recovery.jsonlz4",
+      "bytes": 1242,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/recovery.baklz4",
+      "bytes": 1432,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/previous.jsonlz4",
+      "bytes": 1231,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     }
+    ]
+   },
+   "close": {
+    "tool": "browser_close",
+    "startedAt": "2026-10-13T15:33:36.992Z",
+    "answeredAt": "2026-10-13T15:33:37.220Z",
+    "ms": 228,
+    "isError": false,
+    "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+   },
+   "end": {
+    "code": 0,
+    "signal": null
+   },
+   "saved": [
+    {
+     "file": "sessionstore.jsonlz4",
+     "bytes": 1242,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/recovery.jsonlz4",
+     "bytes": 1242,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/recovery.baklz4",
+     "bytes": 1432,
+     "state": null,
+     "windows": [
+      {
+       "selected": 2,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        },
+        {
+         "index": 1,
+         "entries": [
+          "about:blank"
+         ],
+         "policies": [
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/previous.jsonlz4",
+     "bytes": 1231,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    }
+   ]
+  },
+  {
+   "cycle": 2,
+   "handshake": {
+    "server": {
+     "name": "Playwright",
+     "version": "1.64.0-alpha-1790635538000"
+    },
+    "protocolVersion": "2025-11-25",
+    "tools": [
+     "browser_close",
+     "browser_resize",
+     "browser_get_config",
+     "browser_console_messages",
+     "browser_cookie_list",
+     "browser_cookie_get",
+     "browser_cookie_set",
+     "browser_cookie_delete",
+     "browser_cookie_clear",
+     "browser_resume",
+     "browser_highlight",
+     "browser_hide_highlight",
+     "browser_annotate",
+     "browser_handle_dialog",
+     "browser_emulate_media",
+     "browser_evaluate",
+     "browser_file_upload",
+     "browser_drop",
+     "browser_find",
+     "browser_fill_form",
+     "browser_press_key",
+     "browser_type",
+     "browser_mouse_move_xy",
+     "browser_mouse_click_xy",
+     "browser_mouse_drag_xy",
+     "browser_mouse_down",
+     "browser_mouse_up",
+     "browser_mouse_wheel",
+     "browser_navigate",
+     "browser_navigate_back",
+     "browser_network_requests",
+     "browser_network_request",
+     "browser_network_state_set",
+     "browser_pdf_save",
+     "browser_start_recording",
+     "browser_stop_recording",
+     "browser_route",
+     "browser_route_list",
+     "browser_unroute",
+     "browser_run_code_unsafe",
+     "browser_take_screenshot",
+     "browser_snapshot",
+     "browser_click",
+     "browser_drag",
+     "browser_hover",
+     "browser_select_option",
+     "browser_generate_locator",
+     "browser_storage_state",
+     "browser_set_storage_state",
+     "browser_tabs",
+     "browser_start_tracing",
+     "browser_stop_tracing",
+     "browser_verify_element_visible",
+     "browser_verify_text_visible",
+     "browser_verify_list_visible",
+     "browser_verify_value",
+     "browser_start_video",
+     "browser_stop_video",
+     "browser_video_chapter",
+     "browser_video_show_actions",
+     "browser_video_hide_actions",
+     "browser_wait_for",
+     "browser_localstorage_list",
+     "browser_localstorage_get",
+     "browser_localstorage_set",
+     "browser_localstorage_delete",
+     "browser_localstorage_clear",
+     "browser_sessionstorage_list",
+     "browser_sessionstorage_get",
+     "browser_sessionstorage_set",
+     "browser_sessionstorage_delete",
+     "browser_sessionstorage_clear"
+    ]
+   },
+   "listings": [
+    {
+     "afterMs": 1465,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 1723,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 1981,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2239,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2498,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 2757,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3014,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3273,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3534,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 3791,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4047,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4305,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4561,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 4818,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5075,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5331,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5593,
+     "ms": 9,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 5852,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6111,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6368,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6625,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 6881,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7138,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7395,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7650,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 7907,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8173,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8433,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8692,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 8950,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9208,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9467,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9723,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 9980,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10236,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10500,
+     "ms": 8,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 10756,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11012,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11271,
+     "ms": 7,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11527,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 11784,
+     "ms": 5,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    {
+     "afterMs": 12040,
+     "ms": 6,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": false,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    }
+   ],
+   "launch": {
+    "tool": "browser_tabs",
+    "startedAt": "2026-10-13T15:33:37.570Z",
+    "answeredAt": "2026-10-13T15:33:38.773Z",
+    "ms": 1203,
+    "isError": false,
+    "text": "### Result\n- 0: (current) [](about:blank)\n- 1: [restore-stall page](http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1)",
+    "tabs": [
+     {
+      "index": 0,
+      "current": true,
+      "title": "",
+      "url": "about:blank",
+      "crashed": false
+     },
+     {
+      "index": 1,
+      "current": false,
+      "title": "restore-stall page",
+      "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+      "crashed": false
+     }
+    ]
+   },
+   "selectedBeforeTheTidy": {
+    "waitedMs": 4019,
+    "files": [
+     {
+      "file": "sessionstore-backups/recovery.jsonlz4",
+      "bytes": 1446,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/recovery.baklz4",
+      "bytes": 1432,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/previous.jsonlz4",
+      "bytes": 1242,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     }
+    ]
+   },
+   "currentBeforeTheTidy": {
+    "ms": 894,
+    "isError": false,
+    "value": {
+     "visibility": "visible",
+     "hidden": false,
+     "documentURI": "about:blank",
+     "title": "",
+     "href": "about:blank"
+    }
+   },
+   "tidy": {
+    "select": {
+     "ms": 314,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": false,
+       "title": "",
+       "url": "about:blank",
+       "crashed": false
+      },
+      {
+       "index": 1,
+       "current": true,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    },
+    "close": {
+     "ms": 11,
+     "isError": false,
+     "tabs": [
+      {
+       "index": 0,
+       "current": true,
+       "title": "restore-stall page",
+       "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+       "crashed": false
+      }
+     ]
+    }
+   },
+   "currentAfterTheTidy": {
+    "ms": 508,
+    "isError": false,
+    "value": {
+     "visibility": "visible",
+     "hidden": false,
+     "documentURI": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+     "title": "restore-stall page",
+     "href": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+    }
+   },
+   "snapshot": {
+    "ms": 37,
+    "isError": false,
+    "head": "### Page\n- Page URL: http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1\n- Page Title: restore-stall page\n### Snapshot\n```yaml\n- main [ref=e2]:\n  - heading \"restore-stall\" [level=1] [ref=e3]\n  - paragraph [ref=e4]: seconds 16, events 16\n```"
+   },
+   "documentRead": {
+    "ms": 511,
+    "isError": false,
+    "tabs": 1,
+    "msPerTab": 511,
+    "pages": [
+     {
+      "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+      "documentURI": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+     }
+    ]
+   },
+   "others": [],
+   "finalTabs": [
+    {
+     "index": 0,
+     "current": true,
+     "title": "restore-stall page",
+     "url": "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1",
+     "crashed": false
+    }
+   ],
+   "selectedAfterTheTidy": {
+    "waitedMs": 13040,
+    "files": [
+     {
+      "file": "sessionstore-backups/recovery.jsonlz4",
+      "bytes": 1239,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/recovery.baklz4",
+      "bytes": 1446,
+      "state": null,
+      "windows": [
+       {
+        "selected": 2,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         },
+         {
+          "index": 1,
+          "entries": [
+           "about:blank"
+          ],
+          "policies": [
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     },
+     {
+      "file": "sessionstore-backups/previous.jsonlz4",
+      "bytes": 1242,
+      "state": null,
+      "windows": [
+       {
+        "selected": 1,
+        "tabs": [
+         {
+          "index": 2,
+          "entries": [
+           "about:blank",
+           "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+          ],
+          "policies": [
+           null,
+           null
+          ]
+         }
+        ]
+       }
+      ],
+      "closedWindows": 0
+     }
+    ]
+   },
+   "close": {
+    "tool": "browser_close",
+    "startedAt": "2026-10-13T15:34:08.959Z",
+    "answeredAt": "2026-10-13T15:34:09.116Z",
+    "ms": 157,
+    "isError": false,
+    "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+   },
+   "end": {
+    "code": 0,
+    "signal": null
+   },
+   "saved": [
+    {
+     "file": "sessionstore.jsonlz4",
+     "bytes": 1242,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/recovery.jsonlz4",
+     "bytes": 1239,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/recovery.baklz4",
+     "bytes": 1446,
+     "state": null,
+     "windows": [
+      {
+       "selected": 2,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        },
+        {
+         "index": 1,
+         "entries": [
+          "about:blank"
+         ],
+         "policies": [
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    },
+    {
+     "file": "sessionstore-backups/previous.jsonlz4",
+     "bytes": 1242,
+     "state": null,
+     "windows": [
+      {
+       "selected": 1,
+       "tabs": [
+        {
+         "index": 2,
+         "entries": [
+          "about:blank",
+          "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+         ],
+         "policies": [
+          null,
+          null
+         ]
+        }
+       ]
+      }
+     ],
+     "closedWindows": 0
+    }
+   ]
+  }
+ ],
+ "prepare": {
+  "handshake": {
+   "server": {
+    "name": "Playwright",
+    "version": "1.64.0-alpha-1790635538000"
+   },
+   "protocolVersion": "2025-11-25",
+   "tools": [
+    "browser_close",
+    "browser_resize",
+    "browser_get_config",
+    "browser_console_messages",
+    "browser_cookie_list",
+    "browser_cookie_get",
+    "browser_cookie_set",
+    "browser_cookie_delete",
+    "browser_cookie_clear",
+    "browser_resume",
+    "browser_highlight",
+    "browser_hide_highlight",
+    "browser_annotate",
+    "browser_handle_dialog",
+    "browser_emulate_media",
+    "browser_evaluate",
+    "browser_file_upload",
+    "browser_drop",
+    "browser_find",
+    "browser_fill_form",
+    "browser_press_key",
+    "browser_type",
+    "browser_mouse_move_xy",
+    "browser_mouse_click_xy",
+    "browser_mouse_drag_xy",
+    "browser_mouse_down",
+    "browser_mouse_up",
+    "browser_mouse_wheel",
+    "browser_navigate",
+    "browser_navigate_back",
+    "browser_network_requests",
+    "browser_network_request",
+    "browser_network_state_set",
+    "browser_pdf_save",
+    "browser_start_recording",
+    "browser_stop_recording",
+    "browser_route",
+    "browser_route_list",
+    "browser_unroute",
+    "browser_run_code_unsafe",
+    "browser_take_screenshot",
+    "browser_snapshot",
+    "browser_click",
+    "browser_drag",
+    "browser_hover",
+    "browser_select_option",
+    "browser_generate_locator",
+    "browser_storage_state",
+    "browser_set_storage_state",
+    "browser_tabs",
+    "browser_start_tracing",
+    "browser_stop_tracing",
+    "browser_verify_element_visible",
+    "browser_verify_text_visible",
+    "browser_verify_list_visible",
+    "browser_verify_value",
+    "browser_start_video",
+    "browser_stop_video",
+    "browser_video_chapter",
+    "browser_video_show_actions",
+    "browser_video_hide_actions",
+    "browser_wait_for",
+    "browser_localstorage_list",
+    "browser_localstorage_get",
+    "browser_localstorage_set",
+    "browser_localstorage_delete",
+    "browser_localstorage_clear",
+    "browser_sessionstorage_list",
+    "browser_sessionstorage_get",
+    "browser_sessionstorage_set",
+    "browser_sessionstorage_delete",
+    "browser_sessionstorage_clear"
+   ]
+  },
+  "calls": [
+   {
+    "tool": "browser_tabs",
+    "startedAt": "2026-10-13T15:33:02.146Z",
+    "answeredAt": "2026-10-13T15:33:04.190Z",
+    "ms": 2044,
+    "isError": false,
+    "text": "### Result\n- 0: (current) [](about:blank)"
+   },
+   {
+    "tool": "browser_navigate",
+    "startedAt": "2026-10-13T15:33:04.192Z",
+    "answeredAt": "2026-10-13T15:33:04.788Z",
+    "ms": 596,
+    "isError": false,
+    "text": "### Page\n- Page URL: http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1\n- Page Title: restore-stall page\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\firefox-restore\\.work\\blank-page\\runs\\blank\\02-one-alive-1\\output\\page-2026-10-13T15-33-04-785Z.yml)"
+   },
+   {
+    "tool": "browser_tabs",
+    "startedAt": "2026-10-13T15:33:04.788Z",
+    "answeredAt": "2026-10-13T15:33:04.793Z",
+    "ms": 5,
+    "isError": false,
+    "text": "### Result\n- 0: (current) [restore-stall page](http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1)"
+   },
+   {
+    "tool": "browser_close",
+    "startedAt": "2026-10-13T15:33:04.793Z",
+    "answeredAt": "2026-10-13T15:33:05.202Z",
+    "ms": 409,
+    "isError": false,
+    "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+   }
+  ],
+  "end": {
+   "code": 0,
+   "signal": null
+  },
+  "session": [
+   {
+    "file": "sessionstore.jsonlz4",
+    "bytes": 1231,
+    "state": null,
+    "windows": [
+     {
+      "selected": 1,
+      "tabs": [
+       {
+        "index": 2,
+        "entries": [
+         "about:blank",
+         "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+        ],
+        "policies": [
+         null,
+         null
+        ]
+       }
+      ]
+     }
+    ],
+    "closedWindows": 0
+   }
+  ]
+ },
+ "portsAfterTheEnd": [],
+ "outcome": "measured",
+ "finished": "2026-10-13T15:34:09.141Z"
+}

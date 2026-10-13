@@ -1,0 +1,4 @@
+payload=C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\payload
+playwrightCore=1.64.0-alpha-1790635538000
+commit=456bcebfa9c734ba617fc4f31bddcddd0ef14391
+stage=navigate arms=one-dead,one-alive,three-mixed,none,fresh rounds=3

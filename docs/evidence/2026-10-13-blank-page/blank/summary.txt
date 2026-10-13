@@ -1,0 +1,75 @@
+# .work\blank-page\runs\blank
+
+| Repetition | Resume | Launch ms | First list | First reopened tab listed after | Listed last before the tidy | Firefox selected before the tidy | Current before | Tidy | Current after | Snapshot | Others | Saved after the close |
+|---|--:|--:|---|--:|---|---|---|---|---|---|---|---|
+| 01-one-dead-1 | 1 | 1206 | *blank | 3021 | *blank, :60437?tab=1 "Problem loading page" | selected 2 of [:60437?tab=1, blank] | visible, about:blank | select ok, close ok -> *:60437?tab=1 "Problem loading page" | visible, about:neterror?e=connectionFailure&u=htt | answered | - | selected 1 of [:60437?tab=1] |
+| 01-one-dead-1 | 2 | 1183 | *blank | 2981 | *blank, :60437?tab=1 "Problem loading page" | selected 2 of [:60437?tab=1, blank] | visible, about:blank | select ok, close ok -> *:60437?tab=1 "Problem loading page" | visible, about:neterror?e=connectionFailure&u=htt | answered | - | selected 1 of [:60437?tab=1] |
+| 02-one-alive-1 | 1 | 1164 | *blank, :59620?tab=1 "restore-stall page" | 1425 | *blank, :59620?tab=1 "restore-stall page" | selected 2 of [:59620?tab=1, blank] | visible, about:blank | select ok, close ok -> *:59620?tab=1 "restore-stall page" | visible, http://127.0.0.1:59620/sFjjv9JaAVEQjnm5U | answered | - | selected 1 of [:59620?tab=1] |
+| 02-one-alive-1 | 2 | 1203 | *blank, :59620?tab=1 "restore-stall page" | 1465 | *blank, :59620?tab=1 "restore-stall page" | selected 2 of [:59620?tab=1, blank] | visible, about:blank | select ok, close ok -> *:59620?tab=1 "restore-stall page" | visible, http://127.0.0.1:59620/sFjjv9JaAVEQjnm5U | answered | - | selected 1 of [:59620?tab=1] |
+| 03-three-mixed-1 | 1 | 1668 | *blank, :54055?tab=1 "restore-stall page", :54056?tab=1 "restore-stall page" | 1933 | *blank, :54055?tab=1 "restore-stall page", :54056?tab=1 "restore-stall page", :54054?tab=1 "Problem loading page" | selected 2 of [:54054?tab=1, blank]; selected 1 of [:54055?tab=1]; selected 1 of [:54056?tab=1] | visible, about:blank | select ok, close ok -> *:54055?tab=1 "restore-stall page", :54056?tab=1 "restore-stall page", :54054?tab=1 "Problem loading page" | visible, http://127.0.0.1:54055/X3H9XNFC8rYX4_7Nc | answered | :54056?tab=1: visible, http://127.0.0.1:54056/dC2mEk2cssVf8tff1; :54054?tab=1: visible, about:neterror?e=connectionFailure&u=htt | selected 1 of [:54054?tab=1]; selected 1 of [:54055?tab=1]; selected 1 of [:54056?tab=1] |
+| 03-three-mixed-1 | 2 | 1715 | *blank, :54055?tab=1 "restore-stall page", :54056?tab=1 "restore-stall page" | 1975 | *blank, :54055?tab=1 "restore-stall page", :54056?tab=1 "restore-stall page", :54054?tab=1 "Problem loading page" | selected 2 of [:54054?tab=1, blank]; selected 1 of [:54055?tab=1]; selected 1 of [:54056?tab=1] | visible, about:blank | select ok, close ok -> *:54055?tab=1 "restore-stall page", :54056?tab=1 "restore-stall page", :54054?tab=1 "Problem loading page" | visible, http://127.0.0.1:54055/X3H9XNFC8rYX4_7Nc | answered | :54056?tab=1: visible, http://127.0.0.1:54056/dC2mEk2cssVf8tff1; :54054?tab=1: visible, about:neterror?e=connectionFailure&u=htt | selected 1 of [:54054?tab=1]; selected 1 of [:54055?tab=1]; selected 1 of [:54056?tab=1] |
+| 04-none-1 | 1 | 1089 | *blank, blank | 1350 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 04-none-1 | 2 | 1330 | *blank, blank | 1592 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 05-fresh-1 | 1 | 1927 | *blank | - | *blank | selected 1 of [blank] | visible, about:blank | nothing closed | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 05-fresh-1 | 2 | 1354 | *blank, blank | 1614 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 06-one-dead-2 | 1 | 1434 | *blank | 3027 | *blank, :51329?tab=1 "Problem loading page" | selected 2 of [:51329?tab=1, blank] | visible, about:blank | select ok, close ok -> *:51329?tab=1 "Problem loading page" | visible, about:neterror?e=connectionFailure&u=htt | answered | - | selected 1 of [:51329?tab=1] |
+| 06-one-dead-2 | 2 | 1367 | *blank | 2920 | *blank, :51329?tab=1 "Problem loading page" | selected 2 of [:51329?tab=1, blank] | visible, about:blank | select ok, close ok -> *:51329?tab=1 "Problem loading page" | visible, about:neterror?e=connectionFailure&u=htt | answered | - | selected 1 of [:51329?tab=1] |
+| 07-one-alive-2 | 1 | 1279 | *blank, :54175?tab=1 "restore-stall page" | 1549 | *blank, :54175?tab=1 "restore-stall page" | selected 2 of [:54175?tab=1, blank] | visible, about:blank | select ok, close ok -> *:54175?tab=1 "restore-stall page" | visible, http://127.0.0.1:54175/e1KkVxFcoeT_DJZiF | answered | - | selected 1 of [:54175?tab=1] |
+| 07-one-alive-2 | 2 | 1120 | *blank, :54175?tab=1 "restore-stall page" | 1379 | *blank, :54175?tab=1 "restore-stall page" | selected 2 of [:54175?tab=1, blank] | visible, about:blank | select ok, close ok -> *:54175?tab=1 "restore-stall page" | visible, http://127.0.0.1:54175/e1KkVxFcoeT_DJZiF | answered | - | selected 1 of [:54175?tab=1] |
+| 08-three-mixed-2 | 1 | 1895 | *blank, :52239?tab=1 "restore-stall page", :52240?tab=1 "restore-stall page" | 2161 | *blank, :52239?tab=1 "restore-stall page", :52240?tab=1 "restore-stall page", :52238?tab=1 "Problem loading page" | selected 2 of [:52238?tab=1, blank]; selected 1 of [:52239?tab=1]; selected 1 of [:52240?tab=1] | visible, about:blank | select ok, close ok -> *:52239?tab=1 "restore-stall page", :52240?tab=1 "restore-stall page", :52238?tab=1 "Problem loading page" | visible, http://127.0.0.1:52239/pMuyZdbkecwTzuiPf | answered | :52240?tab=1: visible, http://127.0.0.1:52240/aUs5jvp47RVWN0JSX; :52238?tab=1: visible, about:neterror?e=connectionFailure&u=htt | selected 1 of [:52238?tab=1]; selected 1 of [:52239?tab=1]; selected 1 of [:52240?tab=1] |
+| 08-three-mixed-2 | 2 | 1720 | *blank, :52239?tab=1 "restore-stall page", :52240?tab=1 "restore-stall page" | 1981 | *blank, :52239?tab=1 "restore-stall page", :52240?tab=1 "restore-stall page", :52238?tab=1 "Problem loading page" | selected 2 of [:52238?tab=1, blank]; selected 1 of [:52239?tab=1]; selected 1 of [:52240?tab=1] | visible, about:blank | select ok, close ok -> *:52239?tab=1 "restore-stall page", :52240?tab=1 "restore-stall page", :52238?tab=1 "Problem loading page" | visible, http://127.0.0.1:52239/pMuyZdbkecwTzuiPf | answered | :52240?tab=1: visible, http://127.0.0.1:52240/aUs5jvp47RVWN0JSX; :52238?tab=1: visible, about:neterror?e=connectionFailure&u=htt | selected 1 of [:52238?tab=1]; selected 1 of [:52239?tab=1]; selected 1 of [:52240?tab=1] |
+| 09-none-2 | 1 | 1144 | *blank, blank | 1406 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 09-none-2 | 2 | 1370 | *blank, blank | 1628 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 10-fresh-2 | 1 | 2376 | *blank | - | *blank | selected 1 of [blank] | visible, about:blank | nothing closed | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 10-fresh-2 | 2 | 1149 | *blank, blank | 1411 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 11-one-dead-3 | 1 | 1163 | *blank | 2965 | *blank, :55179?tab=1 "Problem loading page" | selected 2 of [:55179?tab=1, blank] | visible, about:blank | select ok, close ok -> *:55179?tab=1 "Problem loading page" | visible, about:neterror?e=connectionFailure&u=htt | answered | - | selected 1 of [:55179?tab=1] |
+| 11-one-dead-3 | 2 | 1174 | *blank | 2992 | *blank, :55179?tab=1 "Problem loading page" | selected 2 of [:55179?tab=1, blank] | visible, about:blank | select ok, close ok -> *:55179?tab=1 "Problem loading page" | visible, about:neterror?e=connectionFailure&u=htt | answered | - | selected 1 of [:55179?tab=1] |
+| 12-one-alive-3 | 1 | 1338 | *blank, :61052?tab=1 "restore-stall page" | 1596 | *blank, :61052?tab=1 "restore-stall page" | selected 2 of [:61052?tab=1, blank] | visible, about:blank | select ok, close ok -> *:61052?tab=1 "restore-stall page" | visible, http://127.0.0.1:61052/7luc1hvORMAX5XuOF | answered | - | selected 1 of [:61052?tab=1] |
+| 12-one-alive-3 | 2 | 1305 | *blank, :61052?tab=1 "restore-stall page" | 1562 | *blank, :61052?tab=1 "restore-stall page" | selected 2 of [:61052?tab=1, blank] | visible, about:blank | select ok, close ok -> *:61052?tab=1 "restore-stall page" | visible, http://127.0.0.1:61052/7luc1hvORMAX5XuOF | answered | - | selected 1 of [:61052?tab=1] |
+| 13-three-mixed-3 | 1 | 1641 | *blank, :53962?tab=1 "restore-stall page", :53963?tab=1 "restore-stall page" | 1904 | *blank, :53962?tab=1 "restore-stall page", :53963?tab=1 "restore-stall page", :53961?tab=1 "Problem loading page" | selected 2 of [:53961?tab=1, blank]; selected 1 of [:53962?tab=1]; selected 1 of [:53963?tab=1] | visible, about:blank | select ok, close ok -> *:53962?tab=1 "restore-stall page", :53963?tab=1 "restore-stall page", :53961?tab=1 "Problem loading page" | visible, http://127.0.0.1:53962/8WW_DzNoIB01ee0Pf | answered | :53963?tab=1: visible, http://127.0.0.1:53963/wjVlGHX5rX0Ca4vck; :53961?tab=1: visible, about:neterror?e=connectionFailure&u=htt | selected 1 of [:53961?tab=1]; selected 1 of [:53962?tab=1]; selected 1 of [:53963?tab=1] |
+| 13-three-mixed-3 | 2 | 1663 | *blank, :53962?tab=1 "restore-stall page", :53963?tab=1 "restore-stall page" | 1924 | *blank, :53962?tab=1 "restore-stall page", :53963?tab=1 "restore-stall page", :53961?tab=1 "Problem loading page" | selected 2 of [:53961?tab=1, blank]; selected 1 of [:53962?tab=1]; selected 1 of [:53963?tab=1] | visible, about:blank | select ok, close ok -> *:53962?tab=1 "restore-stall page", :53963?tab=1 "restore-stall page", :53961?tab=1 "Problem loading page" | visible, http://127.0.0.1:53962/8WW_DzNoIB01ee0Pf | answered | :53963?tab=1: visible, http://127.0.0.1:53963/wjVlGHX5rX0Ca4vck; :53961?tab=1: visible, about:neterror?e=connectionFailure&u=htt | selected 1 of [:53961?tab=1]; selected 1 of [:53962?tab=1]; selected 1 of [:53963?tab=1] |
+| 14-none-3 | 1 | 1140 | *blank, blank | 1404 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 14-none-3 | 2 | 1088 | *blank, blank | 1347 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 15-fresh-3 | 1 | 1903 | *blank | - | *blank | selected 1 of [blank] | visible, about:blank | nothing closed | visible, about:blank | answered | - | selected 1 of [about:blank] |
+| 15-fresh-3 | 2 | 1128 | *blank, blank | 1387 | *blank, blank | selected 2 of [blank, blank] | visible, about:blank | select ok, close ok -> *blank | visible, about:blank | answered | - | selected 1 of [about:blank] |
+
+| Repetition | Resume | One read of every tab, ms | Tabs | ms per tab | Document URIs | One tab at a time, ms per tab |
+|---|--:|--:|--:|--:|---|---|
+| 01-one-dead-1 | 1 | 507 | 1 | 507 | :60437?tab=1=about:neterror?e=connectionF | - |
+| 01-one-dead-1 | 2 | 507 | 1 | 507 | :60437?tab=1=about:neterror?e=connectionF | - |
+| 02-one-alive-1 | 1 | 508 | 1 | 508 | :59620?tab=1=http://127.0.0.1:59620/sFjjv | - |
+| 02-one-alive-1 | 2 | 511 | 1 | 511 | :59620?tab=1=http://127.0.0.1:59620/sFjjv | - |
+| 03-three-mixed-1 | 1 | 514 | 3 | 171 | :54055?tab=1=http://127.0.0.1:54055/X3H9X, :54056?tab=1=http://127.0.0.1:54056/dC2mE, :54054?tab=1=about:neterror?e=connectionF | 541, 526 |
+| 03-three-mixed-1 | 2 | 522 | 3 | 174 | :54055?tab=1=http://127.0.0.1:54055/X3H9X, :54056?tab=1=http://127.0.0.1:54056/dC2mE, :54054?tab=1=about:neterror?e=connectionF | 535, 523 |
+| 04-none-1 | 1 | 507 | 1 | 507 | blank=about:blank | - |
+| 04-none-1 | 2 | 513 | 1 | 513 | blank=about:blank | - |
+| 05-fresh-1 | 1 | 509 | 1 | 509 | blank=about:blank | - |
+| 05-fresh-1 | 2 | 507 | 1 | 507 | blank=about:blank | - |
+| 06-one-dead-2 | 1 | 507 | 1 | 507 | :51329?tab=1=about:neterror?e=connectionF | - |
+| 06-one-dead-2 | 2 | 1248 | 1 | 1248 | :51329?tab=1=about:neterror?e=connectionF | - |
+| 07-one-alive-2 | 1 | 506 | 1 | 506 | :54175?tab=1=http://127.0.0.1:54175/e1KkV | - |
+| 07-one-alive-2 | 2 | 507 | 1 | 507 | :54175?tab=1=http://127.0.0.1:54175/e1KkV | - |
+| 08-three-mixed-2 | 1 | 512 | 3 | 171 | :52239?tab=1=http://127.0.0.1:52239/pMuyZ, :52240?tab=1=http://127.0.0.1:52240/aUs5j, :52238?tab=1=about:neterror?e=connectionF | 523, 524 |
+| 08-three-mixed-2 | 2 | 516 | 3 | 172 | :52239?tab=1=http://127.0.0.1:52239/pMuyZ, :52240?tab=1=http://127.0.0.1:52240/aUs5j, :52238?tab=1=about:neterror?e=connectionF | 539, 526 |
+| 09-none-2 | 1 | 507 | 1 | 507 | blank=about:blank | - |
+| 09-none-2 | 2 | 507 | 1 | 507 | blank=about:blank | - |
+| 10-fresh-2 | 1 | 507 | 1 | 507 | blank=about:blank | - |
+| 10-fresh-2 | 2 | 508 | 1 | 508 | blank=about:blank | - |
+| 11-one-dead-3 | 1 | 508 | 1 | 508 | :55179?tab=1=about:neterror?e=connectionF | - |
+| 11-one-dead-3 | 2 | 507 | 1 | 507 | :55179?tab=1=about:neterror?e=connectionF | - |
+| 12-one-alive-3 | 1 | 510 | 1 | 510 | :61052?tab=1=http://127.0.0.1:61052/7luc1 | - |
+| 12-one-alive-3 | 2 | 507 | 1 | 507 | :61052?tab=1=http://127.0.0.1:61052/7luc1 | - |
+| 13-three-mixed-3 | 1 | 512 | 3 | 171 | :53962?tab=1=http://127.0.0.1:53962/8WW_D, :53963?tab=1=http://127.0.0.1:53963/wjVlG, :53961?tab=1=about:neterror?e=connectionF | 525, 526 |
+| 13-three-mixed-3 | 2 | 511 | 3 | 170 | :53962?tab=1=http://127.0.0.1:53962/8WW_D, :53963?tab=1=http://127.0.0.1:53963/wjVlG, :53961?tab=1=about:neterror?e=connectionF | 525, 526 |
+| 14-none-3 | 1 | 510 | 1 | 510 | blank=about:blank | - |
+| 14-none-3 | 2 | 506 | 1 | 506 | blank=about:blank | - |
+| 15-fresh-3 | 1 | 508 | 1 | 508 | blank=about:blank | - |
+| 15-fresh-3 | 2 | 507 | 1 | 507 | blank=about:blank | - |
+
+| Arm | Repetitions | Launches past 5 s | First list the blank page alone | Tidy failed | Snapshot failed | Second resume met the first one's tabs |
+|---|--:|--:|--:|--:|--:|--:|
+| one-dead | 3 | 0 | 6 of 6 | 0 | 0 | 3 of 3 |
+| one-alive | 3 | 0 | 0 of 6 | 0 | 0 | 3 of 3 |
+| three-mixed | 3 | 0 | 0 of 6 | 0 | 0 | 3 of 3 |
+| none | 3 | 0 | 0 of 6 | 0 | 0 | 3 of 3 |
+| fresh | 3 | 0 | 3 of 6 | 0 | 0 | 3 of 3 |

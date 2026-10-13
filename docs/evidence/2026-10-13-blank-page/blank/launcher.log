@@ -1,0 +1,47 @@
+2026-10-13T15:31:50.5076564Z the suite lock is held by this lane's holder, pid 125396, and stays with it
+2026-10-13T15:31:51.6003630Z step started: node pid 119644, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\01-one-dead-1
+2026-10-13T15:33:01.6591949Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:33:01.6609290Z repetition 1 (one-dead, round 1) exit code: 0
+2026-10-13T15:33:01.6845969Z step started: node pid 88560, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\02-one-alive-1
+2026-10-13T15:34:11.7317121Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:34:11.7333916Z repetition 2 (one-alive, round 1) exit code: 0
+2026-10-13T15:34:11.7528807Z step started: node pid 97220, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\03-three-mixed-1
+2026-10-13T15:35:21.7879811Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:35:21.7893613Z repetition 3 (three-mixed, round 1) exit code: 0
+2026-10-13T15:35:21.8084800Z step started: node pid 130644, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\04-none-1
+2026-10-13T15:36:31.8866727Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:36:31.8876575Z repetition 4 (none, round 1) exit code: 0
+2026-10-13T15:36:31.9071906Z step started: node pid 30856, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\05-fresh-1
+2026-10-13T15:37:51.9569032Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:37:51.9583175Z repetition 5 (fresh, round 1) exit code: 0
+2026-10-13T15:37:51.9783764Z step started: node pid 92128, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\06-one-dead-2
+2026-10-13T15:39:02.0078610Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:39:02.0089397Z repetition 6 (one-dead, round 2) exit code: 0
+2026-10-13T15:39:02.0291093Z step started: node pid 141720, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\07-one-alive-2
+2026-10-13T15:40:12.1266869Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:40:12.1275901Z repetition 7 (one-alive, round 2) exit code: 0
+2026-10-13T15:40:12.1467936Z step started: node pid 122008, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\08-three-mixed-2
+2026-10-13T15:41:22.2071714Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:41:22.2082517Z repetition 8 (three-mixed, round 2) exit code: 0
+2026-10-13T15:41:22.2303472Z step started: node pid 128168, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\09-none-2
+2026-10-13T15:42:32.2723923Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:42:32.2736085Z repetition 9 (none, round 2) exit code: 0
+2026-10-13T15:42:32.2943729Z step started: node pid 102132, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\10-fresh-2
+2026-10-13T15:43:52.3398471Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:43:52.3411475Z repetition 10 (fresh, round 2) exit code: 0
+2026-10-13T15:43:52.3685807Z step started: node pid 8668, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\11-one-dead-3
+2026-10-13T15:45:02.4022129Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:45:02.4032426Z repetition 11 (one-dead, round 3) exit code: 0
+2026-10-13T15:45:02.4255754Z step started: node pid 66840, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\12-one-alive-3
+2026-10-13T15:46:12.4618212Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:46:12.4629044Z repetition 12 (one-alive, round 3) exit code: 0
+2026-10-13T15:46:12.4831811Z step started: node pid 112036, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\13-three-mixed-3
+2026-10-13T15:47:22.5335372Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:47:22.5398788Z repetition 13 (three-mixed, round 3) exit code: 0
+2026-10-13T15:47:22.5594124Z step started: node pid 143048, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\14-none-3
+2026-10-13T15:48:32.6113440Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:48:32.6122983Z repetition 14 (none, round 3) exit code: 0
+2026-10-13T15:48:32.6327199Z step started: node pid 131540, output C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\15-fresh-3
+2026-10-13T15:49:52.6739251Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-10-13T15:49:52.6750534Z repetition 15 (fresh, round 3) exit code: 0
+2026-10-13T15:49:52.7484672Z registry after blank: 7 line(s) in C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\registry-blank.txt

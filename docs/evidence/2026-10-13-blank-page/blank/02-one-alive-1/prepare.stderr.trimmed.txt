@@ -1,0 +1,77 @@
+2026-10-13T15:33:02.156Z pw:api => async initializeServer started
+2026-10-13T15:33:02.160Z pw:browser <launching> %USERPROFILE%\Downloads\tmp-restore-stall\data-root\browsers\firefox-1553\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\wt\firefox-restore\.work\blank-page\runs\blank\02-one-alive-1\profile -juggler-pipe about:blank
+2026-10-13T15:33:02.168Z pw:browser <launched> pid=130532
+2026-10-13T15:33:04.154Z pw:protocol ◀ RECV {"method":"Browser.attachedToTarget","params":{"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f","targetInfo":{"targetId":"072bfa94-6bda-4603-b303-15b22bc6405f","type":"page"}}}
+2026-10-13T15:33:04.158Z pw:protocol ◀ RECV {"method":"Page.navigationCommitted","params":{"frameId":"mainframe-11","url":"about:blank","name":""},"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.158Z pw:api   navigated to "about:blank"
+2026-10-13T15:33:04.159Z pw:protocol ◀ RECV {"method":"Page.navigationCommitted","params":{"frameId":"mainframe-11","url":"about:blank","name":""},"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.159Z pw:api   navigated to "about:blank"
+2026-10-13T15:33:04.160Z pw:protocol ◀ RECV {"method":"Page.navigationCommitted","params":{"frameId":"mainframe-11","navigationId":"nav-22","url":"about:blank","name":""},"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.160Z pw:api   navigated to "about:blank"
+2026-10-13T15:33:04.160Z pw:protocol ◀ RECV {"method":"Page.ready","sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.160Z pw:protocol ◀ RECV {"method":"Page.eventFired","params":{"frameId":"mainframe-11","name":"DOMContentLoaded"},"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.160Z pw:protocol ◀ RECV {"method":"Page.eventFired","params":{"frameId":"mainframe-11","name":"load"},"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.167Z pw:api <= async initializeServer succeeded
+2026-10-13T15:33:04.168Z pw:api => async initializeServer started
+2026-10-13T15:33:04.173Z pw:api <= async initializeServer succeeded
+2026-10-13T15:33:04.176Z pw:api =>  started
+2026-10-13T15:33:04.178Z pw:api <=  succeeded
+2026-10-13T15:33:04.178Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.179Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.179Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.179Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.180Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.186Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.186Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.186Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.186Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.186Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.187Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.189Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.189Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.189Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.189Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.189Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.194Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.194Z pw:api navigating to "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1", waiting until "domcontentloaded"
+2026-10-13T15:33:04.711Z pw:protocol ◀ RECV {"method":"Page.navigationCommitted","params":{"frameId":"mainframe-11","navigationId":"nav-24","url":"http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1","name":""},"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.711Z pw:api   "commit" event fired
+2026-10-13T15:33:04.712Z pw:api   navigated to "http://127.0.0.1:59620/sFjjv9JaAVEQjnm5UPScWGTPG_jXFButr9szjhN4aqI/?tab=1"
+2026-10-13T15:33:04.729Z pw:protocol ◀ RECV {"method":"Page.eventFired","params":{"frameId":"mainframe-11","name":"DOMContentLoaded"},"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.729Z pw:api   "domcontentloaded" event fired
+2026-10-13T15:33:04.729Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.732Z pw:protocol ◀ RECV {"method":"Page.eventFired","params":{"frameId":"mainframe-11","name":"load"},"sessionId":"e8d8e0d1-b94d-4e43-87d0-1948a107832f"}
+2026-10-13T15:33:04.733Z pw:api   "load" event fired
+2026-10-13T15:33:04.733Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.734Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.735Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.773Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.783Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.783Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.785Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.785Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.785Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.785Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.785Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.789Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.791Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.791Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.791Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.791Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.791Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.791Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.792Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.792Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.792Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.793Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.793Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.794Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.795Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.795Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.795Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.795Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:04.795Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:04.798Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:05.202Z pw:api <= browserBackend.callTool succeeded
+2026-10-13T15:33:05.202Z pw:api => browserBackend.callTool started
+2026-10-13T15:33:05.203Z pw:api <= browserBackend.callTool failed

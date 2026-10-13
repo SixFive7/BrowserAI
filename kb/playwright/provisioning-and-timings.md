@@ -2328,6 +2328,145 @@ restore options to replay. A Firefox build whose juggler reports `load` for a re
 page, or a `playwright-core` whose persistent launch stops waiting for its first page's
 `load`, is the change to look for: the `ff-dead` arm then starts.
 
+⚠️ *Added 2026-10-13 by addition*, the maintainer's 161 of that day, in his words verbatim,
+*"161 your recommendation"*: a Firefox session keeps Playwright's blank page since that day,
+so the blank page is the first page the persistent launch waits for, and the resume closes it
+once a reopened tab is up. What that measured is
+[the entry below](#a-firefox-sessions-restore-with-playwrights-blank-page-kept-starts-in-about-a-second-and-closing-the-blank-page-once-a-reopened-tab-is-up-breaks-nothing----measured-2026-10-13).
+The missing `load` itself was reproduced the same day with no restore and no launch option at
+all, juggler's two paths were read, and it was reported to Playwright:
+[the entry after it](#firefox-reports-no-load-for-its-network-error-page-with-every-launch-option-at-its-default----measured-2026-10-13).
+
+### A Firefox session's restore with Playwright's blank page kept starts in about a second, and closing the blank page once a reopened tab is up breaks nothing -- measured 2026-10-13
+
+`[FLOATS]` Firefox **156.0** (`firefox-1553`) under `playwright-core`
+**1.64.0-alpha-1790635538000** and `@playwright/mcp` **0.0.83** on node **v24.21.0** from the
+payload, the payload's own child started the way the restore-stall rig's replays start it,
+with BrowserAI's Firefox config of 2026-10-13 and the one change of 161: nothing in
+`ignoreDefaultArgs`, so Playwright's blank page is kept; `[MACHINE]` for every time. One
+batch, 15:31:48Z to 15:49:52Z on 2026-10-13: five arms, three rounds with the arms interleaved
+in each, and two resumes in each repetition, each with a new child on the same profile, 30
+resumes ([evidence](../../docs/evidence/2026-10-13-blank-page/README.md),
+[rig](../../docs/probes/2026-10-13-blank-page/README.md)). The maintainer's 161 of 2026-10-13,
+in his words verbatim, *"161 your recommendation"*, whose recommendation asked for this
+measurement before a resume closes the blank page.
+
+**Every resume started in about a second, the stall of the entry above included, and closing
+the blank page once a reopened tab was up broke nothing, 27 of 27.**
+
+| Arm | The first run | Resumes | Launch, min / max | The child's first list | The reopened pages listed |
+|---|---|--:|---|---|---|
+| `one-dead` | one page, `no-store`, its server ended before the resumes | 6 | 1,163 / 1,434 ms | the blank page alone | 1,553 to 1,818 ms after the launch answered, titled *"Problem loading page"* |
+| `one-alive` | the same page, its server answering | 6 | 1,120 / 1,338 ms | the blank page, then the page | with the launch |
+| `three-mixed` | three such pages, the first in the blank page's tab and two in tabs of their own, the first one's server ended | 6 | 1,641 / 1,895 ms | the blank page, then the two live pages | the live pages with the launch, the dead one 1,563 to 1,577 ms after it |
+| `none` | the browser started and closed, no page | 6 | 1,088 / 1,370 ms | the blank page twice, the one Firefox saved and the new one | - |
+| `fresh` | none, so the profile holds no session file | 6 | 1,128 / 2,376 ms | the blank page alone at the first resume, twice at the second | - |
+
+**Which tab Firefox selects.** In all 18 restores with a reopened page, Firefox's
+`sessionstore-backups/recovery.jsonlz4`, read once Firefox had written it after the launch,
+held the blank page as the last tab of the first window and its selected one; each page the
+first run opened with `browser_tabs` `new` was a window of its own, with its one tab selected.
+In the 9 with two blank pages the second was the selected one. The child listed the blank page
+first in every first list, 30 of 30: it lists a tab once its page has come up, and the blank
+page comes up first.
+
+**What closing it does.** `browser_tabs` `select` on the first reopened tab and then `close`
+on the blank page answered without an error 27 of 27, the three first resumes of `fresh`
+having nothing to close; in `three-mixed` the two took 47 to 72 ms together. The current tab
+then read `document.visibilityState` `visible` 30 of 30, `browser_snapshot` answered 30 of
+30, the session Firefox saved at the next clean close held the reopened tabs without the blank
+page, and the second resume of every repetition met the first one's tabs, 15 of 15.
+
+**Telling a tab on Firefox's error page.** The dead tab's `document.documentURI` was
+`about:neterror?e=connectionFailure&u=...` in all 12 of its resumes, under the tab's own
+address, and every live tab's was its own address. One `browser_run_code_unsafe` call that
+read every tab at once took 506 to 522 ms for one tab or three, once 1,248 ms; the two other
+tabs of `three-mixed`, each made current and read with `browser_evaluate` one at a time, took
+523 to 541 ms each. ⚠️ *Added 2026-10-13 by addition, on a reading of the texts of 161 that
+day:* the resume marks a tab only when the page's `e=` is `connectionFailure`, the code
+measured here, or `netTimeout`, `netReset`, `netInterrupt` or `dnsNotFound`, which also mean
+the address gave no answer (`FirefoxRestore.NothingAnswered`). In Firefox's
+`docshell/base/nsDocShell.cpp`, read on its main branch that day and not in `firefox-1553`,
+the same page serves a redirect loop, a server error and a failed TLS handshake, none of them
+measured here, and those tabs are listed without the mark.
+
+**What BrowserAI does with it**, since 2026-10-13: the resume of a Firefox session starts its
+browser, lists the tabs every 250 ms until the list has held for 3 s, closes the blank page once
+a reopened tab is listed, and reads every tab's document URI in one call;
+`SessionTimes.FirefoxRestorePoll`, `FirefoxRestoreQuiet` and `FirefoxRestoreWait` in
+[the numbers index](../numbers.md). A session's live pages come up with the launch and a dead
+one about 1.6 to 1.8 s after it, so the time the list must hold has to outlast that gap:
+derived from the listing times, and not run, a 1 s span would have answered before the dead
+tab in all six `three-mixed` resumes.
+
+⚠️ **Not established:** a machine slower than this one, on which a dead tab comes up more than
+3 s after the last change and is left out of the resume's answer, the open edge of
+`SessionTimes.FirefoxRestoreQuiet`; a restored page on another host; a window; a session of
+more than three tabs; and a blank page that is not the first tab the child lists, which the
+batch never produced and the resume leaves open.
+
+**Re-establish** with the rig: `run.ps1 -Stage blank -Name <batch>` under the suite's lock and
+`summarize.mjs` over the batch, whose tables are the ones above.
+
+### Firefox reports no `load` for its network error page, with every launch option at its default -- measured 2026-10-13
+
+`[FLOATS]` Firefox **156.0** (`firefox-1553`) and Chrome for Testing **155.0.8059.12**
+(`chromium-1247`) under `playwright-core` **1.64.0-alpha-1790635538000** alone, on node
+**v24.21.0** from the payload; `[MACHINE]` for every time. Three batches of the blank-page rig
+on 2026-10-13: `repro`, 15:49:52Z to 15:50:50Z, `navigate`, 15:52:02Z to 15:52:24Z, and
+`issue`, 16:02:21Z to 16:03:24Z ([evidence](../../docs/evidence/2026-10-13-blank-page/README.md),
+[rig](../../docs/probes/2026-10-13-blank-page/README.md)). The maintainer's 161 d of that day,
+which reports the stall to Playwright: [microsoft/playwright#43341](https://github.com/microsoft/playwright/issues/43341),
+opened 2026-10-13T16:11:51Z.
+
+**A page on a live address that navigates itself to one nothing answers on commits Firefox's
+error page under that address, and `waitForLoadState('load')` then waits out its timeout,
+15,001 ms; in Chromium the page commits `chrome-error://chromewebdata/` and `load` arrives in
+36 ms.** Nothing in the launch options is changed, so this is the missing `load` of the
+restore-stall entry above without a restore and without `ignoreDefaultArgs`. A `goto` to such
+an address does not show it: the goto fails with `NS_ERROR_CONNECTION_REFUSED`
+(`net::ERR_CONNECTION_REFUSED` in Chromium), the page stays on `about:blank` and `load`
+resolves at once, in both browsers.
+
+**The persistent launch, through `playwright-core` alone**, a profile given one page served
+with `Cache-Control: no-store`, closed, and launched again with
+`browser.sessionstore.resume_session_once` in `firefoxUserPrefs` and a 30 s timeout:
+
+| Variant | Outcome |
+|---|---|
+| `about:blank` in `ignoreDefaultArgs`, the page's server ended | `Timeout 30000ms exceeded.` after 30,003 ms |
+| Playwright's blank page kept, the server ended | launched in 1,067 ms, on the blank page |
+| `about:blank` left out, the server still answering | launched in 1,124 ms, on the page |
+| `about:blank` left out, the page cacheable, the server ended | launched in 1,080 ms, on the page out of Firefox's cache |
+
+**The two scripts the report carries, run as written**, from a folder whose `node_modules`
+re-exports the payload's `playwright-core`: `repro.mjs` printed *"page.waitForLoadState: Timeout
+15000ms exceeded."* and a `document.documentURI` of `about:neterror?e=connectionFailure&u=...`;
+`restore.mjs` printed *"browserType.launchPersistentContext: Timeout 30000ms exceeded. (after
+30001 ms)"*; and `repro.mjs` with Chromium, launched with `channel: 'chromium'` because the
+scratch root holds no headless shell, printed *"load after 31 ms"* on
+`chrome-error://chromewebdata/`.
+
+**Where it waits, read on 2026-10-13.** In juggler on Playwright's main at `6284a53`,
+`FrameTree.onStateChange` calls `forcePageReady()` when a main-frame navigation stops with an
+error, which is the `Page.ready` the protocol log shows, and `PageAgent._onNavigationAborted`
+emits `DOMContentLoaded` and `load` through `_emitAllEvents` for a subframe whose first
+navigation was aborted, and not for the main frame; the roll to `r1559` of 2026-10-09, the
+only change to either file since `r1553`, touched neither path. In the payload's
+`coreBundle.js`, `loadDefaultContextAsIs` waits for the main frame of
+`possiblyUninitializedPages()[0]` to reach `load`.
+
+⚠️ **Not established:** why Firefox's error page never fires a `load` that juggler forwards,
+when its `DOMContentLoaded` does arrive, which is juggler's or Firefox's own code and was not
+read further; an address on another host; a headed browser; and Chromium's headless shell.
+
+**Re-establish** with the rig: `run.ps1 -Stage repro`, `-Stage navigate` and `-Stage issue`
+under the suite's lock, each with a new `-Name`, and `summarize.mjs` over each batch. The
+change to look for is #43341 fixed in a `playwright-core` the payload pins, or in a Firefox
+build it brings: the `repro` stage's first variant and the `issue` stage's `restore.mjs` then
+launch, and the `navigate` stage's Firefox row resolves. That is the day 161's blank page can
+go again, [re-verification](../re-verification.md) row 222.
+
 ### What a server's start costs before its first answer -- measured 2026-10-04
 
 `[FLOATS]` on the payload, `@playwright/mcp` **0.0.83** with `playwright-core`

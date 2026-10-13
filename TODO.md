@@ -308,7 +308,7 @@ is named as candidates and says so.
       | **`--device`** | 207 device descriptors, of which this product uses none; a session is 1920x1080 desktop Chromium or Firefox and nothing else |
       | **`--timeout-settle`** | 500 ms by default, and it is the knob behind *the snapshot came back before the page finished*. The cheapest of the five to try and the hardest to judge without a case ⚠️ *Declined 2026-10-03 by Q323, verbatim: "Q323 leave it to upstream. they have thought about it and I want to drift with their defaults."* |
 
-- [ ] **Measure the Firefox start that waited out Playwright's 180 s, after the release.**
+- [x] **Measure the Firefox start that waited out Playwright's 180 s, after the release.**
       Twice on 2026-10-12 a headless Firefox 156.0 session of the installed BrowserAI,
       resumed after its idle close, failed its first browser call with
       `initializeServer`'s 180 s timeout, and each call log ended on a favicon fetch for
@@ -347,6 +347,10 @@ is named as candidates and says so.
       fixes it
       ([`DECISIONS.md`](DECISIONS.md#a-resumed-firefox-sessions-browser-started-by-its-resume-decided-2026-10-13)).
       The item closes once the change has passed its gate.
+      ⚠️ *Closed 2026-10-13 by addition*, with the change and the ordinary two-shell gate it
+      passed: the rig of 161 measured the blank page's close before it went in, 30 resumes,
+      and the hazard row closed with it
+      ([kb](kb/playwright/provisioning-and-timings.md#a-firefox-sessions-restore-with-playwrights-blank-page-kept-starts-in-about-a-second-and-closing-the-blank-page-once-a-reopened-tab-is-up-breaks-nothing----measured-2026-10-13)).
 - [ ] **Check whether Chromium sends anywhere the minidump a crash leaves in a session's
       profile, after the release.** The maintainer's 133 a of 2026-10-13, in his words
       verbatim, *"133 a"*. A Chrome for Testing that crashes writes a minidump of the
@@ -1496,7 +1500,8 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       open, with no labels and no reply beyond the cross-link of 01:29:06Z. **Read both again**
       with an anonymous GET of `https://issues.chromium.org/action/issues/572877174` and
       `gh issue view 43327 --repo microsoft/playwright`.
-- [ ] **WATCH the report to Playwright on a Firefox persistent launch that waits out its
+- [ ] **WATCH [microsoft/playwright#43341](https://github.com/microsoft/playwright/issues/43341),
+      the report to Playwright on a Firefox persistent launch that waits out its
       timeout on a restored tab Firefox's error page holds, and put Playwright's blank page
       back out of a Firefox launch when it is fixed.** The maintainer's 161 of 2026-10-13, in
       his words verbatim: *"161 your recommendation"*, which took direction d beside the change
@@ -1522,6 +1527,24 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       and [re-verification row 222](kb/re-verification.md) with dated previously clauses, and
       close this item. If the issue closes without a fix, record the reason in the kb entry and
       close this item.
+      ⚠️ *Added 2026-10-13 by addition:* posted that day at 16:11:51Z under SixFive7, on the
+      maintainer's 161 d, as #43341, and read back the same day at 16:26Z: open, with one
+      comment, of 16:25:00Z, from a contributor who reproduced it and opened
+      [microsoft/playwright#43345](https://github.com/microsoft/playwright/pull/43345), which
+      makes juggler's `PageAgent.onWindowEvent` send `load` once `DOMContentLoaded` fires for
+      an `about:neterror` document, with a test that waits for `load` after such a
+      navigation; open and not reviewed when read. Juggler is built into Playwright's Firefox,
+      so a fix there reaches the payload with a Firefox build a `playwright-core` release pins.
+      The report's reproduction is not the replay but the two scripts of
+      [the blank-page rig](docs/probes/2026-10-13-blank-page/README.md)'s `issue` stage, the
+      first of which changes no launch option
+      ([kb](kb/playwright/provisioning-and-timings.md#firefox-reports-no-load-for-its-network-error-page-with-every-launch-option-at-its-default----measured-2026-10-13)).
+      **So when a fix may have landed, run that rig first**: `run.ps1 -Stage issue` and
+      `-Stage navigate` under the suite's lock, with the payload of the `playwright-core`
+      that may carry it. `restore.mjs` launching and `repro.mjs` printing a `load` time say
+      Firefox reports `load` for its error page; the replay above then says it through the
+      payload's own child, and only both together put the blank page back out. This item is
+      to 161 what the watch item of 129 d, on #43327, is to 129 a.
 
 ---
 

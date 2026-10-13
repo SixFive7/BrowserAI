@@ -1340,9 +1340,95 @@ happenend so there are no surprises? How would an upstream fix look functionaly?
 | Decision | Outcome |
 |---|---|
 | **161: a Firefox launch keeps Playwright's blank page, and the resume starts the browser, closes the page and says what came back** | `BrowserConfiguration` leaves the page out of a Chromium launch alone, so a Firefox launch waits for the blank page and not for a restored tab. A resumed Firefox session's browser is started by the resume itself, through the session's own child and upstream's own `browser_tabs` (`FirefoxRestore`): a list, which starts the browser; more lists while Firefox's session restore reopens the tabs, up to `SessionTimes.FirefoxRestoreWait`; once a reopened tab is up, a `select` that makes the first reopened tab current and a `close` of the blank page; and an answer that lists the tabs as `browser_tabs` lists them, says which one is current, and names any that shows Firefox's error page because nothing answered at its address. **A tab on the error page is told by its `document.documentURI`**, which starts with `about:neterror` in every language, read for every tab at once with one call of upstream's own `browser_run_code_unsafe` (`FirefoxRestore.ErrorPageRead`); the first draft read the page's title, which follows Firefox's language, and the maintainer's machine runs Dutch elsewhere, and a read tab by tab would make each tab current in turn. **The texts that say when the tabs come back say it for both browsers since the same day**: the close tool's description, `SessionManager.ClosedByTheAgent`, the refusal of a call to a closed session (`SessionErrors.SessionWasClosed`) and the held-back resume of a session whose browser has not started (`SessionErrors.SettingsHeldBack`) name the resume for a Firefox session and the first browser call after it for a Chromium one. A profile with none of Firefox's session files has nothing to reopen, and the resume reads the tabs once. A call that names the session meanwhile waits for the start (`LiveSession.BrowserStartSettled`), and so does the agent's own close. A Chromium session is unchanged: its browser is started by its first browser call. **The resume starts the browser because the first browser call could not do it here**: with the blank page back, Playwright's browser server makes the blank page its current tab, so the call that started the browser would act on it, and which tabs came back is known only once the browser is up. Not taken: the blank page kept and nothing closed (direction a), which adds a tab with every close and resume; the note on the first browser call's answer, which would end the byte-for-byte passthrough of 2026-08-26 and reach the model after it chose that call; and reading Firefox's session file to know which tabs to wait for, which would make BrowserAI a second reader of Firefox's own file format. |
-| **161 d: the stall is reported to Playwright, and the change above comes out again when it is fixed** | The report gives Playwright the rig's replay as its reproduction and the two fixes the maintainer was told about: juggler reporting `load` for Firefox's error page, or the persistent launch no longer waiting for the full load of a tab Playwright did not open itself. A watch item in [`TODO.md`](TODO.md) follows it, and [re-verification row 222](kb/re-verification.md) says what to run. Once a `playwright-core` or a Firefox build that Playwright ships starts the rig's stalled profile with the blank page left out, measured and never read off an issue's state, a Firefox launch leaves the page out again and its browser goes back to its first browser call, as 129 d pairs Chromium's profiler switch with its watch. |
+| **161 d: the stall is reported to Playwright, and the change above comes out again when it is fixed** | The report gives Playwright the rig's replay as its reproduction and the two fixes the maintainer was told about: juggler reporting `load` for Firefox's error page, or the persistent launch no longer waiting for the full load of a tab Playwright did not open itself. A watch item in [`TODO.md`](TODO.md) follows it, and [re-verification row 222](kb/re-verification.md) says what to run. Once a `playwright-core` or a Firefox build that Playwright ships starts the rig's stalled profile with the blank page left out, measured and never read off an issue's state, a Firefox launch leaves the page out again and its browser goes back to its first browser call, as 129 d pairs Chromium's profiler switch with its watch. ⚠️ *Added 2026-10-13 by addition:* posted that day as [microsoft/playwright#43341](https://github.com/microsoft/playwright/issues/43341), opened at 16:11:51Z under his account. Its reproduction is two scripts of [the blank-page rig](docs/probes/2026-10-13-blank-page/README.md), run as written, and not the replay: the first has a page navigate itself to an address nothing answers on, with every launch option at its default, and the restored tab's launch comes second (the build's choices below). |
 | **162 b: the product's comments say how Firefox's preferences arrive** | `BrowserConfiguration.Generate`'s comment and `FirefoxProfile.RememberSignonsPreference`'s remarks said Playwright writes `firefoxUserPrefs` into the profile's `user.js` before the browser starts. They say now that Playwright's juggler path hands them over in `Browser.enable` once the browser has started, measured 2026-08-16 ([kb](kb/chromium/resurrection.md)) and seen again in the protocol logs of 2026-10-13, so a preference Firefox reads only as it starts takes effect from a profile's second launch. The same sentence in `FirefoxTests` was corrected with them. |
 | **163 a: the refusal after a stalled start stays as built, and the notice a resume gave after it is a hazard** | The resume refused while a short-lived Firefox held the profile after a stalled start is left as it is. The resume asked five seconds after such a refusal told the connection that had created the session that it had not, once, and nobody has looked into why: an open row in [the hazard index](HAZARDS.md) records it, with what would close it. |
+
+**What the rig measured before the blank page was closed, and the build's choices, for his
+review:**
+
+1. **Closing the blank page was measured before the change went in**, as the recommendation he
+   took asked, through the payload's own child with 161's config, 30 resumes over five arms
+   ([kb](kb/playwright/provisioning-and-timings.md#a-firefox-sessions-restore-with-playwrights-blank-page-kept-starts-in-about-a-second-and-closing-the-blank-page-once-a-reopened-tab-is-up-breaks-nothing----measured-2026-10-13)):
+   every resume started in 1,088 to 2,376 ms, the case of the hazard row 6 of 6; Firefox
+   selected the blank page, the last tab of the first window, in all 18 restores with a
+   reopened page; the child listed it first, 30 of 30; and making the first reopened tab
+   current and closing the blank page failed 0 of 27, after which the current tab was
+   visible 30 of 30, `browser_snapshot` answered 30 of 30, Firefox saved the reopened tabs
+   without the blank page, and the next resume met the same tabs, 15 of 15. So the page is
+   closed as built, and direction a, the page kept and nothing closed, was not needed.
+2. **The tab list must hold for 3 s, not 1 s, before the resume answers**
+   (`SessionTimes.FirefoxRestoreQuiet`, *previously 1 s, chosen before the rig ran*). A page
+   whose server answered was listed with the launch, and a dead one 1,553 to 1,818 ms after
+   it, so in a session with both the blank page goes at once; derived from those listing
+   times, and not run, 1 s would have answered before the dead tab in all six resumes of the
+   arm with both, leaving out the one tab the model most needs to hear about. 3 s costs a
+   resume 3 s after its last change. Not taken: 1 s; waiting until the tab count matches the
+   count Firefox saved, which needs a reader of Firefox's compressed session file in the
+   product; and 3 s with a line in every answer that a tab still loading may join the list
+   later. **The open edge is a slower machine**, on which a dead tab that comes up more than
+   3 s after the last change is left out of the answer, and `browser_tabs` lists it once it
+   is up.
+3. **161 d's report leads with a reproduction that changes no launch option.** A page that
+   navigates itself to an address nothing answers on commits Firefox's error page, and
+   `waitForLoadState('load')` waits out its timeout, 15,001 ms, where Chromium's resolves in
+   36 ms; a `goto` to such an address fails and leaves the page on `about:blank`, so it shows
+   nothing
+   ([kb](kb/playwright/provisioning-and-timings.md#firefox-reports-no-load-for-its-network-error-page-with-every-launch-option-at-its-default----measured-2026-10-13)).
+   It leads because Playwright closed
+   [microsoft/playwright#42093](https://github.com/microsoft/playwright/issues/42093), the
+   same wait with Chromium, as a custom browser argument at the user's own risk, and the
+   restored tab's launch needs `ignoreDefaultArgs`; that launch is the report's second
+   script, and the replay through the payload's own child is the check the watch item in
+   [`TODO.md`](TODO.md) runs beside them.
+4. **The texts were read for a model on 2026-10-13, and four of them reworded as the reading
+   gave them.** The note of a start that failed says that the next browser call acts on the
+   blank page it starts on, and that a reopened tab appears in `browser_tabs` once it is up.
+   The note of a start that closed nothing says Firefox *"reopened tabs of the session's last
+   run. Nothing was closed, so the tabs are:"*, where it counted the blank page among them.
+   The close tool's description and the refusal's *Kept* line each give the tabs' reopening a
+   sentence of its own, as the close's own answer does. **Two facts the reading doubted were
+   corrected**: the error-page sentence is said only of the codes of an address that gave no
+   answer, `connectionFailure`, `netTimeout`, `netReset`, `netInterrupt` and `dnsNotFound`
+   (`FirefoxRestore.NothingAnswered`), where it was said of every `about:neterror` page, a
+   redirect loop and a server error among them; and `SessionTimes.FirefoxRestoreWait` counts
+   from the start of the browser, as the code always did, and not from once it is up, the
+   early end of the wait left as built. **Considered and not taken**, each kept as built:
+   - the tabs reopen *"at that resume"* only when the resume starts the browser; a Firefox not
+     yet installed at the resume, or a start that fails, leaves it to the first browser call,
+     and the resume's own answer says which. Not taken: a condition in each text that a model
+     cannot check, and a resume that provisions a missing browser and waits out a download;
+   - a browser call that starts Firefox on those paths lands on the blank page, which nothing
+     then closes; the note of a failed start says so since the reading, and the note of a
+     resume whose browser is not installed does not. Not taken: a Firefox note of its own for
+     that resume, and the start run at the first browser call, which would end the
+     byte-for-byte passthrough;
+   - a resume whose browser server ended with a failed start says *"Session ready"* beside the
+     note that says to resume again, and a browser call made anyway is refused with the same
+     advice. Not taken: another lead for that answer, and the resume marked as an error.
+5. **The plants, each a filtered run of the four classes 161 touches, watched before the change
+   went in:**
+   - the four files 161 changed as they stood at `f509229d`: 12 of 45 red, the six arms of
+     `FirefoxRestoreTests` that resume a session, `ConfigRoundTripTests`' four arms that read
+     a Firefox launch's `ignoreDefaultArgs`, and `SettingsHoldBackTests`' two held-back texts;
+   - `SessionManager.cs` alone as it stood there, so the blank page kept and nothing closed:
+     7 of 45 red, the six and
+     `SessionCloseTests.AResumeReopensTheTabsThatWereOpenWhenTheBrowserWasClosed(firefox)`,
+     which listed three tabs with the blank page current;
+   - `FirefoxRestore` with five strings planted, the tab line, the blank page's test, the
+     tool's name, the read's list and the error page's mark: its four arms of its own red,
+     with every arm that reads a tab list;
+   - the forwarded call's and the agent's close's wait for the start taken out, and the
+     reading's texts and codes not yet in: 5 of 48 red, the arm of each wait and the three
+     arms of the texts and the codes;
+   - the change as built at first: 44 of 45 green, and
+     `FirefoxRestoreTests.ACallMadeWhileTheResumeStartsTheBrowserWaitsForTheStart` waiting out
+     its 5 minutes on a defect of the arm, which read the resume's answer first and threw the
+     call's away, since the call goes on once the start ends and is answered first; the arm
+     reads both answers at once since (`RawPipeClient.AwaitManyAsync`);
+   - and the change with the reading's texts and codes in, and the agent's close saying when it
+     waits for the start: 48 of 48 green.
+
 
 ### The home, its CPU and memory, and the after-update notice, decided 2026-10-11
 

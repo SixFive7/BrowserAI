@@ -1,0 +1,22 @@
+build.txt: unchanged
+browsers.txt: unchanged
+launcher.log: unchanged
+summary.txt: unchanged
+registry-issue.trimmed.txt: the profile path replaced and colour escapes removed
+registry-before.txt: not kept, it lists every value Firefox keeps for every install on the machine; 64 values
+issue-repro-chromium/census.jsonl: unchanged
+issue-repro-chromium/node.stdout.txt: unchanged
+issue-repro-chromium/node.stderr.txt: unchanged
+issue-repro-chromium/repro.mjs: unchanged
+issue-repro-chromium/node_modules: not kept, the package.json and the one line of index.mjs that run.ps1 writes to re-export the payload's playwright-core
+issue-repro-firefox/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+issue-repro-firefox/node.stdout.txt: unchanged
+issue-repro-firefox/node.stderr.txt: unchanged
+issue-repro-firefox/repro.mjs: unchanged
+issue-repro-firefox/node_modules: not kept, the package.json and the one line of index.mjs that run.ps1 writes to re-export the payload's playwright-core
+issue-restore/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+issue-restore/node.stdout.txt: unchanged
+issue-restore/node.stderr.txt: unchanged
+issue-restore/restore.mjs: unchanged
+issue-restore/node_modules: not kept, the package.json and the one line of index.mjs that run.ps1 writes to re-export the payload's playwright-core
+tmp: not kept, the profile issue\restore.mjs made under os.tmpdir() and the browsers' own temporary files

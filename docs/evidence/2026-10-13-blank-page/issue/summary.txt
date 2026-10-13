@@ -1,0 +1,21 @@
+# .work\blank-page\runs\issue
+
+issue-repro-chromium, what the script printed:
+
+```
+load after 31 ms
+chrome-error://chromewebdata/ chrome-error://chromewebdata/
+```
+
+issue-repro-firefox, what the script printed:
+
+```
+page.waitForLoadState: Timeout 15000ms exceeded.
+http://127.0.0.1:61340/ about:neterror?e=connectionFailure&u=http%3A//127.0.0.1%3A61340/&c=UTF-8&captivePortalState=unknown&d=Firefox%20can%E2%80%99t%20establish%20a%20connection%20to%20the%20server%20at%20127.0.0.1%3A61340.&a=
+```
+
+issue-restore, what the script printed:
+
+```
+browserType.launchPersistentContext: Timeout 30000ms exceeded. (after 30001 ms)
+```

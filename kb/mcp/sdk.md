@@ -552,7 +552,11 @@ and .NET 10.0.12, with a seam awaited in `BrowserProxy`'s forwarded call after t
 sent and before the row was settled, on a full-page Chromium screenshot past the line, which
 BrowserAI refuses: started while the seam held, the rig's teardown had not returned 30 s later,
 returned 59 ms after the seam let go, and the screenshot's row read once the rig was gone said
-`failed`. Which step of the teardown waits was not measured.
+`failed`. Which step of the teardown waits was not measured. `[FLOATS]` on `ModelContextProtocol`
+**2.2.0**: a release whose teardown stopped waiting for a call in flight would let an arm that
+reads its row once the rig is gone read it before the handler settles it, which turns red only
+on the runs that lose the race, so it has [re-verification](../re-verification.md) row 223.
+*The marker and the row were added 2026-10-13, the day the entry was written.*
 
 It answered a suspicion of the sweep of the maintainer's 154 c, that
 `ScreenshotLimitTests`, which reads its row once its rig is gone, could read one still in

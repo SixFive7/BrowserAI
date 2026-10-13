@@ -1,0 +1,17 @@
+# .work\blank-page\runs\navigate
+
+| Variant | The navigation | URL after it | Wait for load | ms | document.documentURI |
+|---|---|---|---|--:|---|
+| firefox: the page navigates itself to a refused address, then wait for load | committed | http://127.0.0.1:62550/ | page.waitForLoadState: Timeout 15000ms exceeded. | 15001 | about:neterror?e=connectionFailure&u=http%3A//127.0.0.1%3A62 |
+| chromium: the page navigates itself to a refused address, then wait for load | committed | chrome-error://chromewebdata/ | resolved | 36 | chrome-error://chromewebdata/ |
+
+| Repetition | Resume | Launch ms | First list | First reopened tab listed after | Listed last before the tidy | Firefox selected before the tidy | Current before | Tidy | Current after | Snapshot | Others | Saved after the close |
+|---|--:|--:|---|--:|---|---|---|---|---|---|---|---|
+| navigate | - | - | undefined | | | | | | | | | |
+
+| Repetition | Resume | One read of every tab, ms | Tabs | ms per tab | Document URIs | One tab at a time, ms per tab |
+|---|--:|--:|--:|--:|---|---|
+
+| Arm | Repetitions | Launches past 5 s | First list the blank page alone | Tidy failed | Snapshot failed | Second resume met the first one's tabs |
+|---|--:|--:|--:|--:|--:|--:|
+| undefined | 1 | 0 | 0 of 0 | 0 | 0 | 0 of 1 |

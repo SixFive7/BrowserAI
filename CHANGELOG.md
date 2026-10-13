@@ -107,7 +107,7 @@ more* link to its detail; nothing else depends on it.
 
 ### Fixed
 
-- 🐛 **A Firefox session resumed after the server of its last page stopped no longer waits three minutes and fails.**
+- 🐛 **A Firefox session resumed after its last page's server stopped no longer waits 3 minutes and fails.**
   When a Firefox session was resumed and its last page had been on a server that no longer
   answered, served so that Firefox could not bring it back from its cache, the first browser
   call waited three minutes and then failed with a timeout. Now `browserai_resume` starts a

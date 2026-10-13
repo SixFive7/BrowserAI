@@ -1,0 +1,11 @@
+build.txt: unchanged
+browsers.txt: unchanged
+launcher.log: unchanged
+summary.txt: unchanged
+registry-navigate.trimmed.txt: the profile path replaced and colour escapes removed
+registry-before.txt: not kept, it lists every value Firefox keeps for every install on the machine; 64 values
+navigate/result.json: unchanged
+navigate/events.jsonl: unchanged
+navigate/census.trimmed.jsonl: the profile path replaced and colour escapes removed
+navigate/node.stdout.txt: unchanged
+navigate/node.stderr.txt: unchanged

@@ -1116,13 +1116,16 @@ selects the first reopened tab and closes the blank page, and `FirefoxRestore.No
 what came back into the resume's answer, reading upstream's tab lines through
 `UpstreamTab`; a tab on Firefox's error page is told by its `document.documentURI`, read
 for every tab at once through one `browser_run_code_unsafe` call
-(`FirefoxRestore.ErrorPageRead`, matched by `FirefoxRestore.Match`). A profile with none of `FirefoxRestore.SessionFiles` is read once. The start
+(`FirefoxRestore.ErrorPageRead`, matched by `FirefoxRestore.Match`), and marked only when the page's code says the address gave no answer (`FirefoxRestore.NothingAnswered`, added 2026-10-13 on a reading of the texts of 161). A profile with none of `FirefoxRestore.SessionFiles` is read once. The start
 holds the countdown through `LiveSession.Driving` and arms the browser's watch as a
 forwarded call does, and it is a gate: `LiveSession.BeginTheBrowserStart` marks it before
 the session is published, `LiveSession.BrowserStartSettled` completes when it ends, and
 `BrowserProxy` and `LiveSession.CloseForTheAgentAsync` wait for it before they reach the
 child. A Chromium session, and a Firefox one whose browser is still being provisioned,
-starts its browser at the first browser call, as before.
+starts its browser at the first browser call, as before. The whole arrangement waits on
+[microsoft/playwright#43341](https://github.com/microsoft/playwright/issues/43341), Firefox's
+missing `load` for its error page, and comes out again once a fix is measured, which the watch
+item in [`TODO.md`](TODO.md) carries.
 
 ### `browserai_page_tool`, and how a page tool's name is resolved
 

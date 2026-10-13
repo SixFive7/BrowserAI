@@ -1,0 +1,66 @@
+{
+ "finished": "2026-10-13T15:50:45.392Z",
+ "rows": [
+  {
+   "name": "restore, blank page left out, no-store, server ended",
+   "keepBlank": false,
+   "serverEnds": true,
+   "cacheControl": "no-store",
+   "url": "http://127.0.0.1:51127/",
+   "outcome": "browserType.launchPersistentContext: Timeout 30000ms exceeded.",
+   "ms": 30003
+  },
+  {
+   "name": "restore, blank page kept, no-store, server ended",
+   "keepBlank": true,
+   "serverEnds": true,
+   "cacheControl": "no-store",
+   "url": "http://127.0.0.1:63596/",
+   "outcome": "launched",
+   "ms": 1067,
+   "pages": [
+    "about:blank"
+   ]
+  },
+  {
+   "name": "restore, blank page left out, no-store, server answering",
+   "keepBlank": false,
+   "serverEnds": false,
+   "cacheControl": "no-store",
+   "url": "http://127.0.0.1:63611/",
+   "outcome": "launched",
+   "ms": 1124,
+   "pages": [
+    "http://127.0.0.1:63611/"
+   ]
+  },
+  {
+   "name": "restore, blank page left out, cacheable, server ended",
+   "keepBlank": false,
+   "serverEnds": true,
+   "cacheControl": null,
+   "url": "http://127.0.0.1:63626/",
+   "outcome": "launched",
+   "ms": 1080,
+   "pages": [
+    "http://127.0.0.1:63626/"
+   ]
+  },
+  {
+   "name": "firefox: goto a refused address, then wait for load",
+   "url": "http://127.0.0.1:63639/",
+   "goto": "page.goto: NS_ERROR_CONNECTION_REFUSED",
+   "load": "resolved",
+   "loadMs": 1,
+   "pageUrl": "about:blank"
+  },
+  {
+   "name": "chromium: goto a refused address, then wait for load",
+   "url": "http://127.0.0.1:63653/",
+   "goto": "page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:63653/",
+   "load": "resolved",
+   "loadMs": 0,
+   "pageUrl": "about:blank"
+  }
+ ]
+}

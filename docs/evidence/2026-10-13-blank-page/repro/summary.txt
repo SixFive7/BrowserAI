@@ -1,0 +1,21 @@
+# .work\blank-page\runs\repro
+
+| Variant | Outcome | ms | Pages, or the load wait |
+|---|---|--:|---|
+| restore, blank page left out, no-store, server ended | browserType.launchPersistentContext: Timeout 30000ms exceeded. | 30003 |  |
+| restore, blank page kept, no-store, server ended | launched | 1067 | about:blank |
+| restore, blank page left out, no-store, server answering | launched | 1124 | http://127.0.0.1:63611/ |
+| restore, blank page left out, cacheable, server ended | launched | 1080 | http://127.0.0.1:63626/ |
+| firefox: goto a refused address, then wait for load | goto: page.goto: NS_ERROR_CONNECTION_REFUSED; load: resolved | 1 | about:blank |
+| chromium: goto a refused address, then wait for load | goto: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:63653/; load: resolved | 0 | about:blank |
+
+| Repetition | Resume | Launch ms | First list | First reopened tab listed after | Listed last before the tidy | Firefox selected before the tidy | Current before | Tidy | Current after | Snapshot | Others | Saved after the close |
+|---|--:|--:|---|--:|---|---|---|---|---|---|---|---|
+| repro | - | - | undefined | | | | | | | | | |
+
+| Repetition | Resume | One read of every tab, ms | Tabs | ms per tab | Document URIs | One tab at a time, ms per tab |
+|---|--:|--:|--:|--:|---|---|
+
+| Arm | Repetitions | Launches past 5 s | First list the blank page alone | Tidy failed | Snapshot failed | Second resume met the first one's tabs |
+|---|--:|--:|--:|--:|--:|--:|
+| undefined | 1 | 0 | 0 of 0 | 0 | 0 | 0 of 1 |
