@@ -523,6 +523,13 @@ internal sealed class PageRegistrationTests
 
         _ = await PageRig.GetAsync(address);
 
+        // ⚠️ Waited for since 2026-10-13, as the arms above wait: the page reads the
+        // registration on the thread pool and offers its buttons through the stream, and a
+        // click the page has not offered yet is refused like an unknown one. The sixth
+        // release run of 2.0.0's fourth attempt, at 25508550, clicked before the read had
+        // landed and was answered 404.
+        await Assert.That(await StateContainingAsync(stream, "Set up for all my Codex projects")).IsNotNull();
+
         // An install whose hooks named no data root: --mcp alone.
         await Assert.That((await rig.ActAsync("""{"action":"register","client":"codex"}""")).Status).IsEqualTo(204);
         await Assert.That(await StateContainingAsync(stream, "BrowserAI is set up for all your Codex projects.")).IsNotNull();
