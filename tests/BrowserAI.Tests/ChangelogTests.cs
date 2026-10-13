@@ -978,6 +978,50 @@ internal sealed partial class ChangelogTests
         await Assert.That(next.StandardError).Contains("no entries under");
     }
 
+    /// <summary>
+    /// The stamp writes its line breaks as line feeds, the line end of every other line in the
+    /// changelog, and not one carriage return.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <c>CHANGELOG.md</c> is an LF file by <c>.gitattributes</c>, and BrowserAI compiles it in for
+    /// the What is new page. The stamp wrote the two line breaks it adds above a new release's
+    /// heading as <c>[Environment]::NewLine</c>, which is a carriage return and a line feed on
+    /// Windows. Git takes the two carriage returns out on commit, so until the next checkout the
+    /// changelog the build compiles in was not the committed one at those two line ends.
+    /// <see cref="StampingMovesTheEntriesUnderTheVersionAndLeavesAnEmptyUnreleased"/> reads the
+    /// stamped file through <c>ReplaceLineEndings</c>, which hides the difference, so this arm
+    /// reads its bytes.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStampWritesLineFeedsAndNoCarriageReturn()
+    {
+        // Every line end is spelled out, so the fixture does not depend on how the checkout
+        // wrote this file.
+        const string Unstamped = "# Changelog\n\n## [Unreleased]\n\n- The one entry.\n\n## [0.1.0] - 2026-08-16\n\n- The first one.\n";
+        const string Stamped = "# Changelog\n\n## [Unreleased]\n\n## [0.2.0] - 2026-08-16\n\n- The one entry.\n\n## [0.1.0] - 2026-08-16\n\n- The first one.\n";
+
+        using var scratch = await ScratchDirectory.CreateAsync("changelog-stamp-lf");
+        var file = await WriteAsync(scratch, "stamp.md", Unstamped);
+
+        // The premise, and the positive control: the count finds a carriage return where one is.
+        await Assert.That(CarriageReturns(await File.ReadAllBytesAsync(file))).IsEqualTo(0);
+        await Assert.That(CarriageReturns(Encoding.UTF8.GetBytes("a\r\nb\r\n"))).IsEqualTo(2);
+
+        var stamp = await RunAsync(file, "-StampVersion", "0.2.0", "-Date", "2026-08-16");
+
+        await Assert.That(stamp.ExitCode).IsEqualTo(0).Because(stamp.StandardError);
+
+        var after = await File.ReadAllBytesAsync(file);
+
+        await Assert.That(CarriageReturns(after))
+            .IsEqualTo(0)
+            .Because("the stamp wrote a carriage return into a changelog whose every line ends in a line feed alone");
+        await Assert.That(Encoding.UTF8.GetString(after)).IsEqualTo(Stamped);
+    }
+
     [Test]
     public async Task AVersionThisProjectCannotCutIsRefusedBeforeTheFileIsTouched()
     {
@@ -1548,6 +1592,11 @@ internal sealed partial class ChangelogTests
 
     private static async Task<string> HashAsync(string file) =>
         Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(file)));
+
+    /// <summary>How many carriage-return bytes some bytes hold.</summary>
+    /// <param name="bytes">The bytes, a file's whole content.</param>
+    /// <returns>The count of <c>0x0D</c>.</returns>
+    private static int CarriageReturns(byte[] bytes) => bytes.Count(static value => value == (byte)'\r');
 
     /// <summary>What one run of the release-notes script produced.</summary>
     /// <param name="ExitCode">Its exit code. Non-zero is a refusal.</param>
