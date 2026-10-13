@@ -38,6 +38,14 @@ more* link to its detail; nothing else depends on it.
 
 ## [Unreleased]
 
+### Changed
+
+- ✅ **The home's browser arm waits for the after-update notice's record the way BrowserAI reads it.**
+  It polled the record with a bare read, and BrowserAI writes the record beside it and moves it
+  into place, so a read that met the move failed the arm with a sharing violation in one gate
+  run. The arm now asks BrowserAI's own reader, which answers that no record is there yet, and
+  waits for the dismissed notice to read as seen.
+
 ## [2.0.0] - 2026-10-13
 
 BrowserAI gives an AI agent a real browser on Windows. It is one program now, and
