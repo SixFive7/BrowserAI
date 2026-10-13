@@ -1272,6 +1272,19 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       carries the fix, the upstream review decides whether BrowserAI's own line
       stays. If the issue is closed without a fix, record the reason here and
       keep the line.
+      ⚠️ *Added 2026-10-13 by addition, read that day with the repository's issue
+      search:* the issue was closed as fixed on 2026-10-08 at 17:59:31Z by
+      [microsoft/playwright#43178](https://github.com/microsoft/playwright/pull/43178),
+      *"fix(firefox): disable safe mode keyboard shortcut in environment"*, merged and
+      labelled `v1.65`, so Playwright 1.65 sets the variable itself. **What to do now:**
+      once the `playwright-core` the payload pins carries that pull request, run
+      [the safe-mode probe](docs/probes/2026-09-25-firefox-safe-mode/README.md) as
+      [re-verification row 168](kb/re-verification.md) says, without BrowserAI's own
+      variable; if the forced launch completes, take `MOZ_DISABLE_SAFE_MODE_KEY` out of
+      `ChildEnvironment.Forced`, which is Q312 b's workaround, turn
+      `ChildEnvironmentTests.EveryChildIsStartedWithFirefoxsSafeModeKeySwitchedOff` round
+      or retire it with a remark, record it in the kb entry and row 168 with dated
+      previously clauses, and close this item. Until then the line stays.
 - [ ] **WATCH our comment on
       [microsoft/playwright#23047](https://github.com/microsoft/playwright/issues/23047),
       closed shadow roots.** Posted 2026-10-03 under SixFive7 on the maintainer's

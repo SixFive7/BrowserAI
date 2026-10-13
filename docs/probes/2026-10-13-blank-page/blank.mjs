@@ -71,6 +71,18 @@ const tabs = (answer) => (answer?.text ?? '').split('\n')
   .map((match) => ({ index: Number(match[1]), current: !!match[2], title: match[3], url: match[4], crashed: !!match[5] }));
 
 const probe = '() => ({ visibility: document.visibilityState, hidden: document.hidden, documentURI: document.documentURI, title: document.title, href: location.href })';
+
+// FirefoxRestore.ErrorPageRead, copied and not shared: every tab's address and document URI,
+// read at once through browser_run_code_unsafe, which is how the resume tells a tab on
+// Firefox's error page from the rest.
+const ERROR_PAGE_READ = 'async (page) => Promise.all(page.context().pages().map(async (each) => ({ url: each.url(), documentURI: await each.evaluate(() => document.documentURI).catch(() => null) })))';
+const readAll = async (client, tabCount) => {
+  const answer = await client.call('browser_run_code_unsafe', { code: ERROR_PAGE_READ }, CALL_BOUND_MS);
+  const line = answer.text.split('\n').find((candidate) => candidate.trim().startsWith('['));
+  let pages = null;
+  try { pages = line ? JSON.parse(line.trim()) : null; } catch { pages = null; }
+  return { ms: answer.ms, isError: answer.isError, tabs: tabCount, msPerTab: tabCount ? Math.round(answer.ms / tabCount) : null, pages, text: pages ? undefined : answer.text.slice(0, 400) };
+};
 const evaluate = async (client) => {
   const answer = await client.call('browser_evaluate', { function: probe }, CALL_BOUND_MS);
   const at = answer.text.indexOf('{');
@@ -158,15 +170,19 @@ try {
       record.tidy = null;
     }
 
-    // The context still answers, on the tab now current, and every other tab is read once.
+    // The context still answers, on the tab now current, and every other tab is read once:
+    // all of them at once, the way the resume reads them, and then one after another, each
+    // made current, which is what the one read saves; both are timed, per tab.
     record.currentAfterTheTidy = await evaluate(resume);
     const snapshot = await resume.call('browser_snapshot', {}, CALL_BOUND_MS);
     record.snapshot = { ms: snapshot.ms, isError: snapshot.isError, head: snapshot.text.slice(0, 300) };
     const after = tabs(await resume.call('browser_tabs', { action: 'list' }, CALL_BOUND_MS));
+    record.documentRead = await readAll(resume, after.length);
     record.others = [];
     for (const tab of after.filter((candidate) => !candidate.current)) {
-      await resume.call('browser_tabs', { action: 'select', index: tab.index }, CALL_BOUND_MS);
-      record.others.push({ index: tab.index, url: tab.url, title: tab.title, probe: await evaluate(resume) });
+      const select = await resume.call('browser_tabs', { action: 'select', index: tab.index }, CALL_BOUND_MS);
+      const read = await evaluate(resume);
+      record.others.push({ index: tab.index, url: tab.url, title: tab.title, selectMs: select.ms, probe: read, msForThisTab: select.ms + read.ms });
     }
     const current = after.find((tab) => tab.current);
     if (current && record.others.length) await resume.call('browser_tabs', { action: 'select', index: current.index }, CALL_BOUND_MS);

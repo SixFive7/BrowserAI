@@ -32,6 +32,8 @@ internal sealed class NoStoreSite : IAsyncDisposable
     private readonly CancellationTokenSource _stopping = new();
     private readonly Task _serving;
     private int _requests;
+    private int _stopped;
+    private int _disposed;
 
     private NoStoreSite(TcpListener listener)
     {
@@ -62,13 +64,18 @@ internal sealed class NoStoreSite : IAsyncDisposable
         return new NoStoreSite(listener);
     }
 
-    /// <inheritdoc />
-    /// <remarks>
-    /// <b>The listener stops first</b>, so the port refuses from this moment on, and the
-    /// loop ends with it.
-    /// </remarks>
-    public async ValueTask DisposeAsync()
+    /// <summary>
+    /// Ends the site: the listener stops, so the port refuses every connection from this
+    /// moment on, and the loop ends with it. Asked again, it does nothing.
+    /// </summary>
+    /// <returns>A task that completes once the loop has ended.</returns>
+    public async Task StopAsync()
     {
+        if (Interlocked.Exchange(ref _stopped, 1) is not 0)
+        {
+            return;
+        }
+
         await _stopping.CancelAsync();
         _listener.Stop();
 
@@ -80,8 +87,17 @@ internal sealed class NoStoreSite : IAsyncDisposable
         {
             // The loop ends on the stop, which is the ordinary way out of it.
         }
+    }
 
-        _stopping.Dispose();
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await StopAsync();
+
+        if (Interlocked.Exchange(ref _disposed, 1) is 0)
+        {
+            _stopping.Dispose();
+        }
     }
 
     private async Task ServeAsync()

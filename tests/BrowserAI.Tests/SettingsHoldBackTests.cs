@@ -194,7 +194,7 @@ internal sealed class SettingsHoldBackTests
 
         await Assert.That((bool?)again["isError"]).IsTrue();
         await Assert.That(TextOf(again)).Contains("- headed: the last run had true, this call asks for false\n");
-        await Assert.That(TextOf(again)).Contains("the session's browser has not started yet, so the first browser call after it starts the browser with these settings.");
+        await Assert.That(TextOf(again)).Contains("the session's browser has not started yet, so it starts with these settings at that call in a Firefox session, and at the first browser call after it in a Chromium one.");
     }
 
     /// <summary>

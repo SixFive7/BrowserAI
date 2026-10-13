@@ -316,10 +316,18 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>An answer and not a refusal</b>, so it lives here and not in
     /// <c>SessionErrors</c>.
     /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-13 by the maintainer's 161 (previously "Every browser call that
+    /// names this session is refused until browserai_resume opens it again, and the first
+    /// browser call after that reopens the tabs.")</i>: a Firefox session's resume starts its
+    /// browser and reopens the tabs itself since that day, and a Chromium session's first
+    /// browser call after the resume still does.
+    /// </para>
     /// </remarks>
     public const string ClosedByTheAgent =
         "Closed. The browser closed itself, so what it held is written to disk, and the session is kept: its profile with the logins and cookies, its site storage, and its tabs with their history. "
-        + "Every browser call that names this session is refused until browserai_resume opens it again, and the first browser call after that reopens the tabs.";
+        + "Every browser call that names this session is refused until browserai_resume opens it again. "
+        + "The tabs reopen when the browser starts again: at that resume in a Firefox session, at the first browser call after it in a Chromium one.";
 
     /// <summary>
     /// What <c>browserai_close</c> answers when the session had no browser up.

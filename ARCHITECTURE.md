@@ -1114,7 +1114,9 @@ again on `SessionTimes.FirefoxRestorePoll` until a reopened tab is up and the li
 for `SessionTimes.FirefoxRestoreQuiet`, bounded by `SessionTimes.FirefoxRestoreWait`, then
 selects the first reopened tab and closes the blank page, and `FirefoxRestore.Note` writes
 what came back into the resume's answer, reading upstream's tab lines through
-`UpstreamTab`. A profile with none of `FirefoxRestore.SessionFiles` is read once. The start
+`UpstreamTab`; a tab on Firefox's error page is told by its `document.documentURI`, read
+for every tab at once through one `browser_run_code_unsafe` call
+(`FirefoxRestore.ErrorPageRead`, matched by `FirefoxRestore.Match`). A profile with none of `FirefoxRestore.SessionFiles` is read once. The start
 holds the countdown through `LiveSession.Driving` and arms the browser's watch as a
 forwarded call does, and it is a gate: `LiveSession.BeginTheBrowserStart` marks it before
 the session is published, `LiveSession.BrowserStartSettled` completes when it ends, and

@@ -1058,7 +1058,10 @@ internal static class SessionToolSurface
             // ⚠️ 2026-10-10, round 2 of the texts review, first page 10: the tools that
             // still answer a closed session are all four, this one included (previously
             // "{CatchUp}, {ChangePurpose} and {Destroy} still answer it").
-            + $"After this, every browser call that names the session is refused, saying who closed it and why, until {Resume} opens it again, and the first browser call after that reopens the tabs; {CatchUp}, {ChangePurpose}, {Destroy} and this tool still answer it. "
+            // ⚠️ 2026-10-13, the maintainer's 161 (previously "until {Resume} opens it again,
+            // and the first browser call after that reopens the tabs;"): a Firefox session's
+            // resume starts its browser and reopens the tabs itself since that day.
+            + $"After this, every browser call that names the session is refused, saying who closed it and why, until {Resume} opens it again, and the tabs reopen when the browser starts again: at that {Resume} in a Firefox session, at the first browser call after it in a Chromium one; {CatchUp}, {ChangePurpose}, {Destroy} and this tool still answer it. "
             + "Call it when the work in a session is done for now and the session should stay resumable, or to free what an open browser holds. "
             + $"To delete the session and everything in it, call {Destroy} instead.",
             new JsonObject

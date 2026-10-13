@@ -34,8 +34,12 @@ internal sealed class FirefoxRestoreTests
     /// <summary>A page a restore reopens, as the double lists it.</summary>
     private static readonly (string Title, string Url) Reopened = ("Reopened page", "http://127.0.0.1:54321/reopened?tab=1");
 
-    /// <summary>A page whose server had ended, as the double lists it once Firefox's error page is up.</summary>
-    private static readonly (string Title, string Url) Unreachable = (FirefoxRestore.ErrorPageTitle, "http://127.0.0.1:54322/gone?tab=1");
+    /// <summary>
+    /// A page whose server had ended, as the double lists it once Firefox's error page is up:
+    /// under its own address, with the title a Firefox in Dutch gives the page, which is not
+    /// what tells it apart.
+    /// </summary>
+    private static readonly (string Title, string Url) Unreachable = ("Probleem bij het laden van de pagina", "http://127.0.0.1:54322/gone?tab=1");
 
     /// <summary>
     /// Upstream's tab line is read back field by field, whatever a page put in its title,
@@ -94,6 +98,62 @@ internal sealed class FirefoxRestoreTests
     }
 
     /// <summary>
+    /// The two tools the start calls are upstream's own, in the committed tool list, and the
+    /// committed verdicts allow both.
+    /// </summary>
+    /// <remarks>
+    /// <b>Asked of the shipped files and not of constants</b>, as the idle close's own tool is:
+    /// the start sends both to the session's child and asks no verdict, so a rename upstream,
+    /// or a verdicts file that stopped allowing one, would leave a resume that starts nothing
+    /// or reads nothing, and this is where that turns red.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheToolsTheStartCallsAreUpstreamsOwnAndAllowed()
+    {
+        var surface = await UpstreamSurface.DefaultSurfaceAsync();
+
+        foreach (var tool in new[] { FirefoxRestore.TabsTool, FirefoxRestore.RunCodeTool })
+        {
+            await Assert.That(surface).Contains(tool);
+            await Assert.That(RepositoryVerdicts.Committed.Decide(tool).IsAllowed).IsTrue().Because(tool);
+        }
+    }
+
+    /// <summary>
+    /// The read of every tab's document URI is matched to the tab list by position when the
+    /// addresses agree and by address when they do not, and only a document URI of Firefox's
+    /// network error page marks a tab.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDocumentReadIsMatchedToTheTabListAndOnlyTheErrorPageMarksATab()
+    {
+        static UpstreamTab Tab(int index, string url) => new(index, index is 0, "a title in any language", url, Crashed: false);
+
+        var pages = FirefoxRestore.ParsePages(
+            "### Result\n"
+            + "[{\"url\":\"http://127.0.0.1:1/\",\"documentURI\":\"about:neterror?e=connectionFailure\"},"
+            + "{\"url\":\"http://127.0.0.1:2/\",\"documentURI\":\"http://127.0.0.1:2/\"},"
+            + "{\"url\":\"http://127.0.0.1:3/\",\"documentURI\":null}]\n"
+            + "### Page\n- Page URL: http://127.0.0.1:1/");
+
+        await Assert.That(pages.Count).IsEqualTo(3);
+
+        // In the same order: by position.
+        await Assert.That(FirefoxRestore.Match([Tab(0, "http://127.0.0.1:1/"), Tab(1, "http://127.0.0.1:2/"), Tab(2, "http://127.0.0.1:3/")], pages))
+            .IsEquivalentTo(new[] { 0 });
+
+        // In another order, or with a tab the read did not see: by address.
+        await Assert.That(FirefoxRestore.Match([Tab(0, "http://127.0.0.1:2/"), Tab(1, "http://127.0.0.1:1/")], pages))
+            .IsEquivalentTo(new[] { 1 });
+        await Assert.That(FirefoxRestore.Match([Tab(0, "http://127.0.0.1:9/")], pages).Count).IsEqualTo(0);
+
+        // An answer that holds no list marks nothing.
+        await Assert.That(FirefoxRestore.ParsePages("### Error\nTimeoutError: something").Count).IsEqualTo(0);
+    }
+
+    /// <summary>
     /// A resumed Firefox session whose profile holds a session: the resume starts the
     /// browser itself, waits for the reopened tabs, makes the first of them current, closes
     /// Playwright's blank page, and says which tabs came back and which shows Firefox's error
@@ -103,9 +163,9 @@ internal sealed class FirefoxRestoreTests
     [Test]
     public async Task AResumedFirefoxSessionStartsItsBrowserClosesTheBlankPageAndSaysWhatCameBack()
     {
-        var tabs = new FakeFirefoxTabs([Reopened, Unreachable]);
+        var tabs = new FakeFirefoxTabs([Reopened, Unreachable], errorPages: [Unreachable.Url]);
 
-        await using var sessions = await FirefoxRigAsync(tabs.Behaviour());
+        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(), tabs.DocumentRead());
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = await ClosedFirefoxSessionAsync(sessions, rig, "restore-reopened", holdsASession: true);
@@ -131,7 +191,11 @@ internal sealed class FirefoxRestoreTests
         await Assert.That(text).Contains("this resume started the browser, and Firefox's session restore reopened 2 tabs. The blank page the browser starts on was closed");
         await Assert.That(text).Contains($"- 0: (current) [{Reopened.Title}]({Reopened.Url})");
         await Assert.That(text).Contains($"- 1: [{Unreachable.Title}]({Unreachable.Url}) -- Firefox's error page: nothing answered at this address");
+        await Assert.That(text).DoesNotContain($"({Reopened.Url}) -- Firefox's error page");
         await Assert.That(text).DoesNotContain(SessionManager.WhatTheFirstBrowserCallReopens);
+
+        // Which tabs show the error page was read once, for every tab at once.
+        await Assert.That(tabs.DocumentReads).IsEqualTo(1);
 
         // The resume made the session, so it is not told it is driving somebody else's.
         await Assert.That(text).DoesNotContain("this connection did not create");
@@ -147,13 +211,14 @@ internal sealed class FirefoxRestoreTests
     {
         var tabs = new FakeFirefoxTabs([Reopened]);
 
-        await using var sessions = await FirefoxRigAsync(tabs.Behaviour());
+        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(), tabs.DocumentRead());
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = await ClosedFirefoxSessionAsync(sessions, rig, "restore-nothing", holdsASession: false);
         var text = TextOf(await ResumeAsync(rig, directory));
 
         await Assert.That(tabs.Actions).IsEquivalentTo(new[] { "list" });
+        await Assert.That(tabs.DocumentReads).IsEqualTo(0);
         await Assert.That(text).Contains("Firefox had no tabs of this session to reopen, so the browser shows one blank page.");
     }
 
@@ -194,7 +259,7 @@ internal sealed class FirefoxRestoreTests
         var tabs = new FakeFirefoxTabs([Reopened]);
         var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(held.Task));
+        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(held.Task), tabs.DocumentRead());
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = await ClosedFirefoxSessionAsync(sessions, rig, "restore-gate", holdsASession: true);
@@ -249,7 +314,7 @@ internal sealed class FirefoxRestoreTests
         var clock = new ManualClock();
         var tabs = new FakeFirefoxTabs([Reopened], listsBeforeTheRestore: int.MaxValue);
 
-        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(), clock);
+        await using var sessions = await FirefoxRigAsync(tabs.Behaviour(), tabs.DocumentRead(), clock);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = await ClosedFirefoxSessionAsync(sessions, rig, "restore-never", holdsASession: true);
@@ -270,6 +335,7 @@ internal sealed class FirefoxRestoreTests
         await Assert.That(text).Contains($"no tab of the session's last run had come up after {SessionErrors.Duration(SessionTimes.FirefoxRestoreWait)}");
         await Assert.That(tabs.Actions).DoesNotContain("close 0");
         await Assert.That(tabs.Now.Tabs.Count).IsEqualTo(1);
+        await Assert.That(tabs.DocumentReads).IsEqualTo(0);
     }
 
     /// <summary>
@@ -295,10 +361,8 @@ internal sealed class FirefoxRestoreTests
     {
         await SuiteEnvironment.RequireProvisionedFirefoxAsync();
 
-        var site = NoStoreSite.Start();
-        var stopped = false;
+        await using var site = NoStoreSite.Start();
 
-        try
         {
             await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
             await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -336,8 +400,7 @@ internal sealed class FirefoxRestoreTests
             await Assert.That((bool?)closed["isError"]).IsNotEqualTo(true).Because(TextOf(closed));
 
             // The server ends, so the page can neither load nor come back from the cache.
-            await site.DisposeAsync();
-            stopped = true;
+            await site.StopAsync();
 
             var resumed = await ResumeAsync(rig, directory);
             var text = TextOf(resumed);
@@ -365,26 +428,28 @@ internal sealed class FirefoxRestoreTests
             await Assert.That(listed).Contains(site.Url);
             await Assert.That(listed).DoesNotContain("about:blank");
         }
-        finally
-        {
-            if (!stopped)
-            {
-                await site.DisposeAsync();
-            }
-        }
     }
 
-    /// <summary>A rig whose session children answer <c>browser_tabs</c> with one behaviour, Firefox installed.</summary>
-    /// <param name="tabs">The behaviour.</param>
+    /// <summary>
+    /// A rig whose session children answer <c>browser_tabs</c> with one behaviour and the read
+    /// of every tab's document URI with another, Firefox installed.
+    /// </summary>
+    /// <param name="tabs">The tab tool's behaviour.</param>
+    /// <param name="documents">The run-code tool's behaviour, or <see langword="null"/> for none.</param>
     /// <param name="clock">The session's clock, or <see langword="null"/> for the system's.</param>
     /// <returns>The rig.</returns>
-    private static async Task<RigSessionEnvironment> FirefoxRigAsync(FakeToolBehaviour tabs, ManualClock? clock = null)
+    private static async Task<RigSessionEnvironment> FirefoxRigAsync(FakeToolBehaviour tabs, FakeToolBehaviour? documents = null, ManualClock? clock = null)
     {
         var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools[FirefoxRestore.TabsTool] = tabs;
                 child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
+
+                if (documents is not null)
+                {
+                    child.Tools[FirefoxRestore.RunCodeTool] = documents;
+                }
             },
             opensDefaultSession: false,
             clock: clock);

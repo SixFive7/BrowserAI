@@ -65,6 +65,20 @@ for (const name of names) {
 }
 
 line();
+line('| Repetition | Resume | One read of every tab, ms | Tabs | ms per tab | Document URIs | One tab at a time, ms per tab |');
+line('|---|--:|--:|--:|--:|---|---|');
+for (const name of names) {
+  const result = await read(join(batch, name, 'result.json'));
+  for (const cycle of result?.cycles ?? []) {
+    const all = cycle.documentRead;
+    if (!all) continue;
+    const uris = (all.pages ?? []).map((page) => `${page.url === 'about:blank' ? 'blank' : page.url.replace(/^http:\/\/127\.0\.0\.1:(\d+)\/[^?]*/, ':$1')}=${String(page.documentURI).slice(0, 28)}`).join(', ') || `unread: ${(all.text ?? '').slice(0, 60)}`;
+    const oneByOne = (cycle.others ?? []).map((other) => other.msForThisTab).join(', ') || '-';
+    line(`| ${name} | ${cycle.cycle} | ${all.ms}${all.isError ? ' (error)' : ''} | ${all.tabs} | ${all.msPerTab ?? '-'} | ${uris} | ${oneByOne} |`);
+  }
+}
+
+line();
 line('| Arm | Repetitions | Launches past 5 s | First list the blank page alone | Tidy failed | Snapshot failed | Second resume met the first one\'s tabs |');
 line('|---|--:|--:|--:|--:|--:|--:|');
 for (const [arm, results] of byArm) {

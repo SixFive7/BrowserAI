@@ -41,12 +41,53 @@ internal sealed class FakeFirefoxTabs
     /// <summary>Makes the double.</summary>
     /// <param name="reopened">The tabs Firefox reopens, in the order they come up.</param>
     /// <param name="listsBeforeTheRestore">How many lists hold the blank page alone before the reopened tabs are up.</param>
-    public FakeFirefoxTabs(IReadOnlyList<(string Title, string Url)> reopened, int listsBeforeTheRestore = 1)
+    /// <param name="errorPages">The addresses whose tab shows Firefox's network error page, which the read of every tab's document URI says.</param>
+    public FakeFirefoxTabs(IReadOnlyList<(string Title, string Url)> reopened, int listsBeforeTheRestore = 1, IReadOnlyCollection<string>? errorPages = null)
     {
         ArgumentNullException.ThrowIfNull(reopened);
 
         _reopened = [.. reopened];
         _listsBeforeTheRestore = listsBeforeTheRestore;
+        _errorPages = [.. errorPages ?? []];
+    }
+
+    private readonly HashSet<string> _errorPages;
+
+    /// <summary>How many times the snippet that reads every tab's document URI was run.</summary>
+    public int DocumentReads => Volatile.Read(ref _documentReads);
+
+    private int _documentReads;
+
+    /// <summary>
+    /// The behaviour to install on a double's <c>browser_run_code_unsafe</c>: the answer the
+    /// start's one read of every tab's <c>document.documentURI</c> gets, as upstream returns a
+    /// snippet's value, in the tabs' order.
+    /// </summary>
+    /// <returns>The behaviour.</returns>
+    public FakeToolBehaviour DocumentRead() => new() { RawResultFor = _ => ReadDocuments() };
+
+    private string ReadDocuments()
+    {
+        lock (_gate)
+        {
+            _ = Interlocked.Increment(ref _documentReads);
+
+            var pages = new JsonArray();
+
+            foreach (var (_, url) in _tabs)
+            {
+                pages.Add(new JsonObject
+                {
+                    ["url"] = url,
+                    ["documentURI"] = _errorPages.Contains(url) ? $"about:neterror?e=connectionFailure&u={Uri.EscapeDataString(url)}" : url,
+                });
+            }
+
+            return new JsonObject
+            {
+                ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = $"### Result\n{pages.ToJsonString()}" }),
+            }.ToJsonString();
+        }
     }
 
     /// <summary>Every action asked of the tool, in order, with its index when it had one.</summary>

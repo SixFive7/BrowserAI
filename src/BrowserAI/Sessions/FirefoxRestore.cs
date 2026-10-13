@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
@@ -44,13 +45,15 @@ namespace BrowserAI.Sessions;
 /// browser call still starts its browser.
 /// </para>
 /// <para>
-/// <b>Upstream's own tool and nothing else</b>, the way the idle close is a
-/// <c>browser_close</c>: every step is a <c>browser_tabs</c> call to the session's child, a
-/// list that starts the browser and then reads the tabs, a <c>select</c> that makes the first
-/// reopened tab the current one, and a <c>close</c> of the blank page. Nothing reads or drives
-/// Playwright any other way. A forwarded call that names the session meanwhile waits for the
-/// start to end (<see cref="LiveSession.BrowserStartSettled"/>), so no call acts on the blank
-/// page or on a tab that is being closed.
+/// <b>Upstream's own tools and nothing else</b>, the way the idle close is a
+/// <c>browser_close</c>: <c>browser_tabs</c> calls to the session's child, a list that starts
+/// the browser and then reads the tabs, a <c>select</c> that makes the first reopened tab the
+/// current one and a <c>close</c> of the blank page; and one <c>browser_run_code_unsafe</c>
+/// call that reads every tab's <c>document.documentURI</c> at once, the one way the child
+/// offers to read a tab that is not its current one without making it current. A forwarded
+/// call that names the session meanwhile waits for the start to end
+/// (<see cref="LiveSession.BrowserStartSettled"/>), so no call acts on the blank page or on a
+/// tab that is being closed.
 /// </para>
 /// <para>
 /// <b>Undone when upstream fixes the wait</b>: the maintainer's 161 took direction d beside
@@ -69,18 +72,39 @@ internal static class FirefoxRestore
     /// </remarks>
     public const string TabsTool = "browser_tabs";
 
+    /// <summary>Upstream's own tool that runs a Playwright snippet, spelled as upstream spells it.</summary>
+    /// <remarks>
+    /// <b>Called once per start, with <see cref="ErrorPageRead"/> and nothing else</b>, held
+    /// against the committed tool list and the verdicts file by the suite as
+    /// <see cref="TabsTool"/> is.
+    /// </remarks>
+    public const string RunCodeTool = "browser_run_code_unsafe";
+
     /// <summary>
-    /// The title Firefox's network error page carries, which is how a reopened tab whose page
-    /// could not be reached is told from the rest.
+    /// What a tab's <c>document.documentURI</c> starts with while it shows Firefox's network
+    /// error page, which is how a reopened tab whose page could not be reached is told apart.
     /// </summary>
     /// <remarks>
-    /// <b>Firefox's own string, read through Playwright's tab list</b>: the error page commits
-    /// under the page's own address, so the address cannot tell it apart, and the tab list
-    /// gives each tab's title and address and nothing else. See the kb entry for the
-    /// measurement it rests on, and the real-browser arm that goes red the day Firefox words
-    /// it differently.
+    /// <b>Firefox's own address for the page, the same in every language</b>: the error page
+    /// commits under the failed page's own address, so <c>location</c> and the tab list cannot
+    /// tell it apart, and its title is Firefox's localised text. Decided 2026-10-13 for the
+    /// maintainer's 161, over the title the first draft read, because a Firefox in another
+    /// language words the title differently. Firefox's own <c>DocLoader</c> log of 2026-10-13
+    /// named the page <c>about:neterror?e=connectionFailure</c>.
     /// </remarks>
-    public const string ErrorPageTitle = "Problem loading page";
+    public const string ErrorPagePrefix = "about:neterror";
+
+    /// <summary>
+    /// The snippet <see cref="RunCodeTool"/> is handed: every tab's address and
+    /// <c>document.documentURI</c>, read at once and in the order the context lists its pages.
+    /// </summary>
+    /// <remarks>
+    /// A tab whose document cannot be evaluated answers <c>null</c> and is read as not on the
+    /// error page. The child's tab list is built from the same pages in the same order, which
+    /// <see cref="Match"/> checks address by address before it trusts it.
+    /// </remarks>
+    public const string ErrorPageRead =
+        "async (page) => Promise.all(page.context().pages().map(async (each) => ({ url: each.url(), documentURI: await each.evaluate(() => document.documentURI).catch(() => null) })))";
 
     /// <summary>
     /// The files Firefox restores a session from, relative to the profile, in the order
@@ -132,7 +156,7 @@ internal static class FirefoxRestore
         {
             FirefoxRestoreLog.DidNotStart(live.Logger, live.Location.FullPath, failure);
 
-            return new FirefoxStart(FirefoxStartOutcome.DidNotStart, [], ClosedTheBlankPage: false, failure, live.Child.ChildHasGone);
+            return new FirefoxStart(FirefoxStartOutcome.DidNotStart, [], ClosedTheBlankPage: false, Unreachable: [], failure, live.Child.ChildHasGone);
         }
 
         // A browser is up now, so its end is watched, as after a forwarded call.
@@ -144,7 +168,7 @@ internal static class FirefoxRestore
         {
             FirefoxRestoreLog.Started(live.Logger, live.Location.FullPath, clock.GetElapsedTime(started), tabs.Count, closed: false);
 
-            return new FirefoxStart(FirefoxStartOutcome.NothingToReopen, tabs, ClosedTheBlankPage: false, Failure: null, ServerEnded: false);
+            return new FirefoxStart(FirefoxStartOutcome.NothingToReopen, tabs, ClosedTheBlankPage: false, Unreachable: [], Failure: null, ServerEnded: false);
         }
 
         var closed = false;
@@ -211,11 +235,16 @@ internal static class FirefoxRestore
             tabs = listed.Tabs;
         }
 
-        FirefoxRestoreLog.Started(live.Logger, live.Location.FullPath, clock.GetElapsedTime(started), tabs.Count, closed);
-
         var outcome = closed || tabs.Count > 1 ? FirefoxStartOutcome.Reopened : FirefoxStartOutcome.NothingCameUp;
 
-        return new FirefoxStart(outcome, tabs, closed, Failure: null, ServerEnded: false);
+        // Which reopened tabs show Firefox's error page, read once for all of them.
+        IReadOnlyList<int> unreachable = outcome is FirefoxStartOutcome.Reopened && live.Closed is null && !live.CloseIsInFlight
+            ? await ErrorPagesAsync(live, tabs, clock, cancellationToken).ConfigureAwait(false)
+            : [];
+
+        FirefoxRestoreLog.Started(live.Logger, live.Location.FullPath, clock.GetElapsedTime(started), tabs.Count, closed);
+
+        return new FirefoxStart(outcome, tabs, closed, unreachable, Failure: null, ServerEnded: false);
     }
 
     /// <summary>
@@ -299,7 +328,7 @@ internal static class FirefoxRestore
         {
             _ = text.Append("  ").Append(tab.Line);
 
-            if (tab.IsErrorPage)
+            if (start.Unreachable.Contains(tab.Index))
             {
                 _ = text.Append(" -- Firefox's error page: nothing answered at this address when the tab was reopened, so the page it had is not there. Navigate to it again once its server is back.");
             }
@@ -338,6 +367,153 @@ internal static class FirefoxRestore
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Which tabs show Firefox's error page, matched from what <see cref="ErrorPageRead"/>
+    /// answered to the child's tab list.
+    /// </summary>
+    /// <remarks>
+    /// <b>By position when every address agrees, and by address otherwise</b>: the child's
+    /// list and the context's pages are the same pages in the same order, so an answer whose
+    /// addresses line up with the list is read in its order, and one that does not, such as a
+    /// tab that came up between the list and the read, is matched address by address, each
+    /// answer used once.
+    /// </remarks>
+    /// <param name="tabs">The child's tab list.</param>
+    /// <param name="pages">Each page's address and document URI, in the context's order.</param>
+    /// <returns>The <see cref="UpstreamTab.Index"/> of every tab on the error page.</returns>
+    internal static List<int> Match(IReadOnlyList<UpstreamTab> tabs, IReadOnlyList<(string Url, string? DocumentUri)> pages)
+    {
+        ArgumentNullException.ThrowIfNull(tabs);
+        ArgumentNullException.ThrowIfNull(pages);
+
+        var aligned = tabs.Count == pages.Count
+            && tabs.Select((tab, at) => string.Equals(tab.Url, pages[at].Url, StringComparison.Ordinal)).All(same => same);
+        var used = new bool[pages.Count];
+        var unreachable = new List<int>();
+
+        for (var at = 0; at < tabs.Count; at++)
+        {
+            var found = aligned ? at : -1;
+
+            for (var candidate = 0; found < 0 && candidate < pages.Count; candidate++)
+            {
+                if (!used[candidate] && string.Equals(tabs[at].Url, pages[candidate].Url, StringComparison.Ordinal))
+                {
+                    found = candidate;
+                }
+            }
+
+            if (found < 0)
+            {
+                continue;
+            }
+
+            used[found] = true;
+
+            if (pages[found].DocumentUri is { } uri && uri.StartsWith(ErrorPagePrefix, StringComparison.Ordinal))
+            {
+                unreachable.Add(tabs[at].Index);
+            }
+        }
+
+        return unreachable;
+    }
+
+    /// <summary>
+    /// What <see cref="ErrorPageRead"/> answered: each page's address and document URI, or
+    /// nothing when the answer holds no list of them.
+    /// </summary>
+    /// <param name="text">The text of the call's answer.</param>
+    /// <returns>The pages, in the context's order.</returns>
+    internal static List<(string Url, string? DocumentUri)> ParsePages(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        foreach (var line in text.Split('\n'))
+        {
+            var trimmed = line.Trim();
+
+            if (!trimmed.StartsWith('['))
+            {
+                continue;
+            }
+
+            try
+            {
+                if (JsonNode.Parse(trimmed) is not JsonArray array)
+                {
+                    continue;
+                }
+
+                return [.. array.Select(entry => (
+                    Url: entry?["url"] is JsonValue url && url.GetValueKind() is JsonValueKind.String ? url.GetValue<string>() : string.Empty,
+                    DocumentUri: entry?["documentURI"] is JsonValue uri && uri.GetValueKind() is JsonValueKind.String ? uri.GetValue<string>() : null))];
+            }
+            catch (JsonException)
+            {
+                // Not the list; the answer's next line may be.
+            }
+        }
+
+        return [];
+    }
+
+    /// <summary>
+    /// Reads every tab's <c>document.documentURI</c> through one <see cref="RunCodeTool"/> call,
+    /// bounded by <see cref="SessionTimes.FirefoxRestoreWait"/>, and says which tabs show
+    /// Firefox's error page.
+    /// </summary>
+    /// <remarks>
+    /// <b>A read that fails marks nothing</b>, and the answer then lists the tabs without the
+    /// sentence an error page gets: what the tab list says is still true, and the session's log
+    /// says why the read did not answer.
+    /// </remarks>
+    /// <param name="live">The session.</param>
+    /// <param name="tabs">The child's tab list, as the start left it.</param>
+    /// <param name="clock">The session's clock.</param>
+    /// <param name="cancellationToken">The resume's token.</param>
+    /// <returns>The <see cref="UpstreamTab.Index"/> of every tab on the error page.</returns>
+    private static async Task<IReadOnlyList<int>> ErrorPagesAsync(LiveSession live, IReadOnlyList<UpstreamTab> tabs, TimeProvider clock, CancellationToken cancellationToken)
+    {
+        using var bound = new CancellationTokenSource(SessionTimes.FirefoxRestoreWait, clock);
+        using var either = CancellationTokenSource.CreateLinkedTokenSource(bound.Token, cancellationToken);
+
+        ChildAnswer answer;
+
+        try
+        {
+            answer = await live.Child.AskAsync(
+                RequestMethods.ToolsCall,
+                new JsonObject
+                {
+                    ["name"] = RunCodeTool,
+                    ["arguments"] = new JsonObject { ["code"] = ErrorPageRead },
+                },
+                either.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (bound.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            FirefoxRestoreLog.ErrorPagesUnread(live.Logger, live.Location.FullPath, $"no answer within {SessionErrors.Duration(SessionTimes.FirefoxRestoreWait)}");
+            return [];
+        }
+
+        if (answer.Response?.Result is not JsonObject result)
+        {
+            FirefoxRestoreLog.ErrorPagesUnread(live.Logger, live.Location.FullPath, FirstLine(answer.ProtocolFailure?.Message ?? answer.TransportFailure?.Message ?? "the browser server gave no answer"));
+            return [];
+        }
+
+        var text = TextOf(result);
+
+        if (result["isError"] is JsonValue flag && flag.GetValueKind() is JsonValueKind.True)
+        {
+            FirefoxRestoreLog.ErrorPagesUnread(live.Logger, live.Location.FullPath, FirstLine(text));
+            return [];
+        }
+
+        return Match(tabs, ParsePages(text));
     }
 
     /// <summary>One <c>browser_tabs</c> call to the session's child, and the tab list it answered with.</summary>
@@ -436,12 +612,14 @@ internal enum FirefoxStartOutcome
 /// <param name="Outcome">How it ended.</param>
 /// <param name="Tabs">The tabs, as the child listed them last.</param>
 /// <param name="ClosedTheBlankPage">Whether Playwright's blank page was closed.</param>
+/// <param name="Unreachable">The <see cref="UpstreamTab.Index"/> of every tab on Firefox's error page.</param>
 /// <param name="Failure">Why the browser did not start, in one line, or <see langword="null"/>.</param>
 /// <param name="ServerEnded">Whether the browser server ended with a start that failed.</param>
 internal sealed record FirefoxStart(
     FirefoxStartOutcome Outcome,
     IReadOnlyList<UpstreamTab> Tabs,
     bool ClosedTheBlankPage,
+    IReadOnlyList<int> Unreachable,
     string? Failure,
     bool ServerEnded);
 
@@ -461,9 +639,6 @@ internal sealed record UpstreamTab(int Index, bool IsCurrent, string Title, stri
 {
     private const string CurrentMark = " (current)";
     private const string CrashedMark = " [crashed]";
-
-    /// <summary>Whether this tab shows Firefox's network error page.</summary>
-    public bool IsErrorPage => string.Equals(Title, FirefoxRestore.ErrorPageTitle, StringComparison.Ordinal);
 
     /// <summary>The tab as upstream's own line spells it, on one line whatever its title holds.</summary>
     public string Line =>
@@ -573,4 +748,14 @@ internal static partial class FirefoxRestoreLog
         Level = LogLevel.Warning,
         Message = "The resume of the Firefox session at {Session} could not start its browser: {Failure}. The next browser call starts it again if the browser server is still there.")]
     public static partial void DidNotStart(ILogger logger, string session, string failure);
+
+    /// <summary>The read of which reopened tabs show Firefox's error page did not answer.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="why">What the child said, in one line.</param>
+    [LoggerMessage(
+        EventId = 7303,
+        Level = LogLevel.Warning,
+        Message = "The resume of the Firefox session at {Session} could not read which reopened tabs show Firefox's error page: {Why}. Its answer lists the tabs without saying so.")]
+    public static partial void ErrorPagesUnread(ILogger logger, string session, string why);
 }

@@ -1462,8 +1462,11 @@ internal static class SessionErrors
 
         var kept = closure.Cause switch
         {
+            // ⚠️ 2026-10-13, the maintainer's 161 (previously "and the first browser call after
+            // the resume reopens the tabs that were open, with"): a Firefox session's resume
+            // starts its browser and reopens the tabs itself since that day.
             _ when CloseReasons.WasACleanClose(closure.Cause) =>
-                "Kept: the profile on disk, with its persistent cookies, localStorage and IndexedDB, and the first browser call after the resume reopens the tabs that were open, with their history, sessionStorage, typed text and session cookies. "
+                "Kept: the profile on disk, with its persistent cookies, localStorage and IndexedDB, and the tabs that were open, with their history, sessionStorage, typed text and session cookies, which reopen when the browser starts again: at the resume in a Firefox session, at the first browser call after it in a Chromium one. "
                 + "Lost: refs from earlier snapshots, so call browser_tabs and browser_snapshot before you act; which tab was selected; and a page that was the answer to a form POST, which does not come back as it was.",
 
             SessionCloseCause.WindowClosed =>
@@ -1637,7 +1640,11 @@ internal static class SessionErrors
             .Append(session switch
             {
                 ResumeFinds.LiveWithItsBrowserUp => ": the session's browser then closes and opens again with these settings, and a clean close keeps its logins, cookies, storage, tabs and history.\n",
-                ResumeFinds.LiveWithNoBrowserYet => ": the session's browser has not started yet, so the first browser call after it starts the browser with these settings.\n",
+                // ⚠️ 2026-10-13, the maintainer's 161 (previously ": the session's browser has not
+                // started yet, so the first browser call after it starts the browser with these
+                // settings."): the call sent again opens the session afresh, and a Firefox
+                // session's resume starts its browser itself since that day.
+                ResumeFinds.LiveWithNoBrowserYet => ": the session's browser has not started yet, so it starts with these settings at that call in a Firefox session, and at the first browser call after it in a Chromium one.\n",
                 _ => ", and the session opens with these settings.\n",
             })
             .Append("To keep the last run's settings, send them instead: ").Append(SettingsHoldBack.LastRunAsACall(lastRun)).Append('.');

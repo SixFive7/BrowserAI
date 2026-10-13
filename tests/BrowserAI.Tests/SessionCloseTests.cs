@@ -787,7 +787,7 @@ internal sealed class SessionCloseTests
 
         await Assert.That((bool?)held["isError"]).IsTrue();
         await Assert.That(TextOf(held)).Contains($"- viewport: the last run had '1280x720', this call asks for '{BrowserConfiguration.DefaultViewport}' (the default, because the call left it out)\n");
-        await Assert.That(TextOf(held)).Contains("the session's browser has not started yet, so the first browser call after it starts the browser with these settings.");
+        await Assert.That(TextOf(held)).Contains("the session's browser has not started yet, so it starts with these settings at that call in a Firefox session, and at the first browser call after it in a Chromium one.");
 
         // Nothing was started, and the one child there is keeps the config it was
         // launched with: the viewport and the transcript the init asked for.

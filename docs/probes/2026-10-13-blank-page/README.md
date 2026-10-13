@@ -36,9 +36,13 @@ profile. Each resume:
    `document.documentURI` and title through `browser_evaluate`;
 4. makes the first reopened page current with `browser_tabs` `select` and closes the blank page
    with `close`, as `FirefoxRestore` does;
-5. reads the current tab again, takes a `browser_snapshot`, and selects every other tab once to
-   read it the same way, which says whether a tab whose server ended shows Firefox's error page
-   under its own address and with which title;
+5. reads the current tab again and takes a `browser_snapshot`; reads every tab's address and
+   `document.documentURI` at once with one `browser_run_code_unsafe` call, the snippet
+   `FirefoxRestore.ErrorPageRead` copied, which is how the resume tells a tab on Firefox's
+   error page by its `about:neterror` address and not by its title, whose words follow
+   Firefox's language; and then selects every other tab once to read it with
+   `browser_evaluate`, so the cost per tab of the one read and of a read tab by tab are both
+   in the row;
 6. lists the tabs, waits for the next session write, closes the browser cleanly, and reads
    `sessionstore.jsonlz4`, the session the next resume reopens.
 
