@@ -1,0 +1,5 @@
+runs: 12, holding what their mode says: 12
+  print-differ: 3 of 3
+  print-same: 3 of 3
+  stream-differ: 3 of 3
+  stream-same: 3 of 3

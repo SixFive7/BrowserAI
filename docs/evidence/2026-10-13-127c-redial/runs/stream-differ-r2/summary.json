@@ -1,0 +1,25 @@
+{
+  "run": "stream-differ-r2",
+  "client": "stream",
+  "mode": "differ",
+  "driverExit": 0,
+  "relays": 2,
+  "relayPids": [
+    97836,
+    79788
+  ],
+  "everyRelaysClientIsTheClientStarted": true,
+  "oneClientCreationTime": true,
+  "clientCreationTime": "134363612666033006",
+  "callsPassedPerConnection": "1:1 2:2",
+  "recordsRewritten": 1,
+  "toolResults": 4,
+  "refusalsTheModelSaw": 1,
+  "standInAnswersTheModelSaw": "1/1 2/1 2/2",
+  "otherResults": [],
+  "relay27Lines": 0,
+  "refusalLogLines": 1,
+  "records": "122044-134363612666033006-18a1460c5403614ea10891e13555f04fd59821819dc5e9c12c18b3b356b45f51.json",
+  "problems": "",
+  "holds": true
+}

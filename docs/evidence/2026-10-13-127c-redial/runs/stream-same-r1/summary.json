@@ -1,0 +1,25 @@
+{
+  "run": "stream-same-r1",
+  "client": "stream",
+  "mode": "same",
+  "driverExit": 0,
+  "relays": 2,
+  "relayPids": [
+    116072,
+    113348
+  ],
+  "everyRelaysClientIsTheClientStarted": true,
+  "oneClientCreationTime": true,
+  "clientCreationTime": "134363612568917627",
+  "callsPassedPerConnection": "1:1 2:3",
+  "recordsRewritten": 0,
+  "toolResults": 4,
+  "refusalsTheModelSaw": 0,
+  "standInAnswersTheModelSaw": "1/1 2/1 2/2 2/3",
+  "otherResults": [],
+  "relay27Lines": 1,
+  "refusalLogLines": 0,
+  "records": "29664-134363612568917627-b9007fa38308c197f8ab6d36040efd92c5f0520839409021a457f278c0b8ce93.json",
+  "problems": "",
+  "holds": true
+}

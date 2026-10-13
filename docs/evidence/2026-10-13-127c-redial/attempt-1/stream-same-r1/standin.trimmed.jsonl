@@ -1,0 +1,9 @@
+{"at":"2026-10-13T10:29:44.290Z","event":"listening","pipe":"\\\\.\\pipe\\BrowserAI-Background-127c-stream-same-r1-2b09bfdcfaa849afb5846a48d6f60045","mode":"same","pid":61480}
+{"at":"2026-10-13T10:29:45.445Z","event":"connected","connection":1}
+{"at":"2026-10-13T10:29:45.446Z","event":"received","connection":1,"method":"browserai/hello","id":"browserai-relay-hello","build":"2.0.1-alpha.0.12","relayPid":123520,"clientPid":70052,"client":{"name":"claude-code","version":"2.1.296"},"clientStarted":"134363609844999078","dataRoot":"%USERPROFILE%\\AppData\\Local\\BrowserAI-127c-measure\\stream-same-r1"}
+{"at":"2026-10-13T10:29:45.448Z","event":"sent","connection":1,"id":"browserai-relay-hello"}
+{"at":"2026-10-13T10:29:45.449Z","event":"received","connection":1,"method":"initialize","id":"browserai-relay-initialize-1"}
+{"at":"2026-10-13T10:29:45.449Z","event":"sent","connection":1,"id":"browserai-relay-initialize-1"}
+{"at":"2026-10-13T10:29:45.450Z","event":"received","connection":1,"method":"notifications/initialized"}
+{"at":"2026-10-13T10:29:45.648Z","event":"closed","connection":1}
+{"at":"2026-10-13T10:29:46.115Z","event":"stopping"}

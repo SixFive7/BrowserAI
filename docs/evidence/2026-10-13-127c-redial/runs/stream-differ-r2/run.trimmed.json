@@ -1,0 +1,14 @@
+{
+  "run": "stream-differ-r2",
+  "client": "stream",
+  "mode": "differ",
+  "claude": "%USERPROFILE%\\.vscode\\extensions\\anthropic.claude-code-2.1.296-win32-x64\\resources\\native-binary\\claude.exe",
+  "relay": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-127c\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.exe",
+  "pipe": "\\\\.\\pipe\\BrowserAI-Background-127c-stream-differ-r2-5bfcb4e7d7704bbd8524deebbdc76c85",
+  "port": 56270,
+  "driverExit": 0,
+  "relays": [
+    97836,
+    79788
+  ]
+}

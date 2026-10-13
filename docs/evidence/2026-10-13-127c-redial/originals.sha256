@@ -1,0 +1,107 @@
+693ccb40d6c24ffd3f80a2096cefa243b06d951b02c309c0f10f2fb163949968  ./runs.tsv
+663099474d25fdbbfdf7e1b6f869bbdbf5a9b0e5626c27178d55d4f7d85ed32e  ./summary.txt
+aca985b5900af081d42e6d5dd93c41a3e2405576f2acf852f967c57c420acc41  runs/print-differ-r1/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+159ef7aaf7f4c90c457f1fe97e0cd0ede1a523e7bd516ecfda77031575a75787  runs/print-differ-r1/summary.json
+630b1ceceb026bb1ee1ea01e0f79bea69b055e38b4b342282293ed19e18d27c8  runs/print-differ-r1/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+f32eb3cf32af3af73a5997035ab324b6d8d6e7275d300f02a90f32a17172a02d  runs/print-differ-r1/model.events.log
+04461fb0eeb667e49d09fcc6093118ebeddffa22cafb69f7f0ba986f92e9009f  runs/print-differ-r1/driver.log
+eae090b440311a2721de16bf77d41129b88bf18de4a54fbd3ea84ae9f182d805  runs/print-differ-r1/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+c6e7498f40144b00c6e4c6a439d66ba2afadbe7ba9f422c034199fe4c5d6544f  runs/print-differ-r1/record-105752-134363612548788758-3d93b3344dcc9c60372c5314e290d32703fc17fd0a583347bf9f4fece79c00b1.json
+af6f45a5d8b4264b639a14f2cac251756df4da70d05a32d09df9632dfe5cbd2b  runs/print-differ-r2/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+f1f2d0d49adff1ab5e98a9d35fe99856a07fb10461e53a15d024a0e10c5af74e  runs/print-differ-r2/summary.json
+db68b9b0b17f7686f32fd89de40264cb56c8d5e6a1e56ca4bcb7f999108b974b  runs/print-differ-r2/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+88b3af860f6804977413f0699f55d5d5e859aacfb8a7264a970110539d60013c  runs/print-differ-r2/model.events.log
+ae630634c4fa9f7a9d5073a63fb79cd0d4fd95de0d3906be566aecd3f96d0c3d  runs/print-differ-r2/driver.log
+13dfd0568b733e2d905c4a945c585b5f88c085af8bfe006ab9df177f1c079198  runs/print-differ-r2/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+293c886c24a9bafb9149eba973c80d11c7a360dd8b218dc8020d1bdf2c26f2d3  runs/print-differ-r2/record-23012-134363612627478630-5cda5fccbab33eb0661c9dacb99154683777f7151099accf5eb2359da0f75c08.json
+89a6fe4907b5abb2a1a06a770b928779a731bfecb9b4f0b60a56f50385a73a39  runs/print-differ-r3/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+80ecef706449a99351f6b962899b16e83fa2b5f394a7501398e7443be2c977ce  runs/print-differ-r3/summary.json
+6551a114be147ebea60766707b0512c48545209bb02b223f5a1003d4b374ac62  runs/print-differ-r3/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+a4ab2b06a5186a3e5e65527b1a074588f39894f7dd02355c7cb07180f2cca77f  runs/print-differ-r3/model.events.log
+f6d22a29cfe8410ead5924247ec95df805a4d20d002e367a5fbe029329f151a4  runs/print-differ-r3/driver.log
+511cb39c1ba31c5e7550a3feb847b9b518ab7af3fda4882625835507e93ae51e  runs/print-differ-r3/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+da8cc30addf18d19cd4e35954896bd8cde1886187262820cf0a92982d7016056  runs/print-differ-r3/record-34952-134363612706435512-59158d7930aabd196dc68d21a5676432912e810064bee703cf19927df9830820.json
+bf1bf58fd9799f2548e61094b47fb7511ee7499d1f471d136f567fa7e34c9e79  runs/print-same-r1/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+452da179cfe17cb5996b4cc7e05719c8c5e58ae85bde08032d9e9dc3ffb0cdb3  runs/print-same-r1/summary.json
+6ba8db250e82eb0097c393532168855a0c4699a75f12cdf85fbbc8b67f514533  runs/print-same-r1/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+61dd1cfc34615b06d6556262e306d250e6989cd1b7e9bba0dd526790d3965506  runs/print-same-r1/model.events.log
+c576de3abf086f1dd3de249f8f1d9e0220ba2d26e89bd23bbf662b09f020eb3f  runs/print-same-r1/driver.log
+258c4a7667648b2fa83987ab10ae8ea5e447a11b0c1b2f015018249d9c273116  runs/print-same-r1/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+afd13ef030262dbfaf1250a8e687b5b447fa96653ecce5b7e61879da3579a2c2  runs/print-same-r1/record-18268-134363612527906396-3e50d15475f8ac9fe956479075c6b46aa00f40f3d990c45618c192b23ad77762.json
+3eed7dddcf2be2dca439eb9c9f7c484f3ceb09ef954be65fc1f496bf2119ad0e  runs/print-same-r2/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+412a65d35a814ecfab4a56baea9402c2760a8c470f0746aa4804133ebe048077  runs/print-same-r2/summary.json
+306709bc87b88090bc94764e50af9a19ac84d53fa65e49422f0e2d101dd0e04e  runs/print-same-r2/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+e76eb9e880c4f5c374eb4e129afdf65ecccaa1d1e18c0aede92e1c7b74dcb506  runs/print-same-r2/model.events.log
+ca87c89077d9d801b5122da52771031d8bfb44afac273d74a37ad984e390ec1c  runs/print-same-r2/driver.log
+8f6441d728b848ffb334e87f66b6389df551be0723773aa5828c78ca8e0adff4  runs/print-same-r2/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+fb1501feeb28a0d76b142dfc7342482cca89f377ce766415fcaaebc22bed1d36  runs/print-same-r2/record-75832-134363612607102802-4e0259eef47d025618025f45c53ef80fff7625031c85b6924664b531ed65f555.json
+eb58b6df33496e5b07b112e30d34ba79f71007bffc051abd938c278aaa8a28d4  runs/print-same-r3/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+bd250606eabd38b2683e7f3033234f7082ba3a1082e64de44106da8b553b3185  runs/print-same-r3/summary.json
+6901ee3174337cb296a2371a2fd46151112085c5fb2793162ed7e1017dfd8c41  runs/print-same-r3/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+ace19bc44c0aec3c16d63d537668b2014ed3384e55a08da4140993d825fbefdb  runs/print-same-r3/model.events.log
+e6f88a27ff2bf8c054b01aed6c246834aaf12dc792f52e79d4c794b2daa85bb6  runs/print-same-r3/driver.log
+a4e12e458e38f7c37c2f5303553957c344d91c3ae980503ccf64bf3f90b945bb  runs/print-same-r3/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+ae233629f5ff7ae283bd549f3a4932183b90322dba74e8cf524f0e327b8b00b4  runs/print-same-r3/record-67692-134363612686344072-a18651cba790861bdff4032225825f9a6001a193533243a28c5c8630ec89a8e3.json
+5050043236146db87384c2e4e704eecfd9874c30c1b61f29551d13bae424b947  runs/stream-differ-r1/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+0fc10eab5bb31033fd4b229aa2298b9b37dde5c56f72adb21d4dd394c217a440  runs/stream-differ-r1/summary.json
+9cd8f777dbbb924b7e625f114a57532bd3a7b44620d6ebee92ff22b94aa5e65b  runs/stream-differ-r1/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+48ddaf8780b7717fdadb02e39038fb4db28df1b088fbebf1e9ca380c21e27a1e  runs/stream-differ-r1/model.events.log
+a3c21602f5a454e2e458e50fee1a4a54f0e8b3704439704f0a2d03845487d20f  runs/stream-differ-r1/driver.log
+3612935b543e3a0882a0856a4e72c4773e09fd189fbcb6161d338d5200f2793d  runs/stream-differ-r1/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+75185ea368d0c374ef9ec4c2b70e92101c02cdf083837076465abca9faa8e8f8  runs/stream-differ-r1/record-96184-134363612589011363-0f23bd5803ef6039c9108c8fea0f27d15cb5e10c34342c2b4e1eedccd7003074.json
+0f68fde8b6fb2f72dc9d4fdc875b339e8622fca5a01ebaea18f2ef122846c0fd  runs/stream-differ-r2/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+de3fc5fb16d81307cf109c68c393920a569c33c343f77a57020ba558890dfdbc  runs/stream-differ-r2/summary.json
+be1c90dc085ee7556aa7939ff4aacf05f0d54a42feae6d88d8043eef4b3a1ce4  runs/stream-differ-r2/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+6265529e7cc5fd5079afa0b96dc8603d5b3d07f9ccded02b4dd39f549460508d  runs/stream-differ-r2/model.events.log
+a80c12ec995b61c022d1b90744f960ebdf8e1433eb72b550df80b821c7fa9816  runs/stream-differ-r2/driver.log
+13008694f4de20513b58f17ef6d2ed818d2cfa91d515f92a9b4a947d505be1b1  runs/stream-differ-r2/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+8530bea79c207321188d5a52716d3c9dcab359d46233263486c63665300ef456  runs/stream-differ-r2/record-122044-134363612666033006-18a1460c5403614ea10891e13555f04fd59821819dc5e9c12c18b3b356b45f51.json
+b956df4f9296d8dda66d03ba2c1ef3303ac19bf70e7048cc63d4c2586980323a  runs/stream-differ-r3/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+1ee714500047201c238587930df462338a7cfbba9d2c8b927be458f849f5fc3f  runs/stream-differ-r3/summary.json
+59d56f278a59d13e964a79e304b39a80282338c90908855bfeeb2c28b04cb6d9  runs/stream-differ-r3/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+1c0dbbb00c10d9bba9c4b58e4d2667836579653cd72813dc7bdddce757b321a6  runs/stream-differ-r3/model.events.log
+97b2922d466bad7176617e5be707c10b14d7c7767dc202b5eff6263cfa2ea79b  runs/stream-differ-r3/driver.log
+a95f57d5f504b51b2afbab6dcd98c7a29072bae0511b6fe6374122a50c616ad7  runs/stream-differ-r3/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+36e90ec502a0bf8c63ccea9dc22f67171fdb3a3e7e73a03cc0e43ac3f9f41d68  runs/stream-differ-r3/record-110132-134363612746719101-82f9e805b7185b90766e7cdf3f3ff8840af76b6d86bb3b36f5a65ab0f0754ee6.json
+c4790353a205e5e5197675fd77499bbc8692cf8f6b6c7f62a3a507c08b311b88  runs/stream-same-r1/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+502662e386c0f1e6a9a7af2b7b9375f53f596fbb4017b2af63f94bde4e2f6273  runs/stream-same-r1/summary.json
+10fc2a31e24b793264ea3406c912cdc2065045cdc313ccc52421ad009b01f3dc  runs/stream-same-r1/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+42e110961e6f0be9a1c487a04277d843ab1fa6ccb5f9cd4f8037e23330f45fdc  runs/stream-same-r1/model.events.log
+526e8d9dcf264402f916ee850cee635eb79201e732683baee7733c7e1137b038  runs/stream-same-r1/driver.log
+781ccfe4fe370327f2b213d4c4a88635dc1d10eb7decb631f3554fb85005d2c8  runs/stream-same-r1/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+7a95d21d673ffee95f1a994f6054cb15c3045e0ebcdd37ac6341149d7a6bace3  runs/stream-same-r1/record-29664-134363612568917627-b9007fa38308c197f8ab6d36040efd92c5f0520839409021a457f278c0b8ce93.json
+21ae4208d4f7b6f5b791c024552033a9eb23b4ce130e7a6153cec782ecc3104e  runs/stream-same-r2/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+956ee94b665fa7b080283aed615907ab4884c3c17435266186288091a2e49ab7  runs/stream-same-r2/summary.json
+5685ef7485250bb074a9f5065a66c9141dc3a26c84790f025f9fdf19c1d26db7  runs/stream-same-r2/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+0537d6fa49e3a79fcdb2ac0a4d89adb936cc7a706736a70549fd1ea4343cb5e0  runs/stream-same-r2/model.events.log
+248dea7c44cc7f597a307b6f14e7a82953841cfc4a742f07139adcbffaae6afb  runs/stream-same-r2/driver.log
+42dedd538a1f620fa4c0191b5e9b48c7ef8597e3433389e1c2e836922d0a4b4b  runs/stream-same-r2/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+4a380f41487dc6ebb802b0102c0edb0f2b48e1ff7c13c2118d9238c29812968c  runs/stream-same-r2/record-92380-134363612647679285-b3449edc554b4c40f82b6a2fd2b0be121665c54b0b07f51c8828f3c4672d2d76.json
+cf3aab19545e3571cd0d394b8ceb4e4afcb6cba8a6727be6b5fab897ee1e1a2b  runs/stream-same-r3/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+43f99ec18d6063eebca093fa96d838592a27fe5acea48645a894630791f8eb4a  runs/stream-same-r3/summary.json
+964fe5be9998ee38cf24e23e445e9f122755f70af77d0404f7824a046ac1826c  runs/stream-same-r3/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+11c34357f91e7030647fa80c177e26d06ee0798e977dec1e93af326d889b6db9  runs/stream-same-r3/model.events.log
+aec63d60643dc11f78f7caeee4e72de8750060b51fbc31cac55abcd92edc624e  runs/stream-same-r3/driver.log
+20aedc21d96547aa0c32e6b6088e8c9f90ba4ee5ce4c2f969d83a27fd2f20c74  runs/stream-same-r3/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+3f05aea82ef78ee6393378c03bfcc8bb49eff57c4fc367cd70e2fa3a702702ae  runs/stream-same-r3/record-109312-134363612726652886-c20415757c37f9d466bf65f9095458d3d5b015246ff8b0a0c33ab72bfc24538c.json
+36d7ef65b7fbba6ac1e6544b5ab9a98bb62cf3c7c7f6a3ed1df6dc1054390706  attempt-1/print-differ-r1/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+d8f5d256a42ec9394948eea03e2ebfb06323d9011ef2506e8e97e663ee0a97c3  attempt-1/print-differ-r1/summary.json
+56afda979a98ecf91787a2c07eebd180efce607a8ed1cdfdc6dcb809348ecf57  attempt-1/print-differ-r1/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+51d0d4748adbaf5dc9568d4848c1aae10155c0a520ddc6aec5a020c85e428ba3  attempt-1/print-differ-r1/model.events.log
+3af972c3b093c6e60b8a20479a875f66eb99bcacc288c5dd3e351d228ab08cdd  attempt-1/print-differ-r1/driver.log
+2ab77a12c996d8dec1eab249e7cd32c04b8a10065846ca711e837ad5769a3df1  attempt-1/print-differ-r1/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+452f2be98d2bb2e20dcb6ef0b8a259f2a9dcfaf049489ea90d557eb7a0034e0b  attempt-1/print-differ-r1/record-84324-134363609824234606-428c2f67170319616886b6ca12e74752acbe5c7a8da102cdfded3da036e189d6.json
+3c792846a871edf7189ccfd48d3878c099b0ec17a6cf36b4570ec5c57a5b565d  attempt-1/print-same-r1/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+f3488d644c50de1aceaa189faf16e3bb345b33c7ef9e1ddb9a62750bf19b0ed3  attempt-1/print-same-r1/summary.json
+b3d9dcbeaf8c27157094a2e362c01005b0552c9d7ff645eb4284ff7a50fb9d4c  attempt-1/print-same-r1/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+150dbb29bf8b5460b4c09f688c884bbc3ec394e865c392f6f40b1b9ed1ab63d2  attempt-1/print-same-r1/model.events.log
+fd63d90487e85c614ea50a4d344b28a8fa77b2495e5e5e33b3ef4df9702d043e  attempt-1/print-same-r1/driver.log
+01db42d85f24bef43324cc94e8b9e13b2789945c72775f40e03b078f13ec2655  attempt-1/print-same-r1/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+5309e2748786a828ed1482961cc028021b5ca5dbf020a92d2353589995b8c8c2  attempt-1/print-same-r1/record-23188-134363609797995543-0637e93e8715ea6c999ebb949b0b4cb28d31894389be8a9ee6b1c49449e1ab64.json
+22612299d113679800910648e6a483b3db7bd19881aad8bda09514654b7fa8ef  attempt-1/stream-same-r1/run.json (stored as run.trimmed.json, the user profile's path replaced by %USERPROFILE%)
+c77607e341c2304492018705ae115682d01fc0c770b06495e7e3ed0c7b843782  attempt-1/stream-same-r1/standin.jsonl (stored as standin.trimmed.jsonl, the user profile's path replaced by %USERPROFILE%)
+68e38073c08a47fc2f8dfc9d7155c3ab3e9873c0302df420fc055b0f2cdece42  attempt-1/stream-same-r1/model.events.log
+5cd6e751afd714f01e9c18d54bc92e4177da570da8aaa5b8eb2e230a3ba9beb0  attempt-1/stream-same-r1/driver.log
+7b75c5c53c7e5c24e493b479f71a1fc52ca950c1dabf0f4c947ed496b03523ec  attempt-1/stream-same-r1/relay-browserai-20261013-000.log (stored as relay-browserai-20261013-000.trimmed.log, the user profile's path replaced by %USERPROFILE%)
+08c7c44d6920feded623339ab2cbbde13d7ca1f67ee0b18fdee409dc37cb0603  attempt-1/stream-same-r1/record-70052-134363609844999078-2fdacef64a1820af3c9f11f7de699d31f93caf6ab4a35303616e1482ca7d1616.json
+e1e6857af60b47cedfa645a17674359c331eecc73db2c2abcc7f58cce4434e3c  cut.ps1 (stored as cut.ps1.txt, unchanged), the script that cut this batch

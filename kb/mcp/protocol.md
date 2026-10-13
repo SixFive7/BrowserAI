@@ -909,6 +909,24 @@ confirmed by the launch lines.
 > creation time. The parent's creation time was not written per launch, which the
 > client running throughout makes unnecessary, and no BrowserAI relay was in these
 > runs. [Evidence](../../docs/evidence/2026-10-13-redial-parent/README.md).
+>
+> ⚠️ *Added 2026-10-13 by addition, the maintainer's 151 b, measured once.* **A BrowserAI
+> relay Claude Code starts again on the same build passes its first call, and one whose
+> record names another list refuses it once, as Q261 b does.** Measured 2026-10-13 at
+> 10:34Z with Claude Code **2.1.296**, the CLI under `claude -p` and the VS Code
+> extension's own binary through the stream-json transport, and the relay published from
+> the tree as **2.0.1-alpha.0.12**, under a scratch `CLAUDE_CONFIG_DIR` and `CODEX_HOME`;
+> a stand-in background ended the first relay after its first call with `browserai/end`,
+> the way an update ends one. In 6 of 6 runs with the record as the first relay wrote it,
+> the second relay was asked for no tool list, both relays named the client as their
+> parent, and the model was handed four answers and no refusal; the relay logged
+> `Relay[27]`. In 6 of 6 with another digest written into the record, the model was
+> handed the refusal once and the next two calls' answers. The extension's binary with
+> `CLAUDE_CODE_ENTRYPOINT=claude-vscode` set, as the extension sets it, answered *"Not
+> logged in"* to a scratch configuration given an API key and never called the model, so
+> those runs set no entrypoint. Re-establish it with
+> [the rig](../../docs/probes/2026-10-13-127c-redial/README.md);
+> [evidence](../../docs/evidence/2026-10-13-127c-redial/README.md).
 
 ### Codex never re-launches on the failure path, and does on the next refresh
 

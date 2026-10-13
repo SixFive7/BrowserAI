@@ -251,6 +251,15 @@ nothing to read in it and it was not put to the scan: it reads the threads of a 
 browser reported over CDP, and the dumps its own profiles hold. **It adds nothing to what the
 scan would flag.**
 
+⚠️ *Added 2026-10-13, later.* **Forty-three**, counted as its subdirectories, when
+[`2026-10-13-127c-redial`](2026-10-13-127c-redial/README.md) arrived with the maintainer's
+151 b. Its `run.ps1` carries two of the spellings `ProcessSelection` keys on, `Get-Process`
+with `-Id` and `System.Diagnostics.Process` for its starts, so it was put to the scan: a copy
+of the rig under `build/`, with `observe.ps1` beside it as the positive control, run through
+`NeverByImageNameTests` in a filtered run on 2026-10-13, named the control alone, by its
+`GetProcessesByName`, and no file of the rig; the copy was removed after. **It adds nothing to
+what the scan would flag.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -336,3 +345,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-11-link-start`](2026-10-11-link-start/README.md) | What comes to the front when a folder link is clicked: a link's start that opens the folder or Windows' folder picker itself, against a stand-in for the background with and without the right to come forward, in Firefox 157.0.1 with a scratch profile | the held-out `close-probe-windows.ps1` would, a true positive |
 | [`2026-10-12-usage`](2026-10-12-usage/README.md) | What a reading of BrowserAI's CPU and memory costs: headless Chromiums in jobs of their own, read the way the background reads a session's job, hot and at the shipped pace of one reading every two seconds against the same wait with no reading, and what each member's working set, private working set, shared working set and shared commit are | |
 | [`2026-10-13-stack-profiler`](2026-10-13-stack-profiler/README.md) | Chrome for Testing's own stack sampling profiler and the browser it crashes: full-page captures of a 16,384 px page for the first 28 s of each launch, with BrowserAI's launch arguments and with `--disable-stack-profiler` added, each launch's thread names, and every Crashpad dump read for its fault site | |
+| [`2026-10-13-127c-redial`](2026-10-13-127c-redial/README.md) | A real Claude Code starting the published relay again, the maintainer's 151 b: a stand-in background ends the first relay after its first call, and the second relay is let through when its client's record names its own list and refused once when the record names another | |

@@ -1,0 +1,129 @@
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+#
+# Cuts the 151 b measurement of 2026-10-13 into its evidence batch: for each run, the files
+# that say what happened, the user profile's path replaced where a file carries it, and
+# what the model was handed read out of the model stub's request log; every file read is
+# named with its SHA-256 in originals.sha256 or left-out.sha256.
+#
+# Usage: pwsh -NoProfile -File cut-127c.ps1 <attempt 2 folder> <attempt 1 folder> <batch folder>
+
+param(
+    [Parameter(Mandatory)] [string] $Second,
+    [Parameter(Mandatory)] [string] $First,
+    [Parameter(Mandatory)] [string] $Batch
+)
+
+$ErrorActionPreference = 'Stop'
+$profilePath = $env:USERPROFILE
+$escaped = $profilePath.Replace('\', '\\')
+$originals = [System.Collections.Generic.List[string]]::new()
+$leftOut = [System.Collections.Generic.List[string]]::new()
+
+function Digest([string] $Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+
+function Trimmed([string] $Text) { $Text.Replace($escaped, '%USERPROFILE%').Replace($profilePath, '%USERPROFILE%') }
+
+# One file kept: verbatim when it names no profile path, under the .trimmed. name when it did.
+function Keep([string] $Source, [string] $Folder, [string] $Name, [string] $Relative) {
+    $text = [System.IO.File]::ReadAllText($Source)
+    $cut = Trimmed $text
+
+    if ($cut -ceq $text) {
+        [System.IO.File]::WriteAllText((Join-Path $Folder $Name), $text)
+        $originals.Add("$(Digest $Source)  $Relative/$Name")
+    }
+    else {
+        $dot = $Name.LastIndexOf('.')
+        $trimmedName = $Name.Substring(0, $dot) + '.trimmed' + $Name.Substring($dot)
+        [System.IO.File]::WriteAllText((Join-Path $Folder $trimmedName), $cut)
+        $originals.Add("$(Digest $Source)  $Relative/$Name (stored as $trimmedName, the user profile's path replaced by %USERPROFILE%)")
+    }
+}
+
+function LeaveOut([string] $Source, [string] $Relative) {
+    $item = Get-Item -LiteralPath $Source
+    $leftOut.Add("$(Digest $Source)  $Relative  $($item.Length) bytes")
+}
+
+# What the model was handed, in order: the tool results of the last request, which carries
+# the whole conversation.
+function ToolResults([string] $RequestLog) {
+    $requests = @(Get-Content -LiteralPath $RequestLog | ForEach-Object { $_ | ConvertFrom-Json })
+    $lines = @()
+
+    foreach ($message in @($requests[-1].body.messages)) {
+        foreach ($block in @($message.content)) {
+            if ($block.type -eq 'tool_result') {
+                $text = if ($block.content -is [string]) { $block.content } else { (@($block.content) | ForEach-Object { $_.text }) -join '' }
+                $first = ($text -split "`n")[0]
+                $lines += "is_error=$([bool]$block.is_error)  $first"
+            }
+        }
+    }
+
+    return $lines
+}
+
+function CutRun([string] $Run, [string] $Destination, [string] $Relative) {
+    $null = New-Item -ItemType Directory -Force -Path $Destination
+
+    foreach ($name in 'run.json', 'summary.json', 'standin.jsonl', 'model.events.log', 'driver.log') {
+        $source = Join-Path $Run $name
+        if (Test-Path -LiteralPath $source) { Keep $source $Destination $name $Relative }
+    }
+
+    foreach ($log in @(Get-ChildItem -LiteralPath (Join-Path $Run 'data-root\logs') -File -ErrorAction SilentlyContinue)) {
+        Keep $log.FullName $Destination ('relay-' + $log.Name) $Relative
+    }
+
+    foreach ($record in @(Get-ChildItem -LiteralPath (Join-Path $Run 'data-root\tool-lists') -File -ErrorAction SilentlyContinue)) {
+        Keep $record.FullName $Destination ('record-' + $record.Name) $Relative
+    }
+
+    $requests = Join-Path $Run 'model.requests.jsonl'
+    if (Test-Path -LiteralPath $requests) {
+        Trimmed ((ToolResults $requests) -join "`n") | Set-Content -LiteralPath (Join-Path $Destination 'tool-results.txt') -Encoding utf8NoBOM
+        LeaveOut $requests "$Relative/model.requests.jsonl"
+    }
+
+    foreach ($name in 'client-stdout.log', 'client-stderr.log', 'claude-debug.log', 'mcp.json', 'modelstub.out.log', 'standin.out.log', 'driver.out.log', 'client.pid') {
+        $source = Join-Path $Run $name
+        if (Test-Path -LiteralPath $source) { LeaveOut $source "$Relative/$name" }
+    }
+
+    foreach ($folder in 'cfg', 'codexhome', 'proj') {
+        $path = Join-Path $Run $folder
+        if (Test-Path -LiteralPath $path) {
+            $files = @(Get-ChildItem -LiteralPath $path -Recurse -File -Force)
+            $bytes = ($files | Measure-Object Length -Sum).Sum
+            $leftOut.Add("(folder)  $Relative/$folder  $($files.Count) files, $([long]$bytes) bytes")
+        }
+    }
+}
+
+$null = New-Item -ItemType Directory -Force -Path $Batch
+
+foreach ($name in 'runs.tsv', 'summary.txt') {
+    Keep (Join-Path $Second $name) $Batch $name '.'
+}
+
+foreach ($run in Get-ChildItem -LiteralPath $Second -Directory | Where-Object Name -ne 'versions' | Sort-Object Name) {
+    CutRun $run.FullName (Join-Path $Batch "runs\$($run.Name)") "runs/$($run.Name)"
+}
+
+foreach ($run in Get-ChildItem -LiteralPath $First -Directory | Where-Object Name -ne 'versions' | Sort-Object Name) {
+    CutRun $run.FullName (Join-Path $Batch "attempt-1\$($run.Name)") "attempt-1/$($run.Name)"
+
+    # The one line of the first attempt's stream-json run that says why it never asked the model.
+    $stdout = Join-Path $run.FullName 'client-stdout.log'
+    $said = @(Get-Content -LiteralPath $stdout | Where-Object { $_ -match '"type":"result"' } | ForEach-Object { ($_ | ConvertFrom-Json).result })
+    if ($said.Count -gt 0) {
+        Trimmed ($said -join "`n") | Set-Content -LiteralPath (Join-Path $Batch "attempt-1\$($run.Name)\client-result.txt") -Encoding utf8NoBOM
+    }
+}
+
+$originals | Set-Content -LiteralPath (Join-Path $Batch 'originals.sha256') -Encoding utf8NoBOM
+$leftOut | Set-Content -LiteralPath (Join-Path $Batch 'left-out.sha256') -Encoding utf8NoBOM
+
+"kept: $($originals.Count) files; left out: $($leftOut.Count) entries"

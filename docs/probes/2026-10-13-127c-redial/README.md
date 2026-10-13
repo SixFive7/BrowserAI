@@ -51,6 +51,13 @@ pwsh -NoProfile -File docs/probes/2026-10-13-127c-redial/measure.ps1 `
     -StreamClaude <the VS Code extension's resources\native-binary\claude.exe>
 ```
 
+⚠️ *Changed 2026-10-13 after its first attempt, at `2fb8932d`*: the stream-json runs set no
+`CLAUDE_CODE_ENTRYPOINT`, because with the extension's own `claude-vscode` the extension's
+binary answered *"Not logged in"* to a scratch configuration given an API key and never
+called the model stub; and `summarize.ps1` reads a run the stub never heard from as one that
+holds nothing. Both attempts are in
+[the evidence](../../evidence/2026-10-13-127c-redial/README.md).
+
 A run holds when, in `same`, two relays greeted the stand-in, both naming the client
 the driver started and one creation time for it, the model was handed no stale-list
 refusal and at least one answer from the second connection, and a relay logged

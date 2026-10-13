@@ -1,0 +1,14 @@
+{
+  "run": "print-same-r2",
+  "client": "print",
+  "mode": "same",
+  "claude": "%USERPROFILE%\\.local\\bin\\claude.exe",
+  "relay": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\after-127c\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.exe",
+  "pipe": "\\\\.\\pipe\\BrowserAI-Background-127c-print-same-r2-0736587e4f124f48ae1cde56a938821e",
+  "port": 61514,
+  "driverExit": 0,
+  "relays": [
+    74564,
+    23316
+  ]
+}

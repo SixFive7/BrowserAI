@@ -1,0 +1,179 @@
+d156c59d3fae58675c03f5d6375e7ec36a693b145996ee6c8a873c4d4ca06a5e  runs/print-differ-r1/model.requests.jsonl  945922 bytes
+ecb54a14835592f6bcbfeef48ab0b021f0d738615ce96a5aaa3e1efa6dcca554  runs/print-differ-r1/client-stdout.log  24275 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r1/client-stderr.log  0 bytes
+a7ace475a201891d2c689cc334136f09a9922be93d82c640096e22145e257673  runs/print-differ-r1/claude-debug.log  59237 bytes
+9640bda176a1bae0a73e3d77343abdbb8f32fe07a18e4068217ee5f475f1d4e8  runs/print-differ-r1/mcp.json  508 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r1/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r1/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r1/driver.out.log  0 bytes
+c713d6ba126af5d1cfeab6d73feb6cf64b274a06f5e5a7946a9491bcec920e20  runs/print-differ-r1/client.pid  6 bytes
+(folder)  runs/print-differ-r1/cfg  4 files, 318088 bytes
+(folder)  runs/print-differ-r1/codexhome  0 files, 0 bytes
+(folder)  runs/print-differ-r1/proj  0 files, 0 bytes
+89f71dda1e4c34a72a49c319d0fde6b2b13d049d745b9048115971118b054b15  runs/print-differ-r2/model.requests.jsonl  945922 bytes
+8f1784d1785f35f7d1ef54eadbc7ad1709f867c4eef92792d7dc5c05db362270  runs/print-differ-r2/client-stdout.log  24275 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r2/client-stderr.log  0 bytes
+26dbe36da2aa7bcba1233da32b3308d25a880453ed0406241909974f542b9448  runs/print-differ-r2/claude-debug.log  59214 bytes
+2b29fd889cbdbc761a72f8a883edee0c850d7541dd5302020a408f1f1f2d9515  runs/print-differ-r2/mcp.json  508 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r2/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r2/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r2/driver.out.log  0 bytes
+221d8da27121dc38cd957a2b9de410fdc60bf6d80ebaeff8bb714497bcb71287  runs/print-differ-r2/client.pid  5 bytes
+(folder)  runs/print-differ-r2/cfg  4 files, 318088 bytes
+(folder)  runs/print-differ-r2/codexhome  0 files, 0 bytes
+(folder)  runs/print-differ-r2/proj  0 files, 0 bytes
+cadb32a494284477ea05a438889d8ea8437230ccff72d889184cbf4592105d7e  runs/print-differ-r3/model.requests.jsonl  945922 bytes
+095c20186a7ac2e8a80051c0590da1ec30143a5cb093ceda0451622c77ba6547  runs/print-differ-r3/client-stdout.log  24275 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r3/client-stderr.log  0 bytes
+634c95363ebf783448d655ceffcf31fce46c03643a99e93a8dbd36b6b286c14f  runs/print-differ-r3/claude-debug.log  59214 bytes
+af045e2af8f2cd3d65046d5cdd4db5004960c6730047e58b007078586c8a4c50  runs/print-differ-r3/mcp.json  508 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r3/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r3/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-differ-r3/driver.out.log  0 bytes
+98b00213d653d2b6f669d7484bf68bd1425252ccf09e839ca653cab50d3a45ba  runs/print-differ-r3/client.pid  5 bytes
+(folder)  runs/print-differ-r3/cfg  4 files, 318087 bytes
+(folder)  runs/print-differ-r3/codexhome  0 files, 0 bytes
+(folder)  runs/print-differ-r3/proj  0 files, 0 bytes
+98da69d93212b293cb13644f6e52f05a7738e1df701ad5ec6f0f75794e9700bf  runs/print-same-r1/model.requests.jsonl  927705 bytes
+2f0c42c590ac99cbebde9207ab96800a066f45a7cbf5c879c5f8fdf4eaccd06f  runs/print-same-r1/client-stdout.log  12154 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r1/client-stderr.log  0 bytes
+fe1360d37d4e545cf204359ab0ce9719a4b8e1f762b44dc8b40af1315c40c2dd  runs/print-same-r1/claude-debug.log  46895 bytes
+226cdb166c54600c0d911ec107d48d491bef016cf36f780888e9239cc9b1dd55  runs/print-same-r1/mcp.json  504 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r1/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r1/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r1/driver.out.log  0 bytes
+20957b3d58a94ed0034b27e4c1ec64f6c9be3112440150e8b41bb5099ccf7264  runs/print-same-r1/client.pid  5 bytes
+(folder)  runs/print-same-r1/cfg  4 files, 305913 bytes
+(folder)  runs/print-same-r1/codexhome  0 files, 0 bytes
+(folder)  runs/print-same-r1/proj  0 files, 0 bytes
+5e347ffdeb281dfa9bdebb68c0711167dfd1213a3cb2f390040b14c2334d3089  runs/print-same-r2/model.requests.jsonl  927705 bytes
+a6001d29a46b22c640b2018159265c93a2131ca186c6e1f0b2d00743aae26776  runs/print-same-r2/client-stdout.log  12154 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r2/client-stderr.log  0 bytes
+0672c617048e157767e698cfb71777874c97793520b0c9097a5c2f8c336b18d9  runs/print-same-r2/claude-debug.log  46891 bytes
+2a112d8ba0ecb4dd386124ffcf81dde315167f4c6702851430a7886d7976e1cc  runs/print-same-r2/mcp.json  504 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r2/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r2/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r2/driver.out.log  0 bytes
+b12a39c382521389fc517682f6f220353de9a1f61dc33cd68ed3cb95a5c440ad  runs/print-same-r2/client.pid  5 bytes
+(folder)  runs/print-same-r2/cfg  4 files, 305913 bytes
+(folder)  runs/print-same-r2/codexhome  0 files, 0 bytes
+(folder)  runs/print-same-r2/proj  0 files, 0 bytes
+779ea6d12d8205ad553be0e11352695a0607a1812376a6ae8637b49531854652  runs/print-same-r3/model.requests.jsonl  927705 bytes
+1ed61e2345c153ff3249e447d10378ca1ea74537785c372935ffe5c6ba0c10a4  runs/print-same-r3/client-stdout.log  12154 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r3/client-stderr.log  0 bytes
+8030c9fcdad211dc9ace63c64c595ea08902804eafabc02f4dc0a9759d295ffb  runs/print-same-r3/claude-debug.log  46890 bytes
+7cc17a594dc0b8b2457da2789611134dbf6a339569e6d181c45b2e5ee437f235  runs/print-same-r3/mcp.json  504 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r3/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r3/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/print-same-r3/driver.out.log  0 bytes
+f510d847322956a950ea1e7e26c7ac167b9d4992213c7b17778d1e83399fdfd4  runs/print-same-r3/client.pid  5 bytes
+(folder)  runs/print-same-r3/cfg  4 files, 305912 bytes
+(folder)  runs/print-same-r3/codexhome  0 files, 0 bytes
+(folder)  runs/print-same-r3/proj  0 files, 0 bytes
+d9613203b9374e5e902de3d24305ce1d404fc13068122b8b8d8bdf0874250ee7  runs/stream-differ-r1/model.requests.jsonl  945942 bytes
+9b49ee4da7cd13ff338118012c55b247d2d38333297c3d4813cd53bec042fd4d  runs/stream-differ-r1/client-stdout.log  24281 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r1/client-stderr.log  0 bytes
+50744261fe8ec20443169197b6dfe8de5dac66a4a41800b5bebd84c0a8f6370a  runs/stream-differ-r1/claude-debug.log  59540 bytes
+49e6657b1645d8448e648528362f0053f27e3d618251c27ec961e667dbb9d6b1  runs/stream-differ-r1/mcp.json  510 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r1/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r1/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r1/driver.out.log  0 bytes
+43fb1d5c60f3183f2e76b97f9b6a9d40b3cff0fded2719f8716731e78f253064  runs/stream-differ-r1/client.pid  5 bytes
+(folder)  runs/stream-differ-r1/cfg  4 files, 318107 bytes
+(folder)  runs/stream-differ-r1/codexhome  0 files, 0 bytes
+(folder)  runs/stream-differ-r1/proj  0 files, 0 bytes
+5d64ca1e7a14e48ca0a0ce99b95127e4509bd3b378ac8f48221a348c5f5e1de4  runs/stream-differ-r2/model.requests.jsonl  945942 bytes
+52a218eb2a5cbb40f7c1e34dadc5a19d8cc81be9c3974709cb38ed048b019299  runs/stream-differ-r2/client-stdout.log  24281 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r2/client-stderr.log  0 bytes
+604bf2411cd2d1f1dac463c61f4495bd4bf55e23d3ef0f72bd76249cc4c035f3  runs/stream-differ-r2/claude-debug.log  59563 bytes
+af2c9991682cfad08c62de3b3c18bc5280bd58fc08fe162f2f36feeb2c8f7568  runs/stream-differ-r2/mcp.json  510 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r2/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r2/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r2/driver.out.log  0 bytes
+d76bc26fd2d9adcd653fb10cfba1f4259a5613064a8fbba71a9b14bed47ee266  runs/stream-differ-r2/client.pid  6 bytes
+(folder)  runs/stream-differ-r2/cfg  4 files, 318109 bytes
+(folder)  runs/stream-differ-r2/codexhome  0 files, 0 bytes
+(folder)  runs/stream-differ-r2/proj  0 files, 0 bytes
+b75a336b4667e505c5b3475c6cbfb5aff12a963bee8bc171cb5a6dd42ab836ab  runs/stream-differ-r3/model.requests.jsonl  945942 bytes
+a4b82ad62e07eaa702719eb72228b80609416d7451639876edc40729b4f049da  runs/stream-differ-r3/client-stdout.log  24284 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r3/client-stderr.log  0 bytes
+a3c088932dfb077602aadc8bfc4ae53e052e80ec6aa373854d36e170f69ffe3d  runs/stream-differ-r3/claude-debug.log  59563 bytes
+e4975e8d11617baaf2783617a833f6d548709ddb53ac5a55e6d0eae0007e77df  runs/stream-differ-r3/mcp.json  510 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r3/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r3/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-differ-r3/driver.out.log  0 bytes
+47e9390117d31a1bf026214bdfe60420d422aee96801738ce56ce9e2eb3d7d7c  runs/stream-differ-r3/client.pid  6 bytes
+(folder)  runs/stream-differ-r3/cfg  4 files, 318108 bytes
+(folder)  runs/stream-differ-r3/codexhome  0 files, 0 bytes
+(folder)  runs/stream-differ-r3/proj  0 files, 0 bytes
+a63b519ed9cf0c4059f50e4ad0fe1a76f5fe537e1482873b1cc7033057d861b1  runs/stream-same-r1/model.requests.jsonl  927725 bytes
+6f35a05ff40d0139d706bcf53c84111f088a46460ace0f41370649433cc47b04  runs/stream-same-r1/client-stdout.log  12160 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r1/client-stderr.log  0 bytes
+14366cf02ac310a87fe35fa6e2630102f58963c8f6d742178fc1cef862feda37  runs/stream-same-r1/claude-debug.log  47220 bytes
+c899c268185765b174317ce656da6438e972587dd94fe352e541dbc498f59241  runs/stream-same-r1/mcp.json  506 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r1/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r1/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r1/driver.out.log  0 bytes
+8522454d9f8be207ba9a9e63db5674ef1688d4c8f9001e05d1ae60a93f924d17  runs/stream-same-r1/client.pid  5 bytes
+(folder)  runs/stream-same-r1/cfg  4 files, 305933 bytes
+(folder)  runs/stream-same-r1/codexhome  0 files, 0 bytes
+(folder)  runs/stream-same-r1/proj  0 files, 0 bytes
+c59ed4f118176569607c3867016a8e156ca434b444cde90171a473074a56a732  runs/stream-same-r2/model.requests.jsonl  927725 bytes
+14c88438dd89ef865367dcf0a54ec43f5a944ddda9514042842d86d543bd0352  runs/stream-same-r2/client-stdout.log  12160 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r2/client-stderr.log  0 bytes
+209c9c580dd407c37ec2de3f052ad843070f3da6a10b0e8e787da23f4f694872  runs/stream-same-r2/claude-debug.log  47218 bytes
+06f37a4d6311bace8e25a55c723b968146f2e107cea2aefc7801215e1b98c7d6  runs/stream-same-r2/mcp.json  506 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r2/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r2/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r2/driver.out.log  0 bytes
+633ef6e94e061744166f162424bf7a53ed0b81c46fe6bec36b34de5ea3d62de8  runs/stream-same-r2/client.pid  5 bytes
+(folder)  runs/stream-same-r2/cfg  4 files, 305932 bytes
+(folder)  runs/stream-same-r2/codexhome  0 files, 0 bytes
+(folder)  runs/stream-same-r2/proj  0 files, 0 bytes
+1d123d3a3af52060f35f68c5f6118864466a2cff4f70a0333ad08efe751de19b  runs/stream-same-r3/model.requests.jsonl  927725 bytes
+dfaf5c7362f2a71f42ae5f0ff359c02ed0a66ea791e1ed461e5ccd495212b267  runs/stream-same-r3/client-stdout.log  12160 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r3/client-stderr.log  0 bytes
+2aadb009a30d8daaf24717634533692952849cd223a131a0ffa591723a2d119b  runs/stream-same-r3/claude-debug.log  47243 bytes
+febc904a34c9b8e5a2a3b6a9179162e66fe2fda52a7a590b693540b25eb055c9  runs/stream-same-r3/mcp.json  506 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r3/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r3/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  runs/stream-same-r3/driver.out.log  0 bytes
+9c7801eed1a5d41e1b24523f43c7d30b1ff258480b06f3d217c265232e7bb8a8  runs/stream-same-r3/client.pid  6 bytes
+(folder)  runs/stream-same-r3/cfg  4 files, 305932 bytes
+(folder)  runs/stream-same-r3/codexhome  0 files, 0 bytes
+(folder)  runs/stream-same-r3/proj  0 files, 0 bytes
+d87f2fc46b729cfbc2671adadf182fbe2bcd2ad5849113da322886bc5b672727  attempt-1/print-differ-r1/model.requests.jsonl  945652 bytes
+febdb9a1266f40effa2c13ac23c03b1f4b225901b9cd0733296e97d673f6819c  attempt-1/print-differ-r1/client-stdout.log  24263 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/print-differ-r1/client-stderr.log  0 bytes
+06d0b7780d1290ac09a95598a13a98f1c231b1e6f1cad49d0bc9c34da8fd28a5  attempt-1/print-differ-r1/claude-debug.log  59087 bytes
+7cc5d3c55aecd6e883e689e30033b575cb2bcc971a3b3b10980d4ee02dac1998  attempt-1/print-differ-r1/mcp.json  508 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/print-differ-r1/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/print-differ-r1/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/print-differ-r1/driver.out.log  0 bytes
+d6068db93c4dfb86423abe2ac29935a359e7fbd7b9037978c92c879b77902997  attempt-1/print-differ-r1/client.pid  5 bytes
+(folder)  attempt-1/print-differ-r1/cfg  4 files, 317928 bytes
+(folder)  attempt-1/print-differ-r1/codexhome  0 files, 0 bytes
+(folder)  attempt-1/print-differ-r1/proj  0 files, 0 bytes
+32702a7ae12367308ac05c16a1575aa589f707e113818228cfe6795d4a028fab  attempt-1/print-same-r1/model.requests.jsonl  927435 bytes
+c44121af4a08d32669bf56d948829deb230d79feef93489ed54d2faeb4b97d5e  attempt-1/print-same-r1/client-stdout.log  12142 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/print-same-r1/client-stderr.log  0 bytes
+ec2d80254aa09a3967bc76c0293df650231be0ac1f55037c72555d685eff7777  attempt-1/print-same-r1/claude-debug.log  46885 bytes
+7df04b6de4e9bf1a8977ffaf7102e55e561ecd0626e4ba4b7c495e2667897603  attempt-1/print-same-r1/mcp.json  504 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/print-same-r1/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/print-same-r1/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/print-same-r1/driver.out.log  0 bytes
+a5f8ddf293935b064363e0ca99fe7aefa436583a3fec60b657c8b6a850af2c61  attempt-1/print-same-r1/client.pid  5 bytes
+(folder)  attempt-1/print-same-r1/cfg  4 files, 305754 bytes
+(folder)  attempt-1/print-same-r1/codexhome  0 files, 0 bytes
+(folder)  attempt-1/print-same-r1/proj  0 files, 0 bytes
+0cb059dd488ae0af1340fe58dfc33759f903ece8bde76edf25390aa050aa1646  attempt-1/stream-same-r1/client-stdout.log  7282 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/stream-same-r1/client-stderr.log  0 bytes
+fda58cddf0b30da2a4afc2e56f262276cce48491e90bdfa45300ae66fccca881  attempt-1/stream-same-r1/claude-debug.log  38113 bytes
+924159602ba6f39aaec6d0f9fc95100a6515bdeded464f2a4a51794901bae762  attempt-1/stream-same-r1/mcp.json  506 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/stream-same-r1/modelstub.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/stream-same-r1/standin.out.log  0 bytes
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  attempt-1/stream-same-r1/driver.out.log  0 bytes
+0ef596452cae90d81a75ce5e63e9a051614d0054e5aeef7446c46f8b773d44b1  attempt-1/stream-same-r1/client.pid  5 bytes
+(folder)  attempt-1/stream-same-r1/cfg  4 files, 161803 bytes
+(folder)  attempt-1/stream-same-r1/codexhome  0 files, 0 bytes
+(folder)  attempt-1/stream-same-r1/proj  0 files, 0 bytes

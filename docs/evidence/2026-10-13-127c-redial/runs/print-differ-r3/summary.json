@@ -1,0 +1,25 @@
+{
+  "run": "print-differ-r3",
+  "client": "print",
+  "mode": "differ",
+  "driverExit": 0,
+  "relays": 2,
+  "relayPids": [
+    83752,
+    85348
+  ],
+  "everyRelaysClientIsTheClientStarted": true,
+  "oneClientCreationTime": true,
+  "clientCreationTime": "134363612706435512",
+  "callsPassedPerConnection": "1:1 2:2",
+  "recordsRewritten": 1,
+  "toolResults": 4,
+  "refusalsTheModelSaw": 1,
+  "standInAnswersTheModelSaw": "1/1 2/1 2/2",
+  "otherResults": [],
+  "relay27Lines": 0,
+  "refusalLogLines": 1,
+  "records": "34952-134363612706435512-59158d7930aabd196dc68d21a5676432912e810064bee703cf19927df9830820.json",
+  "problems": "",
+  "holds": true
+}

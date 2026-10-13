@@ -1,0 +1,25 @@
+{
+  "run": "print-same-r1",
+  "client": "print",
+  "mode": "same",
+  "driverExit": 0,
+  "relays": 2,
+  "relayPids": [
+    118656,
+    113160
+  ],
+  "everyRelaysClientIsTheClientStarted": true,
+  "oneClientCreationTime": true,
+  "clientCreationTime": "134363609797995543",
+  "callsPassedPerConnection": "1:1 2:3",
+  "recordsRewritten": 0,
+  "toolResults": 4,
+  "refusalsTheModelSaw": 0,
+  "standInAnswersTheModelSaw": "1/1 2/1 2/2 2/3",
+  "otherResults": [],
+  "relay27Lines": 1,
+  "refusalLogLines": 0,
+  "records": "23188-134363609797995543-0637e93e8715ea6c999ebb949b0b4cb28d31894389be8a9ee6b1c49449e1ab64.json",
+  "problems": "",
+  "holds": true
+}
