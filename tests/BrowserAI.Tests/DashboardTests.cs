@@ -611,44 +611,52 @@ internal sealed class DashboardTests
     }
 
     /// <summary>
-    /// The conversations page draws its map for up to eight rows and twelve sessions, and
-    /// lists them past that, saying why; at any size it also carries the list a narrow
-    /// window shows in the map's place.
+    /// The conversations page draws its map whatever the number of conversations and
+    /// sessions, past the eight rows and twelve sessions it once stopped at, every row's two
+    /// cards in the rows' own grid and every session a card on it, and at any size it also
+    /// carries the list a narrow window shows in the map's place.
     /// </summary>
     /// <remarks>
-    /// <b>40 a, F</b>: the map becomes a list at narrow widths, and also when it would be too
-    /// crowded to read. The two limits are <see cref="ConversationsContent.MostMapRows"/> and
-    /// <see cref="ConversationsContent.MostMapSessions"/>, and the width is the stylesheet's.
+    /// <b>The maintainer's request of 2026-10-13</b>, in his words verbatim: <i>"Feature
+    /// request. Right now I see "There are too many conversations and sessions to draw as a
+    /// map, so they are listed.". Can we make it so that this still draws on a map. The page
+    /// can become longer (not wider) if need be."</i> The width at which the map becomes a
+    /// list is still the stylesheet's, <see cref="PageAssets.MapMinimumWidth"/>. What only a
+    /// browser can show, that the page grows in height and never in width, is
+    /// <see cref="PageBrowserTests.InARealBrowserAMapOfManyRowsGrowsInHeightOnlyAndKeepsBrowserAIAndTheInspectorInView"/>.
+    /// <i>Corrected 2026-10-13 (previously <c>TheMapIsDrawnUpToItsLimitAndAListBeyondIt</c>,
+    /// which held the map to eight rows and twelve sessions and a list past them that said
+    /// why).</i>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheMapIsDrawnUpToItsLimitAndAListBeyondIt()
+    public async Task TheMapIsDrawnWhateverTheNumberOfConversationsAndSessions()
     {
-        static SessionsSnapshot relaysOf(int count) => CensusPageSessions.Compose(
-            Now,
-            [
-                ("background", Description(900, ServerDescription.Roles.Host, [])),
-                .. Enumerable.Range(1, count).Select(index => ($"relay:{index}", Description(300 + index, ServerDescription.Roles.Relay, [], "claude-code", @"C:\Code\p" + index.ToString(CultureInfo.InvariantCulture)))),
-            ],
-            []);
-
         await using var rig = await PageRig.CreateAsync();
 
-        rig.Sessions.Snapshot = relaysOf(8);
+        foreach (var rows in new[] { 3, 8, 9, 16, 40 })
+        {
+            var snapshot = ConversationsMapTests.Rows(rows);
+            var board = PageBoard.Of(snapshot);
 
-        var drawn = (await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions))).Body;
+            rig.Sessions.Snapshot = snapshot;
 
-        await Assert.That(drawn).Contains("<div class=\"map\" id=\"map\">");
-        await Assert.That(drawn).Contains("<div class=\"list-view\">");
-        await Assert.That(drawn).DoesNotContain("too many");
+            var page = (await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions))).Body;
+            var map = ConversationsMapTests.MapOf(page);
+            var drawn = $"{rows} rows, {board.All.Count} sessions";
 
-        rig.Sessions.Snapshot = relaysOf(9);
+            await Assert.That(page).Contains("<div class=\"map\" id=\"map\">").Because(drawn);
+            await Assert.That(Regex.Count(map, "<div class=\"left\" data-row=\"")).IsEqualTo(rows).Because(drawn);
+            await Assert.That(Regex.Count(map, "<div class=\"right\" data-row=\"")).IsEqualTo(rows).Because(drawn);
+            await Assert.That(Regex.Count(map, "id=\"n-s-")).IsEqualTo(board.All.Count).Because(drawn);
+            await Assert.That(map).Contains("<div class=\"hub-cell\" data-inspect=\"hub\">").Because(drawn);
+            await Assert.That(page).Contains("<div class=\"list-view\">").Because(drawn);
+            await Assert.That(page).DoesNotContain("too many").Because(drawn);
+            await Assert.That(page).DoesNotContain("crowded").Because(drawn);
+        }
 
-        var listed = (await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions))).Body;
-
-        await Assert.That(listed).DoesNotContain("id=\"map\"");
-        await Assert.That(listed).Contains("<div class=\"list-view crowded\">");
-        await Assert.That(listed).Contains("There are too many conversations and sessions to draw as a map, so they are listed.");
+        // The data reaches past both of the old limits.
+        await Assert.That(PageBoard.Of(ConversationsMapTests.Rows(16)).All.Count).IsGreaterThan(12);
     }
 
     /// <summary>

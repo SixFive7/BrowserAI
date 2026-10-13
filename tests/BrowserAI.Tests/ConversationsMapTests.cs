@@ -297,12 +297,14 @@ internal sealed class ConversationsMapTests
     }
 
     /// <summary>
-    /// The list the page shows in a narrow window or on a crowded day carries each session's
-    /// folder, size and traces under a fold of its own, and no link to a session's page.
+    /// The list the page shows in a narrow window carries each session's folder, size and
+    /// traces under a fold of its own, and no link to a session's page.
     /// </summary>
     /// <remarks>
     /// <b>The session page was the list's way to a session's details</b>, its <i>Details</i>
-    /// button on every row. With the page gone, the row folds them away itself.
+    /// button on every row. With the page gone, the row folds them away itself. <i>Corrected
+    /// 2026-10-13 (previously "in a narrow window or on a crowded day"), when the map began to be
+    /// drawn at every count.</i>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -467,6 +469,145 @@ internal sealed class ConversationsMapTests
             ],
         };
     }
+
+    /// <summary>
+    /// A snapshot of as many rows as asked: conversations in Claude Code and Codex, some in a
+    /// VS Code window, one working, with none, one or several sessions each, the sessions
+    /// cycling through a hidden browser, no browser open and a window on the screen; and, from
+    /// two rows, one session kept after its conversation ended for every six rows.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-13 for the map that is drawn at any number of rows</b>, at the
+    /// maintainer's request of that day. Every name, title and folder is invented. With the
+    /// sessions per conversation in turn 1, 3, 0, 2, 1, 4, 1, 2, 2 and 1, three rows hold five
+    /// sessions, eight rows thirteen, sixteen rows twenty-five and forty rows sixty-three.
+    /// </remarks>
+    /// <param name="rows">How many rows the map draws: conversations, and kept sessions after them.</param>
+    /// <param name="at">The moment the snapshot is taken at, which the countdowns run from.</param>
+    /// <returns>The snapshot.</returns>
+    internal static SessionsSnapshot Rows(int rows, DateTimeOffset? at = null)
+    {
+        var now = at ?? Now;
+        var kept = rows < 2 ? 0 : Math.Max(1, rows / 6);
+        var held = new List<HeldSession>();
+        var relays = new List<(string Marker, ServerDescription Description)>();
+
+        for (var index = 0; index < rows - kept; index++)
+        {
+            var pid = FirstRelay + index;
+            var project = Projects[index % Projects.Length];
+            var folder = $@"C:\Code\{project}\.work\{Slugs[index % Slugs.Length]}{RoundOf(index)}";
+
+            for (var each = 0; each < SessionsPerConversation[index % SessionsPerConversation.Length]; each++)
+            {
+                held.Add(HeldOf(held.Count, folder + Variants[each], Titles[index % Titles.Length], pid, now));
+            }
+
+            relays.Add(($"relay:{index}", DashboardTests.Description(pid, ServerDescription.Roles.Relay, [], index % 3 is 2 ? "codex-mcp-client" : "claude-code", $@"C:\Code\{project}", inFlight: index % 7 is 0 ? 1 : 0)));
+        }
+
+        for (var index = 0; index < kept; index++)
+        {
+            held.Add(HeldOf(held.Count, $@"C:\Code\{Projects[(index + 3) % Projects.Length]}\.work\kept-{Slugs[(index + 11) % Slugs.Length]}{RoundOf(index)}", "Checking the page again after its conversation", null, now));
+        }
+
+        var composed = CensusPageSessions.Compose(now, [("background", DashboardTests.Description(900, ServerDescription.Roles.Host, held)), .. relays], []);
+
+        return composed with { Servers = [.. composed.Servers.Select(NamedOf)] };
+    }
+
+    /// <summary>
+    /// What tells apart two folders of <see cref="Rows"/> whose name comes round again past
+    /// the fortieth, so that every session has a folder, and so an id, of its own.
+    /// </summary>
+    private static string RoundOf(int index) => index < Slugs.Length ? string.Empty : $"-{(index / Slugs.Length) + 1}";
+
+    /// <summary>The pid of the first relay <see cref="Rows"/> composes; the next one's is one more.</summary>
+    private const int FirstRelay = 1000;
+
+    /// <summary>The states <see cref="Rows"/> gives its sessions in turn: hidden, no browser open, and a window on the screen.</summary>
+    private static readonly char[] States = ['h', 'c', 'h', 'w', 'c', 'h', 'c'];
+
+    /// <summary>The VS Code window the first two conversations of <see cref="Rows"/> are tabs of.</summary>
+    private static readonly ClientWindow FirstWindow = new("1200-134360600000000000", @"C:\Code\acme-shop");
+
+    /// <summary>The VS Code window the sixth to the eighth conversation of <see cref="Rows"/> are tabs of.</summary>
+    private static readonly ClientWindow SecondWindow = new("1300-134360600000000000", @"C:\Code\store-web");
+
+    /// <summary>One session <see cref="Rows"/> holds, in the state its number's turn gives it, and kept when no relay uses it.</summary>
+    private static HeldSession HeldOf(int number, string folder, string purpose, int? pid, DateTimeOffset now)
+    {
+        var state = States[number % States.Length];
+        var open = pid is null || state is not 'c';
+
+        return new HeldSession(
+            folder,
+            purpose,
+            BrowserOpen: open,
+            Headed: pid is not null && state is 'w',
+            Kept: pid is null,
+            DrivenBy: pid is null ? null : "claude-code",
+            DrivenThrough: pid,
+            IdleCloseAt: open ? now.AddMinutes(5 + (number * 7 % 50)).AddSeconds(number * 13 % 60) : null);
+    }
+
+    /// <summary>A relay of <see cref="Rows"/> with its conversation's title, the VS Code window it is a tab of, and its reconnect.</summary>
+    private static ServerEntry NamedOf(ServerEntry server)
+    {
+        if (!server.IsRelay)
+        {
+            return server;
+        }
+
+        var index = server.Description.ProcessId - FirstRelay;
+        var window = index is 0 or 1 ? FirstWindow : index is 5 or 6 or 7 ? SecondWindow : null;
+
+        return server with
+        {
+            Conversation = new ConversationName(Titles[index % Titles.Length], IsTitle: true),
+            Window = window,
+            Reconnect = window is not null ? RelayReconnect.None : index % 3 is 2 ? RelayReconnect.NewConversation : RelayReconnect.McpReconnect,
+        };
+    }
+
+    /// <summary>How many sessions each conversation of <see cref="Rows"/> uses, in turn.</summary>
+    private static readonly int[] SessionsPerConversation = [1, 3, 0, 2, 1, 4, 1, 2, 2, 1];
+
+    /// <summary>What tells a conversation's sessions apart in <see cref="Rows"/>.</summary>
+    private static readonly string[] Variants = [string.Empty, "-before", "-after", "-mobile"];
+
+    /// <summary>The projects the conversations of <see cref="Rows"/> work in.</summary>
+    private static readonly string[] Projects = ["acme-shop", "market-notes", "docs-site", "billing", "support-site", "store-web", "travel-desk", "newsletter"];
+
+    /// <summary>The conversations' titles in <see cref="Rows"/>, invented.</summary>
+    private static readonly string[] Titles =
+    [
+        "Fix the checkout total rounding", "Compare pricing pages", "Update the install guide screenshots", "Check the sign-in redirect",
+        "Find the slow product search", "Read the vendor's changelog", "Test the order export", "Translate the help pages",
+        "Check the cookie banner", "Try the new onboarding flow", "Collect the release notes", "Reproduce the cart timeout",
+        "Measure the front page", "Review the invoice layout", "List the support site's links", "Watch the status page",
+        "Fill in the supplier form", "Check the mobile menu", "Sort the newsletter archive", "Compare the shipping rates",
+        "Test the password reset", "Read the API reference", "Look up the tax rules", "Check the dark theme",
+        "Gather the competitors' prices", "Rehearse the demo", "Proofread the about page", "Trace the broken image links",
+        "Book the conference tickets", "Copy the FAQ into the wiki", "Check the search filters", "Download the bank statements",
+        "Follow the deployment log", "Test the coupon codes", "Read the accessibility report", "Check the opening hours page",
+        "Compare the two checkout flows", "Write up the bug for the vendor", "Check the PDF receipts", "Walk through the signup emails",
+    ];
+
+    /// <summary>The session folders' names in <see cref="Rows"/>, one per title.</summary>
+    private static readonly string[] Slugs =
+    [
+        "checkout-rounding", "pricing-compare", "install-guide-shots", "sign-in-redirect",
+        "product-search", "vendor-changelog", "order-export", "help-pages",
+        "cookie-banner", "onboarding-flow", "release-notes", "cart-timeout",
+        "front-page", "invoice-layout", "support-links", "status-page",
+        "supplier-form", "mobile-menu", "newsletter-archive", "shipping-rates",
+        "password-reset", "api-reference", "tax-rules", "dark-theme",
+        "competitor-prices", "demo-rehearsal", "about-page", "broken-images",
+        "conference-tickets", "faq-to-wiki", "search-filters", "bank-statements",
+        "deployment-log", "coupon-codes", "accessibility-report", "opening-hours",
+        "checkout-flows", "vendor-bug", "pdf-receipts", "signup-emails",
+    ];
 
     /// <summary>The map's part of a page: from the map's opening tag to the inspector's.</summary>
     internal static string MapOf(string page)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using BrowserAI.App;
 using BrowserAI.App.Page;
 using BrowserAI.Runtime;
@@ -623,6 +624,224 @@ internal sealed class PageBrowserTests
             });
         }
     }
+
+    /// <summary>
+    /// In a real browser the conversations page draws its map at forty rows, past the eight
+    /// rows and twelve sessions it once stopped at: every line is drawn and named, every row's
+    /// two cards share a row, the map is no wider than at three rows and only taller, and
+    /// nothing on the page is wider than the window; BrowserAI's column runs beside every row
+    /// and a click down it chooses BrowserAI; scrolled to its last row with a session of it
+    /// chosen, BrowserAI's card and the inspector are both in view; and a step right into
+    /// BrowserAI's column and a step right again land on the row the first step came from.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's request of 2026-10-13</b>, in his words verbatim: <i>"Feature
+    /// request. Right now I see "There are too many conversations and sessions to draw as a
+    /// map, so they are listed.". Can we make it so that this still draws on a map. The page
+    /// can become longer (not wider) if need be."</i> The forty rows arrive as the next state of
+    /// a tab drawn with three (46 a), so both measurements are of one tab at one window size.
+    /// The markup is <see cref="DashboardTests.TheMapIsDrawnWhateverTheNumberOfConversationsAndSessions"/>'.
+    /// </remarks>
+    /// <param name="browser">The provisioned family.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments(ProvisionedBrowsers.Chromium)]
+    [Arguments(ProvisionedBrowsers.Firefox)]
+    public async Task InARealBrowserAMapOfManyRowsGrowsInHeightOnlyAndKeepsBrowserAIAndTheInspectorInView(string browser)
+    {
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+
+        if (browser is ProvisionedBrowsers.Firefox)
+        {
+            await SuiteEnvironment.RequireProvisionedFirefoxAsync();
+        }
+        else
+        {
+            await SuiteEnvironment.RequireProvisionedChromiumAsync();
+        }
+
+        PublishedSlice.EnsureFresh();
+
+        await using var rig = await PageRig.CreateAsync();
+        using var scratch = await ScratchDirectory.CreateAsync($"page-tall-{browser}");
+
+        var forty = ConversationsMapTests.Rows(40);
+        var board = PageBoard.Of(forty);
+        var strands = board.Conversations.Sum(conversation => ConversationsContent.StrandsOf(conversation).Split(' ').Length);
+        var named = board.Conversations.Sum(conversation => Math.Max(1, conversation.Sessions.Count)) + board.Unlinked.Count;
+        var last = board.Conversations.Last(conversation => conversation.Sessions.Count > 0);
+        var middle = board.Conversations.Skip(board.Conversations.Count / 2).First(conversation => conversation.Sessions.Count > 0);
+        var lastHeld = board.All[^1].Id;
+
+        rig.Sessions.Snapshot = ConversationsMapTests.Rows(3);
+
+        var address = await rig.HandOutAsync(PageKind.Sessions);
+        var session = Path.Combine(scratch.Path, "tall-session");
+
+        await using var client = await RawStdioClient.StartAsync(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
+
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        _ = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "the suite reading BrowserAI's own map of forty rows in a headless browser",
+            ["browser"] = browser,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        try
+        {
+            async Task<string> evaluateAsync(string function) =>
+                TextOf(await CallAsync(client, "browser_evaluate", new JsonObject
+                {
+                    ["function"] = function,
+                    [SessionToolSurface.SessionParameter] = session,
+                    [SessionToolSurface.WhyParameter] = "the suite measuring BrowserAI's own map",
+                }));
+
+            async Task pressAsync(string key) =>
+                _ = await CallAsync(client, "browser_press_key", new JsonObject
+                {
+                    ["key"] = key,
+                    [SessionToolSurface.SessionParameter] = session,
+                    [SessionToolSurface.WhyParameter] = "the suite moving between the map's cards the way a keyboard does",
+                });
+
+            _ = await CallAsync(client, "browser_resize", new JsonObject
+            {
+                ["width"] = 1440,
+                ["height"] = 900,
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the suite giving the map the width it is drawn at",
+            });
+
+            _ = await CallAsync(client, "browser_navigate", new JsonObject
+            {
+                ["url"] = address,
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the suite opening BrowserAI's conversations page",
+            });
+
+            await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 1)).IsTrue();
+            await Assert.That(await WaitForAsync(async () =>
+                !(await evaluateAsync("() => 'wires=' + document.querySelectorAll('#wires path.wire').length")).Contains("wires=0", StringComparison.Ordinal))).IsTrue();
+
+            // Three rows: the map's width and height, and a map that fits the window.
+            var atThree = await evaluateAsync(MapMeasure);
+
+            await Assert.That(atThree).Contains("map=grid list=none tall=false");
+
+            // Forty rows, as the tab's next state.
+            _ = await evaluateAsync("() => { document.querySelector('#main > *').dataset.old = 'yes'; return 'marked'; }");
+
+            rig.Sessions.Snapshot = forty;
+            rig.Clock.Advance(BrowserAI.App.Page.PageService.HoldsWatchPeriod);
+
+            // The forty rows' state itself, and not the first state to take the mark away: the
+            // folder measurement the first draw started sends a state of its own when it is in,
+            // at a moment no arm chooses, as the arm above found on 2026-10-13. The state is told
+            // by its last session, which the map and the list both name, so that a page that
+            // draws no map is read at once and not waited for.
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync($"() => (document.querySelector('[data-old]') ? 'mark=kept' : 'mark=gone') + ' forty=' + document.getElementById('main').innerHTML.includes('{lastHeld}')"))
+                    .Contains("mark=gone forty=true", StringComparison.Ordinal))).IsTrue();
+            await Assert.That(await evaluateAsync("() => 'rows=' + document.querySelectorAll('.map-rows > .left').length + '.'")).Contains("rows=40.");
+
+            // A strand for each state of each conversation, a line on from BrowserAI to each
+            // session and to each "No browser yet", and a word on each of those.
+            await Assert.That(await evaluateAsync("() => 'wires=' + document.querySelectorAll('#wires path.wire').length")).Contains($"wires={strands + named}");
+            await Assert.That(await evaluateAsync("() => 'labels=' + document.querySelectorAll('#wires .lab').length")).Contains($"labels={named}");
+
+            // Still the map, no wider than at three rows and taller, and no page wider than the window.
+            var atForty = await evaluateAsync(MapMeasure);
+
+            await Assert.That(atForty).Contains("map=grid list=none tall=true");
+            await Assert.That(atForty).Contains("wider=false");
+            await Assert.That(atThree).Contains("wider=false");
+            await Assert.That(MeasureOf(atForty, "width")).IsLessThanOrEqualTo(MeasureOf(atThree, "width"));
+            await Assert.That(MeasureOf(atForty, "height")).IsGreaterThan(MeasureOf(atThree, "height"));
+
+            // Each row's two cards on one row, the rows down the page in order, and BrowserAI's
+            // column beside every one of them.
+            await Assert.That(await evaluateAsync(MapRows)).Contains("rows=40 misplaced=0 column=every");
+
+            // A click on BrowserAI's column far below its card chooses BrowserAI.
+            _ = await evaluateAsync("() => { document.querySelector('.hub-cell').click(); return 'clicked'; }");
+
+            await Assert.That(await evaluateAsync("() => 'shown=' + !document.getElementById('inspect-hub').hidden + ',pressed=' + document.getElementById('n-hub').getAttribute('aria-pressed')"))
+                .Contains("shown=true,pressed=true");
+
+            // The page scrolled to its last row and a session of the last conversation that has one chosen.
+            _ = await evaluateAsync("() => { const rows = document.querySelectorAll('.map-rows > .right'); rows[rows.length - 1].scrollIntoView({ block: 'end' }); return 'scrolled'; }");
+            _ = await evaluateAsync($"() => {{ document.querySelector('.right[data-row=\"{last.Key}\"] .node').click(); return 'clicked'; }}");
+
+            await Assert.That(await evaluateAsync(InView)).Contains("scrolled=true hub=in inspector=in pointing=true");
+
+            // Right into BrowserAI's column from a conversation at the bottom of the window, far
+            // below BrowserAI's own card at its top, and right again: one of that conversation's
+            // sessions, and not the row nearest the card.
+            _ = await evaluateAsync($"() => {{ const card = document.getElementById('n-{middle.Key}'); card.scrollIntoView({{ block: 'end' }}); card.focus({{ preventScroll: true }}); return 'focused'; }}");
+            await pressAsync("ArrowRight");
+
+            await Assert.That(await evaluateAsync("() => 'focus=' + (document.activeElement ? document.activeElement.id : '')")).Contains("focus=n-hub");
+
+            await pressAsync("ArrowRight");
+
+            await Assert.That(await evaluateAsync("() => { const cell = document.activeElement ? document.activeElement.closest('[data-row]') : null; return 'row=' + (cell ? cell.dataset.row : '') + '.'; }"))
+                .Contains($"row={middle.Key}.");
+        }
+        finally
+        {
+            _ = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
+            {
+                ["directory"] = session,
+                [SessionToolSurface.WhyParameter] = "the page suite finished with its session",
+            });
+        }
+    }
+
+    /// <summary>
+    /// What the tall map's arm reads of the map: its width and height, whether the map and the
+    /// list are shown, whether the script marked the map tall, and whether anything on the page
+    /// is wider than the window.
+    /// </summary>
+    private const string MapMeasure =
+        "() => { const map = document.getElementById('map'); const box = map.getBoundingClientRect(); const root = document.documentElement;"
+        + " return 'width=' + Math.round(box.width) + ' height=' + Math.round(box.height)"
+        + " + ' map=' + getComputedStyle(document.querySelector('.map-layout')).display + ' list=' + getComputedStyle(document.querySelector('.list-view')).display"
+        + " + ' tall=' + map.classList.contains('tall') + ' wider=' + (root.scrollWidth > root.clientWidth); }";
+
+    /// <summary>
+    /// How many of the map's rows have their two cards off one row or above the row before, and
+    /// whether BrowserAI's column runs from the first row's top to the last row's bottom.
+    /// </summary>
+    private const string MapRows =
+        "() => { const lefts = [...document.querySelectorAll('.map-rows > .left')]; const column = document.querySelector('.hub-cell').getBoundingClientRect();"
+        + " let misplaced = 0; let bottom = -Infinity;"
+        + " for (const left of lefts) { const right = document.querySelector('.map-rows > .right[data-row=\"' + left.dataset.row + '\"]');"
+        + " const a = left.getBoundingClientRect(); const b = right.getBoundingClientRect();"
+        + " if (Math.abs(a.top + a.height / 2 - (b.top + b.height / 2)) > 1 || Math.min(a.top, b.top) < bottom) { misplaced++; }"
+        + " bottom = Math.max(a.bottom, b.bottom); }"
+        + " const first = lefts[0].getBoundingClientRect(); const end = lefts[lefts.length - 1].getBoundingClientRect();"
+        + " return 'rows=' + lefts.length + ' misplaced=' + misplaced + ' column=' + (column.top <= first.top && column.bottom >= end.bottom ? 'every' : 'short'); }";
+
+    /// <summary>Whether the page is scrolled more than a window down, BrowserAI's card and the inspector are inside the window, and the inspector points at the card chosen.</summary>
+    private const string InView =
+        "() => { const inside = (element) => { const box = element.getBoundingClientRect(); return box.top >= 0 && box.bottom <= window.innerHeight ? 'in' : 'out'; };"
+        + " const inspector = document.getElementById('inspector');"
+        + " return 'scrolled=' + (window.scrollY > window.innerHeight) + ' hub=' + inside(document.getElementById('n-hub')) + ' inspector=' + inside(inspector)"
+        + " + ' pointing=' + inspector.classList.contains('pointing'); }";
+
+    /// <summary>One number of what <see cref="MapMeasure"/> read.</summary>
+    /// <param name="measured">What it read.</param>
+    /// <param name="name">The number's name.</param>
+    /// <returns>The number.</returns>
+    private static int MeasureOf(string measured, string name) =>
+        int.Parse(Regex.Match(measured, name + "=(?<value>[0-9]+)").Groups["value"].Value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>The address a tab shows once the address it was handed is swapped: the token taken out (74 a).</summary>
     /// <param name="handed">The address the start was handed.</param>
