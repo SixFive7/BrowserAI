@@ -420,10 +420,11 @@ BrowserAI.exe links the Microsoft.Extensions libraries it uses from the ASP.NET
 Core shared framework, Microsoft.AspNetCore.App, which the product references
 since 2026-10-08, when the server and the configuration app became one
 executable. They are MIT, and none has a file of its own in this artifact. The
-win-x64 runtime pack of that framework, 10.0.12, names
+win-x64 runtime pack of that framework, 10.0.13, names
 https://github.com/dotnet/dotnet as its repository, MIT as its licence and
 "Copyright (c) .NET Foundation and Contributors" in its own LICENSE.txt, read
-2026-10-08 from the package's .nuspec and LICENSE.txt. Until that day the server
+2026-10-14 from the package's .nuspec and LICENSE.txt (previously 10.0.12, read
+2026-10-08 the same way, with the same three answers). Until 2026-10-08 the server
 took 17 Microsoft.Extensions packages from NuGet instead, two of them directly,
 and this section listed all 17.
 

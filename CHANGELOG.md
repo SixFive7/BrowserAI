@@ -40,6 +40,12 @@ more* link to its detail; nothing else depends on it.
 
 ### Changed
 
+- ⬆️ **BrowserAI is built with .NET 10.0.13, up from 10.0.12.**
+  The compiler that builds the one executable, its trimmer, the runtime it carries and the logging
+  libraries it links moved with the .NET update published on 2026-10-13. The suite's own TUnit
+  moved to 1.75.0 and its CsWin32 to 0.3.363 in the same re-resolve, and neither reaches an
+  installed BrowserAI.
+
 - ✅ **The containment arm counts a browser process that exited and that nothing holds as no answer.**
   The arm asks each process of a browser it walked whether Windows would restart it, after the
   walk has let its processes go, and a process that exited in between could not be opened at all,
