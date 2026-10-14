@@ -88,6 +88,21 @@ internal sealed class ServerRegistryReapTests
     private static readonly Regex ReaperIdentity =
         new(Regex.Escape(ServerRegistryReap.AfterDestroy) + @", detached and not awaited: reaper=(?<pid>\d+)@(?<created>-?\d+)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    /// <summary>Matches the identity <c>ReapLog.Started</c> writes for the reap the startup sweep starts.</summary>
+    /// <remarks>
+    /// Either cause the pass can give it: <see cref="ServerRegistryReap.AtStartup"/>, or
+    /// <see cref="ServerRegistryReap.AfterSweep"/> when the pass ended a stray browser.
+    /// </remarks>
+    private static readonly Regex StartupReaperIdentity =
+        new(@"server-registry reap after (?:" + Regex.Escape(ServerRegistryReap.AtStartup) + "|" + Regex.Escape(ServerRegistryReap.AfterSweep) + @"), detached and not awaited: reaper=(?<pid>\d+)@(?<created>-?\d+)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Matches the records that say the startup sweep started no reap: the gate was another
+    /// BrowserAI's, the gate could not be made, the pass failed, or the reap could not start.
+    /// </summary>
+    private static readonly Regex NoStartupReap =
+        new(@"BrowserAI\.Sweep\[2\]  |BrowserAI\.Sweep\[4\]  |The stray sweep failed\.|reap could not be started after (?:" + Regex.Escape(ServerRegistryReap.AtStartup) + "|" + Regex.Escape(ServerRegistryReap.AfterSweep) + @")|No server-registry reap after (?:" + Regex.Escape(ServerRegistryReap.AtStartup) + "|" + Regex.Escape(ServerRegistryReap.AfterSweep) + ")", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     /// <summary>
     /// A destroy reaps every dead descriptor in Playwright's registry, spares the
     /// one belonging to a browser that is still up, and answers its caller while
@@ -129,6 +144,19 @@ internal sealed class ServerRegistryReapTests
         await Assert.That(await DescriptorForAsync(registry, keeper)).IsNotNull();
         await Assert.That(await DescriptorForAsync(registry, closing)).IsNotNull();
 
+        // ⚠️ THE STARTUP SWEEP'S REAP IS OVER BEFORE ANYTHING IS PLANTED -- 2026-10-14. The
+        // background's one sweep at its start reaps this registry too (P5 a), and in the Git
+        // Bash half of the gate at 9c3466a5 its pass took 21.2 s, so the reap it started was
+        // listing this registry while the plant below was being written: 40 of the 1,000
+        // were gone at the count. The arm waits for the record that says how that pass ended
+        // and, when the pass started a reaper, for that reaper, by its identity, to be gone.
+        var background = client.BackgroundProcessId
+            ?? throw new InvalidOperationException("The published relay was started with no background beside it.");
+        var backgroundCreated = ProcessIdentity.CreationTimeOf(background);
+        var (over, said) = await WhenTheStartupReapIsOverAsync(background, backgroundCreated);
+
+        await Assert.That(over).IsTrue().Because(said);
+
         var planted = await PlantDeadDescriptorsAsync(registry, StaleDescriptorsPlanted);
 
         await Assert.That(planted.Count(File.Exists)).IsEqualTo(StaleDescriptorsPlanted);
@@ -159,9 +187,7 @@ internal sealed class ServerRegistryReapTests
         // this machine appends to. ⚠️ The background's since 2026-10-09
         // (previously the relay's own pid, the process the client started): the
         // background holds the sessions and writes their records (S a).
-        var background = client.BackgroundProcessId
-            ?? throw new InvalidOperationException("The published relay was started with no background beside it.");
-        var records = await ProcessLogRecords.ForAsync(background, ProcessIdentity.CreationTimeOf(background));
+        var records = await ProcessLogRecords.SinceItsCreationAsync(background, backgroundCreated);
         var reaper = ReaperIdentity.Match(records);
 
         await Assert.That(reaper.Success)
@@ -325,6 +351,58 @@ internal sealed class ServerRegistryReapTests
         var quoted = ServerRegistryReap.ScriptFor(@"C:\Users\O'Brien\payload\lib\serverRegistry.js");
 
         await Assert.That(quoted).Contains(@"require('C:/Users/O\'Brien/payload/lib/serverRegistry.js')");
+    }
+
+    /// <summary>
+    /// Waits until the background's records say how its startup sweep's reap went and, when
+    /// that pass started a reaper, until the reaper is gone.
+    /// </summary>
+    /// <remarks>
+    /// The records are read only out of the log files the background can have written to,
+    /// because this reads them again every quarter of a second. A pass that could not have
+    /// the machine-wide gate starts no reap, and says so, and so does one that failed.
+    /// </remarks>
+    /// <param name="background">The background's pid.</param>
+    /// <param name="created">Its creation time.</param>
+    /// <returns>Whether the reap is over, and what the records said.</returns>
+    private static async Task<(bool Over, string Said)> WhenTheStartupReapIsOverAsync(int background, long created)
+    {
+        using var deadline = new CancellationTokenSource(TestDefaults.ProcessHang);
+        var records = string.Empty;
+
+        while (!deadline.IsCancellationRequested)
+        {
+            records = await ProcessLogRecords.SinceItsCreationAsync(background, created);
+
+            var reaper = StartupReaperIdentity.Match(records);
+
+            if (reaper.Success)
+            {
+                var pid = int.Parse(reaper.Groups["pid"].Value, CultureInfo.InvariantCulture);
+                var reaperCreated = long.Parse(reaper.Groups["created"].Value, CultureInfo.InvariantCulture);
+                var gone = await ProcessIdentity.WaitUntilGoneAsync(pid, reaperCreated, TestDefaults.ProcessHang);
+
+                return (gone, gone
+                    ? $"the startup sweep's reaper {pid}@{reaperCreated} is gone"
+                    : $"the startup sweep's reaper {pid}@{reaperCreated} was still running when the hang detector ran out");
+            }
+
+            if (NoStartupReap.Match(records) is { Success: true } none)
+            {
+                return (true, $"the startup sweep started no reap: {none.Value}");
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(250), deadline.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
+
+        return (false, $"no record said how the startup sweep's reap went, and the background's records are:{Environment.NewLine}{records}");
     }
 
     /// <summary>Opens one session through the slice and binds a real browser to it.</summary>

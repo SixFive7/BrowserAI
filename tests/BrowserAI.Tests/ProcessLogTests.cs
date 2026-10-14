@@ -521,6 +521,50 @@ internal sealed partial class ProcessLogTests
     }
 
     /// <summary>
+    /// The read a poll takes leaves out a file named for a UTC day before the writer was
+    /// created, and reads one named for that day, one named for a later day and one whose
+    /// name carries no day.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-14</b> with <see cref="ProcessLogRecords.SinceItsCreationAsync"/>,
+    /// whose filter this is: one that left out the wrong file would keep a poll waiting out
+    /// its hang detector for a record it never reads. The same files read with no filter are
+    /// the control that the record of the day before is there to be left out.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheReadAPollTakesLeavesOutOnlyTheFilesNamedForADayBeforeTheWritersCreation()
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-days");
+
+        var directory = Directory.CreateDirectory(new LocalAppDataPaths(scratch.Path).LogDirectory).FullName;
+
+        // Odd, as above, so the planted lines are provably planted.
+        const int Pid = 4243;
+        var created = new DateTime(2026, 10, 14, 0, 30, 0, DateTimeKind.Utc).ToFileTimeUtc();
+
+        foreach (var (name, says) in new[]
+        {
+            ("browserai-20261013-002.log", "written the day before"),
+            ("browserai-20261014-000.log", "written on its day"),
+            ("browserai-20261015-000.log", "written the day after"),
+            ("browserai-noday.log", "in a file named for no day"),
+        })
+        {
+            await File.WriteAllTextAsync(Path.Combine(directory, name), Record(Pid, created, says) + "\n");
+        }
+
+        var read = await ProcessLogRecords.InAsync(directory, Pid, created, ProcessLogRecords.FilesFrom(created));
+
+        await Assert.That(read).DoesNotContain("written the day before");
+        await Assert.That(read).Contains("written on its day");
+        await Assert.That(read).Contains("written the day after");
+        await Assert.That(read).Contains("in a file named for no day");
+
+        await Assert.That(await ProcessLogRecords.InAsync(directory, Pid, created)).Contains("written the day before");
+    }
+
+    /// <summary>
     /// Within the background's category and within the relay's, every line has an event
     /// id of its own, so <c>Background[n]</c> and <c>Relay[n]</c> each name one line.
     /// </summary>

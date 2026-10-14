@@ -73,6 +73,70 @@ internal static class ProcessLogRecords
         await InAsync(BrowserAiPaths.Real.LogDirectory, processId, createdFileTime);
 
     /// <summary>
+    /// The same records, read only out of the files the process could have written to:
+    /// those named for its UTC day of creation or a later one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>For a poll, which reads the log again and again.</b> The log keeps thirty days of
+    /// every BrowserAI on the machine, 186 MB in 42 files on 2026-10-14, and a read of all of
+    /// it each time round a loop is a load of the suite's own making. <c>RollingFileWriter</c>
+    /// names every file <c>browserai-&lt;UTC day&gt;-&lt;index&gt;.log</c> for the day of
+    /// the records it holds, so a process cannot have written into a file named for a day
+    /// before it was created. A file whose name carries no day is read.
+    /// </para>
+    /// <para>
+    /// <i>Added 2026-10-14</i> for <c>ServerRegistryReapTests</c>' wait on the startup sweep's
+    /// reap.
+    /// </para>
+    /// </remarks>
+    /// <param name="processId">The pid half of the writer's identity.</param>
+    /// <param name="createdFileTime">The creation-time half.</param>
+    /// <returns>Its records, joined, or an empty string if it wrote none.</returns>
+    public static async Task<string> SinceItsCreationAsync(int processId, long createdFileTime) =>
+        await InAsync(BrowserAiPaths.Real.LogDirectory, processId, createdFileTime, FilesFrom(createdFileTime));
+
+    /// <summary>
+    /// Which log files a process created at <paramref name="createdFileTime"/> could have
+    /// written to, for <see cref="InAsync"/>.
+    /// </summary>
+    /// <param name="createdFileTime">The process's creation time.</param>
+    /// <returns>True for a file named for its UTC day of creation or a later one, and for a name with no day.</returns>
+    public static Func<string, bool> FilesFrom(long createdFileTime)
+    {
+        var day = DateTime.FromFileTimeUtc(createdFileTime).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+
+        return file => !NamedForADayBefore(file, day);
+    }
+
+    /// <summary>Whether a log file's name carries a UTC day earlier than <paramref name="day"/>.</summary>
+    /// <param name="file">The file's path.</param>
+    /// <param name="day">A UTC day, spelled <c>yyyyMMdd</c>.</param>
+    /// <returns><see langword="false"/> for a file named for that day or a later one, and for a name with no day.</returns>
+    private static bool NamedForADayBefore(string file, string day)
+    {
+        const string Prefix = "browserai-";
+        var name = Path.GetFileName(file);
+
+        if (name.Length < Prefix.Length + day.Length || !name.StartsWith(Prefix, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var named = name.AsSpan(Prefix.Length, day.Length);
+
+        foreach (var character in named)
+        {
+            if (!char.IsAsciiDigit(character))
+            {
+                return false;
+            }
+        }
+
+        return named.CompareTo(day, StringComparison.Ordinal) < 0;
+    }
+
+    /// <summary>
     /// The same read, against a nominated log directory.
     /// </summary>
     /// <remarks>
@@ -86,8 +150,9 @@ internal static class ProcessLogRecords
     /// <param name="directory">The log directory to read.</param>
     /// <param name="processId">The pid half of the writer's identity.</param>
     /// <param name="createdFileTime">The creation-time half.</param>
+    /// <param name="reads">Which of the directory's log files are read; every one when none is given.</param>
     /// <returns>Its records, joined, or an empty string if it wrote none.</returns>
-    public static async Task<string> InAsync(string directory, int processId, long createdFileTime)
+    public static async Task<string> InAsync(string directory, int processId, long createdFileTime, Func<string, bool>? reads = null)
     {
         if (!Directory.Exists(directory))
         {
@@ -103,7 +168,7 @@ internal static class ProcessLogRecords
         var marker = string.Create(CultureInfo.InvariantCulture, $"  pid={processId}@{createdFileTime}  ");
         var collected = new StringBuilder();
 
-        foreach (var file in Directory.EnumerateFiles(directory, "browserai-*.log").Order(StringComparer.Ordinal))
+        foreach (var file in Directory.EnumerateFiles(directory, "browserai-*.log").Where(file => reads?.Invoke(file) ?? true).Order(StringComparer.Ordinal))
         {
             string text;
 
