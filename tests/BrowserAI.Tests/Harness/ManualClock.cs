@@ -8,9 +8,13 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>This exists because the one timer in the product makes claims about
-/// <i>when</i>, and a test that establishes one by letting real time pass is
-/// measuring the machine.</b> Measured 2026-08-17 with every test in this suite
+/// <b>This exists because the product's timers make claims about <i>when</i>, and
+/// a test that establishes one by letting real time pass is measuring the
+/// machine.</b> ⚠️ <i>Corrected 2026-10-14 (previously "the one timer in the product
+/// makes claims"), with the row of <c>ARCHITECTURE.md</c> that said the same</i>: the
+/// update core and its toasts, the relay, the page, the provisioner and a kept window's
+/// look arm timers on the clock they are handed as well as the idle countdown.
+/// Measured 2026-08-17 with every test in this suite
 /// running at once: a single in-process round trip took <b>1.51 s</b> and
 /// <b>2.27 s</b> against an 800 ms idle period, so
 /// <c>BrowserIdleTimerTests</c>'s driving loop could not achieve its own
@@ -48,6 +52,28 @@ namespace BrowserAI.Tests.Harness;
 /// thread of its own while a test moved the clock, has its timer late by the move. The
 /// relay's rig moves the clock only while its relay is settled for that reason
 /// (<c>RelayRig.StepAsync</c>).
+/// </para>
+/// <para>
+/// ⚠️ <b>And the clock answers the orders such a thread can meet in the clock itself</b>,
+/// added 2026-10-14 by addition, for the maintainer's 170 a: a timer disarmed after the clock
+/// chose it ends the step without an error, a due written after a step had passed it is
+/// fired at the clock's own reading, late, with the clock never moving back, and a timer
+/// re-armed after the clock chose it runs the chosen tick and fires again at its new due
+/// (<see cref="FireTheNextDueBy"/>, <c>ManualClockTests</c>).
+/// </para>
+/// <para>
+/// <b>Read the same day for the other places that take a timer's delay from one reading of
+/// this clock and arm it at another</b>: the update core's next look and next check
+/// (<c>BackgroundUpdates.WakeAt</c> and <c>ArmCheck</c>), the page's linger
+/// (<c>PageTabs</c>) and the idle countdown (<c>BrowserIdleTimer.ArmFor</c>). A step can
+/// meet each of them in that gap, and no arm depends on it. The update rig's seams answer at
+/// once, so the core arms on the stepping thread, except after the record of the last check
+/// is written to disk, where the one step that can meet it comes just before the arm
+/// disposes that core. Nothing a test reads waits on the linger, which only wakes a page that
+/// no longer stops on it. And the idle countdown restarts after a forwarded call's answer is
+/// sent: an arm that steps straight after one holds only that nothing closed at that step, or
+/// goes on stepping until the close comes, and an arm that holds the countdown to its deadline
+/// reads it or steps to it only after a call whose restart is done before its answer.
 /// </para>
 /// </remarks>
 internal sealed class ManualClock : TimeProvider
@@ -234,16 +260,22 @@ internal sealed class ManualClock : TimeProvider
         ArgumentOutOfRangeException.ThrowIfLessThan(window, TimeSpan.Zero);
 
         var horizon = GetTimestamp() + window.Ticks;
-        List<ManualTimer> due;
+        List<(ManualTimer Timer, long Arming)> due = [];
 
         lock (_gate)
         {
-            due = [.. _timers.Where(timer => timer.DueAt is { } at && at <= horizon)];
+            foreach (var timer in _timers)
+            {
+                if (timer.Next is { } next && next.At <= horizon)
+                {
+                    due.Add((timer, next.Arming));
+                }
+            }
         }
 
-        foreach (var timer in due)
+        foreach (var (timer, arming) in due)
         {
-            timer.Fire();
+            timer.Fire(arming);
         }
     }
 
@@ -306,42 +338,78 @@ internal sealed class ManualClock : TimeProvider
     /// <summary>
     /// Moves the clock to the earliest moment at or before <paramref name="target"/> at
     /// which a timer is due and fires that one timer; or, when none is due by then, moves
-    /// the clock to <paramref name="target"/>.
+    /// the clock to <paramref name="target"/>. The clock never moves back: a due it has
+    /// already passed is fired at its own reading, and a target it already reads past
+    /// leaves it where it is.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>One step of <see cref="AdvanceTicks"/>, added 2026-10-14</b> for a caller that
     /// must let what a callback set off finish before the clock moves again:
     /// <c>RelayRig.StepAsync</c>, whose relay arms its next timers on a thread of its
     /// own, from readings of this clock.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The due a timer is chosen by is read once and kept</b>, since 2026-10-14, the
+    /// maintainer's 170 a (previously the step read the chosen timer's due a second time to
+    /// move the clock). A timer's <c>Change</c> and <c>Dispose</c> take the timer's own lock
+    /// and not this clock's, so a thread of the code under test can disarm the chosen timer
+    /// in between, and the second read came back empty and threw out of the step. A timer
+    /// disarmed after the choice is still fired once, as a real timer's tick already handed
+    /// to the thread pool is and as this clock already did for a disarm after the move; one
+    /// disposed there is not, as no disposed timer of this clock is.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And the clock moves only forward</b>, since the same day (previously it moved to
+    /// the due of the timer it fired, and to the target when nothing was due). A timer's
+    /// <c>Change</c> reads the clock before it takes its own lock and writes the due after
+    /// it, so a timer armed on another thread while a step goes on can be due at a moment
+    /// the step has already passed, and the callbacks of that step read a moment before
+    /// one the clock had already read. A real clock never does, and a real timer whose
+    /// moment has passed fires at once.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And a re-arm made after the choice stands</b>, since the same day, the build's
+    /// choice, for the maintainer's review, within his 170 a (previously the fire wrote the
+    /// timer's next due over it, so a one-shot timer re-armed there never fired again). The fire is handed how
+    /// many times the timer had been armed when the clock chose it, writes the next due only
+    /// when nothing armed the timer since, and runs the chosen tick either way, as a real
+    /// timer runs a tick already handed to the thread pool and keeps the due a later
+    /// <c>Change</c> gave it. <c>ManualClockTests</c> forces all three orders.
+    /// </para>
     /// </remarks>
     /// <param name="target">The tick the clock is being moved to.</param>
-    /// <returns><see langword="true"/> when a timer fired; <see langword="false"/> once the clock reads <paramref name="target"/> with nothing due by it.</returns>
+    /// <returns><see langword="true"/> when a timer fired; <see langword="false"/> once the clock reads <paramref name="target"/> or later with nothing due by it.</returns>
     public bool FireTheNextDueBy(long target)
     {
         ManualTimer? next = null;
+        long due = 0;
+        long arming = 0;
 
         lock (_gate)
         {
             foreach (var timer in _timers)
             {
-                if (timer.DueAt is { } due && due <= target && (next?.DueAt is not { } best || due < best))
+                if (timer.Next is { } armed && armed.At <= target && (next is null || armed.At < due))
                 {
                     next = timer;
+                    due = armed.At;
+                    arming = armed.Arming;
                 }
             }
 
             if (next is null)
             {
-                _now = target;
+                _now = Math.Max(_now, target);
                 return false;
             }
 
             Interlocked.Exchange(ref _atTheNextChoice, null)?.Invoke(next);
 
-            _now = next.DueAt!.Value;
+            _now = Math.Max(_now, due);
         }
 
-        next.Fire();
+        next.Fire(arming);
         return true;
     }
 
@@ -364,19 +432,32 @@ internal sealed class ManualClock : TimeProvider
         private TimeSpan _period = Timeout.InfiniteTimeSpan;
         private bool _disposed;
 
+        /// <summary>
+        /// How many times <see cref="Change(TimeSpan, TimeSpan)"/> has armed or disarmed this
+        /// timer. Guarded by <see cref="_gate"/>.
+        /// </summary>
+        private long _armings;
+
         /// <summary>When this timer next fires, or null when it is disarmed.</summary>
+        public long? DueAt => Next?.At;
+
+        /// <summary>
+        /// When this timer next fires and how many times it had been armed by then, or null
+        /// when it is disarmed.
+        /// </summary>
         /// <remarks>
         /// Read under the same lock the arming path writes it under, so a
         /// dispatch can never act on a due time a concurrent
-        /// <see cref="Change(TimeSpan, TimeSpan)"/> has half-written.
+        /// <see cref="Change(TimeSpan, TimeSpan)"/> has half-written, and the count tells
+        /// <see cref="Fire(long)"/> whether a <c>Change</c> came after the clock chose the tick.
         /// </remarks>
-        public long? DueAt
+        public (long At, long Arming)? Next
         {
             get
             {
                 lock (_gate)
                 {
-                    return _disposed ? null : Due;
+                    return !_disposed && Due is { } at ? (at, _armings) : null;
                 }
             }
         }
@@ -411,12 +492,17 @@ internal sealed class ManualClock : TimeProvider
 
                 _period = period;
                 Due = dueTime == Timeout.InfiniteTimeSpan ? null : now + dueTime.Ticks;
+                _armings++;
                 return true;
             }
         }
 
-        /// <summary>Runs the callback and re-arms if this timer is periodic.</summary>
-        public void Fire()
+        /// <summary>
+        /// Runs the callback for the tick the clock chose, and re-arms this timer when it is
+        /// periodic and nothing armed it since the choice.
+        /// </summary>
+        /// <param name="arming">How many times the timer had been armed when the clock chose the tick.</param>
+        public void Fire(long arming)
         {
             // Read before the lock, for the reason on Change.
             var now = clock.GetTimestamp();
@@ -428,9 +514,13 @@ internal sealed class ManualClock : TimeProvider
                     return;
                 }
 
-                Due = _period == Timeout.InfiniteTimeSpan || _period == TimeSpan.Zero
-                    ? null
-                    : now + _period.Ticks;
+                // A Change after the choice set the due this timer has now, and it stands.
+                if (_armings == arming)
+                {
+                    Due = _period == Timeout.InfiniteTimeSpan || _period == TimeSpan.Zero
+                        ? null
+                        : now + _period.Ticks;
+                }
             }
 
             callback(state);
