@@ -39,9 +39,10 @@ text and its time and says where the rig was kept.
 runs only and never committed as code: each iteration starts the published BrowserAI the
 way the arm does, opens a Firefox session, navigates, takes the screenshot, destroys
 the session, and appends one JSON row with every call's time and every error's text.
-This is its last version. `stall1` ran an earlier one, which suspended the browser 300
-ms after the screenshot was asked for and so after it had been answered; its 7.3 s are
-the probe's own wait and say nothing about the screenshot.
+This is its last version, which `stall2` ran. `base1`, `stall1`, `load128` and
+`load320` ran an earlier one, which differed in its hold alone: it suspended the browser
+300 ms after the screenshot was asked for, and so after it had been answered, which makes
+the 7.3 s of `stall1` the probe's own wait and nothing about the screenshot.
 
 | File | What ran | Iterations | Screenshot answered in | Errors |
 |---|---|--:|---|--:|
