@@ -9,7 +9,7 @@ investigated from, on 2026-10-14**, after that arm's screenshot was answered wit
 `isError: true` once, in the second PowerShell half of the gate at `df12ab85` on
 2026-10-13, with neither the answer's text nor the session's folder kept. It is cited
 by that row and by
-[the kb entry](../../../kb/playwright/tools-and-artifacts.md#a-firefox-screenshot-gets-upstreams-five-seconds-and-a-loaded-machine-takes-most-of-them----measured-2026-10-14).
+[the kb entry](../../../kb/playwright/tools-and-artifacts.md#a-firefox-screenshot-has-upstreams-five-seconds-and-a-loaded-machine-can-spend-most-of-them----measured-2026-10-14).
 Every file is kept whole, as taken, with the line endings this repository stores.
 
 ## `red/` -- what the red left

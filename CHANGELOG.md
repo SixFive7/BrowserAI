@@ -120,7 +120,7 @@ more* link to its detail; nothing else depends on it.
   step out of BrowserAI's column with the arrow keys comes back to the row you came from. Only a
   window narrower than 1,200 pixels still shows the list.
 
-- ✅ **The Firefox front-door arm now says what each of its calls was answered, and keeps its rig when it goes red.**
+- ✅ **The Firefox front-door arm quotes what its calls were answered, and keeps its rig on a red.**
   Its screenshot was answered with an error once in a gate, and the arm kept only the
   flag, so what the answer said went with the session's folder. Each answer the arm checks
   is quoted in its failure now, the screenshot's with how long it took, which the arm also
