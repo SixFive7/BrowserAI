@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.ComponentModel;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -34,9 +36,18 @@ namespace BrowserAI.Tests;
 /// existed and failed on the script that was not there.
 /// </para>
 /// </remarks>
-internal sealed class RegisterAiPayloadTests
+internal sealed partial class RegisterAiPayloadTests
 {
     private const string Script = "Get-RegisterAi.ps1";
+
+    /// <summary>The variable the script takes its API read's token from, which <c>gh</c> does not read.</summary>
+    private const string TokenVariable = "REGISTERAI_GITHUB_TOKEN";
+
+    /// <summary>
+    /// The hourly limit GitHub gives an address that reads its API unsigned: 60, read
+    /// off GitHub's own <c>/rate_limit</c> on 2026-10-14 (kb, toolchain.md).
+    /// </summary>
+    private const long UnsignedHourlyLimit = 60;
 
     /// <summary>What one run of the script did.</summary>
     /// <param name="Exit">Its exit code.</param>
@@ -109,9 +120,11 @@ internal sealed class RegisterAiPayloadTests
 
     /// <summary>
     /// With no folder named, the newest release of the public repository is read and
-    /// its two files downloaded with no GitHub sign-in: <c>gh</c> is pointed at an
-    /// empty configuration folder and every token variable is removed, so a script
-    /// that still needed <c>gh</c> fails here.
+    /// its two files downloaded with no <c>gh</c>: <c>gh</c> is pointed at an empty
+    /// configuration folder and every variable it takes a token from is removed, so a
+    /// script that still needed <c>gh</c> fails here. The one API read is signed in
+    /// with the token the developer's own <c>gh</c> holds, when it holds one, and the
+    /// two downloads are never signed in.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -123,6 +136,28 @@ internal sealed class RegisterAiPayloadTests
     /// It needs the network: one read of <c>api.github.com</c> and two downloads from
     /// <c>github.com</c>, which a payload build makes too.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The read is signed in since 2026-10-14, the maintainer's 171</b>, in his
+    /// words verbatim: <i>"171 your recommendations"</i>. Unsigned, it counted against
+    /// the 60 calls an hour GitHub gives one address, which everything on the machine
+    /// that reads the API unsigned shares, and in the PowerShell half of the gate at
+    /// <c>24202002</c> that hour was spent before the arm's call (the hazard index).
+    /// The token is asked of <c>gh auth token</c> in this process's own environment and
+    /// handed to the script in <see cref="TokenVariable"/>, a variable <c>gh</c> does not
+    /// read, and no file, log or message of this arm carries it: the script reads it
+    /// once, takes it out of its own environment and puts it on the API read alone. The
+    /// downloads stay unsigned, so a release that stopped being public is still a red
+    /// here. <b>With no token, because <c>gh</c> is not installed or holds no sign-in,
+    /// the read goes out unsigned</b>, which is the read a payload build makes on such a
+    /// machine, so the arm proves there what a build there does. Failing instead would
+    /// make a machine's missing sign-in a red tree, and a recorded answer would stop the
+    /// arm reading the newest release on the machines where a build reads it live.
+    /// Either way the script names the read it made and the hourly limit GitHub
+    /// answered it with, and the arm holds both: a read handed a token that GitHub
+    /// counted against an address's 60 is a red. <b>Planted red 2026-10-14</b> in a filtered
+    /// run against the script of <c>86f9dd8a</c>, which read the release unsigned and named
+    /// no read; green with the script that signs it in and names it.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -133,17 +168,38 @@ internal sealed class RegisterAiPayloadTests
         var payload = Directory.CreateDirectory(Path.Combine(scratch.Path, "payload")).FullName;
         var stamp = Path.Combine(scratch.Path, "registerai.json");
         var placed = Path.Combine(payload, "registerai", "RegisterAI.exe");
-        var signedOut = SignedOut(Directory.CreateDirectory(Path.Combine(scratch.Path, "gh")).FullName);
+        var token = await GitHubTokenAsync();
+        var signedOut = SignedOut(Directory.CreateDirectory(Path.Combine(scratch.Path, "gh")).FullName, token);
 
-        // The control: under these variables gh, where it is installed, is signed in
-        // to nothing, so the run below cannot borrow an account.
+        // The control: under exactly the variables the script is given, the token's
+        // own included, gh, where it is installed, is signed in to nothing, so the run
+        // below cannot borrow an account.
         var gh = await TryStartAsync("gh", ["auth", "status"], signedOut);
 
-        await Assert.That(gh is null || gh.Exit != 0).IsTrue().Because($"gh auth status exited 0 under an empty configuration folder, so this run could still sign in: {gh?.Everything}");
+        await Assert.That(gh is null || gh.Exit != 0).IsTrue().Because($"gh auth status exited 0 under an empty configuration folder, so this run could still sign in: {Scrubbed(gh?.Everything, token)}");
 
         var taken = await RunAsync(["-PayloadRoot", payload, "-StampPath", stamp], signedOut);
+        var said = Scrubbed(taken.Everything, token);
 
-        await Assert.That(taken.Exit).IsEqualTo(0).Because(taken.Everything);
+        await Assert.That(token is null || !taken.Everything.Contains(token, StringComparison.Ordinal)).IsTrue()
+            .Because("the script printed the token it was handed");
+        await Assert.That(taken.Exit).IsEqualTo(0).Because(said);
+
+        // Which read the script made, in its own words, and GitHub's limit for it.
+        var read = ApiRead().Match(said);
+
+        await Assert.That(read.Success).IsTrue().Because($"the script named no API read and no limit GitHub answered it with: {said}");
+
+        if (token is null)
+        {
+            await Assert.That(read.Groups["how"].Value).IsEqualTo("with no sign-in").Because(said);
+        }
+        else
+        {
+            await Assert.That(read.Groups["how"].Value).IsEqualTo("signed in with the token handed in " + TokenVariable).Because(said);
+            await Assert.That(long.Parse(read.Groups["limit"].Value, CultureInfo.InvariantCulture)).IsGreaterThan(UnsignedHourlyLimit)
+                .Because($"GitHub counted a read handed a token against an address's {UnsignedHourlyLimit} calls an hour: {said}");
+        }
 
         using var record = JsonDocument.Parse(await File.ReadAllTextAsync(stamp));
 
@@ -319,9 +375,13 @@ internal sealed class RegisterAiPayloadTests
 
     /// <summary>
     /// The variables of a machine with no GitHub sign-in, for the child alone: an
-    /// empty configuration folder for <c>gh</c>, no token variable, and no prompt.
+    /// empty configuration folder for <c>gh</c>, no variable <c>gh</c> takes a token
+    /// from, and no prompt; and the token for the script's one API read, in the
+    /// variable only the script reads, when there is one.
     /// </summary>
-    private static Dictionary<string, string?> SignedOut(string emptyConfiguration) => new(StringComparer.OrdinalIgnoreCase)
+    /// <param name="emptyConfiguration">An empty folder for <c>gh</c>'s configuration.</param>
+    /// <param name="token">The token the API read is signed in with, or <see langword="null"/> for an unsigned read.</param>
+    private static Dictionary<string, string?> SignedOut(string emptyConfiguration, string? token) => new(StringComparer.OrdinalIgnoreCase)
     {
         ["GH_CONFIG_DIR"] = emptyConfiguration,
         ["GH_TOKEN"] = null,
@@ -331,7 +391,59 @@ internal sealed class RegisterAiPayloadTests
         ["GH_PROMPT_DISABLED"] = "1",
         ["GIT_TERMINAL_PROMPT"] = "0",
         ["GCM_INTERACTIVE"] = "never",
+        [TokenVariable] = token,
     };
+
+    /// <summary>
+    /// The token the developer's own <c>gh</c> holds, asked in this process's own
+    /// environment, or <see langword="null"/> when <c>gh</c> is not installed or holds no
+    /// sign-in.
+    /// </summary>
+    /// <remarks>
+    /// Kept in memory and handed to the script in its environment, and never put in a
+    /// file, a log or a message: every text of a child this arm prints goes through
+    /// <see cref="Scrubbed"/>. <c>gh auth token</c> reads the sign-in and changes nothing.
+    /// </remarks>
+    /// <returns>The token, or <see langword="null"/>.</returns>
+    private static async Task<string?> GitHubTokenAsync()
+    {
+        ChildRunner.Result asked;
+
+        try
+        {
+            asked = await ChildRunner.RunAsync(
+                "gh",
+                ["auth", "token"],
+                Environment.CurrentDirectory,
+                TestDefaults.ProcessHang,
+                new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["GH_PROMPT_DISABLED"] = "1",
+                    ["GIT_TERMINAL_PROMPT"] = "0",
+                    ["GCM_INTERACTIVE"] = "never",
+                },
+                encoding: new UTF8Encoding(false));
+        }
+        catch (Exception failure) when (failure is Win32Exception or FileNotFoundException)
+        {
+            return null;
+        }
+
+        var token = asked.StandardOutput.Trim();
+
+        return asked.ExitCode is 0 && token.Length > 0 && !token.Any(char.IsWhiteSpace) ? token : null;
+    }
+
+    /// <summary>A child's text with the token taken out, for a message the arm prints.</summary>
+    /// <param name="text">The text, or <see langword="null"/>.</param>
+    /// <param name="token">The token, or <see langword="null"/> when there is none.</param>
+    /// <returns>The text, the token replaced by a name for it.</returns>
+    private static string Scrubbed(string? text, string? token) =>
+        token is null || text is null ? text ?? string.Empty : text.Replace(token, "<the token>", StringComparison.Ordinal);
+
+    /// <summary>The line in which the script names its API read and the hourly limit GitHub answered it with.</summary>
+    [GeneratedRegex(@"GitHub API read (?<how>[^;\r\n]+); GitHub answered it with an hourly limit of (?<limit>\d+)\.")]
+    private static partial Regex ApiRead();
 
     /// <summary>Runs the script and returns its exit code and everything it said.</summary>
     private static Task<ScriptRun> RunAsync(string[] arguments, IReadOnlyDictionary<string, string?>? environment = null) =>

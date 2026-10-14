@@ -28,6 +28,18 @@
     same two files instead: a downloaded release, or RegisterAI's own
     artifacts\release.").
 
+    Added 2026-10-14, the maintainer's 171, verbatim: "171 your
+    recommendations". The read is signed in when a token is handed to it in
+    REGISTERAI_GITHUB_TOKEN, a variable gh does not read, so the suite signs its
+    read in and keeps gh itself signed out. GitHub gives an address 60 unsigned
+    API calls an hour, shared with everything on the machine that reads the API
+    unsigned, and a signed-in account 5,000. The token is read once and taken out
+    of this script's environment before anything is started, and it goes on the
+    read alone: the two downloads are unsigned either way, which is what shows
+    the release is public. Handed none, the read is unsigned, as Q379 b decided.
+    Either way the script says which read it made and the hourly limit GitHub
+    answered it with.
+
     In order:
       1. SHA256SUMS must carry a line for RegisterAI.exe, and the file must hash to
          it. Otherwise nothing is written.
@@ -76,6 +88,11 @@ $sumsName = 'SHA256SUMS'
 $PayloadRoot = [System.IO.Path]::GetFullPath($PayloadRoot)
 $StampPath = [System.IO.Path]::GetFullPath($StampPath)
 
+# Read once and taken out of the environment at once, so nothing this script
+# starts inherits it (171, 2026-10-14). It signs the API read and nothing else.
+$token = $env:REGISTERAI_GITHUB_TOKEN
+Remove-Item -LiteralPath Env:REGISTERAI_GITHUB_TOKEN -ErrorAction SilentlyContinue
+
 # ---------------------------------------------------------------------------
 # 1. Where the two files come from.
 # ---------------------------------------------------------------------------
@@ -90,14 +107,34 @@ if ($From) {
 else {
     # The repository is public (Q379 b), so the read and both downloads go out
     # with no sign-in. GitHub answers 60 unauthenticated API calls an hour from
-    # one address, and a build makes one.
+    # one address, and a build makes one. A token handed in
+    # REGISTERAI_GITHUB_TOKEN signs the read in, and the downloads stay unsigned
+    # (171, 2026-10-14).
     $api = "https://api.github.com/repos/$Repository/releases/latest"
+    $headers = @{ Accept = 'application/vnd.github+json' }
+    $how = 'with no sign-in'
+
+    if ($token) {
+        $headers['Authorization'] = "Bearer $token"
+        $how = 'signed in with the token handed in REGISTERAI_GITHUB_TOKEN'
+    }
 
     try {
-        $latest = Invoke-RestMethod -Uri $api -Headers @{ Accept = 'application/vnd.github+json' }
+        $latest = Invoke-RestMethod -Uri $api -Headers $headers -ResponseHeadersVariable answered
     }
     catch {
-        throw "Reading $api failed: $($_.Exception.Message) The read needs the network and no sign-in, and GitHub allows 60 unauthenticated API calls an hour from one address. Or pass -From with a folder holding $fileName and $sumsName."
+        throw "Reading $api $how failed: $($_.Exception.Message) The read needs the network, and GitHub allows 60 unauthenticated API calls an hour from one address and 5,000 to a signed-in account. Or pass -From with a folder holding $fileName and $sumsName."
+    }
+
+    # GitHub's own figure for the hour this read counted against: 60 for the
+    # address when unsigned, and the account's when signed in.
+    $limit = $answered.Keys | Where-Object { $_ -ieq 'X-RateLimit-Limit' } | ForEach-Object { $answered[$_] } | Select-Object -First 1
+
+    if ($limit) {
+        Write-Host "GitHub API read $how; GitHub answered it with an hourly limit of $limit."
+    }
+    else {
+        Write-Host "GitHub API read $how; GitHub's answer named no hourly limit."
     }
 
     $tag = $latest.tag_name

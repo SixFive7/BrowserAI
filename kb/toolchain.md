@@ -1099,3 +1099,47 @@ Re-measured over the section as it then stood: folded is **288,437**, headlines
 alone is **19,780**, and **linked is 41,288** -- a third of the carried limit,
 with a range on every one of the 227 entries. The number the project acts on is
 unchanged and is still nobody's measurement.
+
+## GitHub's REST API from a build script: an address gets 60 calls an hour, a signed-in account 5,000 -- measured 2026-10-14
+
+**GitHub counts an unsigned API read against the address it came from, and a read
+signed in with a token against the account.** Its REST documentation, read on
+2026-10-14: *"Unauthenticated requests are associated with the originating IP
+address, not with the user or application that made the request"*, at *"60 requests
+per hour"*, against *"your personal rate limit of 5,000 requests per hour"* signed
+in; and of `/rate_limit`, *"Accessing this endpoint does not count against your REST
+API rate limit."* Read off that endpoint the same day: at 05:21:58Z, unsigned from this
+machine, `core` answered a limit of **60** with 57 left, and signed in through `gh` 2.102.0
+with the account the maintainer's `gh` holds, a limit of **5,000** with 4,999 left.
+A signed-in read of `repos/SixFive7/RegisterAI/releases/latest` the same morning
+carried `X-Ratelimit-Limit: 5000` and `X-Ratelimit-Resource: core` in its own
+answer, and `Latest` was still v0.3.0.
+
+**The address's 60 are shared by every unsigned reader behind it**, this machine's
+processes and anything else that leaves through the same address.
+[`build/Get-RegisterAi.ps1`](../build/Get-RegisterAi.ps1) read unsigned
+until 2026-10-14 and met *"403 (rate limit exceeded)"* in the PowerShell half of
+the gate at `24202002`, at 02:58:55Z, with the hour already spent; `/rate_limit`
+read at 03:07:50Z gave 58 left and the hour turning over at 03:59:42Z. **What spent
+it was not counted.** Two candidates are on record and neither was counted against
+that hour: the `codex.exe` of 2026-10-10 the suite finds under
+`~\.codex\plugins\.plugin-appserver` carries
+`api.github.com/repos/openai/codex/releases/latest` in its bytes, read on
+2026-10-14, and a Codex app-server's curated plugin sync was answered 429 by
+`api.github.com` on 2026-09-24
+([its stderr](../docs/evidence/2026-09-24-codex-expansion/runs/D-proj-untrusted-r1/appserver.stderr.txt)).
+And one that is ruled out: one `codex mcp list --json` in a scratch home, the call
+RegisterAI makes of Codex, took 0.67 s on 2026-10-14 and spent no call, `/rate_limit`
+reading 3 used both before it and after it.
+
+**The suite's read is signed in since 2026-10-14**, the maintainer's 171:
+`RegisterAiPayloadTests` asks `gh auth token` and hands the token to the script in
+`REGISTERAI_GITHUB_TOKEN`, which `gh` 2.102.0 does not read (`gh help environment`
+names `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN` and
+`GITHUB_ENTERPRISE_TOKEN`), and the script names its read and the limit GitHub
+answered it with. A payload build handed no token reads unsigned, as before.
+
+`[MACHINE]` -- the two figures are this address's and this account's on that day,
+and GitHub may set either differently. Re-establish with
+`curl -s https://api.github.com/rate_limit` and `gh api rate_limit`, neither of
+which spends a call.
