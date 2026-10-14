@@ -41,6 +41,14 @@ namespace BrowserAI.Tests.Harness;
 /// advance sees a timer that never fires, which is a visible failure and
 /// not a flaky one.
 /// </para>
+/// <para>
+/// ⚠️ <b>A timer armed on another thread meets the moves made on this one</b>, added
+/// 2026-10-14 by addition. A timer's <c>Change</c> adds its delay to the clock as it
+/// reads at that moment, so code that took the delay from an earlier reading, on a
+/// thread of its own while a test moved the clock, has its timer late by the move. The
+/// relay's rig moves the clock only while its relay is settled for that reason
+/// (<c>RelayRig.StepAsync</c>).
+/// </para>
 /// </remarks>
 internal sealed class ManualClock : TimeProvider
 {

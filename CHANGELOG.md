@@ -40,6 +40,13 @@ more* link to its detail; nothing else depends on it.
 
 ### Changed
 
+- ✅ **The relay's tests move their clock only while the relay is still.**
+  One relay test waited five minutes in a gate run for an answer due at a held call's 150 second
+  deadline. The relay arms a timer by taking the delay from one reading of its clock, and the
+  suite's clock added that delay to a later reading of its own, so a step the test took between
+  the two readings put the timer a whole step late. The suite now waits for the relay before it
+  moves the clock and after each timer it fires, and a test takes its step at that moment.
+
 - ✅ **The home's browser arm waits for the after-update notice's record the way BrowserAI reads it.**
   It polled the record with a bare read, and BrowserAI writes the record beside it and moves it
   into place, so a read that met the move failed the arm with a sharing violation in one gate

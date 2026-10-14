@@ -28,6 +28,12 @@ namespace BrowserAI.Tests.Harness;
 /// <c>ping</c> whose answer can only come after everything the client sent before it.
 /// Neither is a wait on the wall clock.
 /// </para>
+/// <para>
+/// ⚠️ <b>And the clock moves only while the engine is settled</b>, added 2026-10-14 by
+/// addition: <see cref="StepAsync"/> waits for the engine before it moves the clock and
+/// after each timer it fires, so no reading the engine takes of the clock meets a move.
+/// An arm that moves <see cref="Clock"/> itself has none of that.
+/// </para>
 /// </remarks>
 internal sealed class RelayRig : IAsyncDisposable
 {
@@ -290,12 +296,32 @@ internal sealed class RelayRig : IAsyncDisposable
     }
 
     /// <summary>Moves the clock and waits for the engine to have handled everything the move caused.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The clock moves only while the engine is settled, one due timer at a time</b>,
+    /// since 2026-10-14 (previously the whole step was taken at once, <c>Clock.Advance(by)</c>,
+    /// and then the engine was waited for). The engine arms a timer for a moment by reading
+    /// the clock for the delay, and the timer adds the delay to a reading of its own, both on
+    /// the engine's thread, while the old step moved the clock on the arm's, so a step taken
+    /// between the two readings put the timer past its moment by however far the step went.
+    /// It is the one kind of order a reading of the code found that leaves a held call
+    /// unanswered at its deadline, as
+    /// <c>RelayTests.AnEndAnotherVersionWroteIsHeldAndNamedByThatVersionAtTheDeadline</c>
+    /// was in the gate at <c>e092de31</c>, and
+    /// <c>RelayTests.AHeldCallIsAnsweredAtItsDeadlineWhenAStepMeetsTheRelayArmingItsHoldTimer</c>
+    /// takes a step at that moment.
+    /// </remarks>
     /// <param name="by">How far.</param>
     /// <returns>A task that completes once the engine has settled.</returns>
     public async Task StepAsync(TimeSpan by)
     {
-        Clock.Advance(by);
+        var target = Clock.GetTimestamp() + by.Ticks;
+
         await SettledAsync();
+
+        while (Clock.FireTheNextDueBy(target))
+        {
+            await SettledAsync();
+        }
     }
 
     /// <summary>Waits for the engine to settle.</summary>
