@@ -59,6 +59,43 @@ more* link to its detail; nothing else depends on it.
   browser call holds the session before they step to it, because a call lets go of the countdown
   only after its answer is sent.
 
+- ✅ **The RegisterAI payload arm signs its one GitHub API read in with the token `gh` holds.**
+  Unsigned, the read counted against the 60 calls an hour GitHub gives one address, and in one
+  gate run that hour was spent before the arm's call. The arm asks `gh auth token` and hands the
+  token to the payload script in a variable `gh` does not read, so `gh` itself is still signed in
+  to nothing and the two downloads are still unsigned. With no token the read is unsigned, which
+  is the read a payload build there makes, and the script now names its read and the hourly limit
+  GitHub answered it with.
+
+- ✅ **The Codex arm gives RegisterAI's own budget the suite's hang detector, as it gives its wait.**
+  The arm's own `register --replace` passed no `--timeout`, so RegisterAI gave the whole run its
+  default 30 seconds while the arm would wait ten minutes, and a replace is four runs of Codex. In
+  one gate run RegisterAI answered "failed" 46.8 seconds into the arm. The arm now passes the same
+  ten minutes, and quotes RegisterAI's document when it is red.
+
+- ✅ **The suite waits for a published background's record as well as its pipe before it starts a relay.**
+  A background takes its pipe a moment before it writes its record. A relay whose first call came
+  before its first look had connected read no record and answered at once that no background ran
+  for the build, and one gate run's kill arm went red on it. The harness now waits until the record
+  names the background it started, read the way a relay reads it.
+
+- ✅ **The stop arm of the published background waits with the suite's hang detector, not the hook's 45 s.**
+  The uninstall hook moves on after 45 seconds by design while each session's close gives its
+  browser a minute, so a background still closing at 45 seconds is an outcome BrowserAI allows. In
+  one gate run the session with a browser took 42 seconds to close and the arm went red. The arm
+  still stops the background through the hook's own code and still reads both sessions' records,
+  and a stop that outlasts 45 seconds now keeps the arm's folder with what the background wrote to
+  its standard error, each line stamped with when it came, so the next slow close says what it
+  waited on.
+
+- ✅ **The Firefox front-door arm takes upstream's screenshot timeout for an answer and asks again.**
+  Upstream gives a screenshot five seconds, which BrowserAI does not change, and one gate run's
+  load spent them: the arm's screenshot was answered with upstream's TimeoutError and the arm went
+  red. It now says that answer and asks for the screenshot again, until another answer comes or
+  its hang detector runs out. A new arm holds the screenshot's Firefox suspended on every run, so
+  the timeout's text the first arm waits for is held to upstream's, and that session's next
+  screenshot must be whole.
+
 - ✅ **The dashboard's wording arm no longer reads the folder it runs from as words of the page.**
   The arm refuses words such as relay, client and pid anywhere a page shows them, and the page's
   BrowserAI card names its install and data folders, which in the suite are folders of the copy of
