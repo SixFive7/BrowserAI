@@ -73,7 +73,10 @@ namespace BrowserAI.Tests.Harness;
 /// no longer stops on it. And the idle countdown restarts after a forwarded call's answer is
 /// sent: an arm that steps straight after one holds only that nothing closed at that step, or
 /// goes on stepping until the close comes, and an arm that holds the countdown to its deadline
-/// reads it or steps to it only after a call whose restart is done before its answer.
+/// reads it or steps to it only after a call whose restart is done before its answer. Since
+/// the same day the four arms of <c>IdleCountdownTests</c> that step to a deadline also wait
+/// first until no call holds the countdown, so a forwarded call that lets go of it late cannot
+/// meet the step either.
 /// </para>
 /// </remarks>
 internal sealed class ManualClock : TimeProvider

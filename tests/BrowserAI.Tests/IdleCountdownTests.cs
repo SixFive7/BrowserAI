@@ -30,6 +30,12 @@ namespace BrowserAI.Tests;
 /// waits for a period to pass.
 /// </para>
 /// <para>
+/// ⚠️ <b>And every step to an exact deadline waits first until no call holds the countdown
+/// it is about</b>, added 2026-10-14 by addition (<see cref="NoCallHoldsTheCountdownAsync"/>):
+/// a forwarded call lets go of the countdown after its answer is on the wire, so the answer
+/// alone does not say the countdown is free.
+/// </para>
+/// <para>
 /// <b>Planted red on 2026-10-08</b> against the batch's own code with each behaviour
 /// taken out in turn: a visible window given no countdown, the touch made a no-op,
 /// the old answer, an empty seam, and upstream's hour written back into the launch.
@@ -102,6 +108,7 @@ internal sealed class IdleCountdownTests
 
         // The hidden one goes first, at its ten minutes, and the clock stands still
         // while its close runs.
+        await NoCallHoldsTheCountdownAsync(harness, visible, hidden);
         clock.Advance(ShortPeriod);
         await WaitUntilAsync(() => hiddenChild.HasStopped, "the hidden session was not idle-closed at its ten minutes");
 
@@ -110,6 +117,7 @@ internal sealed class IdleCountdownTests
 
         // One tick short of its hour, measured from the call that named it: open, with
         // its deadline at the hour.
+        await NoCallHoldsTheCountdownAsync(harness, visible);
         clock.AdvanceTicks((hour - ShortPeriod).Ticks - ManualClock.OneTick);
         _ = await harness.Client.RoundTripAsync("tools/list");
 
@@ -118,6 +126,7 @@ internal sealed class IdleCountdownTests
         await Assert.That(CountdownOf(harness, visible).ClosesAt).IsEqualTo(named + hour);
 
         // And the visible one at its hour.
+        await NoCallHoldsTheCountdownAsync(harness, visible);
         clock.AdvanceTicks(ManualClock.OneTick);
         await WaitUntilAsync(() => visibleChild.HasStopped, "the visible window was not idle-closed at its hour");
 
@@ -172,6 +181,7 @@ internal sealed class IdleCountdownTests
 
         var named = clock.GetUtcNow();
 
+        await NoCallHoldsTheCountdownAsync(harness, three);
         clock.AdvanceTicks((OneMinute * 3).Ticks - ManualClock.OneTick);
         _ = await harness.Client.RoundTripAsync("tools/list");
 
@@ -181,6 +191,7 @@ internal sealed class IdleCountdownTests
         // since 2026-10-08 (previously stepped a minute every 20 ms until the child had
         // stopped, which a slow close carried past the ten minutes the next line rules
         // out: planted red the same day with the close slowed by a second).
+        await NoCallHoldsTheCountdownAsync(harness, three);
         clock.AdvanceTicks(ManualClock.OneTick);
         await WaitUntilAsync(() => threeChild.HasStopped, "the three-minute session was not idle-closed at its three minutes");
 
@@ -492,6 +503,7 @@ internal sealed class IdleCountdownTests
 
         // At its ten minutes, and the clock stands still while the close runs, so no
         // step can carry it on towards the visible window's hour (2026-10-08).
+        await NoCallHoldsTheCountdownAsync(harness, hidden, visible);
         clock.Advance(ShortPeriod);
         await WaitUntilAsync(() => hiddenChild.HasStopped, "the hidden session was not idle-closed at its ten minutes");
 
@@ -505,6 +517,7 @@ internal sealed class IdleCountdownTests
 
         for (var typed = 1; typed <= 3; typed++)
         {
+            await NoCallHoldsTheCountdownAsync(harness, visible);
             clock.AdvanceTicks(hour.Ticks - ManualClock.OneTick);
             rig.Desktop.TimePasses();
             rig.Desktop.PersonTypes();
@@ -516,12 +529,14 @@ internal sealed class IdleCountdownTests
 
         // Input with another window in front counts for nothing: one tick short of the
         // hour since the last input that counted, and then past it, the window closes.
+        await NoCallHoldsTheCountdownAsync(harness, visible);
         clock.AdvanceTicks(hour.Ticks - ManualClock.OneTick);
         rig.Desktop.InFront(4321);
         rig.Desktop.TimePasses();
         rig.Desktop.PersonTypes();
         rig.Desktop.Check();
 
+        await NoCallHoldsTheCountdownAsync(harness, visible);
         clock.AdvanceTicks(ManualClock.OneTick * 2);
 
         await WaitUntilAsync(() => visibleChild.HasStopped, "input in another window kept the visible window open");
@@ -563,6 +578,7 @@ internal sealed class IdleCountdownTests
 
         // The person types one tick before the hour runs out, and no check runs.
         rig.Desktop.InFront(child.BrowserProcessId);
+        await NoCallHoldsTheCountdownAsync(harness, visible);
         clock.AdvanceTicks(hour.Ticks - ManualClock.OneTick);
         rig.Desktop.TimePasses();
         rig.Desktop.PersonTypes();
@@ -570,6 +586,7 @@ internal sealed class IdleCountdownTests
         // The hour runs out: the countdown reads the input before it decides. The
         // clock fires the countdown on this thread, so what it decided is readable at
         // once: a deadline a whole hour away, and not a close that has begun.
+        await NoCallHoldsTheCountdownAsync(harness, visible);
         clock.AdvanceTicks(ManualClock.OneTick);
 
         var countdown = harness.Proxy.SessionCountdowns().Single(entry => string.Equals(entry.Directory, SessionPath.For(visible).FullPath, StringComparison.OrdinalIgnoreCase));
@@ -694,6 +711,38 @@ internal sealed class IdleCountdownTests
 
         return JsonNode.Parse(await File.ReadAllTextAsync(file))!.AsObject();
     }
+
+    /// <summary>
+    /// Waits, with the clock still, until no call holds the countdown of any of these sessions,
+    /// bounded by the suite's hang detector: what each exact step here waits for first.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-14, the build's choice, for the maintainer's review, within his 170
+    /// a.</b> A forwarded call holds its session's countdown while it runs and restarts it as
+    /// it lets go, and <c>BrowserProxy</c> lets go after the call's answer is on the wire. Each
+    /// step to an exact deadline here comes after a later call whose restart is done before its
+    /// answer, so a step could still meet a forwarded call's hold only if the letting go
+    /// outlasted that later call's whole round trip; the countdown was then still held at the
+    /// step, or restarted from the moved clock, and the close the arm waits for with the clock
+    /// still never came. This wait leaves that to nothing.
+    /// </para>
+    /// <para>
+    /// <b>Read through the session's own description</b>, <c>SessionManager.Held</c>, whose
+    /// <c>IdleCloseAt</c> is the countdown's <c>ClosesAt</c>: empty while a call holds it, while
+    /// it closes and once its deadline has passed. Each step here comes before its deadline with
+    /// nothing closing, so empty means held.
+    /// </para>
+    /// </remarks>
+    /// <param name="harness">The rig.</param>
+    /// <param name="directories">The sessions whose countdowns the step is about.</param>
+    /// <returns>The wait.</returns>
+    private static Task NoCallHoldsTheCountdownAsync(McpTestHarness harness, params string[] directories) =>
+        WaitUntilAsync(
+            () => directories.All(directory => harness.HeldSessions().Any(held =>
+                string.Equals(held.Directory, SessionPath.For(directory).FullPath, StringComparison.OrdinalIgnoreCase)
+                && held.IdleCloseAt is not null)),
+            $"a call still held the countdown of {string.Join(" and ", directories.Select(Path.GetFileName))} before the arm stepped the clock to its deadline");
 
     /// <summary>Waits for an event with the clock still, bounded by the suite's hang detector.</summary>
     private static async Task WaitUntilAsync(Func<bool> condition, string whatWentWrong)

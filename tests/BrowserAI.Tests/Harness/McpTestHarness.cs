@@ -165,6 +165,28 @@ internal sealed class McpTestHarness : IAsyncDisposable
         _proxy ?? throw new InvalidOperationException("This rig speaks straight to the double; there is no proxy in it.");
 
     /// <summary>
+    /// What the proxy's sessions say of themselves, as <c>SessionManager.Held</c> answers the
+    /// background's page.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-14 for the arms of <c>IdleCountdownTests</c> that hold an idle close to
+    /// its deadline.</b> A session's <c>IdleCloseAt</c> is its countdown's own <c>ClosesAt</c>,
+    /// empty while a forwarded call holds the countdown, so it is how such an arm waits for a
+    /// call's restart of the countdown before it steps the clock. The proxy keeps its session
+    /// manager in a field of its own, read here through reflection, as <c>RelayRig</c> reads its
+    /// engine, so the product carries no member for a test.
+    /// </remarks>
+    /// <returns>Every session the proxy holds.</returns>
+    /// <exception cref="InvalidOperationException">The proxy no longer keeps its session manager where this reads it.</exception>
+    public IReadOnlyList<BrowserAI.Coordination.HeldSession> HeldSessions()
+    {
+        var field = typeof(BrowserProxy).GetField("_sessions", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("BrowserProxy keeps no _sessions field any more, so the rig cannot read what its sessions say of themselves.");
+
+        return ((BrowserAI.Sessions.SessionManager)field.GetValue(Proxy)!).Held();
+    }
+
+    /// <summary>
     /// The full topology: test client → BrowserAI → each session's fake child.
     /// </summary>
     /// <param name="configure">
