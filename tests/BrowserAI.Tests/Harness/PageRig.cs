@@ -117,6 +117,12 @@ internal sealed class PageRig : IAsyncDisposable
 
     public PageFacts Facts { get; }
 
+    /// <summary>
+    /// The rig's scratch folder, which holds every folder its facts name: the install root,
+    /// the data root and its logs.
+    /// </summary>
+    public string Folder => _scratch.Path;
+
     public ManualClock Clock { get; } = new();
 
     public FakeSessions Sessions { get; } = new();

@@ -695,7 +695,13 @@ internal sealed class DashboardTests
 
             await Assert.That(html).IsNotNull().Because(route);
 
-            var shown = WebUtility.HtmlDecode(Regex.Replace(Regex.Replace(html!, "<details.*?</details>", " ", RegexOptions.Singleline), "<[^>]+>", " "));
+            // ⚠️ THE RIG'S OWN FOLDER IS TAKEN OUT BEFORE THE SCAN, AND NOTHING ELSE -- 2026-10-14.
+            // The BrowserAI card names the install root and the data root, which are folders
+            // of the rig's scratch and so of this checkout, and a checkout's path holds whatever
+            // words its folders were given: under .work\wt\inv-relay this arm was red on every
+            // run, on "relay".
+            var shown = WebUtility.HtmlDecode(Regex.Replace(Regex.Replace(html!, "<details.*?</details>", " ", RegexOptions.Singleline), "<[^>]+>", " "))
+                .Replace(rig.Folder, " ", StringComparison.OrdinalIgnoreCase);
 
             foreach (var word in forbidden)
             {
