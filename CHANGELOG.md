@@ -115,6 +115,15 @@ more* link to its detail; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **A resume after a refused one no longer tells the client that created the session that it did not.**
+  When a resume could not open a session, for example because something still held a Firefox
+  session's profile open, the next resume opened it and said *"you are driving a session this
+  connection did not create"*, and that another agent might be using it, to the very client that
+  had made the session with `browserai_init`. BrowserAI now remembers which sessions each
+  client created for as long as that client stays connected, so a resume that fails no longer
+  loses it. A client that did not create the session is still told.
+  [`DECISIONS.md`](DECISIONS.md) has the decision, the maintainer's 169 c.
+
 - 🐛 **A Firefox session resumed after its last page's server stopped no longer waits 3 minutes and fails.**
   When a Firefox session was resumed and its last page had been on a server that no longer
   answered, served so that Firefox could not bring it back from its cache, the first browser

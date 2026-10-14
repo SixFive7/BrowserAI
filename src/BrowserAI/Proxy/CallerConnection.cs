@@ -33,6 +33,8 @@ internal sealed class CallerConnection(int? clientProcessId = null)
 {
     private static long _numbers;
 
+    private readonly Lock _gate = new();
+    private readonly Dictionary<string, DateTimeOffset> _created = new(StringComparer.Ordinal);
     private McpServer? _server;
     private int _ended;
 
@@ -65,6 +67,48 @@ internal sealed class CallerConnection(int? clientProcessId = null)
     /// <see cref="Sessions.SettingsHoldBack"/>.
     /// </remarks>
     public Sessions.HeldBackCalls HeldBack { get; } = new();
+
+    /// <summary>
+    /// Records that this connection created a session: its key, and the moment its record
+    /// says it was created.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-14, the maintainer's 169 c</b>, for the hazard row of his 163. A
+    /// resume of a session this process holds tears the session down before it opens it
+    /// again, and until that day the session object it tore down was the only thing that
+    /// held that this connection had made it. An open that was then refused left nothing
+    /// behind, so the next resume told the connection that had made the session that it had
+    /// not. The connection outlives every session object it drives, so the fact is kept here
+    /// as well, and a resume asks <see cref="HasCreated"/>.
+    /// </para>
+    /// <para>
+    /// <b>The moment is part of the fact</b>: a session destroyed and made again under the
+    /// same path by another connection is another session, and its record says another
+    /// moment.
+    /// </para>
+    /// </remarks>
+    /// <param name="session">The session's key.</param>
+    /// <param name="created">When the session's record says it was created.</param>
+    public void Created(string session, DateTimeOffset created)
+    {
+        lock (_gate)
+        {
+            _created[session] = created;
+        }
+    }
+
+    /// <summary>Whether this connection created the session whose record says it was created at <paramref name="created"/>.</summary>
+    /// <param name="session">The session's key.</param>
+    /// <param name="created">When the session's record says it was created.</param>
+    /// <returns>Whether <see cref="Created"/> recorded that session on this connection.</returns>
+    public bool HasCreated(string session, DateTimeOffset created)
+    {
+        lock (_gate)
+        {
+            return _created.TryGetValue(session, out var recorded) && recorded == created;
+        }
+    }
 
     /// <summary>The server this connection is answered through, once a message has arrived on it.</summary>
     public McpServer? Server => Volatile.Read(ref _server);

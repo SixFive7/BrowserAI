@@ -1752,6 +1752,15 @@ internal sealed class SessionManager : IAsyncDisposable
                     $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to resume. "
                     + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists -- {SessionToolSurface.List} will show what is under a path.");
 
+            // ⚠️ AND THE CONNECTION IS ASKED WHO CREATED IT, since 2026-10-14, the maintainer's
+            // 169 c, on the hazard row of his 163. A resume whose open was refused had torn the
+            // session down, so the next one found nothing in `_live` and opened the session as
+            // one this connection had not created, which the connection that had created it was
+            // then told. The background's log of the sighting read "created by this connection:
+            // True" at every open on its one relay connection and "False" at the open after the
+            // refusal.
+            createdHere = createdHere || connection.HasCreated(location.Key, record.Created);
+
             // ⚠️ F2 d, 2026-10-08, for a session this BrowserAI does not hold: compared
             // with the settings its record says the last run used. A record with none was
             // written before that day, and is treated as an init: only an idle time longer
@@ -3820,6 +3829,17 @@ internal sealed class SessionManager : IAsyncDisposable
 
             held.ScopeTheCallersRecords();
             acquired = held;
+
+            // ⚠️ THE CONNECTION KEEPS WHO CREATED THE SESSION, since 2026-10-14, the
+            // maintainer's 169 c. The session object built below is torn down by the next
+            // resume before that resume opens the session again, and an open that is then
+            // refused leaves no object behind. Recorded once the record exists, so an init
+            // whose open fails after it is still this connection's. See
+            // CallerConnection.Created.
+            if (createdHere)
+            {
+                connection.Created(location.Key, held.Record.Created);
+            }
 
             // The family comes from the session's own record and not from a
             // constant: `resume` reads it out of the record, and a profile

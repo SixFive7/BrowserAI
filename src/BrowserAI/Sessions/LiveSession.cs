@@ -815,9 +815,17 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// resuming one somebody else made.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// There is no bearer token, so this is what recovers the guarantee a minted
     /// handle was going to provide: a caller driving a session it did not create
     /// is told so, at first use, and not at reclaim time.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The connection keeps it as well, since 2026-10-14, the maintainer's 169 c</b>:
+    /// a resume tears this object down before it opens the session again, and an open that
+    /// is then refused builds no other, so a resume after it asks
+    /// <see cref="Proxy.CallerConnection.HasCreated"/>.
+    /// </para>
     /// </remarks>
     public bool CreatedHere { get; }
 

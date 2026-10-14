@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text.Json.Nodes;
 using BrowserAI.Coordination;
 using BrowserAI.Hosting;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
@@ -35,6 +36,9 @@ internal sealed class SessionHostTests
 {
     /// <summary>An idle period the manual clock is advanced past; it never passes by itself.</summary>
     private static readonly TimeSpan ShortPeriod = TimeSpan.FromSeconds(30);
+
+    /// <summary>What a resume says to a connection that did not create the session it opens.</summary>
+    private const string NotCreatedHere = "NOTE: you are driving a session this connection did not create";
 
     /// <summary>
     /// A session outlives the connection that opened it, and the next connection that
@@ -430,6 +434,108 @@ internal sealed class SessionHostTests
     }
 
     /// <summary>
+    /// A resume that follows one refused because the session's Firefox profile was held
+    /// open does not tell the connection that created the session that it did not, and a
+    /// connection that did not create it is told.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The hazard row of the maintainer's 163, 2026-10-13</b>, seen once in the rig of
+    /// 125 b: a resume refused for a profile a short-lived Firefox held, and five seconds
+    /// later a resume that opened the session and told the connection that had made it
+    /// with <c>browserai_init</c> that it was driving a session this connection did not
+    /// create. The resume tears the closed session down before it opens it again, and the
+    /// session it tore down was the one thing that held who had made it.
+    /// </para>
+    /// <para>
+    /// <b>The profile is held the way Firefox holds it</b>, by a probe in another process
+    /// with <c>parent.lock</c> open for reading and writing and shared with nobody, so the
+    /// refusal is the launch's own preflight and nothing here turns on timing.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AResumeAfterOneRefusedForAHeldProfileStillKnowsWhichConnectionCreatedTheSession()
+    {
+        var tabs = new FakeFirefoxTabs([("Reopened page", "http://127.0.0.1:54321/reopened?tab=1")]);
+
+        await using var sessions = await NewSessionsAsync(child =>
+        {
+            child.Tools[FirefoxRestore.TabsTool] = tabs.Behaviour();
+            child.Tools[FirefoxRestore.RunCodeTool] = tabs.DocumentRead();
+        });
+
+        // Seeded complete, so the session's browser counts as installed and a resume starts
+        // it, as a resume of a Firefox session does on a machine that has one.
+        await InstallationMarker.WriteAsync(Path.Combine(sessions.Environment.Paths.BrowsersDirectory, $"firefox-{BrowserAiPaths.FirefoxRevision}"));
+
+        await using var rig = await SessionHostRig.StartAsync(sessions);
+
+        var creator = await rig.ConnectAsync("the client that creates the session");
+        var directory = Path.Combine(sessions.Root, "refused-for-a-held-profile");
+        var profile = Path.Combine(directory, SessionLayout.ProfileFolderName);
+
+        var opened = await creator.CallAsync(SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "the Firefox session whose resume is refused while its profile is held",
+            ["browser"] = ProvisionedBrowsers.Firefox,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(HostConnection.TextOf(opened));
+
+        // Closed, so the resume below tears the session down and opens it again.
+        await CloseAsync(creator, directory, "the suite closing the session so a resume opens it again");
+
+        using var scratch = await ScratchDirectory.CreateAsync("host-held-profile");
+        using var scope = new JobObjectScope();
+
+        var ready = Path.Combine(scratch.Path, "holder.json");
+        var holder = await scope.LaunchAsync(
+            await PlantedProbe.ExecutablePathAsync(),
+            scratch.Path,
+            "hold-file",
+            FirefoxProfile.LockFileIn(profile),
+            ready);
+
+        var holderCreated = ProcessIdentity.CreationTimeOf(holder.Id);
+        _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
+
+        var refused = await creator.CallAsync(SessionToolSurface.Resume, ResumeArguments(directory, "the suite resuming while something holds the profile"));
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That(HostConnection.TextOf(refused)).Contains("is held open by another process");
+
+        ProcessIdentity.Terminate(holder.Id, holderCreated);
+
+        await Assert.That(await ProcessIdentity.WaitUntilGoneAsync(holder.Id, holderCreated, TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(FirefoxProfile.Inspect(profile).MayLaunch).IsTrue();
+
+        var resumed = await creator.CallAsync(SessionToolSurface.Resume, ResumeArguments(directory, "the suite resuming once the profile is free"));
+        var text = HostConnection.TextOf(resumed);
+
+        await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(text);
+        await Assert.That(text).DoesNotContain(NotCreatedHere);
+
+        // The control: a connection that did not create the session is told, so what holds
+        // above is about who made it and not a note that is never written.
+        await CloseAsync(creator, directory, "the suite closing the session before its client goes");
+        await creator.EndAsync();
+        await AssertLetGoAsync(rig, directory, sessions.SessionChildren[^1]);
+
+        var other = await rig.ConnectAsync("a client that did not create the session");
+        var theirs = await other.CallAsync(SessionToolSurface.Resume, ResumeArguments(directory, "the suite resuming a session another client made"));
+        var told = HostConnection.TextOf(theirs);
+
+        await Assert.That((bool?)theirs["isError"]).IsNotEqualTo(true).Because(told);
+        await Assert.That(told).Contains(NotCreatedHere);
+    }
+
+    /// <summary>
     /// A resume of a KEPT session that asks for a setting its last run did not have is
     /// held back once, and one that asks for what it runs with is answered "the session
     /// is already live".
@@ -625,6 +731,39 @@ internal sealed class SessionHostTests
 
         return directory;
     }
+
+    /// <summary>Closes a session's browser from the connection that drives it, and keeps the session.</summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="directory">The session.</param>
+    /// <param name="why">Why, for the session's record.</param>
+    /// <returns>The close.</returns>
+    private static async Task CloseAsync(HostConnection connection, string directory, string why)
+    {
+        var closed = await connection.CallAsync(SessionToolSurface.Close, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = why,
+        });
+
+        if ((bool?)closed["isError"] is true)
+        {
+            throw new InvalidOperationException($"The close of '{directory}' failed: {HostConnection.TextOf(closed)}");
+        }
+    }
+
+    /// <summary>A resume that asks for the settings <see cref="OpenAsync"/> and the Firefox arm open with.</summary>
+    /// <param name="directory">The session.</param>
+    /// <param name="why">Why, for the session's record.</param>
+    /// <returns>The arguments.</returns>
+    private static JsonObject ResumeArguments(string directory, string why) => new()
+    {
+        ["directory"] = directory,
+        ["why"] = why,
+        ["headed"] = false,
+        ["transcript"] = false,
+        ["captureNetwork"] = false,
+        ["idleMinutes"] = 10,
+    };
 
     /// <summary>Navigates a session, which brings its double's browser up.</summary>
     /// <param name="connection">The connection that drives it.</param>
