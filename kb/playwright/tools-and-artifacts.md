@@ -951,8 +951,8 @@ when the answer came, and the session's next screenshot was whole, in 61 and 32 
 it the probe's screenshot was answered in 26 to 51 ms, 5 of 5. Under 128 spinning
 threads at normal priority it took 647 to 1,729 ms, 10 of 10, and under 320 it took 30 to
 4,165 ms, 10 of 10, none of them an error, while the arm's whole run took 32.2 to 47.5 s
-and 24.7 to 622.9 s; a full run gives the arm 13.6 to 51.3 s, 30.8 s at the median, over
-48 runs of 2026-10-12 and 2026-10-13. ⚠️ **Those two loads are not a method.** They
+and 24.7 to 622.9 s, where the 48 runs of the arm over 10 s that the process logs of
+2026-10-12 and 2026-10-13 hold took 13.6 to 51.3 s, 30.8 s at the median. ⚠️ **Those two loads are not a method.** They
 saturated the machine, 1,227 ready threads on 32 processors at most, and nothing of the
 kind is to be run again; what a full run leaves the screenshot is in the arm's own output
 since that day.

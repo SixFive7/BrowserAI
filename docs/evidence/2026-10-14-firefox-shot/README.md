@@ -24,8 +24,8 @@ Every file is kept whole, as taken, with the line endings this repository stores
   own crash probe 3 times, which is the positive control.
 - `arm-durations.txt`: every run of the arm the process log files of 2026-10-12 and
   2026-10-13 hold, from the first BrowserAI start in its scratch folder to its session's
-  destroy: 51 with a destroy, 48 of them in full runs at 13.6 to 51.3 s (median 30.8 s)
-  and 3 alone at 3.8 to 4.4 s, and the red with none.
+  destroy: 51 with a destroy, 48 of them at 13.6 to 51.3 s (median 30.8 s) and 3 alone
+  at 3.8 to 4.4 s, and the red with none. Which of the 48 were full runs is not read here.
 
 ## `plant/` -- the arm explaining itself
 
