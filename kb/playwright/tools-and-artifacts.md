@@ -991,6 +991,10 @@ Timeout 5000ms exceeded."* and the next was whole; the front-door arm with its F
 suspended through its first screenshot was answered after 5,024 ms, asked again, and was
 answered whole in 31 ms. The red in the PowerShell half of the gate at `7a069ecb` read the
 same text after 5.3 s, with the commit charge at about 40 %.
+And in the Git Bash half of the gate at `75ef1e5d` the front-door arm's first screenshot, with
+nothing suspended, was answered with that text after 5,024 ms and its second whole in 1,248 ms,
+with the commit charge at 41.8 % at that half's start: a run's load reaches upstream's line with no
+fault injected, and the arm's second ask is what keeps it green.
 
 ## Every launched browser leaves a descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and nothing reaps it -- measured 2026-09-16
 
