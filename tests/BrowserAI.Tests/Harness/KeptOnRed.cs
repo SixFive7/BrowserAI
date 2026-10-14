@@ -59,28 +59,47 @@ internal static class KeptOnRed
     /// <returns>The failure to throw.</returns>
     public static async Task<Exception> KeepAsync(string folder, Exception failure, string arm, string? keptRoot = null)
     {
-        ArgumentNullException.ThrowIfNull(folder);
         ArgumentNullException.ThrowIfNull(failure);
+
+        var said = await KeepAsync(folder, arm, keptRoot);
+
+        return new InvalidOperationException($"{failure.Message}{Environment.NewLine}{Environment.NewLine}{said}", failure);
+    }
+
+    /// <summary>
+    /// Moves <paramref name="folder"/> under <paramref name="keptRoot"/> for an arm that
+    /// has not failed, and answers the sentence that says where it went, or why it could
+    /// not be kept.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-14 for the stop of <c>BackgroundProcessTests</c></b>, the
+    /// maintainer's 171, which keeps its rig when the stop outlasts the uninstall hook's
+    /// 45 s and still passes, so that the next slow close names what it waited on. The
+    /// overload above, for a red arm, puts the same sentence after the arm's failure.
+    /// </remarks>
+    /// <param name="folder">The arm's scratch folder.</param>
+    /// <param name="arm">A short name for the arm, which the kept folder's name carries.</param>
+    /// <param name="keptRoot">Where kept folders go; <see cref="Root"/> unless an arm about this class says otherwise.</param>
+    /// <returns>The sentence, for the arm's output or its failure.</returns>
+    public static async Task<string> KeepAsync(string folder, string arm, string? keptRoot = null)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
         ArgumentNullException.ThrowIfNull(arm);
 
         var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
         var parent = Path.Combine(keptRoot ?? Root, $"{stamp}-{Environment.ProcessId.ToString(CultureInfo.InvariantCulture)}-{arm}-{Guid.NewGuid().ToString("N")[..8]}");
         var destination = Path.Combine(parent, Path.GetFileName(Path.TrimEndingDirectorySeparator(folder)));
 
-        string said;
-
         try
         {
             _ = Directory.CreateDirectory(parent);
             await MoveOnceReleasedAsync(folder, destination);
-            said = $"The arm's scratch folder is kept at '{destination}', where no reclaim reaches it. Each session folder in it holds the session's record: every close, with its reason and the browser's exit code.";
+            return $"The arm's scratch folder is kept at '{destination}', where no reclaim reaches it. Each session folder in it holds the session's record: every close, with its reason and the browser's exit code.";
         }
         catch (Exception unkept) when (unkept is IOException or UnauthorizedAccessException or TimeoutException)
         {
-            said = $"The arm's scratch folder '{folder}' could not be kept at '{destination}': {unkept.GetType().Name}: {unkept.Message}";
+            return $"The arm's scratch folder '{folder}' could not be kept at '{destination}': {unkept.GetType().Name}: {unkept.Message}";
         }
-
-        return new InvalidOperationException($"{failure.Message}{Environment.NewLine}{Environment.NewLine}{said}", failure);
     }
 
     /// <summary>

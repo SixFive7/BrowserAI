@@ -8,7 +8,8 @@ namespace BrowserAI.Tests;
 /// <summary>
 /// A red arm's scratch folder is moved whole to where no reclaim reaches it, and the
 /// failure says where, after the arm's own message; a folder that cannot be kept is said
-/// there too, and the arm's own failure stays the one reported.
+/// there too, and the arm's own failure stays the one reported. An arm that keeps its
+/// folder with no failure is answered the same sentence.
 /// </summary>
 /// <remarks>
 /// <b>The maintainer's 94 a, 2026-10-12, in his words verbatim:</b> <i>"94 your
@@ -26,7 +27,7 @@ internal sealed class KeptOnRedTests
     /// said in the failure and moves nothing.
     /// </summary>
     /// <remarks>
-    /// <b>Planted red against a <see cref="KeptOnRed.KeepAsync"/> that answered the arm's own
+    /// <b>Planted red against a <see cref="KeptOnRed.KeepAsync(string, Exception, string, string?)"/> that answered the arm's own
     /// failure and moved nothing</b>: the failure came back with no inner exception, at the
     /// arm's second assertion.
     /// </remarks>
@@ -64,6 +65,48 @@ internal sealed class KeptOnRedTests
         await Assert.That(unkept.Message).StartsWith("the arm's own failure").Because(unkept.Message);
         await Assert.That(unkept.Message).Contains("could not be kept").Because(unkept.Message);
         await Assert.That(unkept.InnerException).IsSameReferenceAs(planted);
+    }
+
+    /// <summary>
+    /// The folder of an arm that has not failed is moved whole the same way, and the
+    /// answer says where it went; a folder that is not there is said and moves nothing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-14 with the maintainer's 171</b>, for the stop of
+    /// <c>BackgroundProcessTests</c>, which keeps its rig when the stop outlasts the
+    /// uninstall hook's 45 s and goes on to pass. <b>Planted red 2026-10-14</b> in a filtered
+    /// run against a <see cref="KeptOnRed.KeepAsync(string, string, string?)"/> that answered
+    /// the sentence and moved nothing: the folder was still in the scratch, at the arm's
+    /// first assertion.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFolderKeptWithNoFailureIsMovedWholeOutOfTheScratchAndTheAnswerSaysWhere()
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("kept-with-no-failure");
+
+        var folder = Path.Combine(scratch.Path, "rig");
+        var session = Path.Combine(folder, "a-session");
+
+        _ = Directory.CreateDirectory(session);
+        await File.WriteAllTextAsync(Path.Combine(session, "browserai.data"), "the record");
+
+        var keptRoot = Path.Combine(scratch.Path, "kept");
+
+        var said = await KeptOnRed.KeepAsync(folder, "planted", keptRoot);
+
+        var kept = Directory.GetDirectories(keptRoot).Single();
+        var destination = Path.Combine(kept, "rig");
+
+        await Assert.That(Directory.Exists(folder)).IsFalse().Because("a kept folder leaves the scratch the next run reclaims");
+        await Assert.That(await File.ReadAllTextAsync(Path.Combine(destination, "a-session", "browserai.data"))).IsEqualTo("the record");
+        await Assert.That(said).Contains($"is kept at '{destination}'").Because(said);
+        await Assert.That(Path.GetFileName(kept)).Contains("-planted-");
+
+        // A folder that is not there: said, and nothing moved.
+        var unkept = await KeptOnRed.KeepAsync(Path.Combine(scratch.Path, "never-made"), "planted", keptRoot);
+
+        await Assert.That(unkept).Contains("could not be kept").Because(unkept);
     }
 
     /// <summary>

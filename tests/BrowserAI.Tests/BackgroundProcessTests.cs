@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.Globalization;
+using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
@@ -36,6 +38,15 @@ namespace BrowserAI.Tests;
 [NotInParallel(nameof(BackgroundProcessTests))]
 internal sealed class BackgroundProcessTests
 {
+    /// <summary>The name a kept rig of the stop's arm carries.</summary>
+    private const string StopArm = "background-stop";
+
+    /// <summary>The file in a kept rig that holds what the background wrote to its standard error.</summary>
+    private const string BackgroundStandardErrorFile = "background-stderr.txt";
+
+    /// <summary>The file in a kept rig that says when the stop was asked, how it came out and how long it took.</summary>
+    private const string StopFile = "stop.txt";
+
     /// <summary>
     /// A session outlives a relay that is killed the way Codex ends a server, and the
     /// next relay finds its page exactly as it was left: no restore, no new browser.
@@ -285,6 +296,46 @@ internal sealed class BackgroundProcessTests
     /// session with a browser recorded <see cref="SessionCloseCause.ServerShutDown"/> and
     /// the one without recorded <see cref="SessionCloseCause.Released"/>.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The stop is waited for with the suite's hang detector since 2026-10-14, the
+    /// maintainer's 171</b>, in his words verbatim: <i>"171 your recommendations"</i>.
+    /// <i>Previously with <see cref="BackgroundStop.Bound"/>, the uninstall hook's 45 s.</i>
+    /// That bound is how long the hook waits before it goes on to remove the task and the
+    /// registrations, and the product does not promise a background ends within it: each
+    /// session's close gives its browser <see cref="SessionTimes.BrowserCloseCap"/>, a
+    /// minute, and <see cref="BackgroundStop"/> leaves a slower close to Velopack's kill
+    /// after the hook. In the PowerShell half of the gate at <c>24202002</c> this arm's
+    /// session with a browser took 42.1 s from the stop to the start of its registry
+    /// reap, and the background had not ended when the 45 s ran out (the hazard index).
+    /// The same interval in every machine-wide process log of 2026-10-10 to 2026-10-14,
+    /// over all 106 of this arm's stops: 0.19 s at the shortest, a median of 3.8 s, 12
+    /// over 20 s and 42.1 s at the longest. What the slow ones waited on was not read,
+    /// since a session's own log is the background's standard error, which the harness
+    /// dropped, and its record goes with the arm's scratch. <b>Planted red
+    /// 2026-10-14</b> in a filtered run, with the nine processes of the arm's own Chromium
+    /// held suspended for 50 s through the close by the rig, in a change never committed:
+    /// the hook's bound answered <see cref="BackgroundStopOutcome.StillRunning"/>, in the
+    /// gate's own words, <i>"was still closing its sessions after 45 s, when the hook moved
+    /// on"</i>; and with the hang detector the same plant's stop answered
+    /// <see cref="BackgroundStopOutcome.Ended"/> after 50.2 s and both sessions read
+    /// <see cref="SessionCloseCause.Stopped"/>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A stop that outlasts the hook's 45 s keeps the rig, and the arm still
+    /// passes</b>, since 2026-10-14: the build's choice, for the maintainer's review,
+    /// within his 171, so that the next slow close names what it waited on. The arm says
+    /// on every run when it asked the stop and how long the stop took, in its own output,
+    /// which a gate's report carries; and when the stop outlasted
+    /// <see cref="BackgroundStop.Bound"/>, or the arm is red, it ends the relay and the
+    /// background, writes what the background wrote to its standard error into the
+    /// scratch folder, each line opening with the moment it was read, beside that
+    /// sentence, and moves the folder under <see cref="KeptOnRed.Root"/>, which every gate
+    /// driver copies into its run's records. The session folders in it hold each
+    /// session's record, every close with its reason and the browser's exit code. In the
+    /// plant's green run the kept capture had the stop at 07:17:58.585Z, the session with
+    /// no browser let go 30 ms later, and nothing more until its browser server's exit at
+    /// 07:18:48.783Z, the end of the 50 s hold.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -324,17 +375,85 @@ internal sealed class BackgroundProcessTests
             ["why"] = "the suite bringing a browser up for the stop to close",
         });
 
-        // The uninstall hook's own stop, with its own bound.
-        var (outcome, detail) = await BackgroundStop.AskAndWaitAsync(background.Pipe, background.Record, BackgroundStop.Bound);
+        // The uninstall hook's own stop, waited for with the suite's hang detector and
+        // not the hook's 45 s: see the remarks.
+        var askedAt = DateTimeOffset.UtcNow;
+        var stopping = Stopwatch.StartNew();
+        var (outcome, detail) = await BackgroundStop.AskAndWaitAsync(background.Pipe, background.Record, TestDefaults.ProcessHang);
+        var took = stopping.Elapsed;
+        var stop = new StopTaken(askedAt, took, outcome, detail);
 
-        await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.Ended).Because(detail);
+        // On every run, as the Firefox front-door arm says its screenshot's time: how close
+        // the stop came to the hook's 45 s.
+        await SayAsync(stop.Sentence);
 
-        foreach (var session in new[] { browsing, waiting })
+        try
         {
-            var close = (await SessionLock.ReadRecordAsync(SessionPath.For(session)))!.LastClose!;
+            await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.Ended).Because(detail);
 
-            await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Stopped).Because($"{session}: {CloseReasons.Of(close)}");
+            foreach (var session in new[] { browsing, waiting })
+            {
+                var close = (await SessionLock.ReadRecordAsync(SessionPath.For(session)))!.LastClose!;
+
+                await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Stopped).Because($"{session}: {CloseReasons.Of(close)}");
+            }
         }
+        catch (Exception failure)
+        {
+            throw await KeptOnRed.KeepAsync(await WriteTheStopAsync(relay, background, scratch.Path, stop), failure, StopArm);
+        }
+
+        // ⚠️ A STOP THAT OUTLASTED THE HOOK'S 45 s KEEPS THE RIG, and the arm still passes:
+        // see the remarks.
+        if (took > BackgroundStop.Bound)
+        {
+            await SayAsync(await KeptOnRed.KeepAsync(await WriteTheStopAsync(relay, background, scratch.Path, stop), StopArm));
+        }
+    }
+
+    /// <summary>Writes a line to the arm's own output, which a gate's report carries on a green run too.</summary>
+    /// <param name="line">The line.</param>
+    /// <returns>The write.</returns>
+    private static Task SayAsync(string line) =>
+        TestContext.Current?.OutputWriter.WriteLineAsync(line) ?? Task.CompletedTask;
+
+    /// <summary>
+    /// Ends the arm's relay and background, and writes into the arm's scratch folder what
+    /// the background wrote to its standard error and what the stop took.
+    /// </summary>
+    /// <remarks>
+    /// <b>The relay first and then the background's job</b>, as the Firefox front-door arm
+    /// does it: the relay runs in the scratch folder, which a folder cannot be renamed
+    /// under, and the job's close lets the session folders go. Both disposals are
+    /// idempotent, so the arm's own after this find nothing left.
+    /// </remarks>
+    /// <param name="relay">The arm's relay.</param>
+    /// <param name="background">The arm's background.</param>
+    /// <param name="rig">The arm's scratch folder.</param>
+    /// <param name="stop">What the stop took.</param>
+    /// <returns>The scratch folder, ready to keep.</returns>
+    private static async Task<string> WriteTheStopAsync(RawStdioClient relay, BackgroundRun background, string rig, StopTaken stop)
+    {
+        await relay.DisposeAsync();
+
+        await File.WriteAllTextAsync(Path.Combine(rig, BackgroundStandardErrorFile), await background.EndAsync());
+        await File.WriteAllTextAsync(Path.Combine(rig, StopFile), stop.Sentence + Environment.NewLine);
+
+        return rig;
+    }
+
+    /// <summary>When the stop was asked, how long it took and how it came out.</summary>
+    /// <param name="AskedAt">When the arm asked it.</param>
+    /// <param name="Took">How long the hook's stop took to answer.</param>
+    /// <param name="Outcome">How it came out.</param>
+    /// <param name="Detail">The hook's sentence.</param>
+    private sealed record StopTaken(DateTimeOffset AskedAt, TimeSpan Took, BackgroundStopOutcome Outcome, string Detail)
+    {
+        /// <summary>The line the arm says on every run and writes into a kept rig.</summary>
+        public string Sentence =>
+            string.Create(
+                CultureInfo.InvariantCulture,
+                $"The stop through the pipe was asked at {AskedAt:O} and answered {Outcome} after {Took.TotalMilliseconds:F0} ms; the uninstall hook waits {BackgroundStop.Bound.TotalSeconds:F0} s. {Detail}");
     }
 
     private static async Task DestroyAsync(RawStdioClient client, string session) =>
@@ -379,12 +498,16 @@ internal sealed class BackgroundProcessTests
         private readonly JobObject _job;
         private readonly LaunchedProcess _process;
         private readonly long _created;
+        private readonly StringBuilder _standardError;
+        private readonly Task _standardErrorPump;
 
-        private BackgroundRun(JobObject job, LaunchedProcess process, string pipe, string record)
+        private BackgroundRun(JobObject job, LaunchedProcess process, string pipe, string record, StringBuilder standardError, Task standardErrorPump)
         {
             _job = job;
             _process = process;
             _created = ProcessIdentity.CreationTimeOf(process.Id);
+            _standardError = standardError;
+            _standardErrorPump = standardErrorPump;
             Record = record;
             Pipe = pipe;
         }
@@ -395,7 +518,13 @@ internal sealed class BackgroundProcessTests
         /// <summary>Its record, which a stop through the pipe reads to wait for it.</summary>
         public string Record { get; }
 
-        /// <summary>Starts one and waits for its pipe.</summary>
+        /// <summary>Starts one and waits for its pipe and its record.</summary>
+        /// <remarks>
+        /// What it writes to its standard error is kept, each line with the moment it was
+        /// read: a session's own log has no other destination, and a kept rig carries it
+        /// (<see cref="EndAsync"/>). <i>Added 2026-10-14 with the maintainer's 171; previously
+        /// dropped.</i>
+        /// </remarks>
         /// <param name="workingDirectory">Its working directory.</param>
         /// <returns>The run.</returns>
         public static async Task<BackgroundRun> StartAsync(string workingDirectory)
@@ -406,14 +535,48 @@ internal sealed class BackgroundProcessTests
             {
                 var environment = PublishedSlice.InheritedEnvironment();
                 var pipe = PublishedBackground.NewPipeName();
-                var process = await PublishedBackground.StartAsync(job, workingDirectory, environment, pipe, []);
+                var standardError = new StringBuilder();
+                var (process, pump) = await PublishedBackground.StartAsync(job, workingDirectory, environment, pipe, [], standardError, stampEachLine: true);
 
-                return new BackgroundRun(job, process, pipe, PublishedBackground.RecordFor(environment, [], pipe));
+                return new BackgroundRun(job, process, pipe, PublishedBackground.RecordFor(environment, [], pipe), standardError, pump);
             }
             catch
             {
                 job.Dispose();
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Ends everything in the background's job and answers what the background wrote to
+        /// its standard error, read to its end.
+        /// </summary>
+        /// <remarks>
+        /// The job's close takes the background and every process it started, so the pipe
+        /// reaches its end and the capture is whole; the wait for it is a hang detector. The
+        /// disposal after it finds nothing left to end.
+        /// </remarks>
+        /// <returns>The capture, each line opening with the moment it was read.</returns>
+        public async Task<string> EndAsync()
+        {
+            _job.Dispose();
+
+            var complete = true;
+
+            try
+            {
+                await _standardErrorPump.WaitAsync(TestDefaults.ProcessHang);
+            }
+            catch (TimeoutException)
+            {
+                complete = false;
+            }
+
+            lock (_standardError)
+            {
+                return complete
+                    ? _standardError.ToString()
+                    : _standardError + $"<the background's standard error had not ended {TestDefaults.ProcessHang} after its job was closed>";
             }
         }
 
