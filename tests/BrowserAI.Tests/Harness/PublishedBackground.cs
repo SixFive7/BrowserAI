@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using BrowserAI.Coordination;
 using BrowserAI.Hosting;
@@ -32,8 +33,8 @@ namespace BrowserAI.Tests.Harness;
 internal static class PublishedBackground
 {
     /// <summary>
-    /// How long the harness waits for a background it started to open its pipe: a hang
-    /// detector over a start measured at a few hundred milliseconds.
+    /// How long the harness waits for a background it started to open its pipe and write
+    /// its record: a hang detector over a start measured at a few hundred milliseconds.
     /// </summary>
     public static TimeSpan StartBound => TestDefaults.ProcessHang;
 
@@ -69,14 +70,37 @@ internal static class PublishedBackground
 
     /// <summary>
     /// Starts a background in a job, drains both its streams, keeps what it writes to
-    /// stderr when asked to, and waits for its pipe.
+    /// stderr when asked to, and waits for its pipe and its record.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Both streams are read, always, since 2026-10-09.</b> The background writes
     /// every record to stderr as well as to its log, through a console logger whose
     /// queue blocks the caller once it is full, and an anonymous pipe nobody reads
     /// takes about 4 KiB: a background the harness started and never read would stop
     /// on its own logging after enough records, which a hundred sessions reach.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The pipe AND the record, since 2026-10-14, the maintainer's 171</b>, in his
+    /// words verbatim: <i>"171 your recommendations"</i>. <i>Previously the pipe alone.</i>
+    /// The background takes its pipe before it writes its record, and a client can open
+    /// the pipe from that moment. A relay asked a call before its first look has
+    /// connected holds it and reads that record to say why it has no background, and a
+    /// build that is not installed with no record is answered at once that no background
+    /// runs for it. In the Git Bash half of the gate at <c>24202002</c> the kill arm's
+    /// first call met exactly that, 0.7 s after this wait had seen the pipe, while the
+    /// background had logged its start and not yet its record (the hazard index). A
+    /// person starts a background before a client, so nothing outside the suite meets
+    /// the gap this way; the wait reads the record through the product's own reader and
+    /// requires it to name this process, by pid and creation time, with no end.
+    /// <b>Planted red 2026-10-14</b> in a filtered run against a build never committed, in
+    /// which the background held its record back 5 s after taking its pipe and the relay
+    /// held its first look back 2 s: with the wait for the pipe alone, the kill arm's
+    /// <c>browserai_init</c> was refused in the gate's own words, no background running for
+    /// this build, its relay answering the call 64 ms after the background's start; with this wait the
+    /// same build passed the arm, the record written 5.0 s after the background's start and
+    /// the relay started 51 ms after that.
+    /// </para>
     /// </remarks>
     /// <param name="job">The job it runs in.</param>
     /// <param name="workingDirectory">Its working directory.</param>
@@ -84,6 +108,12 @@ internal static class PublishedBackground
     /// <param name="pipe">The pipe it serves.</param>
     /// <param name="relayArguments">The relay's arguments, whose data root, if any, the background takes too.</param>
     /// <param name="standardError">Where its stderr goes, line by line, or <see langword="null"/> to drop it.</param>
+    /// <param name="stampEachLine">
+    /// Whether each line kept in <paramref name="standardError"/> opens with the moment it
+    /// was read, since the console the background writes to carries no time of its own.
+    /// <i>Added 2026-10-14 with the maintainer's 171</i>, for the stop of
+    /// <c>BackgroundProcessTests</c>, whose kept rig says when each line of a slow close came.
+    /// </param>
     /// <returns>
     /// The background, and the read of its stderr, which ends when every holder of the
     /// write end has gone. <i>Returned beside it since 2026-10-11, when the start became
@@ -96,7 +126,8 @@ internal static class PublishedBackground
         IReadOnlyDictionary<string, string> environment,
         string pipe,
         IReadOnlyList<string> relayArguments,
-        StringBuilder? standardError)
+        StringBuilder? standardError,
+        bool stampEachLine = false)
     {
         List<string> arguments = [Program.BackgroundArgument, BackgroundPipe.PipeArgument, pipe];
 
@@ -107,22 +138,26 @@ internal static class PublishedBackground
 
         var background = JobLauncher.Start(job, PublishedSlice.Executable, arguments, workingDirectory, environment);
 
-        _ = PumpAsync(background.StandardOutput, into: null);
-        var standardErrorPump = PumpAsync(background.StandardError, standardError);
+        _ = PumpAsync(background.StandardOutput, into: null, stamp: false);
+        var standardErrorPump = PumpAsync(background.StandardError, standardError, stampEachLine);
 
+        var record = RecordFor(environment, relayArguments, pipe);
+        var created = ProcessIdentity.CreationTimeOf(background.Id);
         var waited = Stopwatch.StartNew();
 
-        while (!NamedPipes.HasFreeInstanceNow(pipe))
+        while (!NamedPipes.HasFreeInstanceNow(pipe) || !await NamesAsync(record, background.Id, created))
         {
             if (background.HasExited)
             {
                 throw new InvalidOperationException(
-                    $"The published background (pid {background.Id}) ended with {background.TryReadExitCode()} before it opened {pipe}. Its log is under the data root's logs folder.");
+                    $"The published background (pid {background.Id}) ended with {background.TryReadExitCode()} before it opened {pipe} and wrote its record. Its log is under the data root's logs folder.");
             }
 
             if (waited.Elapsed > StartBound)
             {
-                throw new InvalidOperationException($"The published background (pid {background.Id}) opened no pipe {pipe} within {StartBound}.");
+                throw new InvalidOperationException(
+                    $"The published background (pid {background.Id}) had not both opened {pipe} and written its record at {record} within {StartBound}: "
+                    + $"the pipe {(NamedPipes.HasFreeInstanceNow(pipe) ? "has" : "has no")} free instance, and the record {(await NamesAsync(record, background.Id, created) ? "names it" : "does not name it")}.");
             }
 
             await Task.Delay(25);
@@ -131,11 +166,27 @@ internal static class PublishedBackground
         return (background, standardErrorPump);
     }
 
+    /// <summary>Whether a background's record names this process as a background that runs.</summary>
+    /// <remarks>
+    /// Read through <see cref="BackgroundRecord.ReadAsync"/>, the reader a relay asks, which
+    /// answers <see langword="null"/> while the record is absent, unreadable or being moved
+    /// into place.
+    /// </remarks>
+    /// <param name="record">The record's path.</param>
+    /// <param name="processId">The background's pid.</param>
+    /// <param name="created">Its creation time.</param>
+    /// <returns>Whether the record names it, with no end.</returns>
+    private static async Task<bool> NamesAsync(string record, int processId, long created) =>
+        await BackgroundRecord.ReadAsync(record) is { Ended: null } state
+            && state.ProcessId == processId
+            && state.CreatedFileTime == created;
+
     /// <summary>Reads a stream line by line to its end, keeping the lines when asked to.</summary>
     /// <param name="stream">One of the background's streams.</param>
     /// <param name="into">Where the lines go, or <see langword="null"/>.</param>
+    /// <param name="stamp">Whether each kept line opens with the moment it was read, in UTC.</param>
     /// <returns>A task that ends at the stream's end, or when it is closed under the read.</returns>
-    private static async Task PumpAsync(Stream stream, StringBuilder? into)
+    private static async Task PumpAsync(Stream stream, StringBuilder? into, bool stamp)
     {
         try
         {
@@ -145,9 +196,11 @@ internal static class PublishedBackground
             {
                 if (into is not null)
                 {
+                    var kept = stamp ? DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture) + " " + line : line;
+
                     lock (into)
                     {
-                        _ = into.AppendLine(line);
+                        _ = into.AppendLine(kept);
                     }
                 }
             }
