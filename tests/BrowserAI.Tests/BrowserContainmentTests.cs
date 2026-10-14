@@ -432,7 +432,9 @@ internal sealed class BrowserContainmentTests
             .Select(process => (process.ProcessId, process.ImagePath, Result: RestartRegistration.Of(process.ProcessId)))
 
             // A process of the walk that has exited since is no answer either way:
-            // red once at async-ps-1, 2026-10-11, on a Chromium process that had gone.
+            // red once at async-ps-1, 2026-10-11, on a Chromium process that had gone,
+            // and once in the first PowerShell half at 9c3466a5, 2026-10-14, on one that
+            // nothing held any more, whose pid no longer opened.
             .Where(entry => entry.Result is not (RestartRegistration.NotRegistered or RestartRegistration.Gone))
             .ToList();
 

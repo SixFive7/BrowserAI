@@ -213,6 +213,84 @@ $running.WaitForExit()
 `RestartRegistrationTests.AProcessThatHasExitedReadsAsGoneAndOneThatRunsReadsAsNotRegistered`
 holds the reader's half of it on every run.
 
+## An exited process nothing holds does not open: `OpenProcess` answers `ERROR_INVALID_PARAMETER` -- measured 2026-10-14
+
+**Once the last handle to an exited process closes, its pid opens no process**, and
+`OpenProcess` fails with `ERROR_INVALID_PARAMETER`, 87, where the entry above, with a
+handle still held, had it open and `GetApplicationRestartSettings` answer
+`ERROR_PARTIAL_COPY`. Measured 2026-10-14 on Windows 11 Pro 10.0.26300 with PowerShell
+7.6.6, in two runs of five rounds, the second with the program below as it is written, ten
+rounds of ten: a `cmd.exe /d /c exit 0`, waited for with its handle held, opened and
+answered `0x8007012B`; once its `Process` object was disposed, the pid still opened that
+same process, by its creation time, at 8 of the 10 first asks, and an open failed with 87
+within 3.4 to 17.2 ms, at the first or the second ask. In both runs pid 0 answered 87, which
+[the documentation](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocess)
+gives for the System Idle Process, and pid 4 answered `ERROR_ACCESS_DENIED`, 5, which it
+gives for the System process. `[FLOATS]`
+
+**Why it matters here.** The Chromium arm of `BrowserContainmentTests` asks for each walked
+browser process's registration after the launcher that walked them has let its handles go,
+so a process that exits in between is held by nothing, and on 2026-10-14, in the first
+PowerShell half of the gate at `9c3466a5`, the reader threw on one: *"Process 88504 could not
+be opened to read its restart registration (Win32 87)"*. Since that day the reader answers
+`Gone` for an open refused with 87, as it does for `ERROR_PARTIAL_COPY`, and still throws for
+any other refusal, 5 among them, because a process that refuses is there.
+
+**To re-establish it**, run this from PowerShell 7; the first two lines read `open failed 5`
+and `open failed 87`, and each round line reads `handle held: opened same process,
+registration 0x8007012B; let go: open failed 87` while it holds:
+
+```powershell
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class Probe87 {
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+    [DllImport("kernel32.dll")] public static extern int GetApplicationRestartSettings(IntPtr process, IntPtr commandLine, ref uint size, out uint flags);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool GetProcessTimes(IntPtr process, out long creation, out long exit, out long kernel, out long user);
+    [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle);
+    public static string Ask(int pid, long creation) {
+        var h = OpenProcess(0x400 | 0x10, false, (uint)pid);
+        if (h == IntPtr.Zero) return "open failed " + Marshal.GetLastWin32Error();
+        long c, e, k, u;
+        GetProcessTimes(h, out c, out e, out k, out u);
+        uint size = 0; uint flags;
+        var r = GetApplicationRestartSettings(h, IntPtr.Zero, ref size, out flags);
+        CloseHandle(h);
+        var who = creation == 0 ? "" : (c == creation ? " same process" : " ANOTHER process, created " + c);
+        return string.Format("opened{0}, registration 0x{1:X8}", who, r);
+    }
+}
+"@
+"pid 4: " + [Probe87]::Ask(4, 0)
+"pid 0: " + [Probe87]::Ask(0, 0)
+for ($round = 1; $round -le 5; $round++) {
+    $info = [System.Diagnostics.ProcessStartInfo]::new((Join-Path $env:SystemRoot 'System32\cmd.exe'), '/d /c exit 0')
+    $info.UseShellExecute = $false
+    $info.CreateNoWindow = $true
+    $exited = [System.Diagnostics.Process]::Start($info)
+    $exited.WaitForExit()
+    $id = $exited.Id
+    $creation = $exited.StartTime.ToFileTimeUtc()
+    $held = [Probe87]::Ask($id, $creation)
+    $exited.Dispose()
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    $polls = 0
+    do {
+        $polls++
+        $answer = [Probe87]::Ask($id, $creation)
+        if ($answer -notlike 'opened same process*') { break }
+        Start-Sleep -Milliseconds 1
+    } while ($watch.Elapsed.TotalSeconds -lt 10)
+    "round {0}: pid {1}, handle held: {2}; let go: {3} after {4} ask(s), {5:F1} ms" -f $round, $id, $held, $answer, $polls, $watch.Elapsed.TotalMilliseconds
+}
+```
+
+`RestartRegistrationTests.AProcessThatHasExitedAndIsHeldByNothingReadsAsGoneAndOneThatRefusesIsStillRefused`
+holds the reader's half of it on every run: it lets go of an exited probe, asks the reader
+once an open of the probe's pid answers 87, and asks it of a probe of its own whose access
+control list it has emptied, which answers 5.
+
 ## Machine state
 
 `HKCU\...\Winlogon\RestartApps = 1` -- Settings › Accounts › Sign-in options ›

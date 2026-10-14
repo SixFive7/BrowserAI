@@ -543,7 +543,8 @@ internal sealed class FirefoxTests
         var registered = browsers
             .Select(process => (process.ProcessId, process.ImagePath, Result: RestartRegistration.Of(process.ProcessId)))
 
-            // A process that has exited since it was listed is no answer either way.
+            // A process that has exited since it was listed is no answer either way,
+            // whether something still holds it or nothing does.
             .Where(entry => entry.Result is not (RestartRegistration.NotRegistered or RestartRegistration.Gone))
             .ToList();
 

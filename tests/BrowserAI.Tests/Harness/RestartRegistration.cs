@@ -36,13 +36,16 @@ internal static partial class RestartRegistration
 
     /// <summary>
     /// No answer: the process had exited by the time it was asked, so there is no address
-    /// space to read a registration out of. A value no <c>HRESULT</c> this call returns
-    /// can take.
+    /// space to read a registration out of, and once nothing holds it no process to open.
+    /// A value no <c>HRESULT</c> this call returns can take.
     /// </summary>
     public const int Gone = int.MaxValue;
 
     private const uint ProcessQueryInformation = 0x00000400;
     private const uint ProcessVmRead = 0x00000010;
+
+    /// <summary><c>ERROR_INVALID_PARAMETER</c>, what <c>OpenProcess</c> answers for a pid no process has.</summary>
+    private const int InvalidParameter = 87;
 
     /// <summary>Asks Windows what a live process has registered.</summary>
     /// <param name="processId">The pid, which the caller must know is still alive.</param>
@@ -51,10 +54,13 @@ internal static partial class RestartRegistration
     /// project requires; <c>S_OK</c> means a registration exists; and
     /// <see cref="Gone"/> when the process had exited by the time it was asked, which
     /// the call itself answers as <c>HRESULT_FROM_WIN32(ERROR_PARTIAL_COPY)</c>, read out
-    /// of an address space that is gone. <i>Gone since 2026-10-11 (previously that raw
-    /// answer, which an arm read as a registration).</i>
+    /// of an address space that is gone, and which <c>OpenProcess</c> answers with
+    /// <c>ERROR_INVALID_PARAMETER</c> once nothing holds the process any more. <i>Gone
+    /// since 2026-10-11 (previously that raw answer, which an arm read as a registration),
+    /// and for a process nothing holds since 2026-10-14 (previously the exception
+    /// below).</i>
     /// </returns>
-    /// <exception cref="InvalidOperationException">The process could not be opened.</exception>
+    /// <exception cref="InvalidOperationException">The process is there and could not be opened.</exception>
     public static int Of(int processId)
     {
         // PROCESS_VM_READ as well as QUERY_INFORMATION: the command line comes
@@ -64,8 +70,19 @@ internal static partial class RestartRegistration
 
         if (handle.IsInvalid)
         {
+            var error = Marshal.GetLastPInvokeError();
+
+            // An exited process nothing holds is no process at all: its pid opens nothing,
+            // and OpenProcess answers ERROR_INVALID_PARAMETER, measured 2026-10-14
+            // (kb/chromium/resurrection.md). Any other refusal comes from a process that is
+            // there, and it is still no answer.
+            if (error is InvalidParameter)
+            {
+                return Gone;
+            }
+
             throw new InvalidOperationException(
-                $"Process {processId} could not be opened to read its restart registration (Win32 {Marshal.GetLastPInvokeError()}). A closed answer is not the same as 'not registered'.");
+                $"Process {processId} could not be opened to read its restart registration (Win32 {error}). A closed answer is not the same as 'not registered'.");
         }
 
         uint size = 0;

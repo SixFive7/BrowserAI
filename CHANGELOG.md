@@ -40,6 +40,13 @@ more* link to its detail; nothing else depends on it.
 
 ### Changed
 
+- ✅ **The containment arm counts a browser process that exited and that nothing holds as no answer.**
+  The arm asks each process of a browser it walked whether Windows would restart it, after the
+  walk has let its processes go, and a process that exited in between could not be opened at all,
+  which the arm's reader took for a failure: one gate run went red on it. Such a process now counts
+  as gone, as one that exited while something still held it already did, and a process that is
+  there and refuses to be opened still fails the arm.
+
 - ✅ **The relay's tests move their clock only while the relay is still.**
   One relay test waited five minutes in a gate run for an answer due at a held call's 150 second
   deadline. The relay arms a timer by taking the delay from one reading of its clock, and the
