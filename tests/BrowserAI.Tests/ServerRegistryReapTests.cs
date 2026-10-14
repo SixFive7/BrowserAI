@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using BrowserAI.Coordination;
 using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -97,13 +98,6 @@ internal sealed class ServerRegistryReapTests
         new(@"server-registry reap after (?:" + Regex.Escape(ServerRegistryReap.AtStartup) + "|" + Regex.Escape(ServerRegistryReap.AfterSweep) + @"), detached and not awaited: reaper=(?<pid>\d+)@(?<created>-?\d+)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>
-    /// Matches the records that say the startup sweep started no reap: the gate was another
-    /// BrowserAI's, the gate could not be made, the pass failed, or the reap could not start.
-    /// </summary>
-    private static readonly Regex NoStartupReap =
-        new(@"BrowserAI\.Sweep\[2\]  |BrowserAI\.Sweep\[4\]  |The stray sweep failed\.|reap could not be started after (?:" + Regex.Escape(ServerRegistryReap.AtStartup) + "|" + Regex.Escape(ServerRegistryReap.AfterSweep) + @")|No server-registry reap after (?:" + Regex.Escape(ServerRegistryReap.AtStartup) + "|" + Regex.Escape(ServerRegistryReap.AfterSweep) + ")", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
-    /// <summary>
     /// A destroy reaps every dead descriptor in Playwright's registry, spares the
     /// one belonging to a browser that is still up, and answers its caller while
     /// the reap is still running.
@@ -144,22 +138,40 @@ internal sealed class ServerRegistryReapTests
         await Assert.That(await DescriptorForAsync(registry, keeper)).IsNotNull();
         await Assert.That(await DescriptorForAsync(registry, closing)).IsNotNull();
 
-        // ⚠️ THE STARTUP SWEEP'S REAP IS OVER BEFORE ANYTHING IS PLANTED -- 2026-10-14. The
-        // background's one sweep at its start reaps this registry too (P5 a), and in the Git
-        // Bash half of the gate at 9c3466a5 its pass took 21.2 s, so the reap it started was
-        // listing this registry while the plant below was being written: 40 of the 1,000
-        // were gone at the count. The arm waits for the record that says how that pass ended
-        // and, when the pass started a reaper, for that reaper, by its identity, to be gone.
+        // ⚠️ NO REAP OF A SWEEP CAN MEET THE PLANT -- 2026-10-14. The background's one sweep at
+        // its start reaps this registry too (P5 a), and in the Git Bash half of the gate at
+        // 9c3466a5 its pass took 21.2 s, so the reap it started was listing this registry while
+        // the plant below was being written: 40 of the 1,000 were gone at the count. A pass
+        // needs the machine-wide sweep gate, so the arm holds the gate from before the plant to
+        // after the count: no pass, the slice's own among them, can start a reap meanwhile, and
+        // a pass that ran before started its reap inside the gate and wrote the reaper's
+        // record there, so the arm reads the record once it holds the gate and waits that
+        // reaper out. ⚠️ Corrected the same day (previously the arm waited for a record of how
+        // the pass ended): a pass that could not have the gate writes no record the process
+        // log keeps, SweepLog.AlreadyRunning being Debug, and in the PowerShell half of the gate
+        // at 86f9dd8a that wait ran out its hang detector.
         var background = client.BackgroundProcessId
             ?? throw new InvalidOperationException("The published relay was started with no background beside it.");
         var backgroundCreated = ProcessIdentity.CreationTimeOf(background);
-        var (over, said) = await WhenTheStartupReapIsOverAsync(background, backgroundCreated);
 
-        await Assert.That(over).IsTrue().Because(said);
+        List<string> planted;
 
-        var planted = await PlantDeadDescriptorsAsync(registry, StaleDescriptorsPlanted);
+        using (var sweepGate = MachineMutex.Create(LockScopes.Sweep))
+        {
+            await using var held = await sweepGate.HoldAsync(TestDefaults.ProcessHang);
 
-        await Assert.That(planted.Count(File.Exists)).IsEqualTo(StaleDescriptorsPlanted);
+            await Assert.That(held.Acquisition)
+                .IsNotEqualTo(MutexAcquisition.NotAcquired)
+                .Because("a sweep pass held the machine-wide gate for longer than the hang detector");
+
+            var (gone, said) = await TheStartupReapersGoneAsync(background, backgroundCreated);
+
+            await Assert.That(gone).IsTrue().Because(said);
+
+            planted = await PlantDeadDescriptorsAsync(registry, StaleDescriptorsPlanted);
+
+            await Assert.That(planted.Count(File.Exists)).IsEqualTo(StaleDescriptorsPlanted);
+        }
 
         var destroyed = await client.RoundTripAsync("tools/call", new JsonObject
         {
@@ -354,55 +366,35 @@ internal sealed class ServerRegistryReapTests
     }
 
     /// <summary>
-    /// Waits until the background's records say how its startup sweep's reap went and, when
-    /// that pass started a reaper, until the reaper is gone.
+    /// Waits out the reaper the background's startup sweep started, when it started one.
     /// </summary>
     /// <remarks>
-    /// The records are read only out of the log files the background can have written to,
-    /// because this reads them again every quarter of a second. A pass that could not have
-    /// the machine-wide gate starts no reap, and says so, and so does one that failed.
+    /// <b>Asked once, with the machine-wide sweep gate held by the caller.</b> A pass that
+    /// ran had the gate and wrote its reaper's record before it let the gate go, so the record
+    /// is there to read; a pass that could not have the gate, or has not run yet, starts no
+    /// reap while the caller holds it. The records are read only out of the log files the
+    /// background can have written to.
     /// </remarks>
     /// <param name="background">The background's pid.</param>
     /// <param name="created">Its creation time.</param>
-    /// <returns>Whether the reap is over, and what the records said.</returns>
-    private static async Task<(bool Over, string Said)> WhenTheStartupReapIsOverAsync(int background, long created)
+    /// <returns>Whether no startup reaper is left running, and what the records said.</returns>
+    private static async Task<(bool Gone, string Said)> TheStartupReapersGoneAsync(int background, long created)
     {
-        using var deadline = new CancellationTokenSource(TestDefaults.ProcessHang);
-        var records = string.Empty;
+        var records = await ProcessLogRecords.SinceItsCreationAsync(background, created);
+        var reaper = StartupReaperIdentity.Match(records);
 
-        while (!deadline.IsCancellationRequested)
+        if (!reaper.Success)
         {
-            records = await ProcessLogRecords.SinceItsCreationAsync(background, created);
-
-            var reaper = StartupReaperIdentity.Match(records);
-
-            if (reaper.Success)
-            {
-                var pid = int.Parse(reaper.Groups["pid"].Value, CultureInfo.InvariantCulture);
-                var reaperCreated = long.Parse(reaper.Groups["created"].Value, CultureInfo.InvariantCulture);
-                var gone = await ProcessIdentity.WaitUntilGoneAsync(pid, reaperCreated, TestDefaults.ProcessHang);
-
-                return (gone, gone
-                    ? $"the startup sweep's reaper {pid}@{reaperCreated} is gone"
-                    : $"the startup sweep's reaper {pid}@{reaperCreated} was still running when the hang detector ran out");
-            }
-
-            if (NoStartupReap.Match(records) is { Success: true } none)
-            {
-                return (true, $"the startup sweep started no reap: {none.Value}");
-            }
-
-            try
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(250), deadline.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
+            return (true, "the background's records name no reaper of its startup sweep");
         }
 
-        return (false, $"no record said how the startup sweep's reap went, and the background's records are:{Environment.NewLine}{records}");
+        var pid = int.Parse(reaper.Groups["pid"].Value, CultureInfo.InvariantCulture);
+        var reaperCreated = long.Parse(reaper.Groups["created"].Value, CultureInfo.InvariantCulture);
+        var gone = await ProcessIdentity.WaitUntilGoneAsync(pid, reaperCreated, TestDefaults.ProcessHang);
+
+        return (gone, gone
+            ? $"the startup sweep's reaper {pid}@{reaperCreated} is gone"
+            : $"the startup sweep's reaper {pid}@{reaperCreated} was still running when the hang detector ran out, and the background's records are:{Environment.NewLine}{records}");
     }
 
     /// <summary>Opens one session through the slice and binds a real browser to it.</summary>

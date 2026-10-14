@@ -63,8 +63,9 @@ more* link to its detail; nothing else depends on it.
 - ✅ **The registry reap arm plants its dead descriptors only once the startup's reap is over.**
   BrowserAI's sweep at its start reaps the registry the arm hands it, and in one gate run that sweep
   took 21 seconds, so its reap was still running when the arm planted a thousand dead descriptors,
-  and it took 40 of them before the arm counted. The arm now waits for the record that says how the
-  sweep at the start ended and, when that sweep started a reap, for the reaper to be gone.
+  and it took 40 of them before the arm counted. The arm now holds the sweep's machine-wide gate
+  while it plants and counts, so no sweep can start a reap meanwhile, and first waits out a reap a
+  sweep started before it took the gate.
 
 - ✅ **The relay's tests move their clock only while the relay is still.**
   One relay test waited five minutes in a gate run for an answer due at a held call's 150 second

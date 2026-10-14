@@ -78,9 +78,10 @@ internal static class ProcessLogRecords
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>For a poll, which reads the log again and again.</b> The log keeps thirty days of
-    /// every BrowserAI on the machine, 186 MB in 42 files on 2026-10-14, and a read of all of
-    /// it each time round a loop is a load of the suite's own making. <c>RollingFileWriter</c>
+    /// <b>For a read an arm makes while it holds something up, and for a poll, which reads the
+    /// log again and again.</b> The log keeps thirty days of every BrowserAI on the machine,
+    /// 186 MB in 42 files on 2026-10-14, and a read of all of it each time is a load of the
+    /// suite's own making. <c>RollingFileWriter</c>
     /// names every file <c>browserai-&lt;UTC day&gt;-&lt;index&gt;.log</c> for the day of
     /// the records it holds, so a process cannot have written into a file named for a day
     /// before it was created. A file whose name carries no day is read.
