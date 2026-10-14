@@ -46,6 +46,19 @@ more* link to its detail; nothing else depends on it.
   moved to 1.75.0 and its CsWin32 to 0.3.363 in the same re-resolve, and neither reaches an
   installed BrowserAI.
 
+- ✅ **The suite's hand-moved clock no longer throws, moves back or drops a re-arm during a step.**
+  Tests move this clock in steps while the code they test arms its timers on threads of its own.
+  Such a thread could disarm a timer the clock had just chosen to fire, which ended the step with
+  an error; arm a timer for a moment the step had already passed, which the clock fired by going
+  back to that moment; or arm the chosen timer again, which the clock forgot once the chosen tick
+  ran. The clock now keeps the moment it chose a timer by, fires a timer whose moment has passed
+  at its own reading, late, as a real timer does, only moves forward, and keeps a re-arm made
+  after its choice. The three other places that take a timer's delay from one reading of the
+  clock and arm it at another were read for the same gap, and no test of theirs depends on it.
+  Four tests of the idle countdown that hold a close to its deadline now also wait until no
+  browser call holds the session before they step to it, because a call lets go of the countdown
+  only after its answer is sent.
+
 - ✅ **The dashboard's wording arm no longer reads the folder it runs from as words of the page.**
   The arm refuses words such as relay, client and pid anywhere a page shows them, and the page's
   BrowserAI card names its install and data folders, which in the suite are folders of the copy of
