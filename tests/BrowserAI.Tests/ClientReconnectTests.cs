@@ -503,16 +503,31 @@ internal sealed class ClientReconnectTests
         // the 14 s twice of three PowerShell halves in the first gates after the
         // maintainer's decision 54, at async-ps-1 and async-ps-4, and in its own class
         // it ended inside it (the hazard index, the real Codex arm's RegisterAI run).
+        //
+        // ⚠️ AND RegisterAI'S OWN BUDGET IS THAT BOUND TOO, since 2026-10-14, the
+        // maintainer's 171. The bound above was only how long this process waits for
+        // RegisterAI; with no --timeout RegisterAI gives its whole run 30 s, its own
+        // default, and a --replace with Codex is four runs of Codex. A run that outlasts
+        // it is answered "failed", the answer the arm met in the PowerShell half of the
+        // gate at 24202002, 46.8 s into the arm (the hazard index). Its document is
+        // quoted on a red. Planted red 2026-10-14 in a filtered run, with a Codex the rig
+        // slowed by 12 s a run, named to this run with RegisterAI's own --client-exe in a
+        // change never committed: with no --timeout the action read "failed", Codex
+        // stopped while writing the entry, 30.9 s into the arm; with the ten minutes, the
+        // same four slow runs read "replaced".
         var sandboxed = await tool.RunAsync(
             [
                 "register", "--name", McpRegistrar.ServerName, "--client", RegistrationClient.Codex.ToolId, "--scope", "user",
-                "--owned-root", install, "--replace", "--", server, RegistrationTarget.McpArgument, BrowserAiPaths.DataRootArgument, appRoot,
+                "--owned-root", install, "--replace",
+                "--timeout", TestDefaults.ProcessHang.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture),
+                "--", server, RegistrationTarget.McpArgument, BrowserAiPaths.DataRootArgument, appRoot,
                 BrowserAI.Coordination.BackgroundPipe.PipeArgument, background.Pipe,
             ],
             TestDefaults.ProcessHang);
 
         await Assert.That(ToolDocuments.TryRead(sandboxed, out var rewritten, out var problem)).IsTrue().Because(problem);
-        await Assert.That(rewritten!.For(RegistrationClient.Codex.ToolId)!.Action).IsEqualTo("replaced");
+        await Assert.That(rewritten!.For(RegistrationClient.Codex.ToolId)!.Action).IsEqualTo("replaced")
+            .Because($"RegisterAI's document: {sandboxed.Output}{Environment.NewLine}its standard error: {sandboxed.Error}");
 
         // ---- Started by the real client, one call ------------------------------
         var steps = new JsonArray(
