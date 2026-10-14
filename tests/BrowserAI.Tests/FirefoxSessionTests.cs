@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
@@ -48,7 +49,7 @@ namespace BrowserAI.Tests;
 /// reason.
 /// </para>
 /// </remarks>
-internal sealed class FirefoxSessionTests
+internal sealed partial class FirefoxSessionTests
 {
     /// <summary>The one argument the reinstall tool requires, so the assertion has no literal array in it.</summary>
     private static readonly string[] RequiredOnReinstall = ["browser"];
@@ -137,6 +138,24 @@ internal sealed class FirefoxSessionTests
     /// the browser's exit code, and the Firefox profile. The job's close ends the
     /// background with the browser, so a browser that was still running at the red has
     /// no close in the record.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Upstream's own action timeout is a true answer, and the screenshot is asked
+    /// for again</b>, since 2026-10-14, the maintainer's 171, in his words verbatim:
+    /// <i>"171 your recommendations"</i>. <i>Previously the first answer was the one the
+    /// arm judged.</i> The next red after the arm learned to say its answer, in the
+    /// PowerShell half of the gate at <c>7a069ecb</c>, read upstream's
+    /// <c>TimeoutError</c> after 5.3 s, the text a suspended browser provokes, and the
+    /// arm's row in the hazard index named the fix it now has: each answer that is that timeout
+    /// is said and the screenshot asked for again, until another answer comes or the hang
+    /// detector runs out, and every answer is quoted in a red.
+    /// <see cref="AFirefoxScreenshotThatOutlastsUpstreamsActionTimeoutIsAnsweredWithItAndTheNextIsWhole"/>
+    /// provokes the timeout on every run, which holds the text this arm keys on to
+    /// upstream's. <b>Planted red 2026-10-14</b> in a filtered run, with the session's
+    /// Firefox suspended through the arm's first screenshot in a change never committed:
+    /// the arm as it stood at <c>963497fe</c> was answered after 5.0 s with upstream's
+    /// <c>TimeoutError</c> and went red on it; under the same plant this arm took that
+    /// answer, asked again and was answered whole in 31 ms.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -235,22 +254,45 @@ internal sealed class FirefoxSessionTests
         // An artifact, written by the child into the session's own output root.
         // No `filename`, which is upstream's own condition for returning the
         // image in the answer as well as writing it.
-        var asked = Stopwatch.StartNew();
+        //
+        // ⚠️ UPSTREAM'S OWN ACTION TIMEOUT IS A TRUE ANSWER, AND THE SCREENSHOT IS
+        // ASKED FOR AGAIN -- since 2026-10-14, the maintainer's 171. A screenshot waits
+        // the 5,000 ms upstream gives an action, which BrowserAI does not set, and a
+        // run's load spent them once in the gate at 7a069ecb, which answered with
+        // upstream's TimeoutError (the hazard index). Each answer that is that timeout
+        // is said and the screenshot asked for again, until another answer comes or
+        // the hang detector runs out; any other answer is the one the arm judges.
+        var answers = new List<(JsonObject Envelope, TimeSpan Took)>();
+        var asking = Stopwatch.StartNew();
+        JsonObject screenshot;
 
-        var screenshot = await client.EnvelopeAsync("tools/call", new JsonObject
+        while (true)
         {
-            ["name"] = "browser_take_screenshot",
-            ["arguments"] = new JsonObject { [SessionToolSurface.SessionParameter] = session, [SessionToolSurface.WhyParameter] = "the suite exercising this call" },
-        });
+            var asked = Stopwatch.StartNew();
 
-        var took = asked.Elapsed;
+            screenshot = await client.EnvelopeAsync("tools/call", new JsonObject
+            {
+                ["name"] = "browser_take_screenshot",
+                ["arguments"] = new JsonObject { [SessionToolSurface.SessionParameter] = session, [SessionToolSurface.WhyParameter] = "the suite exercising this call" },
+            });
 
-        // On every run and not only on a red: upstream gives a screenshot its action
-        // timeout, and a gate's report then says how close this one came to it under
-        // the gate's own load.
-        await (TestContext.Current?.OutputWriter.WriteLineAsync($"browser_take_screenshot answered in {took.TotalMilliseconds.ToString("F0", CultureInfo.InvariantCulture)} ms") ?? Task.CompletedTask);
+            var took = asked.Elapsed;
+            var timedOut = IsUpstreamsActionTimeout(screenshot);
 
-        await Assert.That((bool?)screenshot["result"]?["isError"]).IsNotEqualTo(true).Because(Said(screenshot, took));
+            answers.Add((screenshot, took));
+
+            // On every run and not only on a red: upstream gives a screenshot its action
+            // timeout, and a gate's report then says how close this one came to it under
+            // the gate's own load.
+            await (TestContext.Current?.OutputWriter.WriteLineAsync($"browser_take_screenshot answered in {took.TotalMilliseconds.ToString("F0", CultureInfo.InvariantCulture)} ms{(timedOut ? ", with upstream's action timeout, so it is asked for again" : string.Empty)}") ?? Task.CompletedTask);
+
+            if (!timedOut || asking.Elapsed > TestDefaults.ProcessHang)
+            {
+                break;
+            }
+        }
+
+        await Assert.That((bool?)screenshot["result"]?["isError"]).IsNotEqualTo(true).Because(SaidEach(answers));
 
         var artifact = SliceRun.ArtifactPathIn(screenshot, Path.Combine(session, SessionLayout.OutputFolderName));
 
@@ -299,6 +341,143 @@ internal sealed class FirefoxSessionTests
     }
 
     /// <summary>
+    /// A Firefox screenshot of a browser that does not run is answered with upstream's
+    /// own action timeout, and the next screenshot of the same session is whole.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-14 with the maintainer's 171</b>, beside the front-door arm's
+    /// screenshot asked for again: upstream gives a screenshot 5,000 ms, which BrowserAI
+    /// does not set, and its <c>TimeoutError</c> is the answer that arm takes for a true
+    /// one. Every process of the session's Firefox is suspended before the screenshot is
+    /// asked for and let go once it is answered, so this holds on every run that the text
+    /// is the one <see cref="IsUpstreamsActionTimeout"/> reads, and that a session whose
+    /// screenshot timed out takes its next one whole. A fault injected into the arm's own
+    /// browser, which loads nothing, the way the investigation of that day provoked the
+    /// timeout, 2 of 2
+    /// (<see href="../../kb/playwright/tools-and-artifacts.md#a-firefox-screenshot-has-upstreams-five-seconds-and-a-loaded-machine-can-spend-most-of-them----measured-2026-10-14">kb</see>).
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-14</b> in a filtered run, with the browser let go before the
+    /// screenshot was asked for in a change never committed: answered whole after 0.1 s,
+    /// which is not the timeout. Green with it held: answered with upstream's
+    /// <c>TimeoutError</c> after 5,026 ms, and the next screenshot whole.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFirefoxScreenshotThatOutlastsUpstreamsActionTimeoutIsAnsweredWithItAndTheNextIsWhole()
+    {
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedFirefoxAsync();
+
+        using var scratch = await ScratchDirectory.CreateAsync("firefox-shot-timeout");
+
+        // The client's job holds the session's processes, as the front-door arm's does.
+        await using var client = await RawStdioClient.StartAsync(
+            PublishedSlice.Executable,
+            PublishedSlice.Mcp,
+            scratch.Path,
+            PublishedSlice.InheritedEnvironment());
+
+        try
+        {
+            await TimedOutThenWholeAsync(client, Path.Combine(scratch.Path, "firefox-session"));
+        }
+        catch (Exception failure)
+        {
+            throw await KeepTheRigAsync(client, scratch.Path, failure, "firefox-shot-timeout");
+        }
+    }
+
+    /// <summary>
+    /// The timeout arm's steps: a session, a page, a screenshot with the browser held,
+    /// and a screenshot with it running again.
+    /// </summary>
+    /// <param name="client">The client, initialised here.</param>
+    /// <param name="session">The session directory to create, inside the arm's scratch folder.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task TimedOutThenWholeAsync(RawStdioClient client, string session)
+    {
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        var created = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "the suite's Firefox session whose screenshot meets a browser that does not run",
+            ["browser"] = ProvisionedBrowsers.Firefox,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        await Assert.That((bool?)created["isError"]).IsNotEqualTo(true).Because(TextOf(created));
+
+        var navigated = await CallAsync(client, "browser_navigate", new JsonObject
+        {
+            ["url"] = SliceRun.TargetUrl,
+            [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
+        });
+
+        await Assert.That((bool?)navigated["isError"]).IsNotEqualTo(true).Because(TextOf(navigated));
+
+        var screenshot = new JsonObject
+        {
+            ["name"] = "browser_take_screenshot",
+            ["arguments"] = new JsonObject { [SessionToolSurface.SessionParameter] = session, [SessionToolSurface.WhyParameter] = "the suite exercising this call" },
+        };
+
+        // ---- Asked for while the browser does not run: held until the answer comes,
+        // which is upstream's own timeout or, failing that, the client's hang detector.
+        var asked = Stopwatch.StartNew();
+        JsonObject timedOut;
+
+        using (var held = SuspendedBrowser.Of(client.JobProcessIds, BrowserAiPaths.FirefoxExecutable))
+        {
+            await Assert.That(held.Count).IsGreaterThan(0).Because("the session's Firefox should be up, in the client's own job");
+
+            timedOut = await client.EnvelopeAsync("tools/call", screenshot.DeepClone());
+        }
+
+        var heldFor = asked.Elapsed;
+
+        await (TestContext.Current?.OutputWriter.WriteLineAsync($"browser_take_screenshot with the browser held answered in {heldFor.TotalMilliseconds.ToString("F0", CultureInfo.InvariantCulture)} ms") ?? Task.CompletedTask);
+
+        await Assert.That(IsUpstreamsActionTimeout(timedOut)).IsTrue()
+            .Because($"a screenshot of a browser that does not run should be answered with upstream's own action timeout, which the front-door arm asks again after; it was {Said(timedOut, heldFor)}");
+
+        // ---- Asked for again with the browser running: whole.
+        var again = Stopwatch.StartNew();
+        var whole = await client.EnvelopeAsync("tools/call", screenshot.DeepClone());
+        var tookAgain = again.Elapsed;
+
+        await Assert.That((bool?)whole["result"]?["isError"]).IsNotEqualTo(true).Because(Said(whole, tookAgain));
+
+        var artifact = SliceRun.ArtifactPathIn(whole, Path.Combine(session, SessionLayout.OutputFolderName));
+
+        await Assert.That(File.Exists(artifact)).IsTrue();
+
+        var bytes = await File.ReadAllBytesAsync(artifact);
+
+        await Assert.That(bytes.Length).IsGreaterThan(8);
+        await Assert.That(bytes[..8]).IsEquivalentTo(PngSignature);
+
+        var destroyed = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
+        {
+            ["why"] = "the suite exercising this call",
+            ["directory"] = session,
+        });
+
+        await DestroyAnswer.AccountsForWhatItLeftAsync(TextOf(destroyed), (bool?)destroyed["isError"], session);
+
+        var neverReleased = await ScratchDirectory.RemoveTreeWhenReleasedAsync(session, TeardownPatience);
+
+        await Assert.That(string.Join(Environment.NewLine, neverReleased)).IsEmpty();
+    }
+
+    /// <summary>
     /// Ends the arm's processes, writes what the relay and the background said on
     /// their standard error into the arm's scratch folder, and keeps that folder.
     /// </summary>
@@ -312,15 +491,16 @@ internal sealed class FirefoxSessionTests
     /// <param name="client">The arm's client.</param>
     /// <param name="rig">The arm's scratch folder.</param>
     /// <param name="failure">What the arm failed with.</param>
+    /// <param name="arm">The name the kept folder carries.</param>
     /// <returns>The failure to throw.</returns>
-    private static async Task<Exception> KeepTheRigAsync(RawStdioClient client, string rig, Exception failure)
+    private static async Task<Exception> KeepTheRigAsync(RawStdioClient client, string rig, Exception failure, string arm = "firefox-front-door")
     {
         await client.DisposeAsync();
 
         await File.WriteAllTextAsync(Path.Combine(rig, RelayStandardErrorFile), await client.DrainedStandardErrorAsync());
         await File.WriteAllTextAsync(Path.Combine(rig, BackgroundStandardErrorFile), await client.DrainedBackgroundStandardErrorAsync());
 
-        return await KeptOnRed.KeepAsync(rig, failure, "firefox-front-door");
+        return await KeptOnRed.KeepAsync(rig, failure, arm);
     }
 
     /// <summary>
@@ -333,6 +513,36 @@ internal sealed class FirefoxSessionTests
     private static string Said(JsonObject envelope, TimeSpan took) =>
         $"answered after {took.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)} s: "
         + (envelope["result"] is JsonObject result ? TextOf(result) : envelope.ToJsonString());
+
+    /// <summary>What every answer of a call asked for more than once said, in order, for a failure message.</summary>
+    /// <param name="answers">Each envelope with how long it took.</param>
+    /// <returns>The sentences, one per answer.</returns>
+    private static string SaidEach(List<(JsonObject Envelope, TimeSpan Took)> answers) =>
+        string.Join(
+            Environment.NewLine,
+            answers.Select((answer, index) => $"answer {(index + 1).ToString(CultureInfo.InvariantCulture)} of {answers.Count.ToString(CultureInfo.InvariantCulture)}, {Said(answer.Envelope, answer.Took)}"));
+
+    /// <summary>
+    /// Whether a <c>tools/call</c> envelope is upstream's own action timeout: an error
+    /// whose text names Playwright's <c>TimeoutError</c> of an action that ran past its
+    /// time.
+    /// </summary>
+    /// <remarks>
+    /// <b>Held to upstream's real text on every run</b> by
+    /// <see cref="AFirefoxScreenshotThatOutlastsUpstreamsActionTimeoutIsAnsweredWithItAndTheNextIsWhole"/>,
+    /// which provokes the timeout with the browser suspended, so a text upstream changes
+    /// is a red there and never a screenshot this arm stops asking for again.
+    /// </remarks>
+    /// <param name="envelope">The response envelope.</param>
+    /// <returns>Whether it is that timeout.</returns>
+    private static bool IsUpstreamsActionTimeout(JsonObject envelope) =>
+        envelope["result"] is JsonObject result
+            && (bool?)result["isError"] is true
+            && UpstreamsActionTimeout().IsMatch(TextOf(result));
+
+    /// <summary>Upstream's own words for an action that ran past its time, as 0.0.83 answers a screenshot with them.</summary>
+    [GeneratedRegex(@"TimeoutError: browserBackend\.callTool: Timeout \d+ms exceeded\.")]
+    private static partial Regex UpstreamsActionTimeout();
 
     /// <summary>
     /// Every family this build provisions has a download size somebody measured.

@@ -980,6 +980,18 @@ every run since 2026-10-14. For the opening, sample
 `\Memory\% Committed Bytes In Use` once a second with `typeperf` through a full run's
 first two minutes.
 
+⚠️ *Added 2026-10-14 by addition*: **the timeout is provoked on every run since that day**,
+by `FirefoxSessionTests.AFirefoxScreenshotThatOutlastsUpstreamsActionTimeoutIsAnsweredWithItAndTheNextIsWhole`,
+which suspends every process of its session's Firefox through one screenshot, found through
+the client's job and the full image path, and requires the text above and a whole next
+screenshot; the front-door arm takes that text for a true answer and asks again (the
+maintainer's 171). In its planted green run of 2026-10-14 at `@playwright/mcp` 0.0.83 the
+held screenshot was answered after 5,026 ms with *"TimeoutError: browserBackend.callTool:
+Timeout 5000ms exceeded."* and the next was whole; the front-door arm with its Firefox
+suspended through its first screenshot was answered after 5,024 ms, asked again, and was
+answered whole in 31 ms. The red in the PowerShell half of the gate at `7a069ecb` read the
+same text after 5.3 s, with the commit charge at about 40 %.
+
 ## Every launched browser leaves a descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and nothing reaps it -- measured 2026-09-16
 
 **`playwright-core` writes one JSON file per launched browser into a cache
