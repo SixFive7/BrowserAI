@@ -918,6 +918,68 @@ consequence and not for the cause**, as with the WebP entry above: it forwards
 the call byte for byte")*: that paragraph above describes the product before 9 d
 and is left as written.
 
+### A Firefox screenshot has upstream's five seconds, and a loaded machine can spend most of them -- measured 2026-10-14
+
+**The screenshot's whole wait is upstream's action timeout, 5,000 ms, and BrowserAI
+does not set it.** Read on 2026-10-14 in the payload's `playwright-core`
+1.64.0-alpha-1790635538000, under `@playwright/mcp` 0.0.83: `browser_take_screenshot`
+hands `page.screenshot` the tab's `actionTimeoutOptions`, which are
+`config.timeouts.action`, and the merge keeps upstream's default of 5,000 ms, because
+the config BrowserAI generates writes `idle` under `timeouts` and nothing else
+(`BrowserConfiguration`). Inside that time Playwright logs *taking page screenshot*,
+prepares every frame in its utility world, logs *waiting for fonts to load...*, waits for
+`document.fonts.ready`, logs *fonts loaded*, and for Firefox then reads the scroll offset
+in the utility world and sends juggler's `Page.screenshot`, which at `firefox-1553`
+(Firefox 156.0) calls `drawSnapshot` on the page's window global, again every 50 ms for
+as long as that throws, and encodes the image through a canvas. Every step but the last
+waits on the page's content process. `[FLOATS]`
+
+**A screenshot the browser cannot take in that time is answered `isError: true` with
+upstream's `TimeoutError`, and the session goes on.** Measured 2026-10-14 through
+BrowserAI 2.0.1-alpha.0.49, built from `df445d33` with that day's change to
+`FirefoxSessionTests`, on Windows 11 Pro 10.0.26300, by a probe that took the
+front-door arm's steps. With every process of the session's Firefox suspended before the
+screenshot was asked for, found through the client's own job and the browser's full
+image path, the two answers came at 5,011 and 5,004 ms, and each read `### Error`, then
+`TimeoutError: browserBackend.callTool: Timeout 5000ms exceeded.`, then `Call log:` and
+one line, `  - taking page screenshot`, between the escape sequences `ESC[2m` and
+`ESC[22m` that dim it. `browserBackend.callTool` is the name Playwright's client gives
+the call, after the outermost frame of its own code on the stack. The browser was let go
+when the answer came, and the session's next screenshot was whole, in 61 and 32 ms.
+
+**A loaded machine stretches the same screenshot towards that line.** With nothing beside
+it the probe's screenshot was answered in 26 to 51 ms, 5 of 5. Under 128 spinning
+threads at normal priority it took 647 to 1,729 ms, 10 of 10, and under 320 it took 30 to
+4,165 ms, 10 of 10, none of them an error, while the arm's whole run took 32.2 to 47.5 s
+and 24.7 to 622.9 s; a full run gives the arm 13.6 to 51.3 s, 30.8 s at the median, over
+48 runs of 2026-10-12 and 2026-10-13. ⚠️ **Those two loads are not a method.** They
+saturated the machine, 1,227 ready threads on 32 processors at most, and nothing of the
+kind is to be run again; what a full run leaves the screenshot is in the arm's own output
+since that day.
+
+**A full run's opening is the heaviest stretch of it, and the arm runs inside it.**
+Sampled every second on 2026-10-14 through the Git Bash half of an ordinary gate, counted
+from its test host's start: in its first 45 s processor time read 100 % at the median,
+the run queue 248 ready threads at the median and 395 at most, on 32 processors, and the
+commit charge 91.5 % at the median and 96.1 % at most, where the run's coverage block,
+which reads the commit charge at the run's two ends, gave 84.1 % and 82.6 %. From 85 s on,
+processor time read 29 % at the median and the run queue 0. The red's arm at `df12ab85`
+started 6.7 s after its test host did and failed about 40 s after it.
+Everything here is in
+[the evidence batch](../../docs/evidence/2026-10-14-firefox-shot/README.md).
+
+**To re-establish it**, without loading the machine: for the timeout, suspend every
+process of a Firefox session's browser, found through the client's job object and the
+full image path, before asking for a screenshot, and let it go when the answer comes;
+the probe that did it is in the evidence batch. For the time a full run leaves the
+screenshot, read the output of
+`FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy` in the TUnit
+report beside the run, `browser_take_screenshot answered in <n> ms`, which it writes on
+every run since 2026-10-14. For the opening, sample
+`\Processor(_Total)\% Processor Time`, `\System\Processor Queue Length` and
+`\Memory\% Committed Bytes In Use` once a second with `typeperf` through a full run's
+first two minutes.
+
 ## Every launched browser leaves a descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and nothing reaps it -- measured 2026-09-16
 
 **`playwright-core` writes one JSON file per launched browser into a cache

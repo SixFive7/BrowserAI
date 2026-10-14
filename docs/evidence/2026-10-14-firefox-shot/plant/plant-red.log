@@ -1,0 +1,119 @@
+failed AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy (3s 221ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] InvalidOperationException: Expected to not be equal to True, because answered after 0.0 s: ### Error
+  Error: fullPage cannot be used with element screenshots.
+  but received True
+  
+  at Assert.That((bool?)screenshot["result"]?["isError"]).IsNotEqualTo(true).Because("answered after 0.0 s: ### Error
+  Error: fullPage cannot be used with element screenshots.")
+  
+  The arm's scratch folder is kept at 'C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\.work\kept\20261014T003231Z-127092-firefox-front-door-b3f02d93\firefox-front-door-d40dcbc8d97449388e48fba73ba73b12', where no reclaim reaches it. Each session folder in it holds the session's record: every close, with its reason and the browser's exit code.
+    at BrowserAI.Tests.FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy() in C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\FirefoxSessionTests.cs:165
+    at BrowserAI.Tests.FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy() in C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\FirefoxSessionTests.cs:165
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+  --->  TUnit.Assertions.Exceptions.AssertionException: Expected to not be equal to True, because answered after 0.0 s: ### Error
+  Error: fullPage cannot be used with element screenshots.
+  but received True
+  
+  at Assert.That((bool?)screenshot["result"]?["isError"]).IsNotEqualTo(true).Because("answered after 0.0 s: ### Error
+  Error: fullPage cannot be used with element screenshots.")
+    at TUnit.Assertions.Core.Assertion`1.ThrowOrAccumulateFailure(AssertionResult result)
+    at TUnit.Assertions.Core.Assertion`1.ExecuteCoreAsync()
+    at TUnit.Assertions.Core.Assertion`1.AssertAsync()
+    at BrowserAI.Tests.FirefoxSessionTests.FromInitThroughAnArtifactToDestroyAsync(RawStdioClient client, String session) in C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\FirefoxSessionTests.cs:247
+    at BrowserAI.Tests.FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy() in C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\FirefoxSessionTests.cs:161
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\Releases\BrowserAI.app-2.0.0-full.nupkg
+  shipping release    PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\Releases\BrowserAI.app-2.0.0-full.nupkg
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\Releases\test-pack\BrowserAI.test-installer.exe; BrowserAI.app.test-1.1.1-alpha.0.137-full.nupkg's lib/app/BrowserAI.exe is not C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe, so the pack is not the build this run tested. Publish both slices and run: pwsh -File build/New-Release.ps1 -TestPackOnly (every gate driver does)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-14T00:01:33.783Z is 19m07s newer than the newest of 243 inputs (upstream-snapshots\tools-list.json, 2026-10-13T23:42:26.268Z) · exe and tree both 2.0.1-alpha.0.49 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+  filter              FILTERED   --treenode-filter '/*/*/FirefoxSessionTests/AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       TIGHT      start 122,355 MiB (83.6%) · end 122,374 MiB (83.6%) · limit 146,382 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+      ⚠️  Commit was tight during this run. A timing failure here is not safely
+      attributable to the code under test; re-run it on a quieter machine before
+      recording it as a defect.
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 80 events, 0 about visible root windows and none of them this run's, 136 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 3 scans, 5 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=127092 created=134364115460478714), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  1 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed! - C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 1
+  failed: 1
+  succeeded: 0
+  skipped: 0
+  duration: 5s 389ms
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\Releases\BrowserAI.app-2.0.0-full.nupkg
+  shipping release    PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\Releases\BrowserAI.app-2.0.0-full.nupkg
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\Releases\test-pack\BrowserAI.test-installer.exe; BrowserAI.app.test-1.1.1-alpha.0.137-full.nupkg's lib/app/BrowserAI.exe is not C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe, so the pack is not the build this run tested. Publish both slices and run: pwsh -File build/New-Release.ps1 -TestPackOnly (every gate driver does)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-14T00:01:33.783Z is 19m07s newer than the newest of 243 inputs (upstream-snapshots\tools-list.json, 2026-10-13T23:42:26.268Z) · exe and tree both 2.0.1-alpha.0.49 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\inv-ffshot\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+  filter              FILTERED   --treenode-filter '/*/*/FirefoxSessionTests/AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       TIGHT      start 122,355 MiB (83.6%) · end 122,374 MiB (83.6%) · limit 146,382 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+      ⚠️  Commit was tight during this run. A timing failure here is not safely
+      attributable to the code under test; re-run it on a quieter machine before
+      recording it as a defect.
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 80 events, 0 about visible root windows and none of them this run's, 136 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 3 scans, 5 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=127092 created=134364115460478714), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  1 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================

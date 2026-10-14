@@ -1,0 +1,75 @@
+# The Windows Application log from 2026-10-13T22:03:00Z to 22:06:00Z, read on 2026-10-14 with Get-WinEvent: 49 events.
+# By provider and id:
+#     22 Microsoft-Windows-RestartManager, 10000
+#     21 Microsoft-Windows-RestartManager, 10001
+#      1 .NET Runtime, 1026
+#      1 Application Error, 1000
+#      1 Microsoft-Windows-Security-SPP, 16384
+#      1 Microsoft-Windows-Security-SPP, 16394
+#      1 Windows Error Reporting, 1001
+#      1 Wow64 Emulation Layer, 1109
+# Every event not from the Restart Manager, in full:
+== 2026-10-13T22:03:21.6600164Z Microsoft-Windows-Security-SPP 16394
+Offline downlevel migration succeeded.
+== 2026-10-13T22:03:51.9067120Z Microsoft-Windows-Security-SPP 16384
+Successfully scheduled Software Protection service for re-start at 2126-09-19T22:03:51Z. Reason: RulesEngine.
+== 2026-10-13T22:04:17.1436192Z Wow64 Emulation Layer 1109
+The program or feature "\??\C:\Source\SixFive7\BrowserAI\.work\wt\tall-map\.work\test-scratch\chromium-ua-5388478037c04ac0ad25c18dd5e1b5f8\chrome-win64\chrome.exe" cannot start or run due to incompatibity with 64-bit versions of Windows. Please contact the software vendor to ask if a 64-bit Windows compatible version is available.
+== 2026-10-13T22:04:28.9063667Z .NET Runtime 1026
+Application: BrowserAI.TestProbe.exe
+CoreCLR Version: 10.0.1226.42308
+.NET Version: 10.0.12
+Description: The process was terminated due to an unhandled exception.
+Exception Info: System.InvalidOperationException: Deliberate unhandled exception from the crash probe.
+   at BrowserAI.TestProbe.Program.Crash(String root) in C:\Source\SixFive7\BrowserAI\.work\wt\tall-map\tests\BrowserAI.TestProbe\Program.cs:line 270
+   at BrowserAI.TestProbe.Program.Main(String[] args) in C:\Source\SixFive7\BrowserAI\.work\wt\tall-map\tests\BrowserAI.TestProbe\Program.cs:line 40
+   at BrowserAI.TestProbe.Program.<Main>(String[] args)
+
+== 2026-10-13T22:04:31.7438338Z Application Error 1000
+Faulting application name: BrowserAI.TestProbe.exe, version: 1.0.0.0, time stamp: 0x6a890000
+Faulting module name: KERNELBASE.dll, version: 10.0.26100.9549, time stamp: 0x4370855d
+Exception code: 0xe0434352
+Fault offset: 0x00000000000c483a
+Faulting process id: 0x1BA9C
+Faulting application start time: 0x1DD5B5ED00103A3
+Faulting application path: C:\Source\SixFive7\BrowserAI\.work\wt\tall-map\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.TestProbe.exe
+Faulting module path: C:\WINDOWS\System32\KERNELBASE.dll
+Report Id: 9f616687-ce9a-49f7-91dc-b9b622d16e3e
+Faulting package full name: 
+Faulting package-relative application ID: 
+== 2026-10-13T22:04:49.0004604Z Windows Error Reporting 1001
+Fault bucket 1491194197882682258, type 5
+Event Name: CLR20r3
+Response: Not available
+Cab Id: 0
+
+Problem signature:
+P1: BrowserAI.TestProbe.exe
+P2: 1.0.0.0
+P3: 6a890000
+P4: BrowserAI.TestProbe
+P5: 1.0.0.0
+P6: a3a28500
+P7: bb
+P8: 35
+P9: System.InvalidOperationException
+P10: 
+
+Attached files:
+\\?\C:\ProgramData\Microsoft\Windows\WER\Temp\WER.ca9e91cd-e0ac-4cc0-a844-2b0c5b430a2e.tmp.dmp
+\\?\C:\ProgramData\Microsoft\Windows\WER\Temp\WER.3e911139-9321-4fd8-aa32-db0a23a76c09.tmp.WERInternalMetadata.xml
+\\?\C:\ProgramData\Microsoft\Windows\WER\Temp\WER.8b22f6ba-96cf-4f7b-b9a4-a4f73b21473b.tmp.csv
+\\?\C:\ProgramData\Microsoft\Windows\WER\Temp\WER.eb2d4b9f-3d28-48aa-b21d-33e1833dcd29.tmp.txt
+\\?\C:\ProgramData\Microsoft\Windows\WER\Temp\WER.0889df43-b274-4725-b05e-dd5a884b9110.tmp.xml
+
+These files may be available here:
+\\?\C:\ProgramData\Microsoft\Windows\WER\ReportArchive\AppCrash_BrowserAI.TestPr_273081893aa08bf62663e89155a7e2dcb55e6_3faa0834_7ce71672-583a-4c37-b60c-e5ca772c39bf
+
+Analysis symbol: 
+Rechecking for solution: 0
+Report Id: 9f616687-ce9a-49f7-91dc-b9b622d16e3e
+Report Status: 268435456
+Hashed bucket: ed28ba89f4178cb214b1c938e7ebbb92
+Cab Guid: 0
+# Events whose message names firefox.exe, node.exe or BrowserAI.exe: 0
+# Positive control, the same match over the same window for BrowserAI.TestProbe.exe: 3

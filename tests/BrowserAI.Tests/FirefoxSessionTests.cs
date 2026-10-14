@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
@@ -65,6 +67,15 @@ internal sealed class FirefoxSessionTests
     /// </remarks>
     private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
 
+    /// <summary>The file a red writes the relay's standard error to, in the kept rig.</summary>
+    private const string RelayStandardErrorFile = "relay-stderr.txt";
+
+    /// <summary>
+    /// The file a red writes the background's standard error to, in the kept rig: the
+    /// session's own log, which reaches nothing else.
+    /// </summary>
+    private const string BackgroundStandardErrorFile = "background-stderr.txt";
+
     /// <summary>
     /// The front door, end to end, against a real Firefox: create, navigate,
     /// take an artifact, destroy.
@@ -109,6 +120,24 @@ internal sealed class FirefoxSessionTests
     /// reported success would pass. It is used <b>as well</b>, for the one
     /// property it does hold to.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>A red says what the product answered, and keeps the rig.</b> <i>Added
+    /// 2026-10-14 by addition</i>, after the arm's screenshot was answered with
+    /// <c>isError: true</c> once, in the second PowerShell half of the gate at
+    /// <c>df12ab85</c>, and the failure carried the flag and nothing else: the answer's
+    /// text was not kept, and the session folder went with the scratch. Every answer
+    /// the arm asserts the flag of is quoted in its failure now, the screenshot's with
+    /// how long it took, which the arm's own output carries on a green run too, because
+    /// upstream gives a screenshot its own action timeout and BrowserAI does not set it;
+    /// and a red moves the scratch folder under
+    /// <see cref="KeptOnRed.Root"/> once the client's job has ended the browser, with
+    /// what the relay and the background wrote to their standard error beside the
+    /// session folder. The session folder holds the session's record, every call with
+    /// its answer and every close the session saw before the red with its reason and
+    /// the browser's exit code, and the Firefox profile. The job's close ends the
+    /// background with the browser, so a browser that was still running at the red has
+    /// no close in the record.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -128,9 +157,25 @@ internal sealed class FirefoxSessionTests
             scratch.Path,
             PublishedSlice.InheritedEnvironment());
 
-        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+        try
+        {
+            await FromInitThroughAnArtifactToDestroyAsync(client, Path.Combine(scratch.Path, "firefox-session"));
+        }
+        catch (Exception failure)
+        {
+            throw await KeepTheRigAsync(client, scratch.Path, failure);
+        }
+    }
 
-        var session = Path.Combine(scratch.Path, "firefox-session");
+    /// <summary>
+    /// The arm's steps, against a client whose job holds the session's processes.
+    /// </summary>
+    /// <param name="client">The client, initialised here.</param>
+    /// <param name="session">The session directory to create, inside the arm's scratch folder.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task FromInitThroughAnArtifactToDestroyAsync(RawStdioClient client, string session)
+    {
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
         var created = await CallAsync(client, SessionToolSurface.Init, new JsonObject
         {
@@ -143,7 +188,7 @@ internal sealed class FirefoxSessionTests
             ["idleMinutes"] = 10,
         });
 
-        await Assert.That((bool?)created["isError"]).IsNotEqualTo(true);
+        await Assert.That((bool?)created["isError"]).IsNotEqualTo(true).Because(TextOf(created));
         await Assert.That(TextOf(created)).Contains(ProvisionedBrowsers.Firefox);
 
         // The record, read off disk and not off the answer: `resume` reads
@@ -162,7 +207,7 @@ internal sealed class FirefoxSessionTests
             [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
-        await Assert.That((bool?)navigated["isError"]).IsNotEqualTo(true);
+        await Assert.That((bool?)navigated["isError"]).IsNotEqualTo(true).Because(TextOf(navigated));
 
         // ⚠️ WHICH BROWSER ACTUALLY CAME UP. Scoped twice: to the processes
         // inside this client's own job, and to the full image path of the
@@ -190,13 +235,22 @@ internal sealed class FirefoxSessionTests
         // An artifact, written by the child into the session's own output root.
         // No `filename`, which is upstream's own condition for returning the
         // image in the answer as well as writing it.
+        var asked = Stopwatch.StartNew();
+
         var screenshot = await client.EnvelopeAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_take_screenshot",
             ["arguments"] = new JsonObject { [SessionToolSurface.SessionParameter] = session, [SessionToolSurface.WhyParameter] = "the suite exercising this call" },
         });
 
-        await Assert.That((bool?)screenshot["result"]?["isError"]).IsNotEqualTo(true);
+        var took = asked.Elapsed;
+
+        // On every run and not only on a red: upstream gives a screenshot its action
+        // timeout, and a gate's report then says how close this one came to it under
+        // the gate's own load.
+        await (TestContext.Current?.OutputWriter.WriteLineAsync($"browser_take_screenshot answered in {took.TotalMilliseconds.ToString("F0", CultureInfo.InvariantCulture)} ms") ?? Task.CompletedTask);
+
+        await Assert.That((bool?)screenshot["result"]?["isError"]).IsNotEqualTo(true).Because(Said(screenshot, took));
 
         var artifact = SliceRun.ArtifactPathIn(screenshot, Path.Combine(session, SessionLayout.OutputFolderName));
 
@@ -243,6 +297,42 @@ internal sealed class FirefoxSessionTests
 
         await Assert.That(string.Join(Environment.NewLine, neverReleased)).IsEmpty();
     }
+
+    /// <summary>
+    /// Ends the arm's processes, writes what the relay and the background said on
+    /// their standard error into the arm's scratch folder, and keeps that folder.
+    /// </summary>
+    /// <remarks>
+    /// <b>The client is disposed first</b>, and its disposal is idempotent, so the
+    /// arm's own disposal after this finds nothing left to do. Closing its job ends the
+    /// browser and both BrowserAI processes, so the session folder is let go before it
+    /// is moved, and both standard error pipes reach their end, which is what makes the
+    /// two captures whole.
+    /// </remarks>
+    /// <param name="client">The arm's client.</param>
+    /// <param name="rig">The arm's scratch folder.</param>
+    /// <param name="failure">What the arm failed with.</param>
+    /// <returns>The failure to throw.</returns>
+    private static async Task<Exception> KeepTheRigAsync(RawStdioClient client, string rig, Exception failure)
+    {
+        await client.DisposeAsync();
+
+        await File.WriteAllTextAsync(Path.Combine(rig, RelayStandardErrorFile), await client.DrainedStandardErrorAsync());
+        await File.WriteAllTextAsync(Path.Combine(rig, BackgroundStandardErrorFile), await client.DrainedBackgroundStandardErrorAsync());
+
+        return await KeptOnRed.KeepAsync(rig, failure, "firefox-front-door");
+    }
+
+    /// <summary>
+    /// What a <c>tools/call</c> envelope said, for a failure message: its text, or the
+    /// whole envelope when it carries no result, and how long the call took.
+    /// </summary>
+    /// <param name="envelope">The response envelope.</param>
+    /// <param name="took">How long the call took to be answered.</param>
+    /// <returns>The sentence.</returns>
+    private static string Said(JsonObject envelope, TimeSpan took) =>
+        $"answered after {took.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)} s: "
+        + (envelope["result"] is JsonObject result ? TextOf(result) : envelope.ToJsonString());
 
     /// <summary>
     /// Every family this build provisions has a download size somebody measured.

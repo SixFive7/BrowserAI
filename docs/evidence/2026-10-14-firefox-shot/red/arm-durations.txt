@@ -1,0 +1,56 @@
+# Every run of FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy in the process log files
+# browserai-20261012-000.log and browserai-20261013-000.log to -002.log, read on 2026-10-14: the first BrowserAI
+# start whose working directory is the arm's scratch folder, and its session's "Session destroyed" record.
+# start (UTC)                  seconds  scratch folder
+2026-10-12T02:44:17.6876237Z        38.9  firefox-front-door-14832972e32448d2b559c013db1b5219
+2026-10-12T03:03:10.5659982Z        38.3  firefox-front-door-2d8d1f59ac3048f9ad480add37cb5249
+2026-10-12T03:19:20.4374125Z        40.6  firefox-front-door-a5501cdab4b541b8995fd93299e60454
+2026-10-12T03:34:55.8366564Z        26.9  firefox-front-door-ed4d6da2f8a644e6bf98f7bbcab1ca76
+2026-10-12T03:49:46.8338595Z        51.3  firefox-front-door-6b242feb77aa4b709f0012a8bc1357e8
+2026-10-12T13:38:47.8745401Z        21.7  firefox-front-door-72119c4de08a40bb88b141a13e3c2ef9
+2026-10-12T13:57:00.7197741Z        18.8  firefox-front-door-6be01c9133b84f5f978cc69bece5efdc
+2026-10-12T14:53:21.4825125Z        30.8  firefox-front-door-59d3f9084f024f78a3ef56b48a0c6e03
+2026-10-12T21:17:28.2701501Z        43.1  firefox-front-door-9967cd713f1d447d9608300db2c79d57
+2026-10-12T21:40:02.8161032Z        32.7  firefox-front-door-dc09ab4d310442f7851245a9f9e2caec
+2026-10-12T21:53:09.6251685Z        35.9  firefox-front-door-0de6bc1b4f9a422b96d6c81ed86de4f9
+2026-10-13T01:07:29.4170847Z        40.9  firefox-front-door-c5de89154ab1416da224d4740abba092
+2026-10-13T02:08:28.8824458Z        28.9  firefox-front-door-282007d93aa3477589c3fde2170357d8
+2026-10-13T02:21:59.2082201Z        30.1  firefox-front-door-26590467d9ff43ecaf42f0e5ccdadf60
+2026-10-13T02:35:08.4385327Z        22.0  firefox-front-door-d103e39f836d4e0399152288d2d5b950
+2026-10-13T02:49:16.8598546Z        31.5  firefox-front-door-9c52ab6c044347709793fe25f5db3b73
+2026-10-13T03:02:49.0168454Z        31.7  firefox-front-door-c48a5a8cfe2b42a3a52799e5fcdbbbc4
+2026-10-13T03:16:27.3635495Z        27.2  firefox-front-door-8186144ee6b3404db92efbb0709074c9
+2026-10-13T03:42:23.2393483Z        26.3  firefox-front-door-8ba62a53f0ce4b13ae2b86689123250b
+2026-10-13T04:05:18.2775149Z        37.5  firefox-front-door-658c4d41950148578ffb83e1b0a07c55
+2026-10-13T04:18:16.4802351Z        28.5  firefox-front-door-0fbf3118ba224b7bbe121788cd19f904
+2026-10-13T04:31:19.8996183Z        30.8  firefox-front-door-5dbd79791b784ccf9d005b5461c438ae
+2026-10-13T04:45:30.9984145Z        22.3  firefox-front-door-a4c2eae38e434c1c801ab097794a34a7
+2026-10-13T04:58:42.6640962Z        23.5  firefox-front-door-9432cce63555415faa31c3a42bfe29cb
+2026-10-13T05:12:22.4345954Z        27.5  firefox-front-door-3d5538d6d8be42269396ee93615c9499
+2026-10-13T06:50:28.8183493Z        41.2  firefox-front-door-1c3cf4bf5bf1468ba92f2d8ad1b3f592
+2026-10-13T07:12:39.7759586Z        18.5  firefox-front-door-94238cbd376a4c3c925e911095490f66
+2026-10-13T07:31:14.1232081Z        28.4  firefox-front-door-40fc6834ce814f32a872c293ac202293
+2026-10-13T08:02:54.1593122Z        30.8  firefox-front-door-033f1c9dbc8842d59eafe45815431d56
+2026-10-13T08:36:15.6358880Z        31.3  firefox-front-door-74c7f6aa1a8b4197ae09b7e9af5d41c6
+2026-10-13T09:16:51.1872786Z        36.5  firefox-front-door-993f5a18da9c4dcbba237d6fded546f3
+2026-10-13T09:31:47.0477970Z        39.1  firefox-front-door-5e70956c574a4650885f1354a493f220
+2026-10-13T09:56:16.4953035Z        44.3  firefox-front-door-d07331b2321547ad9aacc40faf69f636
+2026-10-13T10:10:29.0103429Z        27.8  firefox-front-door-44a865e4dcfb4499882ada58bc8ad310
+2026-10-13T11:05:06.1559174Z        41.1  firefox-front-door-b87b01a4a91a4eb39e29456abb7ba502
+2026-10-13T11:19:45.8049003Z        30.2  firefox-front-door-2d612007077f496a9ae0ae07d4f145f9
+2026-10-13T13:22:45.3412183Z        28.4  firefox-front-door-bb33dcc46f71476082abb502b1edf139
+2026-10-13T13:37:44.2342383Z        26.3  firefox-front-door-3472030b23d44ae7abfe9911edc16e14
+2026-10-13T14:49:03.3797245Z        36.5  firefox-front-door-992c93df055b4cd79ff7eef3070df467
+2026-10-13T15:04:08.0344359Z        27.2  firefox-front-door-c0b0331abad8452db03cc3fbf39788b3
+2026-10-13T17:08:59.6675175Z        37.4  firefox-front-door-ecdc0e4fd5c7461da18e535bab5b5d9e
+2026-10-13T17:40:32.6916543Z        38.3  firefox-front-door-fa321247dc0f408e83379a2138835809
+2026-10-13T17:55:05.6330402Z        24.3  firefox-front-door-d391b7cdc00542b087e82caf7109bb09
+2026-10-13T22:04:16.5004647Z  NO-DESTROY  firefox-front-door-f366d579bbca4c0ea1a9594f9d99ee68
+2026-10-13T22:21:01.3691321Z        35.4  firefox-front-door-ca9e170b71ea4830bb2dc066cdd5d562
+2026-10-13T22:35:25.3476661Z         4.4  firefox-front-door-8062ab74a3f74456bf71ce5b698e85d1
+2026-10-13T22:35:36.9549085Z         4.1  firefox-front-door-fda56271fce84b229622998eec22b55d
+2026-10-13T22:35:47.7309397Z         3.8  firefox-front-door-5dfc9b36f3954e1896a7d05f0ed4cd34
+2026-10-13T22:36:53.8452817Z        41.0  firefox-front-door-fdae655f5d394d55b357b4cb8995632d
+2026-10-13T23:25:12.8699431Z        41.0  firefox-front-door-9e22b83e0b044853af7cb10a6c8589cc
+2026-10-13T23:40:17.8924615Z        30.3  firefox-front-door-d2e4956d9b73413cb813555eab253be5
+2026-10-13T23:57:56.0338733Z        13.6  firefox-front-door-95f5fbbb6eae4d3db04f55daff8436e0

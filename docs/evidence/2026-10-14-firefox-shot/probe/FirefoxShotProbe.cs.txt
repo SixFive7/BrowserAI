@@ -1,0 +1,270 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json.Nodes;
+using BrowserAI.Interop;
+using BrowserAI.Runtime;
+using BrowserAI.Sessions;
+using BrowserAI.Tests.Harness;
+
+namespace BrowserAI.Tests;
+
+/// <summary>
+/// A scratch probe, never committed: the front-door arm's steps, repeated, each call
+/// timed and every answer kept, for the inv-ffshot investigation of 2026-10-14.
+/// </summary>
+internal sealed partial class FirefoxShotProbe
+{
+    private const string Out = @"C:\Source\SixFive7\BrowserAI\.work\inv-ffshot-scratch\probe";
+
+    private const uint ProcessSuspendResume = 0x0800;
+
+    [Test]
+    public async Task Probe()
+    {
+        var plan = (await File.ReadAllLinesAsync(Path.Combine(Out, "plan.txt")))
+            .Select(line => line.Split('=', 2))
+            .Where(pair => pair.Length is 2)
+            .ToDictionary(pair => pair[0].Trim(), pair => pair[1].Trim(), StringComparer.Ordinal);
+
+        var tag = plan["tag"];
+        var iterations = int.Parse(plan["iterations"], CultureInfo.InvariantCulture);
+        var shots = int.Parse(plan.GetValueOrDefault("shots", "1"), CultureInfo.InvariantCulture);
+        var stallMs = int.Parse(plan.GetValueOrDefault("stallMs", "0"), CultureInfo.InvariantCulture);
+        var results = Path.Combine(Out, $"{tag}.jsonl");
+
+        for (var i = 0; i < iterations; i++)
+        {
+            await OneAsync(tag, i, shots, stallMs, results);
+        }
+    }
+
+    private static async Task OneAsync(string tag, int i, int shots, int stallMs, string results)
+    {
+        using var scratch = await ScratchDirectory.CreateAsync("firefox-shot-probe");
+        var row = new JsonObject
+        {
+            ["tag"] = tag,
+            ["i"] = i,
+            ["at"] = DateTimeOffset.UtcNow.ToString("o", CultureInfo.InvariantCulture),
+            ["commitStart"] = CommitChargeReading.Take().Fraction,
+        };
+        var total = Stopwatch.StartNew();
+
+        await using var client = await RawStdioClient.StartAsync(
+            PublishedSlice.Executable,
+            PublishedSlice.Mcp,
+            scratch.Path,
+            PublishedSlice.InheritedEnvironment());
+
+        try
+        {
+            _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+            var session = Path.Combine(scratch.Path, "firefox-session");
+            var watch = Stopwatch.StartNew();
+
+            var created = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = session,
+                ["purpose"] = "the inv-ffshot probe",
+                ["browser"] = ProvisionedBrowsers.Firefox,
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
+            });
+
+            row["initMs"] = watch.ElapsedMilliseconds;
+            row["initError"] = (bool?)created["result"]?["isError"];
+
+            watch.Restart();
+
+            var navigated = await CallAsync(client, "browser_navigate", new JsonObject
+            {
+                ["url"] = SliceRun.TargetUrl,
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the probe",
+            });
+
+            row["navigateMs"] = watch.ElapsedMilliseconds;
+            row["navigateError"] = (bool?)navigated["result"]?["isError"];
+
+            if ((bool?)navigated["result"]?["isError"] is true)
+            {
+                row["navigateText"] = Clip(TextOf(navigated));
+            }
+
+            var taken = new JsonArray();
+
+            for (var s = 0; s < shots; s++)
+            {
+                var stalled = 0;
+                var resumedAtMs = -1L;
+                var answeredWhileHeld = false;
+                List<nint>? held = null;
+
+                // Held BEFORE the call is sent, so the whole screenshot meets a browser
+                // that does not run; let go when the answer arrives or stallMs passes.
+                if (s is 0 && stallMs > 0)
+                {
+                    held = Suspend(client);
+                    stalled = held.Count;
+                }
+
+                watch.Restart();
+
+                var call = CallAsync(client, "browser_take_screenshot", new JsonObject
+                {
+                    [SessionToolSurface.SessionParameter] = session,
+                    [SessionToolSurface.WhyParameter] = "the probe",
+                });
+
+                if (held is not null)
+                {
+                    _ = await Task.WhenAny(call, Task.Delay(stallMs));
+                    answeredWhileHeld = call.IsCompleted;
+                    Resume(held);
+                    resumedAtMs = watch.ElapsedMilliseconds;
+                }
+
+                var answer = await call;
+                var shot = new JsonObject
+                {
+                    ["ms"] = watch.ElapsedMilliseconds,
+                    ["isError"] = (bool?)answer["result"]?["isError"],
+                    ["stalledProcesses"] = stalled,
+                    ["resumedAtMs"] = resumedAtMs,
+                    ["answeredWhileHeld"] = answeredWhileHeld,
+                    ["images"] = (answer["result"]?["content"]?.AsArray() ?? []).Count(block => (string?)block!["type"] == "image"),
+                };
+
+                if ((bool?)answer["result"]?["isError"] is true || answer["result"] is null)
+                {
+                    shot["text"] = Clip(answer["result"] is not null ? TextOf(answer) : answer.ToJsonString());
+                }
+
+                taken.Add(shot);
+            }
+
+            row["shots"] = taken;
+
+            watch.Restart();
+
+            var destroyed = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
+            {
+                ["why"] = "the probe",
+                ["directory"] = session,
+            });
+
+            row["destroyMs"] = watch.ElapsedMilliseconds;
+            row["destroyError"] = (bool?)destroyed["result"]?["isError"];
+        }
+#pragma warning disable CA1031 // A scratch probe records every failure and goes on.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            row["exception"] = Clip(failure.ToString());
+        }
+
+        row["totalMs"] = total.ElapsedMilliseconds;
+        row["commitEnd"] = CommitChargeReading.Take().Fraction;
+
+        var anyError = row.ToJsonString().Contains("\"isError\":true", StringComparison.Ordinal) || row["exception"] is not null || (row["navigateError"] is JsonValue ne && ne.GetValue<bool>());
+
+        if (anyError)
+        {
+            await client.DisposeAsync();
+            await File.WriteAllTextAsync(Path.Combine(Out, $"{tag}-{i.ToString(CultureInfo.InvariantCulture)}-background.txt"), await client.DrainedBackgroundStandardErrorAsync());
+            await File.WriteAllTextAsync(Path.Combine(Out, $"{tag}-{i.ToString(CultureInfo.InvariantCulture)}-relay.txt"), await client.DrainedStandardErrorAsync());
+        }
+
+        await File.AppendAllTextAsync(results, row.ToJsonString() + "\n", new UTF8Encoding(false));
+    }
+
+    /// <summary>
+    /// Suspends every provisioned-Firefox process in the client's own job. Selected by job
+    /// membership and full image path, never by name.
+    /// </summary>
+    private static List<nint> Suspend(RawStdioClient client)
+    {
+        var inTheJob = client.JobProcessIds().ToHashSet();
+        var firefoxes = BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory)
+            .Where(process => inTheJob.Contains(process.ProcessId)
+                && string.Equals(process.ImagePath, BrowserAiPaths.FirefoxExecutable, StringComparison.OrdinalIgnoreCase))
+            .Select(process => process.ProcessId)
+            .ToList();
+
+        var handles = new List<nint>();
+
+        foreach (var pid in firefoxes)
+        {
+            var handle = OpenProcess(ProcessSuspendResume, bInheritHandle: false, (uint)pid);
+
+            if (handle == nint.Zero)
+            {
+                continue;
+            }
+
+            // Still in the job after the handle is held, so the number was not reused.
+            if (!client.JobProcessIds().Contains(pid))
+            {
+                _ = CloseHandle(handle);
+                continue;
+            }
+
+            _ = NtSuspendProcess(handle);
+            handles.Add(handle);
+        }
+
+        return handles;
+    }
+
+    private static void Resume(List<nint> handles)
+    {
+        foreach (var handle in handles)
+        {
+            _ = NtResumeProcess(handle);
+            _ = CloseHandle(handle);
+        }
+
+        handles.Clear();
+    }
+
+    private static string Clip(string text) => text.Length <= 6000 ? text : text[..6000] + "...";
+
+    private static async Task<JsonObject> CallAsync(RawStdioClient client, string tool, JsonObject arguments) =>
+        await client.EnvelopeAsync("tools/call", new JsonObject
+        {
+            ["name"] = tool,
+            ["arguments"] = arguments,
+        });
+
+    private static string TextOf(JsonObject envelope) =>
+        string.Join(
+            "\n",
+            (envelope["result"]?["content"]?.AsArray() ?? [])
+                .Where(block => (string?)block!["type"] == "text")
+                .Select(block => (string?)block!["text"] ?? string.Empty));
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial nint OpenProcess(uint dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, uint dwProcessId);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseHandle(nint hObject);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("ntdll.dll")]
+    private static partial int NtSuspendProcess(nint processHandle);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("ntdll.dll")]
+    private static partial int NtResumeProcess(nint processHandle);
+}

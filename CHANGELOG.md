@@ -120,6 +120,16 @@ more* link to its detail; nothing else depends on it.
   step out of BrowserAI's column with the arrow keys comes back to the row you came from. Only a
   window narrower than 1,200 pixels still shows the list.
 
+- ✅ **The Firefox front-door arm now says what each of its calls was answered, and keeps its rig when it goes red.**
+  Its screenshot was answered with an error once in a gate, and the arm kept only the
+  flag, so what the answer said went with the session's folder. Each answer the arm checks
+  is quoted in its failure now, the screenshot's with how long it took, which the arm also
+  writes to its output on every run, and a red moves the arm's scratch folder under
+  `.work\kept\`, with the session's record, the Firefox profile and what the two BrowserAI
+  processes wrote to their standard error. A screenshot Firefox cannot take within
+  upstream's limit of five seconds, which BrowserAI does not set, is answered with
+  upstream's timeout, and the open row of the hazard index says what else was measured.
+
 ### Fixed
 
 - 🐛 **A resume after a refused one no longer tells the client that created the session that it did not.**
