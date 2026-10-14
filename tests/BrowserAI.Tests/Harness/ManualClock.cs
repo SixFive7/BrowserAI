@@ -60,6 +60,7 @@ internal sealed class ManualClock : TimeProvider
     private int _created;
     private ManualTimer? _newest;
     private Action? _atTheNextReading;
+    private Action<ITimer>? _atTheNextChoice;
 
     /// <summary>One tick, in this clock's units, for "just short of" arithmetic.</summary>
     /// <remarks>
@@ -125,6 +126,36 @@ internal sealed class ManualClock : TimeProvider
         if (Interlocked.CompareExchange(ref _atTheNextReading, action, null) is not null)
         {
             throw new InvalidOperationException("An action is already waiting for the next reading of this clock.");
+        }
+    }
+
+    /// <summary>
+    /// Runs <paramref name="action"/> once, on the thread that steps the clock, with the timer
+    /// <see cref="FireTheNextDueBy"/> has chosen to fire next, after the choice and before the
+    /// clock moves to that timer's due.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-14 to force an order no timing can</b>, the maintainer's 170 a: what
+    /// code under test does to a timer of this clock on a thread of its own while a step is
+    /// under way. A thread that disarms a timer, or arms one from a reading the step has
+    /// already left behind, can do it at any moment of a step, and this is the one moment of
+    /// it an arm can name.
+    /// </para>
+    /// <para>
+    /// <b>It runs with the clock's lock held</b>, which a timer of this clock takes again on
+    /// the same thread without waiting, so the action may arm, disarm or dispose one; it must
+    /// not wait for another thread.
+    /// </para>
+    /// </remarks>
+    /// <param name="action">What to run, handed the chosen timer.</param>
+    public void AtTheNextChoice(Action<ITimer> action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (Interlocked.CompareExchange(ref _atTheNextChoice, action, null) is not null)
+        {
+            throw new InvalidOperationException("An action is already waiting for the next timer this clock chooses.");
         }
     }
 
@@ -304,6 +335,8 @@ internal sealed class ManualClock : TimeProvider
                 _now = target;
                 return false;
             }
+
+            Interlocked.Exchange(ref _atTheNextChoice, null)?.Invoke(next);
 
             _now = next.DueAt!.Value;
         }
