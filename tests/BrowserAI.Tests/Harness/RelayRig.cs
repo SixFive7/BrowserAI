@@ -380,7 +380,7 @@ internal sealed class RelayRig : IAsyncDisposable
     /// name that moves reads as absent here, which costs a failure message its detail and no arm.
     /// </remarks>
     /// <returns>The state, on one line per part.</returns>
-    private string EngineState()
+    internal string EngineState()
     {
         const System.Reflection.BindingFlags Fields = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
         var type = Engine.GetType();

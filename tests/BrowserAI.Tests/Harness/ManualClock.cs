@@ -51,6 +51,7 @@ internal sealed class ManualClock : TimeProvider
     private long _now;
     private int _created;
     private ManualTimer? _newest;
+    private Action? _atTheNextReading;
 
     /// <summary>One tick, in this clock's units, for "just short of" arithmetic.</summary>
     /// <remarks>
@@ -78,11 +79,46 @@ internal sealed class ManualClock : TimeProvider
 
     /// <inheritdoc />
     /// <remarks>
-    /// A fixed instant. Nothing under test reads it; it is implemented and
-    /// not thrown from so that a future reader of the clock gets a coherent
-    /// answer instead of an exception.
+    /// <para>
+    /// The Unix epoch plus the clock's ticks, so it moves with the clock. ⚠️ <i>Corrected
+    /// 2026-10-14 (previously "A fixed instant. Nothing under test reads it; it is
+    /// implemented and not thrown from so that a future reader of the clock gets a coherent
+    /// answer instead of an exception.")</i>: the relay engine reads its every <c>Now</c>
+    /// here, as other product code a rig hands this clock to does.
+    /// </para>
+    /// <para>
+    /// An action handed to <see cref="AtTheNextReading"/> runs here once, after the reading
+    /// and before it is returned.
+    /// </para>
     /// </remarks>
-    public override DateTimeOffset GetUtcNow() => DateTimeOffset.UnixEpoch + TimeSpan.FromTicks(GetTimestamp());
+    public override DateTimeOffset GetUtcNow()
+    {
+        var now = DateTimeOffset.UnixEpoch + TimeSpan.FromTicks(GetTimestamp());
+        Interlocked.Exchange(ref _atTheNextReading, null)?.Invoke();
+        return now;
+    }
+
+    /// <summary>
+    /// Runs <paramref name="action"/> once, on the thread that next reads
+    /// <see cref="GetUtcNow"/>, after that reading is taken and before it is returned.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-14 to force an order no timing can</b>: what code under test does
+    /// between two readings of this clock. The relay engine reads it for the delay of a
+    /// timer it arms, and the timer reads <see cref="GetTimestamp"/> for the moment the
+    /// delay is added to, so an action that moves the clock here moves it between the two,
+    /// as a step the arm takes on its own thread can.
+    /// </remarks>
+    /// <param name="action">What to run.</param>
+    public void AtTheNextReading(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (Interlocked.CompareExchange(ref _atTheNextReading, action, null) is not null)
+        {
+            throw new InvalidOperationException("An action is already waiting for the next reading of this clock.");
+        }
+    }
 
     /// <inheritdoc />
     public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
@@ -223,31 +259,49 @@ internal sealed class ManualClock : TimeProvider
         // One due timer at a time, re-reading the set after every callback: a
         // callback may arm a new deadline inside this window, and the whole
         // point of the class under test is that it does exactly that.
-        while (true)
+        while (FireTheNextDueBy(target))
         {
-            ManualTimer? next = null;
+        }
+    }
 
-            lock (_gate)
+    /// <summary>
+    /// Moves the clock to the earliest moment at or before <paramref name="target"/> at
+    /// which a timer is due and fires that one timer; or, when none is due by then, moves
+    /// the clock to <paramref name="target"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>One step of <see cref="AdvanceTicks"/>, added 2026-10-14</b> for a caller that
+    /// must let what a callback set off finish before the clock moves again:
+    /// <c>RelayRig.StepAsync</c>, whose relay arms its next timers on a thread of its
+    /// own, from readings of this clock.
+    /// </remarks>
+    /// <param name="target">The tick the clock is being moved to.</param>
+    /// <returns><see langword="true"/> when a timer fired; <see langword="false"/> once the clock reads <paramref name="target"/> with nothing due by it.</returns>
+    public bool FireTheNextDueBy(long target)
+    {
+        ManualTimer? next = null;
+
+        lock (_gate)
+        {
+            foreach (var timer in _timers)
             {
-                foreach (var timer in _timers)
+                if (timer.DueAt is { } due && due <= target && (next?.DueAt is not { } best || due < best))
                 {
-                    if (timer.DueAt is { } due && due <= target && (next?.DueAt is not { } best || due < best))
-                    {
-                        next = timer;
-                    }
+                    next = timer;
                 }
-
-                if (next is null)
-                {
-                    _now = target;
-                    return;
-                }
-
-                _now = next.DueAt!.Value;
             }
 
-            next.Fire();
+            if (next is null)
+            {
+                _now = target;
+                return false;
+            }
+
+            _now = next.DueAt!.Value;
         }
+
+        next.Fire();
+        return true;
     }
 
     private void Forget(ManualTimer timer)

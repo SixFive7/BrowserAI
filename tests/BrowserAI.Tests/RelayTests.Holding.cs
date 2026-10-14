@@ -516,6 +516,67 @@ internal sealed partial class RelayTests
         Match(answered.ToolText, nameof(RelayErrors.EndedByAnotherVersion), RelayErrors.EndedByAnotherVersion("browser_navigate", "9.9.10-a-later-build", Log));
     }
 
+    /// <summary>
+    /// A held call is answered at its deadline when the arm's step toward it comes while the
+    /// relay is arming its hold timer, between the reading of the clock the relay takes the
+    /// delay from and the timer's own.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The hang of <see cref="AnEndAnotherVersionWroteIsHeldAndNamedByThatVersionAtTheDeadline"/>
+    /// in the PowerShell half of the gate at <c>e092de31</c>, in a forced order.</b> The finder's
+    /// first answer arms the hold timer again for the call's deadline: the relay reads the
+    /// clock and takes the delay to the deadline from it, and the rig's timer reads the clock
+    /// again and adds the delay to that. The arm's first step, a tick short of the deadline,
+    /// moved the clock between the two readings, so the timer came due a whole step past the
+    /// deadline, the arm's last tick reached the deadline with nothing due, and the answer
+    /// never came. Here that step is taken at the relay's first reading of the clock after the
+    /// finder answers, which is the hold timer's.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-14</b> against the rig as it was, whose step moved the clock at
+    /// once: the barrier at the deadline returned with nothing before it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AHeldCallIsAnsweredAtItsDeadlineWhenAStepMeetsTheRelayArmingItsHoldTimer()
+    {
+        await using var rig = RelayRig.Start();
+        const string Log = @"C:\Data\BrowserAI-relay-tests\logs\browserai-20261010.log";
+        rig.Finder.Absence = new BackgroundAbsence.UnreadableEnd("9.9.10-a-later-build", ThisBuild: false, new DateTimeOffset(2026, 10, 10, 14, 5, 0, TimeSpan.Zero), Log);
+
+        _ = await rig.InitializeAsync(KnownClients.Codex);
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        // The finder's answer to the question the call asks is held, so the relay arms its
+        // hold timer again only once the arm lets that answer go.
+        rig.Finder.HoldExplanations();
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+        await rig.Finder.ExplanationWaiting.WaitAsync(TestDefaults.InProcessHang);
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        // The forced order: the step to a tick short of the deadline is taken at the relay's
+        // next reading of the clock, after that reading and before the timer's own.
+        var stepped = new TaskCompletionSource<Task>(TaskCreationOptions.RunContinuationsAsynchronously);
+        rig.Clock.AtTheNextReading(() => stepped.SetResult(rig.StepAsync(RelayConstants.HoldBound - OneTick)));
+        rig.Finder.ReleaseExplanations();
+
+        var step = await stepped.Task.WaitAsync(TestDefaults.InProcessHang);
+        await step;
+
+        await Assert.That(rig.Clock.GetUtcNow()).IsEqualTo(DateTimeOffset.UnixEpoch + RelayConstants.HoldBound - OneTick);
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        await rig.StepAsync(OneTick);
+        var answered = await rig.BarrierAsync();
+
+        await Assert.That(answered.Count).IsEqualTo(1).Because($"nothing answered the held call at its deadline. The engine held: {rig.EngineState()}");
+        await Assert.That(answered[0].IdText).IsEqualTo("1");
+        Match(answered[0].ToolText, nameof(RelayErrors.EndedByAnotherVersion), RelayErrors.EndedByAnotherVersion("browser_navigate", "9.9.10-a-later-build", Log));
+    }
+
     /// <summary>A build that is not installed is answered at once, with the command a developer runs.</summary>
     /// <remarks>D11 a, decided 2026-10-08: nothing will ever start a background for it.</remarks>
     /// <returns>The assertion task.</returns>
