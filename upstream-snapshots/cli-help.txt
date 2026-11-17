@@ -4,8 +4,10 @@ Options:
   -V, --version                         output the version number
   --allowed-hosts <hosts...>            comma-separated list of hosts this
                                         server is allowed to serve from.
-                                        Defaults to the host the server is bound
-                                        to. Pass '*' to disable the host check.
+                                        Defaults to localhost, loopback IPs and
+                                        the host passed via --host; other hosts
+                                        must be listed explicitly. Pass '*' to
+                                        disable the host check.
   --allowed-origins <origins>           semicolon-separated list of TRUSTED
                                         origins to allow the browser to request.
                                         Default is to allow all.
@@ -83,6 +85,11 @@ Options:
                                         browsers, never for headed ones, 0
                                         disables.
   --ignore-https-errors                 ignore https errors
+  --ignore-roots                        do not ask the client for its workspace
+                                        roots, use the current working directory
+                                        as the workspace root instead. Use this
+                                        with clients that advertise roots, but
+                                        can not answer the roots request.
   --init-page <path...>                 path to TypeScript file to evaluate on
                                         Playwright page object
   --init-script <path...>               path to JavaScript file to add as an
@@ -100,6 +107,11 @@ Options:
                                         Defaults to "allow".
   --no-sandbox                          disable the sandbox for all process
                                         types that are normally sandboxed.
+  --background                          do not activate controlled tabs or focus
+                                        the browser window when using
+                                        --extension.
+  --no-tab-group                        do not group controlled tabs when using
+                                        --extension.
   --no-webmcp                           do not collect or expose the tools that
                                         a page registers through the WebMCP API.
   --output-dir <path>                   path to the directory for automatically
@@ -121,8 +133,14 @@ Options:
                                         for example
                                         ".com,chromium.org,.domain.com"
   --proxy-server <proxy>                specify proxy server, for example
-                                        "http://myproxy:3128" or
+                                        "http://myproxy:3128",
+                                        "http://user:password@myproxy:3128" or
                                         "socks5://myproxy:8080"
+  --redact-url-params <names>           comma-separated list of URL query and
+                                        fragment parameter names, for example
+                                        "access_token,code", whose values are
+                                        replaced with <redacted> in the tool
+                                        responses.
   --sandbox                             enable the sandbox for all process types
                                         that are normally not sandboxed.
   --save-session                        Whether to save the Playwright MCP

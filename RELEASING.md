@@ -1089,7 +1089,8 @@ before this and nobody had re-read the number:*
   and written to `.work/suite-coverage.txt`.
 
   ⚠️ **The same variable is what makes the first-run download real.** Ordinary
-  runs download 208.8 MB from Playwright's CDN [at most once an
+  runs download 217.6 MB (re-measured 2026-11-17 at chromium 1254, previously
+  208.8 MB) from Playwright's CDN [at most once an
   hour](TESTING.md#the-first-run-download-runs-at-most-once-an-hour) and seed
   from a cached tree in between; under `BROWSERAI_RELEASE_RUN=1` the cache is
   bypassed unconditionally, so **no release can be cut on evidence that came out

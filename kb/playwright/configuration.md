@@ -705,12 +705,26 @@ the suite. [HAZARDS](../../HAZARDS.md#hazard-index) carries the row.
 ## Environment, merge order and startup output
 
 **The merge order is config file → environment → CLI**, and `@playwright/mcp`
-reads **43** `PLAYWRIGHT_MCP_*` variables in its config env mapping -- `BROWSER`,
+reads **48** `PLAYWRIGHT_MCP_*` variables in its config env mapping -- `BROWSER`,
 `HEADLESS`, `USER_DATA_DIR`, `EXECUTABLE_PATH`, `OUTPUT_DIR`, `ISOLATED`,
-`CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS` and 33 more. **The real total
-is 46**: `PLAYWRIGHT_MCP_PING_TIMEOUT_MS`, `PLAYWRIGHT_MCP_EXTENSION_TOKEN` and
+`CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS` and 38 more. **The real total
+is 51**: `PLAYWRIGHT_MCP_PING_TIMEOUT_MS`, `PLAYWRIGHT_MCP_EXTENSION_TOKEN` and
 `PLAYWRIGHT_MCP_PROFILE_DIR_NAME` are read *outside* that mapping. An allowlist
 test must derive the count from the resolved bundle and never carry a literal.
+The figure is [re-verification row 17](../re-verification.md)'s.
+
+⚠️ **`Corrected 2026-11-17 @ playwright-core 1.66.0-alpha-2026-11-09 (previously
+"reads **43** ... and 33 more ... **The real total is 46**")`.** That figure was
+already one behind on 2026-09-21, when `@playwright/mcp` 0.0.82 added
+`PLAYWRIGHT_MCP_WEBMCP` inside the mapping and row 17 and `ChildEnvironment`
+moved to 44 + 3 = 47 while this paragraph did not. Re-measured with the same
+predicate and the previous bundle as the positive control, 1.64.0-alpha-1790635538000
+read out of its registry tarball, which returned **44 + 3 = 47** as row 17
+recorded; the bundle that ships returns **48 + 3 = 51**. `@playwright/mcp` 0.0.84
+added `PLAYWRIGHT_MCP_IGNORE_ROOTS` and `PLAYWRIGHT_MCP_REDACT_URL_PARAMS`, and
+0.0.85 `PLAYWRIGHT_MCP_BACKGROUND` and `PLAYWRIGHT_MCP_NO_TAB_GROUP`, all four inside
+`configFromEnv`. None of them reaches a child, because the allowlist does not name
+them, and none is refused, because BrowserAI writes none of the four keys.
 
 ⚠️ **`Corrected 2026-09-17 @ playwright-core 1.64.0-alpha-2026-09-17 (previously
 "reads **42** ... and 32 more ... **The real total is 45**")`. Re-measured with the

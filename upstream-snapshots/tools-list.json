@@ -3,13 +3,13 @@
   "_regenerate": "pwsh -File build/Update-UpstreamSnapshots.ps1 -Accept",
   "_before_you_accept_a_change": "UPSTREAM-REVIEW.md. Accepting a diff here is adopting an upstream version.",
   "resolvedFrom": {
-    "@playwright/mcp": "0.0.83",
-    "playwright-core": "1.64.0-alpha-1790635538000",
-    "node": "v24.21.0"
+    "@playwright/mcp": "0.0.85",
+    "playwright-core": "1.66.0-alpha-2026-11-09",
+    "node": "v26.13.1"
   },
   "serverInfo": {
     "name": "Playwright",
-    "version": "1.64.0-alpha-1790635538000"
+    "version": "1.66.0-alpha-2026-11-09"
   },
   "serverCapabilities": {
     "tools": {
@@ -517,7 +517,7 @@
     },
     {
       "name": "browser_cookie_delete",
-      "description": "Delete a specific cookie",
+      "description": "Delete a specific cookie (optionally only on a given domain/path)",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -525,6 +525,14 @@
           "name": {
             "type": "string",
             "description": "Cookie name to delete"
+          },
+          "domain": {
+            "description": "Only delete the cookie on this domain",
+            "type": "string"
+          },
+          "path": {
+            "description": "Only delete the cookie on this path",
+            "type": "string"
           }
         },
         "required": [
@@ -892,6 +900,10 @@
           "regex": {
             "description": "Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. \"/error/i\" for case-insensitive. Provide either text or regex, not both.",
             "type": "string"
+          },
+          "maxResults": {
+            "description": "Maximum number of matching items to return. Defaults to returning all matches.",
+            "type": "number"
           },
           "filename": {
             "description": "Save results to a file instead of returning them in the response. Relative file names are resolved against the workspace root.",
@@ -1288,6 +1300,10 @@
             "description": "Only return requests whose URL matches this regexp (e.g. \"/api/.*user\").",
             "type": "string"
           },
+          "all": {
+            "description": "Return all network requests since the beginning of the session, not just since the last navigation. Defaults to false.",
+            "type": "boolean"
+          },
           "filename": {
             "description": "File name to save the network requests to. Relative file names are resolved against the workspace root. If not provided, requests are returned as text.",
             "type": "string"
@@ -1537,7 +1553,7 @@
     },
     {
       "name": "browser_take_screenshot",
-      "description": "Take a screenshot of the current page. You can't perform actions based on the screenshot, use browser_snapshot for actions.",
+      "description": "Take a screenshot of the current page. Use browser_snapshot for actions by default. With the vision capability enabled, use screenshot coordinates with the coordinate-based mouse tools for elements not exposed in the accessibility snapshot.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -1874,6 +1890,10 @@
           },
           "url": {
             "description": "URL to navigate to in the new tab, used for new.",
+            "type": "string"
+          },
+          "isolatedContext": {
+            "description": "Name of an isolated browser context to create the new tab in, used for new. Tabs in the same isolated context share cookies and storage, tabs in different contexts are fully isolated. If omitted or \"default\", the tab is created in the default context.",
             "type": "string"
           }
         },
@@ -2231,13 +2251,13 @@
     },
     {
       "name": "browser_wait_for",
-      "description": "Wait for text to appear or disappear or a specified time to pass",
+      "description": "Wait for text to appear or disappear or a specified time to pass. When both text and textGone are provided, waits for the first one to happen",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "time": {
-            "description": "The time to wait in seconds, at most 30",
+            "description": "The time to wait in seconds, at most 30. When combined with text or textGone, serves as a timeout for them instead of the default action timeout",
             "type": "number"
           },
           "text": {

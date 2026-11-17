@@ -1,0 +1,32 @@
+{
+  "family": "firefox",
+  "root": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\prov\\root-firefox-2",
+  "exitCode": 0,
+  "seconds": 9.55,
+  "totalBytes": 374579351.0,
+  "totalFiles": 72,
+  "topLevel": ".links,ffmpeg-1013,firefox-1573,winldd-1007",
+  "components": [
+    {
+      "name": ".links",
+      "bytes": 81.0,
+      "files": 1
+    },
+    {
+      "name": "ffmpeg-1013",
+      "bytes": 4025246.0,
+      "files": 4
+    },
+    {
+      "name": "firefox-1573",
+      "bytes": 370295464.0,
+      "files": 64
+    },
+    {
+      "name": "winldd-1007",
+      "bytes": 258560.0,
+      "files": 3
+    }
+  ],
+  "utc": "2026-11-17T15:30:18.4159171Z"
+}

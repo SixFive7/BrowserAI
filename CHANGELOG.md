@@ -40,6 +40,16 @@ more* link to its detail; nothing else depends on it.
 
 ### Changed
 
+- ⬆️ **`@playwright/mcp` moves to 0.0.85 with Chromium 158 and Firefox 159, and its Node to 26.**
+  Chromium is 158.0.8127.18 and Firefox is Playwright's build 1573 of 159.0, so every machine
+  downloads Chromium once more, 217.6 MB, and one that uses Firefox downloads it again, 134.0 MB.
+  A rollback to 2.0.0 downloads Chromium 155 again, 208.8 MB, and Firefox build 1553 on a machine
+  that uses it, 130.9 MB. The Node that runs Playwright is v26.13.1, the new long-term line.
+  Among upstream's changes: a new tab can open in a named context of its own, whose cookies and
+  storage stay out of the session's profile; a cookie can be deleted for one domain or path;
+  `browser_find` can stop after a number of matches, `browser_network_requests` can list every
+  request since the session began, and `browser_wait_for` can bound a wait for text with a time.
+
 - ⬆️ **BrowserAI is built with .NET 11, up from .NET 10.0.12.**
   The maintainer moved the whole tree to the new major on 2026-11-17. The executable carries the
   11.0.0 runtime, compiled in ahead of time as before, so nothing has to be installed beside it,

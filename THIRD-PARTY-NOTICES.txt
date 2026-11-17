@@ -38,9 +38,18 @@ build/payload/package-lock.json by ThirdPartyNoticeTests, so a fourth package
 arriving in the payload is a red build here rather than a name nobody noticed
 was missing.
 
-This payload resolved playwright 1.64.0-alpha-1790635538000 and playwright-core
-1.64.0-alpha-1790635538000. The two agree, which is what @playwright/mcp 0.0.83
+This payload resolved playwright 1.66.0-alpha-2026-11-09 and playwright-core
+1.66.0-alpha-2026-11-09. The two agree, which is what @playwright/mcp 0.0.85
 declares for both and is the ordinary state.
+Corrected 2026-11-17 (previously "This payload resolved playwright
+1.64.0-alpha-1790635538000 and playwright-core 1.64.0-alpha-1790635538000 ...
+which is what @playwright/mcp 0.0.83 declares for both"), when the payload rolled
+to 0.0.85. The licence files of all three packages were re-read in the rolled
+payload that day: LICENSE, NOTICE and ThirdPartyNotices.txt are byte-identical
+to 0.0.83's in playwright-core and playwright, and so is @playwright/mcp's
+LICENSE. Three of the six per-bundle sidecars moved, and only to name newer
+versions of the components bundled inside them. Node's LICENSE moved with Node
+v26 and still carries every aggregate term named above.
 Corrected 2026-10-03 (previously "This payload resolved playwright
 1.64.0-alpha-1789764292000 and playwright-core 1.64.0-alpha-1789764292000 ...
 which is what @playwright/mcp 0.0.82 declares for both"), when the payload rolled

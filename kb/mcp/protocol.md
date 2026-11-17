@@ -524,7 +524,7 @@ budget.** These rounds are warm: the binary had just been published and the payl
 was in the file cache. A genuinely cold first start reads a 19 MB server, a 93 MB
 `node.exe` and a ~117 MB payload from disk for the first time, and nothing here
 establishes what that costs on a slow or contended disk. **The first-run browser
-download is NOT this path**: provisioning is 208.8 MB and 13 to 17 s (re-measured 2026-10-03 at chromium 1247, previously 207.3 MB and ~10.8 s), and it happens on
+download is NOT this path**: provisioning is 217.6 MB and 17 to 21 s (re-measured 2026-11-17 at chromium 1254, previously 208.8 MB and 13 to 17 s at 1247; re-measured 2026-10-03 at chromium 1247, previously 207.3 MB and ~10.8 s), and it happens on
 the first browser call and not during startup, so it cannot reach a startup timeout
 -- it reaches a TOOL timeout instead, which Codex defaults to 60 s.
 

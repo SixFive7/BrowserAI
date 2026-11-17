@@ -12,12 +12,29 @@ namespace BrowserAI.Protocol;
 /// <remarks>
 /// <para>
 /// <b>It has to be an allowlist and not a strip-list.</b> Upstream reads
-/// <b>47</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
+/// <b>51</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
 /// config mapping, and the merge order is config file → environment → CLI -- so
 /// an inherited variable silently overrides a key BrowserAI generated, with no
 /// error anywhere. Naming what may pass makes the next variable upstream adds
 /// absent by default; naming what may not makes it present, and nothing says
 /// so.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-11-17 @ <c>playwright-core</c>
+/// 1.66.0-alpha-2026-11-09 (previously "<b>47</b> ... variables, three of them
+/// outside its own config mapping").</b> <b>Re-measured against the resolved
+/// bundle with the previous one as the positive control</b>, read out of the
+/// registry tarball of 1.64.0-alpha-1790635538000: it returned 44 + 3 = 47,
+/// exactly what this sentence carried, against 48 + 3 = 51 on the bundle that
+/// ships. <c>@playwright/mcp</c> 0.0.84 added <c>PLAYWRIGHT_MCP_IGNORE_ROOTS</c>
+/// and <c>PLAYWRIGHT_MCP_REDACT_URL_PARAMS</c>, and 0.0.85
+/// <c>PLAYWRIGHT_MCP_BACKGROUND</c> and <c>PLAYWRIGHT_MCP_NO_TAB_GROUP</c>, all
+/// four read <b>inside</b> <c>configFromEnv</c>, so the outside set is unchanged
+/// at three. None of the four is in <see cref="Refused"/>, for the reason
+/// <c>PLAYWRIGHT_MCP_WEBMCP</c> is not: this product writes no
+/// <c>ignoreRoots</c>, <c>redactUrlParams</c>, <c>background</c> or
+/// <c>tabGroup</c> key, and the allowlist already makes them absent. Nothing left
+/// the set.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-17 @ <c>playwright-core</c>
@@ -152,7 +169,7 @@ internal static class ChildEnvironment
     /// <para>
     /// The proxy and CA names are inherited because without them a machine behind
     /// TLS inspection cannot provision a browser at all -- first-run provisioning
-    /// downloads 208.8 MB from three hosts -- <i>corrected 2026-10-03 at chromium 1247, previously 207.3 MB; corrected 2026-09-17, previously
+    /// downloads 217.6 MB from three hosts -- <i>corrected 2026-11-17 at chromium 1254, previously 208.8 MB; corrected 2026-10-03 at chromium 1247, previously 207.3 MB; corrected 2026-09-17, previously
     /// "203.8 MB", and the live figure is
     /// <see cref="Runtime.BrowserProvisioner.FirstRunDownloadSizes"/> and not
     /// this sentence</i> -- and SOCKS is unsupported on that path

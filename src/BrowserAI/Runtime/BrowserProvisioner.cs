@@ -486,6 +486,17 @@ internal sealed partial class BrowserProvisioner : IDisposable
     public static IReadOnlyDictionary<string, long> FirstRunDownloadBytes { get; } =
         new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase)
         {
+            // ⚠️ Corrected 2026-11-17 (previously 208_824_056 for Chromium and
+            // 130_935_881 for Firefox, measured at chromium 1247 / 155.0.8059.12
+            // and firefox 1553 / 156.0). Re-measured 2026-11-17 at chromium 1254 /
+            // 158.0.8127.18 and firefox 1573 / 159.0 under playwright-core
+            // 1.66.0-alpha-2026-11-09, on the @playwright/mcp 0.0.85 roll. BOTH
+            // BROWSERS AND FFMPEG MOVED: Chromium's archive by 8,536,653 bytes,
+            // Firefox's by 2,842,008 and ffmpeg's by 251,836, which both families
+            // fetch. The rendered figures move 208.8 MB -> 217.6 MB and
+            // 130.9 MB -> 134.0 MB. The anchor test was watched red against the
+            // old constant first.
+            //
             // ⚠️ Corrected 2026-10-03 (previously 207_274_189 for Chromium and
             // 130_934_199 for Firefox, measured at chromium 1246 / 154.0.8037.0
             // and firefox 1549 / 156.0). Re-measured 2026-10-03 at chromium 1247 /
@@ -527,8 +538,8 @@ internal sealed partial class BrowserProvisioner : IDisposable
             // docs/probes/2026-09-16-provisioning is the rig, and
             // ProvisioningTests.TheQuotedFirstRunDownloadSizeIsTheFigureTheKnowledgeBasePublishes
             // is what stops these drifting from the kb article again.
-            [ProvisionedBrowsers.Chromium] = 208_824_056,
-            [ProvisionedBrowsers.Firefox] = 130_935_881,
+            [ProvisionedBrowsers.Chromium] = 217_612_545,
+            [ProvisionedBrowsers.Firefox] = 134_029_725,
         };
 
     public static IReadOnlyDictionary<string, string> FirstRunDownloadSizes { get; } =
