@@ -1,0 +1,35 @@
+import os, sys, time
+sys.stdout.reconfigure(encoding='utf-8')
+# Scratch plants for the WebMCP fix, never committed. Usage: plant.py absent|naive|restore.
+# absent: the switch stays defined and leaves ChromiumArguments, and the Firefox preferences are
+# not written, which is the tree before the fix. naive: the switch spelled --enable-features=WebMCP
+# alone. restore: the fixed file back, stamped now so that both builds see it.
+W = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\pw\\'
+P = W + 'src\\BrowserAI\\Runtime\\BrowserConfiguration.cs'
+FIXED = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\webmcp\\BrowserConfiguration.fixed.cs'
+mode = sys.argv[1]
+fixed = open(FIXED, encoding='utf-8', newline='').read()
+t = fixed
+if mode == 'absent':
+    a = "        HideCrashRestoreBubbleSwitch,\n        WebMcpFeatureSwitch,\n    ];\n"
+    assert t.count(a) == 1
+    t = t.replace(a, "        HideCrashRestoreBubbleSwitch,\n    ];\n")
+    b = ("                foreach (var (name, value) in FirefoxWebMcpPreferences)\n"
+         "                {\n"
+         "                    writer.WriteBoolean(name, value);\n"
+         "                }\n")
+    assert t.count(b) == 1
+    t = t.replace(b, "")
+    c = "                .Concat(FirefoxWebMcpPreferences.Select(preference => $\"browser.launchOptions.firefoxUserPrefs.{preference.Key}\"))\n"
+    assert t.count(c) == 1
+    t = t.replace(c, "")
+elif mode == 'naive':
+    a = 'public const string WebMcpFeatureSwitch = "--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies";'
+    assert t.count(a) == 1
+    t = t.replace(a, 'public const string WebMcpFeatureSwitch = "--enable-features=WebMCP";')
+elif mode != 'restore':
+    raise SystemExit('unknown mode ' + mode)
+open(P, 'w', encoding='utf-8', newline='').write(t)
+now = time.time()
+os.utime(P, (now, now))
+print('planted', mode, 'naive' if 'enable-features=WebMCP";' in t else '', 'in-arguments' if '        WebMcpFeatureSwitch,\n' in t else 'not-in-arguments')

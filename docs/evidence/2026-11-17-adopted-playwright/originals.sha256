@@ -1,3 +1,6 @@
 72df49a3846ddf718e19bf3f3c76f0c7c3f4a96e92bed61365db47cba0eb9dd7  profiler/arm-planted.log  132658 B  the test host's [Trace], [Debug] and [Information] log lines removed
 1de8094ffd75cf47aa786253a913b37e229847688256e27fcaa1bff467e3af8d  profiler/arm-green.log  5883 B  the test host's [Trace], [Debug] and [Information] log lines removed
 a541ea15e49a401d467da51be07000082974d6991e41c38fc42d50933a45d0b5  rows/row140.log  11189 B  terminal escape sequences removed
+7097cb8c32e36ccb5a70780a288957f151a23e0b0dc3bd8041f74a1c6d374d0d  webmcp/arms-naive-spelling.log  133594 B  the test host's log lines removed
+ab6c98e3e1bdaebbf05232a98dec85f78f2bedd93f27289140bda29d0b2d94c2  webmcp/arms-switch-absent.log  142357 B  the test host's log lines removed
+50ac52c817571137f70dbd105a257a019d459f4d7eeb2992cf95464bc73bcc2b  webmcp/arms-fixed.log  6045 B  the test host's log lines removed

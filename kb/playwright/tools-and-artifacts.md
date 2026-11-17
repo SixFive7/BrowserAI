@@ -2054,6 +2054,75 @@ both is a line the key does not reach -- then run `through-browserai.mjs` agains
 a published slice. Transcripts:
 [`docs/evidence/2026-09-21-webmcp`](../../docs/evidence/2026-09-21-webmcp/README.md).
 
+## A page tool reaches the child only from a browser launched with WebMCP on -- measured 2026-11-17
+
+`[FLOATS]` `@playwright/mcp` **0.0.85**, `playwright-core` **1.66.0-alpha-2026-11-09**,
+Chrome for Testing **158.0.8127.18** (`chromium-1254`) and Firefox **159.0**
+(`firefox-1573`), the payload's own `playwright-core` driven headless by six rigs of the
+adoption batch ([evidence](../../docs/evidence/2026-11-17-adopted-playwright/README.md)).
+
+**Upstream moved page-tool discovery into its server and put a check of the launch in front
+of it.** In 1.66, `WebMCP.tools()` in `packages/playwright-core/src/server/webmcp.ts` first
+calls `assertBrowserSupport`, which throws *"WebMCP is not enabled. Launch the browser with
+the "--enable-features=WebMCP" argument."* for a Chromium whose launch arguments carry no
+`WebMCP` in an `--enable-features`, and the like for a Firefox without
+`dom.modelcontext.enabled` and `dom.modelcontext.testing.enabled` both true in its
+`firefoxUserPrefs`; `listWebMCPTools` swallows the throw with `.catch(() => [])`. The script
+it injects reads `document.modelContext ?? navigator.modelContext` in Playwright's utility
+world. 1.64 read the same two names in the page's own world, with no check.
+
+**So a page's tools reach the child only through the browser's own WebMCP.** Measured on a
+page served from 127.0.0.1, a secure origin, that registers one tool through whichever
+interface the browser offers:
+
+| Browser and launch | What the page had | What Playwright listed |
+|---|---|---|
+| Chromium, no WebMCP switch | no `document.modelContext` | *"WebMCP is not enabled"* |
+| Chromium, `--enable-features=WebMCP` | `document.modelContext` with `registerTool`, `getTools`, `executeTool`, `ontoolchange`, `ontoolactivated` and `ontoolcancel` | the tool, called and answered |
+| Firefox, neither preference | no `navigator.modelContext` | *"WebMCP is not enabled"* |
+| Firefox, `dom.modelcontext.enabled` alone | `navigator.modelContext` with `registerTool` and `unregisterTool` | *"WebMCP is not enabled"* |
+| Firefox, both | the same with `getTools` and `invokeTool` | the tool, called and answered |
+
+A `data:` page that set `document.modelContext` to an object of its own, the shape
+`PageToolTests` used since 2026-09-21, offered no tools with the switch either: the object is
+in the page's world and Playwright reads its own.
+
+**Chromium keeps only the last `--enable-features`.** Playwright's `chromiumSwitches` passes
+`--enable-features=CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies` before the
+caller's arguments. Read through `chrome://version/?show-variations-cmd`: with
+`--enable-features=WebMCP` added the browser ran `WebMCP` and neither of Playwright's two,
+and with `--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies`
+it ran all three. Chromium's `base::CommandLine::AppendSwitchNative` assigns a repeated
+switch's value over the one before unless a duplicate-switch handler is installed, read at
+158.0.8127.18, and a search of Chromium's source found the handler set only by its unit-test
+launcher. `SystemInfo.getFeatureState` answered *"Unknown feature"* for all three, so it
+cannot read them.
+
+**What BrowserAI does since 2026-11-17**: `BrowserConfiguration.WebMcpFeatureSwitch`, the
+merged spelling, in every Chromium launch's arguments, and
+`BrowserConfiguration.FirefoxWebMcpPreferences` in every Firefox launch's preferences.
+**The copy of Playwright's two features is a coupling**: a Playwright that adds a feature to
+its own switch would have it dropped by BrowserAI's, with no error, so
+`WebMcpLaunchTests` reads the payload's `enabledFeatures` against BrowserAI's switch and the
+running browser's features against its command line on every run, and re-verification row
+227 is the re-check at a roll. Building the value from the payload at run time was the other
+way, and it would put a parse of upstream's bundle in every launch; a test fails where a
+parse would guess.
+
+⚠️ **The Firefox preference named `testing`.** `dom.modelcontext.testing.enabled` adds
+`getTools()` and `invokeTool()` to `navigator.modelContext`, with which any script of a page
+can list every tool the page registered and call it. Firefox's `ModelContext.webidl` gates
+exactly those two members on it, read on Firefox's main branch on 2026-11-17, and both
+preferences default to false. Playwright lists and calls a page's tools through those two
+members, so a Firefox page tool needs it, and a page's own scripts get the same reach.
+
+⚠️ **What no switch brings back**: a page that offers its tools through a script object of
+its own, a polyfill of `document.modelContext` or `navigator.modelContext`, was seen by 1.64
+and is not seen by 1.66. Only a browser's own WebMCP reaches the child now.
+
+**Re-establish** with `features.mjs` to `features6.mjs` from the evidence batch's `rig/`,
+against the new payload, and compare the listings and the features `chrome://version` reports.
+
 ## A page tool's wire name is built from the page's tool NAME, and `annotations.title` is not that name -- measured 2026-09-21
 
 **This is the fact `browserai_page_tool` resolves on, and it is the opposite way
@@ -2087,6 +2156,17 @@ outside.
 `tools/list` and a `browser_snapshot` result side by side --
 [`docs/probes/2026-09-21-webmcp`](../../docs/probes/2026-09-21-webmcp/README.md)
 is the rig; its page registers a titled tool already.
+
+⚠️ *Corrected 2026-11-17 by addition @ `@playwright/mcp` 0.0.85 / `playwright-core` 1.66.0-alpha-2026-11-09 / Chrome for Testing 158.0.8127.18 (previously the table and the rule above,
+which stand for 1.64)*: **no title reaches the child any more, and the browser decides which
+names a page can register.** 1.66 keeps no title out of the browser's own WebMCP and sets
+`annotations.title` to the tool's name, read in its bundle; the wire name is built as
+before. Chromium's own `registerTool`, with WebMCP on, listed `do.the.thing`,
+`do-the-thing`, `do_the_thing`, `DoTheThing` and a 65-character name, and did not list
+`Do The Thing!`, a non-ASCII name, or a second tool of one name in a frame; a frame of the
+same origin registered a tool of the page's name, and upstream named the two `webmcp_twin`
+and `webmcp_twin_2` ([evidence](../../docs/evidence/2026-11-17-adopted-playwright/README.md)). So `PageToolTests` uses
+`do.the.thing` for the rule and a frame for the twin since that day.
 
 ## A hung page tool does not block the child, and is released by navigating away -- measured 2026-09-21
 
@@ -2125,6 +2205,13 @@ on the way through.
 [`docs/probes/2026-09-21-webmcp`](../../docs/probes/2026-09-21-webmcp/README.md):
 serve a page whose `invokeTool` is `() => new Promise(() => {})`, call it, and
 keep asking the same child for snapshots while it pends.
+
+⚠️ *Corrected 2026-11-17 by addition @ `@playwright/mcp` 0.0.85 / `playwright-core` 1.66.0-alpha-2026-11-09 / Chrome for Testing 158.0.8127.18 (previously the call above, which
+upstream never ended on its own)*: **1.66 ends a page tool's call itself at 30 s**, answering
+*"browserBackend.callTool: Timeout 30000ms exceeded."*, measured through the published
+binary by `PageToolTests` that day, so a hung page tool is answered half way through
+`SessionToolSurface.PageToolBudget`, which stays as the bound behind it. The session
+answered a snapshot afterwards; whether the page's code was stopped was not read.
 
 
 ## The list compiled into the binary is the child's own bytes -- measured 2026-10-08

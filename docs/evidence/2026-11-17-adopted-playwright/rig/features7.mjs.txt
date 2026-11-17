@@ -1,0 +1,55 @@
+// pw lane, 2026-11-17: the seventh WebMCP rig, Chromium with WebMCP on, the merged spelling: which
+// tool names Chrome for Testing 158's document.modelContext.registerTool takes, what a second tool
+// of one name does, whether an iframe of the same origin registers its own, and what the adopted
+// playwright-core lists, names and answers for each. One headless browser; a loopback page.
+// Scratch, never committed. Usage: node features7.mjs <payload> <scratch dir>
+import { createRequire } from 'node:module';
+import http from 'node:http';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const [payload, scratch] = process.argv.slice(2);
+const require = createRequire(import.meta.url);
+const core = require(join(payload, 'mcp', 'node_modules', 'playwright-core'));
+rmSync(scratch, { recursive: true, force: true });
+mkdirSync(scratch, { recursive: true });
+
+const names = ['Do The Thing!', 'do.the.thing', 'do-the-thing', 'do_the_thing', 'DoTheThing', 'twin', 'twin', 'x'.repeat(65), 'Ünïcode'];
+const main = `<!doctype html><title>start</title><script>
+const results = [];
+for (const name of ${JSON.stringify(names)}) {
+  try { const r = document.modelContext.registerTool({ name, title: 'Human Title', description: 'D-' + name, inputSchema: { type: 'object', properties: {} }, execute: async () => ({ content: [{ type: 'text', text: 'RAN ' + name }] }) });
+    results.push([name.slice(0, 20), 'ok', typeof r]); }
+  catch (e) { results.push([name.slice(0, 20), 'threw', e.name + ': ' + e.message]); }
+}
+window.__results = results;
+</script><iframe src="/frame"></iframe>`;
+const frame = `<!doctype html><title>frame</title><script>
+try { document.modelContext.registerTool({ name: 'twin', description: 'FRAME-TWIN', inputSchema: { type: 'object', properties: {} }, execute: async () => ({ content: [{ type: 'text', text: 'FRAME-RAN' }] }) }); window.__frame = 'ok'; }
+catch (e) { window.__frame = 'threw ' + e.message; }
+</script>`;
+const server = http.createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/html' }); res.end(req.url === '/frame' ? frame : main); });
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const url = `http://127.0.0.1:${server.address().port}/`;
+
+const args = ['--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session', '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble', '--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies'];
+const context = await core.chromium.launchPersistentContext(join(scratch, 'cr'), { channel: 'chrome-for-testing', headless: true, args, ignoreDefaultArgs: ['about:blank'], timeout: 60000 });
+const r = {};
+try {
+  const p = context.pages()[0] ?? await context.newPage();
+  const consoleLines = [];
+  p.on('console', (m) => consoleLines.push(m.type() + ': ' + m.text().slice(0, 200)));
+  await p.goto(url);
+  await p.waitForTimeout(1500);
+  r.results = await p.evaluate(() => window.__results);
+  r.frame = await p.frames()[1]?.evaluate(() => window.__frame).catch((e) => 'eval failed ' + e.message);
+  r.console = consoleLines;
+  r.mainTools = (await p.mainFrame().webmcp.tools()).map((t) => ({ name: t.name, annotations: t.annotations }));
+  r.frameTools = p.frames()[1] ? (await p.frames()[1].webmcp.tools()).map((t) => t.name) : null;
+} finally {
+  await context.close();
+}
+console.log(JSON.stringify(r, null, 1));
+writeFileSync(join(scratch, 'features7.json'), JSON.stringify(r, null, 2));
+server.close();
+console.log('DONE');

@@ -1,0 +1,11 @@
+{"label":"cr-none","extra":[],"commandLineVariations":"eyJkaXNhYmxlLWZlYXR1cmVzIjoiQWltRW5hYmxlZCxBdm9pZENvcnNVUkxM...","enableFeaturesInCommandLine":["--enable-features=CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies"],"page":{"modelContext":"undefined","members":[],"how":"none","secure":true},"toolsError":"webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument."}
+{"label":"cr-webmcp","extra":["--enable-features=WebMCP"],"commandLineVariations":"eyJkaXNhYmxlLWZlYXR1cmVzIjoiQWltRW5hYmxlZCxBdm9pZENvcnNVUkxM...","enableFeaturesInCommandLine":["--enable-features=CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies","--enable-features=WebMCP"],"page":{"modelContext":"undefined","members":[],"how":"none","secure":true},"tools":[]}
+{"label":"cr-webmcp-merged","extra":["--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies"],"commandLineVariations":"eyJkaXNhYmxlLWZlYXR1cmVzIjoiQWltRW5hYmxlZCxBdm9pZENvcnNVUkxM...","enableFeaturesInCommandLine":["--enable-features=CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies","--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies"],"page":{"modelContext":"undefined","members":[],"how":"none","secure":true},"tools":[]}
+{"label":"ff-none","prefs":{},"page":{"modelContext":"undefined","members":[],"how":"none","secure":true},"toolsError":"webMCP.tools: WebMCP is not enabled. Launch the browser with the \"dom.modelcontext.enabled\" and \"dom.modelcontext.testing.enabled\" preferences set to true."}
+{"label":"ff-prefs","prefs":{"dom.modelcontext.enabled":true,"dom.modelcontext.testing.enabled":true},"page":{"modelContext":"object","members":["registerTool","unregisterTool","getTools","invokeTool"],"how":"registerTool","secure":true},"tools":["probe_tool"],"call":"{\"content\":[{\"type\":\"text\",\"text\":\"PROBE-ANSWERED {\\\"who\\\":\\\"rig\\\"}\"}]}"}
+{"label":"ff-enabled-only","prefs":{"dom.modelcontext.enabled":true},"page":{"modelContext":"object","members":["registerTool","unregisterTool"],"how":"registerTool","secure":true},"toolsError":"webMCP.tools: WebMCP is not enabled. Launch the browser with the \"dom.modelcontext.enabled\" and \"dom.modelcontext.testing.enabled\" preferences set to true."}
+DONE
+
+--- stderr ---
+
+EXIT finished=True code=0

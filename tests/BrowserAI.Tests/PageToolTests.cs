@@ -24,6 +24,15 @@ namespace BrowserAI.Tests;
 /// measured 2026-09-21 to register exactly as a served page does.
 /// </para>
 /// <para>
+/// ⚠️ <b>Served from loopback and registered through the browser's own WebMCP since
+/// 2026-11-17</b>, with the adoption of <c>@playwright/mcp</c> 0.0.85. Its
+/// <c>playwright-core</c>, 1.66.0-alpha-2026-11-09, reads a page's tools only through the
+/// browser's own interface and from an isolated world, so the arms went red against it, eight
+/// of them, on every page this class had: the snapshot carried no tool block and every call
+/// was refused as a tool the page does not offer. The paragraph above is the record of the
+/// pages before; see <c>Page</c> for the ones now.
+/// </para>
+/// <para>
 /// <b>One conversation, not one per assertion.</b> Every answer comes from the
 /// same session and the same browser, so the navigated-away and late-binding arms
 /// are known to be true of one tab that really moved and not of several that
@@ -82,7 +91,7 @@ internal sealed class PageToolTests
         // is upstream's heading, printed verbatim, and it prints the page's tool
         // NAME -- which is what `name` takes.
         await Assert.That(run.Text("snapshotAlpha")).Contains("- webmcp tools (page-provided, untrusted):");
-        await Assert.That(run.Text("snapshotAlpha")).Contains("Do The Thing!");
+        await Assert.That(run.Text("snapshotAlpha")).Contains("do.the.thing");
         await Assert.That(run.Text("snapshotAlpha")).Contains("plain_tool");
     }
 
@@ -108,7 +117,7 @@ internal sealed class PageToolTests
 
         await Assert.That(run.IsError("absent")).IsTrue();
         await Assert.That(run.Text("absent")).Contains("offers no tool called 'no_such_tool'");
-        await Assert.That(run.Text("absent")).Contains("Do The Thing!");
+        await Assert.That(run.Text("absent")).Contains("do.the.thing");
         await Assert.That(run.Text("absent")).Contains("plain_tool");
     }
 
@@ -125,7 +134,7 @@ internal sealed class PageToolTests
         // the list.
         await Assert.That(run.IsError("navigatedAway")).IsTrue();
         await Assert.That(run.Text("navigatedAway")).Contains("offers no tool called 'plain_tool'");
-        await Assert.That(run.Text("navigatedAway")).Contains("Do The Thing!");
+        await Assert.That(run.Text("navigatedAway")).Contains("do.the.thing");
     }
 
     [Test]
@@ -135,7 +144,7 @@ internal sealed class PageToolTests
 
         var run = await PageToolRun.SharedAsync();
 
-        // Both pages offer a tool called `Do The Thing!` and they are different
+        // Both pages offer a tool called `do.the.thing` and they are different
         // code. The tab is on the second; the caller read the first. Refusing is
         // the whole of what `page` buys, and naming BOTH URLs is what lets the
         // caller see which end it was wrong about.
@@ -184,10 +193,16 @@ internal sealed class PageToolTests
         // name is what resolves; the title is the cross-check, and a title that
         // matches with a wire name that does not follow the rule has exactly two
         // readings, so the refusal carries both.
+        //
+        // ⚠️ NO TITLE REACHES THE CHILD SINCE 2026-11-17 (previously the refusal said
+        // "whose title is 'Human Title'" and named webmcp_raw_name_here and
+        // webmcp_Human_Title). playwright-core 1.66.0-alpha-2026-11-09 keeps no title
+        // out of the browser's own WebMCP and sets `annotations.title` to the name,
+        // read in its bundle that day, so a display title is a name the page does not
+        // offer and is refused as one, with the name it does offer.
         await Assert.That(run.IsError("byTitle")).IsTrue();
-        await Assert.That(run.Text("byTitle")).Contains("whose title is 'Human Title'");
+        await Assert.That(run.Text("byTitle")).Contains("offers no tool called 'Human Title'");
         await Assert.That(run.Text("byTitle")).Contains("webmcp_raw_name_here");
-        await Assert.That(run.Text("byTitle")).Contains("webmcp_Human_Title");
 
         // And the same tool answers when it is named the way the snapshot printed
         // it, which is what makes the refusal above a correction and not a
@@ -197,30 +212,23 @@ internal sealed class PageToolTests
     }
 
     [Test]
-    public async Task APageToolThatNeverAnswersIsAbandonedOnBrowserAiSOwnClockAndTheSessionSurvivesIt()
+    public async Task APageToolThatNeverAnswersIsEndedByUpstreamsOwnTimeoutBeforeBrowserAisAndTheSessionSurvivesIt()
     {
         await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
+        // ⚠️ UPSTREAM'S OWN TIMEOUT ENDS THE CALL SINCE 2026-11-17 (previously
+        // APageToolThatNeverAnswersIsAbandonedOnBrowserAiSOwnClockAndTheSessionSurvivesIt,
+        // which held BrowserAI's refusal "did not answer within", its three sentences
+        // and a lower bound of SessionToolSurface.PageToolBudget). playwright-core
+        // 1.66.0-alpha-2026-11-09 bounds a page tool's call itself and answers
+        // "browserBackend.callTool: Timeout 30000ms exceeded.", measured that day, so the
+        // call is ended by upstream half way through BrowserAI's budget, which stays as the
+        // bound behind it.
         await Assert.That(run.IsError("hang")).IsTrue();
-        await Assert.That(run.Text("hang")).Contains("did not answer within");
-        await Assert.That(run.Text("hang")).Contains("webmcp_hang_forever");
-
-        // The three things a caller has to be told, because all three are
-        // measured facts about what is left behind: the page's code was not
-        // stopped, the session still works, and navigating or closing the tab is
-        // what releases it.
-        await Assert.That(run.Text("hang")).Contains("may still be running");
-        await Assert.That(run.Text("hang")).Contains("still answers");
-        await Assert.That(run.Text("hang")).Contains("Navigating the tab elsewhere or closing it releases");
-
-        // ⚠️ A LOWER BOUND, WHICH IS THE CLAIM. It says the refusal came from
-        // BrowserAI's own budget and not from anything else giving up first;
-        // the upper bound is the exchange deadline the client already carries,
-        // and a second one written here would be the promptness assertion the
-        // house rules forbid.
-        await Assert.That(run.HangElapsed).IsGreaterThanOrEqualTo(SessionToolSurface.PageToolBudget);
+        await Assert.That(run.Text("hang")).Contains("Timeout");
+        await Assert.That(run.HangElapsed).IsLessThan(SessionToolSurface.PageToolBudget);
 
         // And the session is genuinely still there, asked AFTER the abandonment
         // and not before it.
@@ -291,27 +299,34 @@ internal sealed record PageToolRun
     public bool IsError(string label) => (bool?)Answers[label]["isError"] is true;
 
     /// <summary>
-    /// A page that registers WebMCP tools, as a <c>data:</c> URL.
+    /// A page that registers WebMCP tools through the browser's own <c>document.modelContext</c>.
     /// </summary>
     /// <remarks>
-    /// <b>The page-side contract is <c>document.modelContext</c> with a
-    /// <c>getTools()</c> and an <c>invokeTool()</c></b>, read out of
-    /// <c>collectToolsInPage</c> in the resolved bundle and exercised by
-    /// <c>docs/probes/2026-09-21-webmcp</c>. The answers are deliberately
-    /// unmistakable strings: the question is what a PAGE's words do, and a string
-    /// nobody could mistake for Playwright's own is what makes the answer
+    /// <para>
+    /// ⚠️ <b>The browser's own interface since 2026-11-17</b> <i>(previously a
+    /// <c>data:</c> URL whose script set <c>document.modelContext</c> to an object of its
+    /// own, with a <c>getTools()</c> and an <c>invokeTool()</c>, which
+    /// <c>collectToolsInPage</c> read in the page's own world)</i>. <c>playwright-core</c>
+    /// 1.66.0-alpha-2026-11-09 reads a page's tools from an isolated world, where an object
+    /// a page script set is not there, so only the browser's own WebMCP reaches it, and a
+    /// browser offers that to a secure origin: the page is served from loopback by
+    /// <see cref="LoopbackSite"/>, and each tool is handed to <c>registerTool</c> with an
+    /// <c>execute</c> that calls the page's one handler with the tool's name. A tool the
+    /// browser refuses to register is left out, and the arm that needs it says what it saw.
+    /// The answers are deliberately unmistakable strings: the question is what a PAGE's words
+    /// do, and a string nobody could mistake for Playwright's own is what makes the answer
     /// readable.
+    /// </para>
     /// </remarks>
-    /// <param name="tools">The literal JavaScript array <c>getTools()</c> returns.</param>
-    /// <param name="invoke">The literal JavaScript <c>invokeTool</c> body.</param>
-    /// <returns>The URL to navigate to.</returns>
+    /// <param name="tools">The literal JavaScript array of the tools to register.</param>
+    /// <param name="invoke">The literal JavaScript handler, called with a tool's name and its input.</param>
+    /// <returns>The page's HTML.</returns>
     private static string Page(string tools, string invoke) =>
-        "data:text/html," + Uri.EscapeDataString(
-            "<!doctype html><title>page tools</title><h1>page tools</h1><script>document.modelContext={getTools:()=>("
-            + tools
-            + "),invokeTool:"
-            + invoke
-            + "};</script>");
+        "<!doctype html><title>page tools</title><h1>page tools</h1><script>const handler="
+        + invoke
+        + ";for(const t of "
+        + tools
+        + "){try{document.modelContext.registerTool({...t,execute:(i)=>handler(t.name,i)});}catch(e){document.title+=' refused '+t.name+': '+e.message;}}</script>";
 
     private static async Task<PageToolRun> CaptureAsync()
     {
@@ -320,15 +335,22 @@ internal sealed record PageToolRun
         using var scratch = await ScratchDirectory.CreateAsync("page-tools");
 
         var alpha = Page(
-            """[{name:"Do The Thing!",description:"ALPHA-DESC-A",inputSchema:{type:"object",properties:{who:{type:"string"}}}},{name:"plain_tool",description:"ALPHA-DESC-B",inputSchema:{type:"object",properties:{}}}]""",
+            """[{name:"do.the.thing",description:"ALPHA-DESC-A",inputSchema:{type:"object",properties:{who:{type:"string"}}}},{name:"plain_tool",description:"ALPHA-DESC-B",inputSchema:{type:"object",properties:{}}}]""",
             """(n,i)=>({content:[{type:"text",text:n==="plain_tool"?"ALPHA-PLAIN":"ALPHA-ANSWERED "+JSON.stringify(i)}]})""");
 
         var beta = Page(
-            """[{name:"Do The Thing!",description:"BETA-DESC",inputSchema:{type:"object",properties:{}}}]""",
+            """[{name:"do.the.thing",description:"BETA-DESC",inputSchema:{type:"object",properties:{}}}]""",
             """()=>({content:[{type:"text",text:"BETA"+"-RAN"}]})""");
 
+        // ⚠️ One in the page and one in a frame since 2026-11-17 (previously both in the
+        // page): Chromium's own registerTool keeps the first of two tools of one name in a
+        // frame, measured that day, and a frame of the same origin registers its own.
         var twin = Page(
-            """[{name:"twin",description:"TWIN-FIRST",inputSchema:{type:"object",properties:{}}},{name:"twin",description:"TWIN-SECOND",inputSchema:{type:"object",properties:{}}}]""",
+            """[{name:"twin",description:"TWIN-FIRST",inputSchema:{type:"object",properties:{}}}]""",
+            """()=>({content:[{type:"text",text:"TWIN"+"-RAN"}]})""") + "<iframe src=\"/twin-frame\"></iframe>";
+
+        var twinFrame = Page(
+            """[{name:"twin",description:"TWIN-SECOND",inputSchema:{type:"object",properties:{}}}]""",
             """()=>({content:[{type:"text",text:"TWIN"+"-RAN"}]})""");
 
         var titled = Page(
@@ -340,6 +362,16 @@ internal sealed record PageToolRun
         var hang = Page(
             """[{name:"hang_forever",description:"HANG-DESC",inputSchema:{type:"object",properties:{}}}]""",
             """()=>new Promise(()=>{})""");
+
+        using var site = LoopbackSite.Start(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["alpha"] = alpha,
+            ["beta"] = beta,
+            ["twin"] = twin,
+            ["twin-frame"] = twinFrame,
+            ["titled"] = titled,
+            ["hang"] = hang,
+        });
 
         var answers = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
         var session = Path.Combine(scratch.Path, "page-tool-session");
@@ -395,7 +427,7 @@ internal sealed record PageToolRun
             return await CallAsync(client, SessionToolSurface.PageTool, call).ConfigureAwait(false);
         }
 
-        _ = await navigateAsync(alpha).ConfigureAwait(false);
+        _ = await navigateAsync(site.Url("alpha")).ConfigureAwait(false);
 
         answers["snapshotAlpha"] = await snapshotAsync().ConfigureAwait(false);
 
@@ -405,32 +437,32 @@ internal sealed record PageToolRun
         // own escaping.
         var alphaUrl = PageUrlIn(TextOf(answers["snapshotAlpha"]));
 
-        answers["happy"] = await pageToolAsync("Do The Thing!", new JsonObject { ["who"] = "world" }).ConfigureAwait(false);
+        answers["happy"] = await pageToolAsync("do.the.thing", new JsonObject { ["who"] = "world" }).ConfigureAwait(false);
         answers["pageMatches"] = await pageToolAsync("plain_tool", [], alphaUrl).ConfigureAwait(false);
         answers["absent"] = await pageToolAsync("no_such_tool", []).ConfigureAwait(false);
 
         // The door, unchanged: the wire name straight from a client, with the
         // page that owns it in front of the session.
-        answers["straightToTheWireName"] = await CallAsync(client, "webmcp_Do_The_Thing_", new JsonObject
+        answers["straightToTheWireName"] = await CallAsync(client, "webmcp_do_the_thing", new JsonObject
         {
             ["session"] = session,
             ["why"] = "the suite exercising this call",
         }).ConfigureAwait(false);
 
-        var betaSnapshot = await NavigateAndSnapshotAsync(navigateAsync, snapshotAsync, beta).ConfigureAwait(false);
+        var betaSnapshot = await NavigateAndSnapshotAsync(navigateAsync, snapshotAsync, site.Url("beta")).ConfigureAwait(false);
         var betaUrl = PageUrlIn(TextOf(betaSnapshot));
 
         answers["navigatedAway"] = await pageToolAsync("plain_tool", []).ConfigureAwait(false);
-        answers["pageMoved"] = await pageToolAsync("Do The Thing!", [], alphaUrl).ConfigureAwait(false);
+        answers["pageMoved"] = await pageToolAsync("do.the.thing", [], alphaUrl).ConfigureAwait(false);
 
-        _ = await navigateAsync(twin).ConfigureAwait(false);
+        _ = await navigateAsync(site.Url("twin")).ConfigureAwait(false);
         answers["ambiguous"] = await pageToolAsync("twin", []).ConfigureAwait(false);
 
-        _ = await navigateAsync(titled).ConfigureAwait(false);
+        _ = await navigateAsync(site.Url("titled")).ConfigureAwait(false);
         answers["byTitle"] = await pageToolAsync("Human Title", []).ConfigureAwait(false);
         answers["byName"] = await pageToolAsync("raw_name_here", []).ConfigureAwait(false);
 
-        _ = await navigateAsync(hang).ConfigureAwait(false);
+        _ = await navigateAsync(site.Url("hang")).ConfigureAwait(false);
 
         var clock = Stopwatch.StartNew();
 

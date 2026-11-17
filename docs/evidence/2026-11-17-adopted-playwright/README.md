@@ -28,6 +28,7 @@ suite lock through one holder, one rig at a time at below-normal priority, betwe
 | `rows/` | Rows 121, 140 and 141 of [the re-verification index](../../../kb/re-verification.md), each by the method the row gives |
 | `isolated-context/` | What `browser_tabs`' new `isolatedContext` does in a child configured like BrowserAI's with the network capture on |
 | `launcher/` | What each of the three cleans took out of `HKCU\Software\Mozilla\Firefox\Launcher` |
+| `webmcp/` | Seven rigs of the WebMCP launch, taken after the page-tool arms went red on 0.0.85 in the gate at `675f92c2`, and three runs of `PageToolTests` with `WebMcpLaunchTests`: the WebMCP switch absent, spelled alone, and as the fix spells it; and Firefox's `ModelContext.webidl` as read on its main branch |
 | `rig/` | Every script that produced the above, as text, as it ran |
 
 ## What the runs found
@@ -88,11 +89,27 @@ default context's page and none of the isolated one's, the isolated tab's cookie
 showed the default context's cookie beside its own, the default tab's showed only its
 own, and after a relaunch on the profile only the default context's cookie was there.
 
+**A page's tools reach the child only through the browser's own WebMCP, launched on.** On
+0.0.85 a Chromium launched without `--enable-features=WebMCP`, or a Firefox without both
+`dom.modelcontext.enabled` and `dom.modelcontext.testing.enabled`, made Playwright throw
+*"WebMCP is not enabled"*, which its listing swallows. With them, a page on 127.0.0.1 got the
+browser's own interface, `document.modelContext` in Chromium and `navigator.modelContext` in
+Firefox, and a tool registered through it was listed and answered; Firefox's interface had
+`getTools` and `invokeTool` only with the `testing` preference. A page's own
+`document.modelContext` object on a `data:` URL offered nothing either way. Chromium kept only
+the last `--enable-features`: `chrome://version/?show-variations-cmd` read `WebMCP` alone with
+`--enable-features=WebMCP`, and Playwright's two features beside it with the merged spelling.
+Chromium's `registerTool` did not list a name with a space or a `!`, or a second tool of one
+name in a frame, and a frame of the same origin registered its own. The arms: with the switch
+absent, 9 of 12 red; spelled alone, both `WebMcpLaunchTests` arms red, each naming Playwright's
+two features as dropped; as fixed, 26 of 26 green with `ConfigRoundTripTests`,
+`PasswordPromptTests` and `HeadedUserAgentTests`.
+
 ## What was cut, and what is not here
 
-`originals.sha256` names the three files cut and the digest of each original: the test
-host's trace lines out of the two arm logs, and terminal escape sequences out of
-`rows/row140.log`. Every other file is whole.
+`originals.sha256` names every file cut and the digest of each original: the test host's
+log lines out of the five arm logs, and terminal escape sequences out of `rows/row140.log`.
+Every other file is whole.
 
 **Not here, because it measured nothing:** a first pair of safe-mode and profiler runs
 read the console host node starts beside itself, the first child the rigs found; the

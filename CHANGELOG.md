@@ -49,6 +49,11 @@ more* link to its detail; nothing else depends on it.
   storage stay out of the session's profile; a cookie can be deleted for one domain or path;
   `browser_find` can stop after a number of matches, `browser_network_requests` can list every
   request since the session began, and `browser_wait_for` can bound a wait for text with a time.
+  A page's own tools keep working: Playwright now offers them only from a browser with WebMCP
+  switched on, so BrowserAI starts Chromium with it, beside Playwright's own features, and Firefox
+  with its two WebMCP preferences, one of which lets a page's scripts list and call every tool the
+  page registered. A page has to register its tools through the browser's own WebMCP now: one that
+  offers them through a script object of its own is no longer seen.
 
 - ⬆️ **BrowserAI is built with .NET 11, up from .NET 10.0.12.**
   The maintainer moved the whole tree to the new major on 2026-11-17. The executable carries the

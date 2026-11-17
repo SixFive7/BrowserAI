@@ -1,0 +1,99 @@
+// pw lane, 2026-11-17: the second WebMCP rig. For a Chrome for Testing launched the way BrowserAI
+// launches it, by spelling of the WebMCP switch: the effective feature overrides chrome://version
+// reports as its command-line variations, and whether a page on a secure origin can register a tool
+// through the browser's own navigator.modelContext and the adopted playwright-core lists and calls
+// it. The same page in a Firefox with and without the two WebMCP preferences. The page is served
+// from 127.0.0.1, which is a secure context; one headless browser at a time; persistent profiles in
+// scratch; the payload's own playwright-core. Scratch, never committed.
+// Usage: node features2.mjs <payload> <scratch dir>
+import { createRequire } from 'node:module';
+import http from 'node:http';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const [payload, scratch] = process.argv.slice(2);
+const require = createRequire(import.meta.url);
+const core = require(join(payload, 'mcp', 'node_modules', 'playwright-core'));
+rmSync(scratch, { recursive: true, force: true });
+mkdirSync(scratch, { recursive: true });
+
+const html = `<!doctype html><title>start</title><script>
+const mc = navigator.modelContext;
+const proto = mc ? Object.getOwnPropertyNames(Object.getPrototypeOf(mc)).filter((n) => n !== 'constructor') : [];
+let how = 'none';
+try {
+  if (mc && mc.registerTool) {
+    mc.registerTool({ name: 'probe_tool', description: 'PROBE-DESC', inputSchema: { type: 'object', properties: { who: { type: 'string' } } },
+      execute: async (input) => ({ content: [{ type: 'text', text: 'PROBE-ANSWERED ' + JSON.stringify(input) }] }) });
+    how = 'registerTool';
+  } else if (mc && mc.provideContext) {
+    mc.provideContext({ tools: [{ name: 'probe_tool', description: 'PROBE-DESC', inputSchema: { type: 'object', properties: {} },
+      execute: async (input) => ({ content: [{ type: 'text', text: 'PROBE-ANSWERED ' + JSON.stringify(input) }] }) }] });
+    how = 'provideContext';
+  }
+} catch (e) { how = 'threw ' + e.message; }
+window.__probe = { modelContext: typeof mc, members: proto, how, secure: window.isSecureContext };
+</script><p>probe</p>`;
+const server = http.createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/html' }); res.end(html); });
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const url = `http://127.0.0.1:${server.address().port}/`;
+
+const browserAiArgs = ['--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session', '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble'];
+const out = [];
+
+async function probePage(p, r) {
+  await p.goto(url);
+  r.page = await p.evaluate(() => window.__probe);
+  try { r.tools = (await p.mainFrame().webmcp.tools()).map((t) => t.name); }
+  catch (e) { r.toolsError = String(e.message).slice(0, 200); }
+  if (r.tools && r.tools.includes('probe_tool')) {
+    try { r.call = JSON.stringify(await p.mainFrame().webmcp.callTool('probe_tool', { who: 'rig' })).slice(0, 200); }
+    catch (e) { r.callError = String(e.message).slice(0, 200); }
+  }
+}
+
+async function chromiumArm(label, extra) {
+  const context = await core.chromium.launchPersistentContext(join(scratch, label), {
+    channel: 'chrome-for-testing', headless: true, args: [...browserAiArgs, ...extra], ignoreDefaultArgs: ['about:blank'], timeout: 60000,
+  });
+  const r = { label, extra };
+  try {
+    const p = context.pages()[0] ?? await context.newPage();
+    await p.goto('chrome://version');
+    const text = await p.evaluate(() => document.body.innerText);
+    const m = text.match(/Command-line variations\s*([\s\S]*?)(\n[A-Z][a-z]|$)/);
+    r.commandLineVariations = m ? m[1].trim().slice(0, 600) : 'NOT FOUND: ' + text.slice(0, 300);
+    const cl = text.match(/Command Line\s*([^\n]*)/);
+    r.enableFeaturesInCommandLine = cl ? (cl[1].match(/--enable-features=\S*/g) ?? []) : null;
+    await probePage(p, r);
+  } finally {
+    await context.close();
+  }
+  out.push(r);
+  console.log(JSON.stringify(r));
+}
+
+async function firefoxArm(label, prefs) {
+  const context = await core.firefox.launchPersistentContext(join(scratch, label), {
+    headless: true, firefoxUserPrefs: { 'toolkit.winRegisterApplicationRestart': false, 'signon.rememberSignons': false, ...prefs }, timeout: 60000,
+  });
+  const r = { label, prefs };
+  try {
+    const p = context.pages()[0] ?? await context.newPage();
+    await probePage(p, r);
+  } finally {
+    await context.close();
+  }
+  out.push(r);
+  console.log(JSON.stringify(r));
+}
+
+await chromiumArm('cr-none', []);
+await chromiumArm('cr-webmcp', ['--enable-features=WebMCP']);
+await chromiumArm('cr-webmcp-merged', ['--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies']);
+await firefoxArm('ff-none', {});
+await firefoxArm('ff-prefs', { 'dom.modelcontext.enabled': true, 'dom.modelcontext.testing.enabled': true });
+await firefoxArm('ff-enabled-only', { 'dom.modelcontext.enabled': true });
+writeFileSync(join(scratch, 'features2.json'), JSON.stringify(out, null, 2));
+server.close();
+console.log('DONE');

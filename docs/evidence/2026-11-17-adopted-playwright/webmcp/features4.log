@@ -1,0 +1,8 @@
+{"label":"cr-none","extra":[],"variationsRawStart":"eyJkaXNhYmxlLWZlYXR1cmVzIjoiQWltRW5hYmxl","decodeError":"Unterminated string in JSON at position 45 (line 1 column 46)","page":{"modelContext":"undefined","members":[],"modelContextTesting":"undefined","testingMembers":[],"how":"none","secure":true},"toolsError":"webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument."}
+{"label":"cr-webmcp","extra":["--enable-features=WebMCP"],"variationsRawStart":"eyJkaXNhYmxlLWZlYXR1cmVzIjoiQWltRW5hYmxl","decodeError":"Unterminated string in JSON at position 45 (line 1 column 46)","page":{"modelContext":"object","members":["ontoolchange","ontoolactivated","ontoolcancel","executeTool","getTools","registerTool"],"modelContextTesting":"undefined","testingMembers":[],"how":"registerTool","secure":true},"tools":["probe_tool"],"call":"{\"content\":[{\"type\":\"text\",\"text\":\"PROBE-ANSWERED {\\\"who\\\":\\\"rig\\\"}\"}]}"}
+{"label":"cr-webmcp-merged","extra":["--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies"],"variationsRawStart":"eyJkaXNhYmxlLWZlYXR1cmVzIjoiQWltRW5hYmxl","decodeError":"Unterminated string in JSON at position 45 (line 1 column 46)","page":{"modelContext":"object","members":["ontoolchange","ontoolactivated","ontoolcancel","executeTool","getTools","registerTool"],"modelContextTesting":"undefined","testingMembers":[],"how":"registerTool","secure":true},"tools":["probe_tool"],"call":"{\"content\":[{\"type\":\"text\",\"text\":\"PROBE-ANSWERED {\\\"who\\\":\\\"rig\\\"}\"}]}"}
+DONE
+
+--- stderr ---
+
+EXIT finished=True code=0

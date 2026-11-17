@@ -30,16 +30,25 @@ internal sealed class LoopbackSite : IDisposable
     private readonly HttpListener _listener;
     private readonly CancellationTokenSource _stopping = new();
     private readonly string _root;
+    private readonly IReadOnlyDictionary<string, string> _bodies;
 
-    private LoopbackSite(HttpListener listener, string root)
+    private LoopbackSite(HttpListener listener, string root, IReadOnlyDictionary<string, string> bodies)
     {
         _listener = listener;
         _root = root;
+        _bodies = bodies;
     }
 
     /// <summary>Binds a loopback port and starts answering.</summary>
+    /// <param name="bodies">
+    /// The whole HTML of the pages that need more than a title and a heading, by name; every
+    /// other name is answered with its title and heading. <b>Added 2026-11-17</b> for the
+    /// page-tool arms, whose pages register their tools through the browser's own WebMCP,
+    /// which a browser offers a secure origin, and loopback is one where a <c>data:</c> URL
+    /// is not.
+    /// </param>
     /// <returns>The running site.</returns>
-    public static LoopbackSite Start()
+    public static LoopbackSite Start(IReadOnlyDictionary<string, string>? bodies = null)
     {
         for (var port = 54_300; port < 54_400; port++)
         {
@@ -57,7 +66,7 @@ internal sealed class LoopbackSite : IDisposable
                 continue;
             }
 
-            var site = new LoopbackSite(listener, root);
+            var site = new LoopbackSite(listener, root, bodies ?? new Dictionary<string, string>(StringComparer.Ordinal));
             _ = Task.Run(site.ServeAsync, CancellationToken.None);
 
             return site;
@@ -118,7 +127,7 @@ internal sealed class LoopbackSite : IDisposable
             }
 
             _requests.Enqueue((name, headers));
-            var body = Encoding.UTF8.GetBytes($"<!doctype html><title>{name}</title><h1>{name}</h1>");
+            var body = Encoding.UTF8.GetBytes(_bodies.TryGetValue(name, out var page) ? page : $"<!doctype html><title>{name}</title><h1>{name}</h1>");
 
             context.Response.ContentType = "text/html; charset=utf-8";
             context.Response.ContentLength64 = body.Length;

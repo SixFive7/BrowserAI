@@ -1,0 +1,79 @@
+{
+ "results": [
+  [
+   "Do The Thing!",
+   "ok",
+   "object"
+  ],
+  [
+   "do.the.thing",
+   "ok",
+   "object"
+  ],
+  [
+   "do-the-thing",
+   "ok",
+   "object"
+  ],
+  [
+   "do_the_thing",
+   "ok",
+   "object"
+  ],
+  [
+   "DoTheThing",
+   "ok",
+   "object"
+  ],
+  [
+   "twin",
+   "ok",
+   "object"
+  ],
+  [
+   "twin",
+   "ok",
+   "object"
+  ],
+  [
+   "xxxxxxxxxxxxxxxxxxxx",
+   "ok",
+   "object"
+  ],
+  [
+   "├â┼ôn├â┬»code",
+   "ok",
+   "object"
+  ]
+ ],
+ "frame": "ok",
+ "console": [],
+ "mainTools": [
+  {
+   "name": "DoTheThing"
+  },
+  {
+   "name": "do-the-thing"
+  },
+  {
+   "name": "do.the.thing"
+  },
+  {
+   "name": "do_the_thing"
+  },
+  {
+   "name": "twin"
+  },
+  {
+   "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
+ ],
+ "frameTools": [
+  "twin"
+ ]
+}
+DONE
+
+--- stderr ---
+
+EXIT finished=True code=0

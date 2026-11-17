@@ -403,6 +403,44 @@ internal static class BrowserConfiguration
     // StackSamplingProfiler thread, and keeps guarding whoever passes the switch.
 
     /// <summary>
+    /// The Chromium switch that turns the browser's WebMCP on, without which Playwright lists
+    /// no page's tools and calls none.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Needed since <c>playwright-core</c> 1.66.0-alpha-2026-11-09</b>, which
+    /// <c>@playwright/mcp</c> 0.0.85 pins. Its page-tool discovery moved into Playwright's
+    /// server, where <c>WebMCP.tools()</c> first reads the caller's own launch arguments for
+    /// <c>WebMCP</c> in an <c>--enable-features</c> and throws <i>"WebMCP is not enabled"</i>
+    /// without it, and the listing behind the snapshot swallows the throw: every page offered no
+    /// tools and <c>browserai_page_tool</c> refused every call. 1.64 read the page's
+    /// <c>document.modelContext</c> with no such check. Read in both bundles on 2026-11-17, after
+    /// <c>PageToolTests</c>' real-page arms went red against 0.0.85
+    /// (<see href="../../../kb/playwright/tools-and-artifacts.md#a-page-tool-reaches-the-child-only-from-a-browser-launched-with-webmcp-on----measured-2026-11-17">kb</see>).
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Spelled with Playwright's own two features, because Chromium keeps only the last
+    /// <c>--enable-features</c> on a command line.</b> Playwright's <c>chromiumSwitches</c>
+    /// passes <c>--enable-features=CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies</c>
+    /// before the caller's arguments, and Chromium installs no handler that merges a repeated
+    /// switch, so <c>base::CommandLine</c> keeps the last value. Measured 2026-11-17 at Chrome for
+    /// Testing 158.0.8127.18 through <c>chrome://version/?show-variations-cmd</c>: with
+    /// <c>--enable-features=WebMCP</c> alone the browser ran WebMCP and neither of Playwright's,
+    /// and with this spelling it ran all three. A copy of upstream's list goes stale when
+    /// Playwright adds a feature, so <c>WebMcpLaunchTests</c> reads the payload's
+    /// <c>enabledFeatures</c> and the running browser's features on every run.
+    /// </para>
+    /// <para>
+    /// <b>What it turns on</b>: the browser's own <c>document.modelContext</c>, with
+    /// <c>registerTool</c>, <c>getTools</c> and <c>executeTool</c> and three tool events, on a
+    /// secure origin, through which a page registers its tools and Playwright lists and calls
+    /// them; measured the same day, the property is missing without the feature and a tool
+    /// registered through it was listed and answered with it.
+    /// </para>
+    /// </remarks>
+    public const string WebMcpFeatureSwitch = "--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies";
+
+    /// <summary>
     /// The argument Playwright adds to open one blank page at launch, which a Chromium
     /// session's launch tells it to leave out.
     /// </summary>
@@ -451,6 +489,38 @@ internal static class BrowserConfiguration
         new("browser.sessionstore.resume_session_once", true),
         new("browser.sessionstore.restore_on_demand", false),
         new("browser.sessionstore.restore_tabs_lazily", false),
+    ];
+
+    /// <summary>
+    /// The Firefox preferences that turn the browser's WebMCP on, without which Playwright
+    /// lists no page's tools and calls none.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Firefox's half of <see cref="WebMcpFeatureSwitch"/>.</b> <c>playwright-core</c>
+    /// 1.66.0-alpha-2026-11-09 throws <i>"WebMCP is not enabled"</i> for a Firefox unless both
+    /// are true in the launch's <c>firefoxUserPrefs</c>, and the listing behind the snapshot
+    /// swallows the throw. Measured 2026-11-17 at Firefox 159.0 (<c>firefox-1573</c>) on a page
+    /// served from loopback: with neither, the page had no <c>navigator.modelContext</c>; with
+    /// <c>dom.modelcontext.enabled</c> alone it had one with <c>registerTool</c> and
+    /// <c>unregisterTool</c> and Playwright still refused; with both it had <c>getTools</c> and
+    /// <c>invokeTool</c> as well, and a tool registered through it was listed and answered.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The second is named <c>testing</c>, and what it turns on is reach into a page's
+    /// tools.</b> <c>dom.modelcontext.testing.enabled</c> exposes <c>getTools()</c> and
+    /// <c>invokeTool()</c> on <c>navigator.modelContext</c>, which let any script of a page list
+    /// every tool the page registered and call it; Firefox's <c>ModelContext.webidl</c> gates
+    /// exactly those two members on it, read on Firefox's main branch on 2026-11-17, and both
+    /// preferences default to false. Playwright lists and calls a page's tools through those two,
+    /// so BrowserAI's page tools need it; what it gives a page's own scripts is what it gives
+    /// Playwright (<see href="../../../kb/playwright/tools-and-artifacts.md#a-page-tool-reaches-the-child-only-from-a-browser-launched-with-webmcp-on----measured-2026-11-17">kb</see>).
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<KeyValuePair<string, bool>> FirefoxWebMcpPreferences { get; } =
+    [
+        new("dom.modelcontext.enabled", true),
+        new("dom.modelcontext.testing.enabled", true),
     ];
 
     /// <summary>
@@ -712,6 +782,11 @@ internal static class BrowserConfiguration
     /// microsoft/playwright#43364, so BrowserAI's copy is gone, and
     /// <c>StackProfilerTests</c> still reads the session's browser for the profiler's thread.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Six again since 2026-11-17 (previously five), with the adoption of
+    /// <c>@playwright/mcp</c> 0.0.85.</b> <see cref="WebMcpFeatureSwitch"/> turns WebMCP on, which
+    /// <c>playwright-core</c> 1.66.0-alpha-2026-11-09 requires before it offers a page's tools.
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<string> ChromiumArguments { get; } =
     [
@@ -720,6 +795,7 @@ internal static class BrowserConfiguration
         RestoreLastSessionSwitch,
         AggressiveDomStorageFlushingSwitch,
         HideCrashRestoreBubbleSwitch,
+        WebMcpFeatureSwitch,
     ];
 
     /// <param name="browser">The family, as upstream names it.</param>
@@ -735,6 +811,7 @@ internal static class BrowserConfiguration
                 $"browser.launchOptions.firefoxUserPrefs.{FirefoxProfile.RememberSignonsPreference}",
             }
                 .Concat(FirefoxSessionRestorePreferences.Select(preference => $"browser.launchOptions.firefoxUserPrefs.{preference.Key}"))
+                .Concat(FirefoxWebMcpPreferences.Select(preference => $"browser.launchOptions.firefoxUserPrefs.{preference.Key}"))
             : ["browser.launchOptions.channel", "browser.launchOptions.args"],
 
         // Added 2026-10-03 with the session restore: without it the restore piles
@@ -1007,6 +1084,13 @@ internal static class BrowserConfiguration
                 // and for the same reason: in force before the browser decides
                 // what to open.").
                 foreach (var (name, value) in FirefoxSessionRestorePreferences)
+                {
+                    writer.WriteBoolean(name, value);
+                }
+
+                // WebMCP, without which playwright-core 1.66 lists no page's tools. See
+                // FirefoxWebMcpPreferences for the second one's name.
+                foreach (var (name, value) in FirefoxWebMcpPreferences)
                 {
                     writer.WriteBoolean(name, value);
                 }

@@ -1,0 +1,81 @@
+// pw lane, 2026-11-17: the sixth WebMCP rig, the enabled features read out of the variations; the fifth, chrome://version with its variations shown whole; the fourth, Chromium only, through document.modelContext, the
+// interface Chromium's own WebMCP test registers on; from the third. For a Chrome for Testing launched the
+// way BrowserAI launches it, by spelling of the WebMCP switches: the effective enabled features that
+// chrome://version reports (its command-line variations, base64 JSON), and whether a page on a
+// secure origin gets the browser's own navigator.modelContext, registers a tool through it, and the
+// adopted playwright-core lists and calls that tool. One headless browser at a time; persistent
+// profiles in scratch; the payload's own playwright-core. Scratch, never committed.
+// Usage: node features3.mjs <payload> <scratch dir>
+import { createRequire } from 'node:module';
+import http from 'node:http';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const [payload, scratch] = process.argv.slice(2);
+const require = createRequire(import.meta.url);
+const core = require(join(payload, 'mcp', 'node_modules', 'playwright-core'));
+rmSync(scratch, { recursive: true, force: true });
+mkdirSync(scratch, { recursive: true });
+
+const html = `<!doctype html><title>start</title><script>
+const mc = document.modelContext;
+const proto = mc ? Object.getOwnPropertyNames(Object.getPrototypeOf(mc)).filter((n) => n !== 'constructor') : [];
+const mt = navigator.modelContextTesting || document.modelContextTesting;
+const protoT = mt ? Object.getOwnPropertyNames(Object.getPrototypeOf(mt)).filter((n) => n !== 'constructor') : [];
+let how = 'none';
+try {
+  if (mc && mc.registerTool) {
+    mc.registerTool({ name: 'probe_tool', description: 'PROBE-DESC', inputSchema: { type: 'object', properties: { who: { type: 'string' } } },
+      execute: async (input) => ({ content: [{ type: 'text', text: 'PROBE-ANSWERED ' + JSON.stringify(input) }] }) });
+    how = 'registerTool';
+  }
+} catch (e) { how = 'threw ' + e.message; }
+window.__probe = { modelContext: typeof mc, members: proto, modelContextTesting: typeof mt, testingMembers: protoT, how, secure: window.isSecureContext };
+</script><p>probe</p>`;
+const server = http.createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/html' }); res.end(html); });
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const url = `http://127.0.0.1:${server.address().port}/`;
+
+const browserAiArgs = ['--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session', '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble'];
+const out = [];
+
+async function chromiumArm(label, extra) {
+  const context = await core.chromium.launchPersistentContext(join(scratch, label), {
+    channel: 'chrome-for-testing', headless: true, args: [...browserAiArgs, ...extra], ignoreDefaultArgs: ['about:blank'], timeout: 60000,
+  });
+  const r = { label, extra };
+  try {
+    const p = context.pages()[0] ?? await context.newPage();
+    await p.goto('chrome://version/?show-variations-cmd');
+    const raw = await p.evaluate(() => {
+      const e = document.getElementById('variations-cmd');
+      return e ? (e.getAttribute('title') || e.textContent || '').trim() : null;
+    });
+    r.variationsRawLength = raw ? raw.length : null;
+    r.enableFeaturesInVariations = raw ? (raw.match(/--enable-features="?[^" ]*/g) ?? []) : null;
+    r.disableFeaturesHasAutoDeElevate = raw ? raw.includes('AutoDeElevate') : null;
+    try {
+      const j = JSON.parse(Buffer.from(String(raw), 'base64').toString('utf8'));
+      r.effectiveEnable = j['enable-features'] ?? null;
+    } catch (e) { r.decodeError = String(e.message).slice(0, 120); }
+    await p.goto(url);
+    r.page = await p.evaluate(() => window.__probe);
+    try { r.tools = (await p.mainFrame().webmcp.tools()).map((t) => t.name); }
+    catch (e) { r.toolsError = String(e.message).slice(0, 200); }
+    if (r.tools && r.tools.includes('probe_tool')) {
+      try { r.call = JSON.stringify(await p.mainFrame().webmcp.callTool('probe_tool', { who: 'rig' })).slice(0, 200); }
+      catch (e) { r.callError = String(e.message).slice(0, 200); }
+    }
+  } finally {
+    await context.close();
+  }
+  out.push(r);
+  console.log(JSON.stringify(r));
+}
+
+await chromiumArm('cr-none', []);
+await chromiumArm('cr-webmcp', ['--enable-features=WebMCP']);
+await chromiumArm('cr-webmcp-merged', ['--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies']);
+writeFileSync(join(scratch, 'features6.json'), JSON.stringify(out, null, 2));
+server.close();
+console.log('DONE');

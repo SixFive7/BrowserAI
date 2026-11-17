@@ -1,0 +1,79 @@
+// pw lane, 2026-11-17: what a Chrome for Testing launched the way BrowserAI launches it reports for
+// the WebMCP feature and for Playwright's own enabled features, by spelling of the WebMCP switch, and
+// whether the adopted playwright-core then lists a page's WebMCP tools; and the same listing for a
+// Firefox with and without the two WebMCP preferences. One headless browser at a time, persistent
+// profiles in scratch, the payload's own playwright-core. Scratch, never committed.
+// Usage: node features.mjs <payload> <scratch dir>
+import { createRequire } from 'node:module';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const [payload, scratch] = process.argv.slice(2);
+const require = createRequire(import.meta.url);
+const core = require(join(payload, 'mcp', 'node_modules', 'playwright-core'));
+rmSync(scratch, { recursive: true, force: true });
+mkdirSync(scratch, { recursive: true });
+
+const page = 'data:text/html,' + encodeURIComponent('<!doctype html><title>t</title><script>document.modelContext={getTools:()=>([{name:"probe_tool",description:"d",inputSchema:{type:"object",properties:{}}}]),invokeTool:(n,i)=>({content:[{type:"text",text:"ANSWERED"}]})};</script>');
+const browserAiArgs = ['--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session', '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble'];
+const features = ['WebMCP', 'CDPScreenshotNewSurface', 'SkipListAccountsWithoutGaiaCookies'];
+const out = [];
+
+async function chromiumArm(label, extra) {
+  const dir = join(scratch, label);
+  const context = await core.chromium.launchPersistentContext(dir, {
+    channel: 'chrome-for-testing', headless: true, args: [...browserAiArgs, ...extra], ignoreDefaultArgs: ['about:blank'], timeout: 60000,
+  });
+  const r = { label, extra };
+  try {
+    const browser = context.browser();
+    r.browserObject = !!browser;
+    const p = context.pages()[0] ?? await context.newPage();
+    await p.goto(page);
+    r.native = await p.evaluate(() => { const mc = navigator.modelContext; const mt = navigator.modelContextTesting; const names = (o) => o ? Object.getOwnPropertyNames(Object.getPrototypeOf(o)).filter((n) => n !== 'constructor') : null; return { modelContext: typeof mc, modelContextMembers: names(mc), modelContextTesting: typeof mt, modelContextTestingMembers: names(mt) }; });
+    try {
+      const session = browser ? await browser.newBrowserCDPSession() : await context.newCDPSession(p);
+      try { r.enableFeaturesOnCommandLine = (await session.send('Browser.getBrowserCommandLine')).arguments.filter((a) => a.startsWith('--enable-features=')); }
+      catch (e) { r.commandLineError = String(e.message).slice(0, 160); }
+      r.state = {};
+      for (const f of features) {
+        try { r.state[f] = (await session.send('SystemInfo.getFeatureState', { featureState: f })).featureEnabled; }
+        catch (e) { r.state[f] = 'ERROR ' + String(e.message).slice(0, 160); }
+      }
+    } catch (e) { r.cdpError = String(e.message).slice(0, 200); }
+    try { r.tools = (await p.mainFrame().webmcp.tools()).map((t) => t.name); }
+    catch (e) { r.toolsError = String(e.message).slice(0, 200); }
+  } finally {
+    await context.close();
+  }
+  out.push(r);
+  console.log(JSON.stringify(r));
+}
+
+async function firefoxArm(label, prefs) {
+  const dir = join(scratch, label);
+  const context = await core.firefox.launchPersistentContext(dir, {
+    headless: true, firefoxUserPrefs: { 'toolkit.winRegisterApplicationRestart': false, 'signon.rememberSignons': false, ...prefs }, timeout: 60000,
+  });
+  const r = { label, prefs };
+  try {
+    const p = context.pages()[0] ?? await context.newPage();
+    await p.goto(page);
+    r.native = await p.evaluate(() => { const mc = navigator.modelContext; const mt = navigator.modelContextTesting; const names = (o) => o ? Object.getOwnPropertyNames(Object.getPrototypeOf(o)).filter((n) => n !== 'constructor') : null; return { modelContext: typeof mc, modelContextMembers: names(mc), modelContextTesting: typeof mt, modelContextTestingMembers: names(mt) }; });
+    try { r.tools = (await p.mainFrame().webmcp.tools()).map((t) => t.name); }
+    catch (e) { r.toolsError = String(e.message).slice(0, 200); }
+  } finally {
+    await context.close();
+  }
+  out.push(r);
+  console.log(JSON.stringify(r));
+}
+
+await chromiumArm('cr-none', []);
+await chromiumArm('cr-webmcp', ['--enable-features=WebMCP']);
+await chromiumArm('cr-webmcp-merged', ['--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies']);
+await firefoxArm('ff-none', {});
+await firefoxArm('ff-prefs', { 'dom.modelcontext.enabled': true, 'dom.modelcontext.testing.enabled': true });
+await firefoxArm('ff-enabled-only', { 'dom.modelcontext.enabled': true });
+writeFileSync(join(scratch, 'features.json'), JSON.stringify(out, null, 2));
+console.log('DONE');
