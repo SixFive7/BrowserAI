@@ -313,6 +313,12 @@ So a boot time computed as now minus `Environment.TickCount64` is right on .NET
 10 and wrong by every sleep since boot on .NET 11, while one computed from
 `GetTickCount64` itself is right on both. `[FLOATS]`
 
+⚠️ **The target framework is .NET 11 since 2026-11-17**, *added by addition*: the Learn page,
+re-read that day, still says the same. No code in the product computes a boot time. Four
+bounded waits take a deadline from `Environment.TickCount64`, in `BackgroundFinder`,
+`PersonStart`, `BackgroundClient` and `BackgroundRecord`, and on .NET 11 their bounds count
+awake time only, the way the Windows wait functions they sit beside already counted it.
+
 **Re-establish it** with `boot/boot.ps1` and `boot/logon.ps1`, and the .NET half by
 reading the Learn page against the target framework in force.
 [Re-verification row 158](../re-verification.md).

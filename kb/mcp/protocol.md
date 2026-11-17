@@ -74,7 +74,9 @@ drops the unknown method instead of answering, **every child spawn costs a flat
 5 s against a ~300 ms baseline**, presenting as "browser automation got slow"
 with no error anywhere. The SDK's own test base class pins it explicitly, citing
 [csharp-sdk#1701](https://github.com/modelcontextprotocol/csharp-sdk/issues/1701)
--- CI slowness tripped the probe there. `[FLOATS]`
+-- CI slowness tripped the probe there. *Read 2026-11-17*: #1701 is still open, labelled
+bug, area-tests, ready for work and P3, milestone 2.x, unchanged since 2026-08-09; and the
+5 s default is unchanged at ModelContextProtocol 2.4.0, read off the shipped assembly. `[FLOATS]`
 
 > **Asserted, not remembered, since 2026-08-16.**
 > `FakeChildHarnessTests.TheClientPinIsWhatSkipsTheDiscoverProbe` reads the 5 s

@@ -188,6 +188,13 @@ reads the variable. ⚠️ *Corrected 2026-09-16
 2026-09-15 and does not take the argument, so following the old line **opens a
 window** instead of measuring anything. The procedure was broken, not untidy.
 
+⚠️ **Re-measured 2026-11-17 by addition, on .NET 11.0.0 and ILC 11.0.0**, three passes of the
+published binary with `--sweep --data-root` under `%LocalAppData%`: **112.8 / 90.4 / 128.9 ms**
+over 936-942 pids, 749-751 opened, 79 message windows of which 18 titled, no restart and no
+truncation. The machine held about 40 % more processes than on 2026-08-20 and other sessions
+were at work on it, so the two readings do not measure a regression; the premise the sweep
+rests on, a cost one process pays once per start, holds. `[MACHINE]`
+
 **51 of the 64 message windows are nameless, and one of the 13 named ones is not
 a path.** It is `DeviceMonitorMessageWindow`, owned by a Chromium embedder, and
 the sweep's string guard refuses it before any filesystem call -- **a live example
@@ -1497,6 +1504,14 @@ is about **a seventeenth** of the cheapest walk available to measure, and a
 session whose profile has actually been used holds far more than 310 files.
 Adding a probe per entry therefore cannot make a listing pathological: the
 listing's cost was already the walk. `[MACHINE]`
+
+⚠️ **Re-measured 2026-11-17 by addition, on .NET 11.0.0**, the same open in a file-based
+program against a scratch `browserai.json`, 2,000 iterations a run after a warm-up, 3 runs:
+free **0.0872 · 0.0891 · 0.0879 ms**, held by a second handle opened `FileShare.Read`
+**0.1368 · 0.1259 · 0.1215 ms**, every held open a sharing violation, 2,000 of 2,000, by
+`HResult & 0xFFFF`. About two and a half times the 2026-08-20 figures, on a machine other
+sessions were busy on, so the two readings do not measure a regression; the probe is still a
+fraction of the walk's cheapest reading, and the argument above holds. `[MACHINE]`
 
 > ⚠️ **These figures still describe `SessionLock.ProbeLiveness`, and since
 > 2026-08-24 they are no longer the whole of what a listing pays per entry.**

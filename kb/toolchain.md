@@ -194,6 +194,10 @@ property ([dotnet/roslyn#41640](https://github.com/dotnet/roslyn/issues/41640)).
 It is an error and not a quiet skip, which is the good outcome; the trap is
 that the fix also turns on CS1591, so every publicly visible member then needs
 an XML doc comment or the build is red under `TreatWarningsAsErrors`. `[FLOATS]`
+*Verified 2026-11-17 @ SDK 11.0.100*: without the property a build with IDE0005 escalated
+reports `EnableGenerateDocumentationFile` and IDE0005 does not run; with it IDE0005 reports
+the unused `using`. #41640 is still open, with one third-party cross-reference since
+2026-10-14.
 
 ## PowerShell as a build-script host
 

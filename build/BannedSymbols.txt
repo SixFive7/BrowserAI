@@ -195,6 +195,9 @@ M:System.Diagnostics.Process.WaitForExit(System.Int32);Never WaitForExit, any ov
 ; Corrected 2026-10-11 (previously "and the suite still reads its own children
 ; through them, where the product reads its children through
 ; Interop/JobLauncher's overlapped pipes"), when the suite's runs moved.
+; Re-measured 2026-11-17 by addition: on .NET 11 only a Process's redirected
+; standard input is such a stream; its standard output and error are opened for
+; overlapped I/O (kb, windows/processes.md).
 ; -----------------------------------------------------------------------------
 
 M:System.Runtime.CompilerServices.TaskAwaiter.GetResult;Never block a worker on a task (decision 54): await it. GetResult on a task that has not finished parks this thread until another thread finishes it, and on a pool thread the task's own completion may need the thread GetResult holds.

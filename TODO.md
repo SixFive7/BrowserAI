@@ -178,13 +178,16 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       Added in 2.1.277: https://code.claude.com/docs/en/changelog#2-1-277
       Extended in 2.1.281: https://code.claude.com/docs/en/changelog#2-1-281
       Remaining differences: https://github.com/anthropics/claude-code/tree/main/mods/agents-md#where-it-still-differs-from-claudemd
-- [ ] **Move the global `vpk` tool to 1.2.161.** Velopack 1.2.161 was
+- [x] **Move the global `vpk` tool to 1.2.161.** Velopack 1.2.161 was
       adopted on 2026-10-03 and `build/New-Release.ps1` refuses a `vpk` whose
       version is not the library's. The review that night packed with a copy
       installed into `.work/rv-scratch/vpk-1.2.161`, first on PATH for its own
       processes only, because the night's rules forbade a global install. Every
       gate needs a `vpk` 1.2.161 until this is done:
       `dotnet tool update -g vpk --version 1.2.161`, then delete the copy.
+      ✅ **Done, read 2026-11-17**: `dotnet tool list -g` reads `vpk` 1.2.161, the
+      library's version, and the gate of that day packed its test installer with it. The scratch copy
+      is still under `.work/rv-scratch/`, which is untracked and outside every build.
 - [ ] **Re-take the headed half of row 152**, the one part of the rows the 0.0.83
       roll left `[STALE]` in [the re-verification index](kb/re-verification.md)
       that is still owed: what `--enable-automation` changes that a page or a
@@ -1527,6 +1530,17 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       `myapp/` holding the held-file case, for the day `.work` is gone, and the
       measurement has
       [a kb section of its own](kb/packaging/velopack.md#an-apply-whose-last-rename-fails-leaves-no-program-and-the-installer-puts-it-back----measured-2026-10-10).
+      ⚠️ *Read 2026-11-17 by addition, through GitHub's API and both registries*: #1086 is closed as
+      completed by #1087, merged into `develop` on 2026-10-11 as `afa30e56` with the Velopack
+      maintainer's second commit `a69dc7b9`, *"Keep the Windows apply backup whenever the update
+      failed"*, which changes the cleanup rule the build of 2026-10-10 measured. **No stable release
+      carries it**: the first build that does is the pre-release `1.3.39-g8d2844f` of 2026-10-17, 83
+      commits ahead of 1.2.161 and none behind, and 1.2.161 is still the newest stable version on
+      NuGet and GitHub. GA is a hard floor, so nothing is adopted and the held-file rig waits for the
+      first stable release that contains `a69dc7b9`. The same pre-release is the first to carry
+      [#1089](https://github.com/velopack/velopack/pull/1089), the xdialog v4 dialogs (`9c006364`),
+      so the installer BrowserAI ships shows what it showed; what the new one shows is read the day a
+      stable release carries it, without starting it on this screen.
 - [ ] **WATCH [velopack/velopack#38](https://github.com/velopack/velopack/issues/38),
       better support for console applications, where our ask for a start with no
       console window after an install went.** Added 2026-10-11, on the maintainer's
@@ -1554,6 +1568,12 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       this item; adopting the option is a question for the maintainer through
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md). If #38 closes without either, record
       the reason in the kb section and close this item.
+      ⚠️ *Read 2026-11-17 by addition, through GitHub's API*: #38 is still open, labelled
+      `enhancement` and `os:windows`, with no answer from a maintainer and no linked pull request.
+      What moved since 2026-10-14 is a contributor's comment of support on 2026-11-03 and a
+      cross-reference from PR #1144, *"Add UpdateManager.DownloadLatestUpdateAndApplyOnExit"*,
+      opened 2026-11-03 and closed unmerged the next day. No Velopack release offers a start with
+      no console window.
 - [x] **WATCH the reports to Chromium and to Playwright on Chrome for Testing's stack sampling
       profiler, whose stack walk crashes the browser, and take `--disable-stack-profiler` out
       again when a fix ships.** ✅ **CLOSED 2026-11-17 by the maintainer's 178 b**, in his words

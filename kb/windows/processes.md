@@ -341,6 +341,17 @@ suite's child runs moved to the launcher the same day.*
 `UseShellExecute = false` and the three streams redirected, and print
 `process.StandardOutput.BaseStream.GetType()` and `((FileStream)process.StandardOutput.BaseStream).IsAsync`.
 
+⚠️ **On .NET 11 the output and error streams are opened for overlapped I/O** -- *re-measured
+2026-11-17 by addition, the record above being .NET 10's*. The same program, a file-based app
+starting `cmd.exe /d /c exit 0` with all three streams redirected and `CreateNoWindow`, read
+`System.IO.FileStream IsAsync=False` for standard input and `System.IO.FileStream
+IsAsync=True` for standard output and standard error on .NET 11.0.0, and `False` for all
+three on .NET 10.0.15, the control, run the same hour on the same machine. So on .NET 11 a
+`ReadAsync` of a child's output or error through `Process` parks no thread, and a write to its
+input still does. Nothing in the product starts a child through `Process`, so nothing here
+changed but the reason; the launcher's job list is the reason BrowserAI's children start
+through `Interop/JobLauncher` either way, and any .NET release can move this again.
+
 ### Both clients hand a server synchronous pipe ends, and no call makes them overlapped -- measured 2026-10-11
 
 **Measured 2026-10-11 on Windows 11 Pro 10.0.26300 with .NET 10.0.12**, against Claude
@@ -2917,7 +2928,7 @@ sentence would have caused is a wrong answer to a *different* question: a
 generator that emits `[DllImport]` (which is what `Microsoft.Windows.CsWin32`
 does, and will keep doing -- [#593](https://github.com/microsoft/CsWin32/issues/593)
 and [#1333](https://github.com/microsoft/CsWin32/issues/1333) are both closed
-*not planned*) is **not** ruled out by AOT. CsWin32 #1333's own
+*not planned*, read again 2026-11-17 and unchanged, at CsWin32 0.3.371) is **not** ruled out by AOT. CsWin32 #1333's own
 opening post repeats the same misconception, which is a fair guess at where it
 entered this repository. `[STABLE]` -- re-establish by publishing any AOT project
 containing a `[DllImport]` and reading the ILC output. The probe used here was

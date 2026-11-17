@@ -376,7 +376,8 @@ what each one does. `[UNVERIFIED]`
 downloads and the newest was published in **2017**. `dotnet/runtime`
 [#126273](https://github.com/dotnet/runtime/issues/126273) proposed built-in
 support and was closed as not planned. The hand-rolled surface is ~60 lines.
-`[FLOATS]`
+*Read 2026-11-17*: #126273 is still closed as not planned and locked, unchanged since
+2026-07-30, and .NET 11 ships no job-object API either. `[FLOATS]`
 
 **A job's I/O counters count a write to a pipe exactly as a write to a file**, so
 `JOBOBJECT_BASIC_AND_IO_ACCOUNTING_INFORMATION` measures what a tree's

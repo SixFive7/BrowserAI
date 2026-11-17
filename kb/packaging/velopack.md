@@ -1291,7 +1291,14 @@ one file in it open for 60 s. Everything it was read from:
   build of that commit itself, and applied normally without it. It was posted on
   2026-10-10 as pull request [#1087](https://github.com/velopack/velopack/pull/1087), with the report,
   issue [#1086](https://github.com/velopack/velopack/issues/1086); both are open, and no Velopack
-  release carries it, read the same day.
+  release carries it, read the same day. ⚠️ *Read 2026-11-17 by addition*: #1087 was merged on
+  2026-10-11 as `afa30e56` together with the Velopack maintainer's own `a69dc7b9`, which keeps
+  the backup whenever the update failed, so what upstream ships is not the build measured
+  above; #1086 closed with it. The first build carrying both is the pre-release
+  `1.3.39-g8d2844f` of 2026-10-17, and the newest stable release on NuGet and GitHub is still
+  1.2.161, so the measurement above is still what a BrowserAI that may adopt only stable
+  releases gets. The held-file case is re-run against the first stable `Update.exe` that
+  contains `a69dc7b9`.
 - **Not measured:** that `current\` is missing for up to about 30 s while a rename
   that later succeeds is being retried, which is what the source reads as happening.
   The holder never let go inside the retry window.
