@@ -145,7 +145,13 @@ to it. The chain the pointer opens: google.com/chrome/terms (last modified
 modify, distribute, sell, or lease any part of our services or software."*
 This is a citation, not a measurement, and it is not legal advice; it is
 recorded because it is the single piece of evidence the provisioning
-decision rests on.
+decision rests on. ⚠️ *Verified 2026-11-17 by addition, read through GitHub's
+API:* the thread is unchanged, closed since 2023-06-16. One newer issue asks
+the same question for `chrome-headless-shell`,
+[#226](https://github.com/GoogleChromeLabs/chrome-for-testing/issues/226), open
+since 2026-09-28 and unchanged since 2026-10-14; its one comment is a third
+party's that calls itself *"Not a Google answer"*. So #21 is still the only
+on-point statement from Google.
 
 ### What vendoring a runtime actually costs -- two long-lived cases
 

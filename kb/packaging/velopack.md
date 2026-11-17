@@ -2189,6 +2189,12 @@ from MylesBorins on **2021-10-06**, verbatim: *"We are looking at a number of
 improvements that we could make to artifacts / assets, but we may not be funding
 this effort in the immediate future (to set expectations)"*. Still open, with
 comments as recent as April 2026, beside three later duplicates that are
+unanswered. ⚠️ *Verified 2026-11-17 by addition, read through GitHub's API:* still
+open, with that 2021 reply as its chosen answer and no staff reply since; a user's
+comment of 2026-11-11 is the newest, and the three later discussions,
+[89928](https://github.com/orgs/community/discussions/89928),
+[158761](https://github.com/orgs/community/discussions/158761) and
+[166048](https://github.com/orgs/community/discussions/166048), are still open and
 unanswered.
 
 **What can be changed is what the archives CONTAIN, not whether they appear** --
@@ -2256,7 +2262,12 @@ process in its family is running: claude-code
 `ERROR_SHARING_VIOLATION`, the report naming "Claude Code runs as a child process
 of Claude Desktop") and openai/codex
 [#25770](https://github.com/openai/codex/issues/25770), both in 2026. Hydraulic
-Conveyor emits MSIX on Windows and inherits the same failure.
+Conveyor emits MSIX on Windows and inherits the same failure. ⚠️ *Verified
+2026-11-17 by addition, read through GitHub's API:* #25770 is still open with no
+reply from OpenAI, and five more users added reports from Windows 10 and 11 between
+2026-10-22 and 2026-11-14 of the update failing while the old package was still in use
+or left half-registered; #63397 was closed as not planned by the stale bot
+on 2026-05-31, labelled `invalid`, and is locked, with no fix linked.
 
 **Every unsigned `Setup.exe` is a new file to SmartScreen.** Azure Artifact
 Signing at roughly **$10/mo** buys instant reputation. `[UNVERIFIED]` price -- a

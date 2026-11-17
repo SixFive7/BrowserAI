@@ -265,6 +265,15 @@ per-connection tool list -- SEP-2567 stands -- but the cited issues need re-dati
 > re-list is a property of the pair, and this product's half of it is not there.
 > [Evidence](../../docs/evidence/2026-10-03-q369-tool-list-refresh/README.md).
 
+> ⚠️ *Re-dated 2026-11-17 by addition, read through GitHub's API on 2026-10-14 and
+> 2026-11-17, unchanged between the two.* **#13646** was closed as a duplicate by its own
+> author on 2025-12-11, the day it was opened, and locked on 2025-12-19. **#4118** was
+> closed as completed on 2026-05-23 by a Claude Code collaborator, in these words:
+> *"Handling for `notifications/tools/list_changed` shipped in 2.1.0 and is active in
+> current versions"*, and locked on 2026-09-02. So the change the paragraph above dates
+> between 2.0.65 and 2.1.231 came with 2.1.0, by Claude Code's own word; the 2.1.231
+> measurement stands as taken.
+
 ## Registering BrowserAI with the client
 
 Measured 2026-08-16 @ **Claude Code 2.1.233** (`claude.exe`, native install at
@@ -730,6 +739,22 @@ silently. The entry with its own PATH started in every condition measured; its c
 server whose PATH is that one entry, and a reliance on `which` expanding `~`, which Codex
 neither documents nor tests. Which entry BrowserAI writes is the maintainer's to decide. ⚠️ *Decided later that day,
 by addition: his 30 took the bare name for both clients, which the section below measures for Claude Code.*
+
+⚠️ *Verified 2026-11-17 by addition, by reading and not by a run.*
+[openai/codex#2680](https://github.com/openai/codex/issues/2680) is still open, with no
+linked pull request and no word from OpenAI; one user's comment of 2026-10-21 asks for
+the same expansion in an entry's `env` table. The newest stable Codex is `rust-v0.169.0`,
+of 2026-11-13 *(previously "the newest release `rust-v0.162.1`", read 2026-10-10)*. At that
+tag `program_resolver.rs` and `utils.rs` are byte-identical to `rust-v0.162.1`, whose copies
+give the SHA-256 prefixes the 2026-10-10 evidence recorded, `e0c81492e5d9` and
+`90e35a8811aa`, once given CRLF line endings; and `stdio_server_launcher.rs` still builds
+the server's environment with `create_env_for_mcp_server`, resolves the program with
+`program_resolver::resolve` and starts what that returns. It, `mcp_types.rs`,
+`child_command.rs` and `win/job.rs` changed: the launcher's process lifecycle, the Windows
+pipe handles, the job's restart and membership handling, and the configuration's
+authentication and deferred-start fields. None of those changes expands a variable or `~`
+in `command`. So the measurement speaks for 0.169.0 by this reading and not by identity;
+the rig has not been run against it.
 
 ## Claude Code finds a bare name in a project entry on the PATH it was started with -- measured 2026-10-10
 
@@ -1279,6 +1304,10 @@ three were run against the same sandbox:
 add-mcp **2.4.1** still ignored `CLAUDE_CONFIG_DIR` against Claude Code 2.1.288 on
 2026-10-03 ([evidence](../../docs/evidence/2026-10-03-upstream-reports/README.md));
 that is [neon-solutions/add-mcp#130](https://github.com/neon-solutions/add-mcp/issues/130).
+⚠️ *Verified 2026-11-17 by addition, by reading and not by a run:* the issue is open with
+no reply. add-mcp is at 2.6.1 (2026-11-01), and GitHub's code search finds
+`CLAUDE_CONFIG_DIR` nowhere in its repository, against five files for `COPILOT_HOME`, the
+variable it began reading for Copilot CLI on 2026-09-29.
 
 **Read and not run, on 2026-10-01, in a second look that tried to find the
 wheel:** kurir 0.3.0 registers but has no remove and no presence check;

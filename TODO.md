@@ -194,6 +194,29 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       122, 127's window time, 140, 141, 152 and 163 to 166"):* every other row is
       re-taken, and rows 5 and 66 are stamped with it, from
       [`docs/evidence/2026-10-03-reverify-0.0.83`](docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+- [ ] **Re-sync the upstream half of `.gitignore`, the part copied from github/gitignore's
+      `VisualStudio.gitignore`.** Added 2026-11-17 by the maintainer's 175 a, in his words
+      verbatim: *"175 a"*, which asked for this item and left the re-sync itself for later
+      (option b was to do it that day). The note at `.gitignore`'s BrowserAI marker says the
+      half above it is upstream's file as of commit `61268c1e` of 2026-04-17, and the note in
+      its section on certificates, keys and signing material points here for re-fetching it
+      wholesale. Upstream has moved six times
+      since, read 2026-11-17 at its HEAD `b71db924`:
+      [#4839](https://github.com/github/gitignore/pull/4839) adds a commented `*.lscache`
+      (2026-09-04), [#4777](https://github.com/github/gitignore/pull/4777) reverts the
+      `*.snk` lines that cite #2483 (2026-10-02),
+      [#4806](https://github.com/github/gitignore/pull/4806) adds `*_i.h` (2026-10-30),
+      [#4938](https://github.com/github/gitignore/pull/4938) rewords the `.vs/` comment
+      (2026-11-04), [#4912](https://github.com/github/gitignore/pull/4912) removes a
+      duplicated `*.ncb` and `*.aps` block (2026-11-07) and
+      [#4941](https://github.com/github/gitignore/pull/4941) adds `*.msixbundle`
+      (2026-11-13). **What to do:** paste upstream's file over the half above the marker,
+      anchor `artifacts/` and `.artifacts/` at the root again with their comment, and run
+      `git check-ignore -v` over `src/` and `tests/` by hand, as the note at the marker
+      says; then correct that note's *"as of"* sentence with a dated previously clause. The
+      project half's `*.snk` and `*.pfx` rules stay whatever upstream does, and so does its
+      `!.vscode/mcp.json` while [github/gitignore#4735](https://github.com/github/gitignore/pull/4735)
+      is open.
 
 ### Research that exists only under `.work`, owed to `docs/evidence/` and `kb/` before the session closes
 
@@ -1259,6 +1282,22 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       because it is the same class of report in the other tracker, so how it is
       handled is the triage signal this item is waiting for.
 
+      ⚠️ *Corrected 2026-11-17 by addition, read through GitHub's API on 2026-10-14
+      and again on 2026-11-17, with the record above left as it stood.* Three of
+      the issues it cites closed after it was written, and none has moved since
+      2026-10-14. [#42363](https://github.com/microsoft/playwright/issues/42363) was
+      closed as completed on 2026-08-28, when
+      [PR #42365](https://github.com/microsoft/playwright/pull/42365) merged, and
+      still carries the `[MCP]:` title prefix and no labels.
+      [#42384](https://github.com/microsoft/playwright/issues/42384) was closed as not
+      planned on 2026-08-31 by a Playwright collaborator, *"Closing because we lack
+      the information to act on this issue"*, after a Playwright maintainer's
+      question of 2026-08-25 went unanswered *(previously "open, filed
+      2026-08-24")*. And
+      [playwright-mcp#1664](https://github.com/microsoft/playwright-mcp/issues/1664),
+      the notice, was closed and unpinned on 2026-10-03 *(previously "pinned and
+      open")*.
+
 - [ ] **WATCH [microsoft/playwright#43089](https://github.com/microsoft/playwright/issues/43089),
       the Firefox safe-mode hang.** Posted 2026-10-03 under SixFive7 on the
       maintainer's word (Q313 and Q357), with the reproduction in a public
@@ -1303,6 +1342,21 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       question to the maintainer. A fix would change what `browser_snapshot`
       returns, so the upstream review that adopts one re-runs the page from the
       comment.
+      ⚠️ *Corrected 2026-11-17 by addition (previously "open since 2023 and
+      labelled `P3-collecting-feedback`"), read through GitHub's API:* a Playwright
+      maintainer closed the issue as not planned on 2026-10-31, in a sweep that
+      closed every issue labelled `P3-collecting-feedback`, about a hundred, and
+      retired the label; it carries `archive` now.
+      [#43813](https://github.com/microsoft/playwright/issues/43813) says why, and
+      asks anyone the request still matters to for a new issue against the latest
+      Playwright with the concrete use case, linking back. Nobody answered our
+      comment and no fix was made. A contributor's
+      [#43820](https://github.com/microsoft/playwright/issues/43820), *"`Locator`
+      support closed shadow root"*, was closed the same day with a Playwright
+      member's answer that a snippet like its own is a reasonable workaround where
+      a page has no open root mode for testing. **So no reply is left to watch for
+      here.** Whether a new issue goes out is the maintainer's to decide, because
+      it goes out under his name; the item stays open until he does.
 - [ ] **WATCH https://github.com/anthropics/claude-code/issues/99238, the
       Windows stdio MCP tree-kill.** On Windows, Claude Code tree-kills a stdio
       MCP server before its stdin is closed. Posted 2026-10-03. Watch for a
@@ -1310,6 +1364,13 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 - [ ] **WATCH https://github.com/openai/codex/issues/48524#issuecomment-5969839400,
       our Windows comment on Codex server-shutdown issue #48524.** Posted
       2026-10-03. Watch for a reply.
+      ⚠️ *Verified 2026-11-17 by addition, read through GitHub's API:* no reply to
+      it, and no OpenAI member has commented on the issue, which is open with the
+      labels `bug`, `mcp` and `app-server`. Two other people added measurements of
+      the same ordering on other systems: `codex exec` 0.162.1 on macOS sent
+      SIGTERM 41 ms before it closed the server's stdin (2026-10-17), and an
+      app-server 0.163.0 on Linux, traced with `strace`, sent SIGTERM, closed stdin
+      0.6 ms later and sent SIGKILL 8.5 ms after the SIGTERM (2026-10-18).
 - [ ] **WATCH https://github.com/microsoft/playwright/issues/43098, the Windows
       Playwright MCP browser kill.** On Windows, the stdio server force-kills
       its own browser 1 ms after the graceful close begins. Posted 2026-10-03.
@@ -1377,6 +1438,30 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       it changes what the 2026-10-08 decision costs a Codex user, and close
       this item. If #11489 and #16899 both close without a fix, record the
       reason in the kb section and close this item.
+      ⚠️ *Verified 2026-11-17 by addition, read through GitHub's API and in Codex's
+      source; nothing was run.* All four are open, and no maintainer has replied on
+      any of them. #11489 gained a cross-reference from
+      [#54301](https://github.com/openai/codex/issues/54301), a recovered server
+      whose tools stay missing in an existing chat; #4955 two users' comments, its
+      assignee still silent; #30083 nothing, its merge conflicts unresolved. On
+      #16899 a third party measured the case on Windows at 0.165.0-alpha.1.2 on
+      2026-10-28: after the server exited, the same thread's calls failed with
+      *"Transport closed"* in about 1 ms and no new server started, while a fresh
+      app-server worked. That is their reading and not this repository's rig. The
+      newest stable release is `rust-v0.169.0`, of 2026-11-13 *(previously
+      "`rust-v0.161.0`, the newest stable release (2026-10-07)", read 2026-10-08)*,
+      and the notes of every stable release from 0.162.0 to 0.169.0 name no change
+      that starts a closed stdio server again inside a thread. They do change the
+      code around it: 0.166.0 shares eligible local stdio connections across chats,
+      0.167.0 gives each chat a lease on a shared connection, and 0.169.0 adds an
+      opt-in lazy start for cached stdio servers. Read at the tag `rust-v0.169.0`,
+      `reusable_client` still returns nothing for a closed client, so a refresh
+      replaces it, and the reconnect path added since, `client_for_call`, starts a
+      server again only after its start failed; GitHub's code search over `main`
+      finds `Op::RefreshMcpServers` in its definition, its handler and seven test
+      files and nowhere else. **The kb section's rig has not been run against a
+      release this new**, and only that run can say the condition above is still
+      unmet.
 - [ ] **WATCH [velopack/velopack#1086](https://github.com/velopack/velopack/issues/1086)
       and [PR #1087](https://github.com/velopack/velopack/pull/1087), an update that leaves
       no program when its last rename fails.** Both were filed on 2026-10-10

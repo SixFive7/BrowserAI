@@ -56,3 +56,5 @@ uncut. Two departures, both in the reports' folder: its three Markdown drafts ca
 their names, so that no header has to be written into what was posted, and its log of the
 install of Playwright 1.64.0's Chromium is left out, because its progress bars are terminal
 control bytes.
+
+⚠️ *Added 2026-11-17 by addition*: `reports/cl8482885.json` is kept whole, with the four account addresses Gerrit served in it, three at chromium.org and one a service account's, because it is a verbatim capture of Chromium's public code-review record; by the maintainer's 177 a of 2026-11-17, in his words verbatim: *"177 a"*.

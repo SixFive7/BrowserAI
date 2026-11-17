@@ -996,6 +996,14 @@ nothing suspended, was answered with that text after 5,024 ms and its second who
 with the commit charge at 41.8 % at that half's start: a run's load reaches upstream's line with no
 fault injected, and the arm's second ask is what keeps it green.
 
+⚠️ *Added 2026-11-17 by addition*: **BrowserAI keeps upstream's action timeout for a
+screenshot, by the maintainer's decision.** Whether a screenshot should get more than
+upstream's 5 s was put to him on 2026-10-14 as his question 173, and he answered on
+2026-11-17, in his words verbatim: *"173 a - do not track this issue. do not check in a
+week or two. if the issue becomes a problem we will see it."* So nothing watches the
+question, no TODO item and no follow-up; [row 224](../re-verification.md) still says
+when the measurement above is taken again, which is a different thing.
+
 ## Every launched browser leaves a descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and nothing reaps it -- measured 2026-09-16
 
 **`playwright-core` writes one JSON file per launched browser into a cache
@@ -1753,7 +1761,12 @@ listener. `browser_snapshot` at 0.0.83 left the closed content out the same way.
 it gets no ref for it, while a person can use it and the coordinate tools can
 reach it. Posted as a comment on
 [microsoft/playwright#23047](https://github.com/microsoft/playwright/issues/23047)
-on 2026-10-03.
+on 2026-10-03. ⚠️ *Added 2026-11-17 by addition, read through GitHub's API:* a
+Playwright maintainer closed #23047 as not planned on 2026-10-31, with no fix and no
+reply to the comment, in a sweep that closed every issue labelled
+`P3-collecting-feedback` and retired the label
+([#43813](https://github.com/microsoft/playwright/issues/43813)). Nothing here was
+measured again, and the TODO item that watched the comment says what is left.
 
 **Re-establish** with `shadow-probe.cjs` and `shadow-exact.cjs` from the rig,
 which serve the page and print what each reader returned.

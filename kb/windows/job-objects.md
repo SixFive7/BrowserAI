@@ -352,9 +352,13 @@ suite; it is what makes *"`--no-sandbox` is absent"* an assertion about the
 browser, not about our config file. `[STABLE]`
 
 **Node's `child_process` has no job object support at all**, and Node's `spawn`
-cannot execute `.cmd` shims without `shell: true` -- a live Claude Code bug for
+cannot execute `.cmd` shims without `shell: true` -- a Claude Code bug for
 plugin-shipped servers using bare `npx`
-([#58510](https://github.com/anthropics/claude-code/issues/58510)). The first
+([#58510](https://github.com/anthropics/claude-code/issues/58510)), which the stale
+bot closed as not planned on 2026-07-14 with no fix linked and no maintainer reply,
+after users reported it still reproducing at 2.1.156 *(corrected 2026-11-17, read
+through GitHub's API, previously "a live Claude Code bug"; whether a current Claude
+Code still has it is not measured here)*. The first
 half is Node's own documented API surface. **The second half is reasoned, not
 surveyed** -- ***relabelled 2026-08-18 (previously "Every Node process supervisor
 on Windows falls back to `taskkill /T /F` or a native addon, and none survives a

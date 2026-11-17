@@ -456,7 +456,7 @@ Do **not** set `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS`: it writes a line to
 
 ### Windows process spawning
 
-Node's `spawn` cannot execute `.cmd` shims without `shell: true` -- a live Claude Code bug ([#58510](https://github.com/anthropics/claude-code/issues/58510)) for plugin-shipped servers using bare `npx`. Since BrowserAI ships its own Node, it must invoke the resolved `cli.js` with the bundled Node executable directly and never depend on PATH resolution or shell shims:
+Node's `spawn` cannot execute `.cmd` shims without `shell: true` -- a Claude Code bug ([#58510](https://github.com/anthropics/claude-code/issues/58510)) for plugin-shipped servers using bare `npx`, which the stale bot closed as not planned on 2026-07-14 with no fix linked and no maintainer reply, after users reported it still reproducing at 2.1.156 *(corrected 2026-11-17, previously "a live Claude Code bug"; whether a current Claude Code still has it is not measured here)*. Since BrowserAI ships its own Node, it must invoke the resolved `cli.js` with the bundled Node executable directly and never depend on PATH resolution or shell shims:
 
 ```
 <install>\node\node.exe  <install>\mcp\node_modules\@playwright\mcp\cli.js  --config <abs path>

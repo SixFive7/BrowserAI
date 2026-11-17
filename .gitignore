@@ -468,6 +468,17 @@ FodyWeavers.xsd
 # (VisualStudio.gitignore blob d5a18de, last touched by commit 61268c1e on
 # 2026-04-17), which has not moved since.
 #
+# !! CORRECTED 2026-11-17 (previously "which has not moved since"). Upstream moved
+# after that reading, six times by 2026-11-17, read at its HEAD b71db924 (blob
+# bbcb2d2): github/gitignore#4839 adds a commented *.lscache (2026-09-04), #4777
+# reverts the *.snk lines above that cite #2483 (2026-10-02), #4806 adds *_i.h
+# (2026-10-30), #4938 rewords the .vs/ comment (2026-11-04), #4912 removes a
+# duplicated *.ncb and *.aps block (2026-11-07) and #4941 adds *.msixbundle
+# (2026-11-13). Verified the same day: this half is upstream's file at 61268c1e
+# but for the anchoring the next paragraph describes. It was not re-synced, by
+# the maintainer's 175 a of 2026-11-17, which put the re-sync in TODO.md as an
+# item of its own.
+#
 # !! IT IS NOT VERBATIM, AND THE ONE DEVIATION IS LOAD-BEARING. Corrected
 # 2026-08-19 (previously "verbatim as of 2026-04-17, so the upstream half can be
 # refreshed wholesale"). Upstream's `artifacts/` and `.artifacts/` are
@@ -507,7 +518,11 @@ FodyWeavers.xsd
 # failure mode this file's own header is about.
 #
 # Upstream proposes fixing it: github/gitignore#4735, open since 2025-09-23, last
-# touched 2025-07-24, still unmerged when checked 2026-08-19. Re-admitted here in
+# touched 2026-07-24, still unmerged when checked 2026-11-17. Corrected 2026-11-17
+# (previously "last touched 2025-07-24, still unmerged when checked 2026-08-19"):
+# the year was wrong, since the pull request was opened in 2025-09, and its last
+# touch is the stale bot's comment and label of 2026-07-24, after changes were
+# requested on 2026-04-24. Re-admitted here in
 # the meantime, below the marker, so a wholesale refresh of the upstream half
 # cannot drop it. If that PR merges, this line becomes redundant and not
 # wrong, and the upstream half's own negation takes over.
@@ -623,7 +638,11 @@ CLAUDE.local.md
 # commented out. Both are asserted again here on purpose: this half is the one
 # that gets read, and re-fetching the upstream half wholesale (TODO.md) must not
 # be able to quietly drop either. `.gitattributes` already calls most of these
-# binary -- that suppresses a diff, not a commit.
+# binary -- that suppresses a diff, not a commit. Added 2026-11-17: the TODO.md
+# item this points at is "Re-sync the upstream half of `.gitignore`", written
+# that day by the maintainer's 175 a; until then TODO.md held no such item. The
+# re-sync will drop the commented `*.snk` above, which upstream reverted on
+# 2026-10-02, and the `*.snk` rule below still ignores the class.
 #
 # Nothing in this project needs a committed certificate today. If a test fixture
 # ever does, negate it by exact path (`!tests/Fixtures/localhost.pfx`), so the
