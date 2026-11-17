@@ -606,7 +606,10 @@ state database and logs a fresh scratch home does not have. The machine had been
 2026-11-13T10:14:07Z and the file had last started at 06:45:10Z that day, so whether its
 pages were still in memory was not read. The fourth sighting in
 [the hazard index](../../HAZARDS.md#hazard-index), the first gate after a reboot, had all
-three.
+three. ⚠️ *Added 2026-11-17 by addition:* under the suite's load later that day, with the
+commit charge at 90 to 92 %, two runs of this command line outlasted BrowserAI's 14 s,
+one starting with Codex and one with Claude Code; they were seen in a gate and not timed,
+and the hazard index has them.
 
 **How it was timed.** RegisterAI's document gives no times, so the rig put RegisterAI in a
 job object of its own with a completion port: every process it started was reported as it
