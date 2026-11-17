@@ -20,15 +20,15 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class ChildEnvironmentTests
 {
-    /// <summary>The three names set on every child whatever this process carries.</summary>
+    /// <summary>The two names set on every child whatever this process carries.</summary>
     /// <remarks>
-    /// ⚠️ <b>Three since 2026-10-03 (previously two).</b>
-    /// <c>MOZ_DISABLE_SAFE_MODE_KEY</c> arrived with Q312 b; see
-    /// <see cref="EveryChildIsStartedWithFirefoxsSafeModeKeySwitchedOff"/>.
+    /// ⚠️ <b>Two again since 2026-11-17 (previously three), the maintainer's 197 b, in his
+    /// words verbatim: <i>"197 b"</i>.</b> <c>MOZ_DISABLE_SAFE_MODE_KEY</c> arrived with Q312 b
+    /// on 2026-10-03 and left when Playwright began setting it itself; <c>SafeModeKeyTests</c>
+    /// reads the started Firefox's own environment for it since.
     /// </remarks>
-    private static readonly string[] TheThreeForcedNames =
+    private static readonly string[] TheTwoForcedNames =
     [
-        "MOZ_DISABLE_SAFE_MODE_KEY",
         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD",
         "PLAYWRIGHT_SKIP_BROWSER_GC",
     ];
@@ -200,11 +200,13 @@ internal sealed class ChildEnvironmentTests
         // would reach every child every other arm starts.
         var host = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            [ServerRegistryReap.RegistryDirectoryVariable] = @"C:\scratchegistry",
+            [ServerRegistryReap.RegistryDirectoryVariable] = @"C:\scratch
+egistry",
         };
 
         await Assert.That(ChildEnvironment.Build(host)[ServerRegistryReap.RegistryDirectoryVariable])
-            .IsEqualTo(@"C:\scratchegistry");
+            .IsEqualTo(@"C:\scratch
+egistry");
 
         // And absent by default, whatever this machine happens to carry: nothing
         // in the product writes this name.
@@ -224,70 +226,31 @@ internal sealed class ChildEnvironmentTests
         await Assert.That(string.Join(", ", contradictions)).IsEmpty();
     }
 
-    /// <summary>The forced names are exactly the three that must not depend on the host.</summary>
+    /// <summary>The forced names are exactly the two that must not depend on the host.</summary>
     /// <remarks>
-    /// ⚠️ <b>Renamed 2026-10-03 (previously
-    /// <c>TheForcedVariablesAreTheTwoThatMustNotDependOnTheHost</c>)</b>, when Q312 b
-    /// made the set three.
+    /// ⚠️ <b>Renamed 2026-11-17 (previously
+    /// <c>TheForcedVariablesAreTheThreeThatMustNotDependOnTheHost</c>)</b>, when the
+    /// maintainer's 197 b made the set two again, the name it carried before 2026-10-03, when
+    /// Q312 b had made it three.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheForcedVariablesAreTheThreeThatMustNotDependOnTheHost()
+    public async Task TheForcedVariablesAreTheTwoThatMustNotDependOnTheHost()
     {
         await Assert.That(ChildEnvironment.Forced.Keys.Order(StringComparer.Ordinal))
-            .IsEquivalentTo(TheThreeForcedNames);
+            .IsEquivalentTo(TheTwoForcedNames);
 
         await Assert.That(ChildEnvironment.Forced["PLAYWRIGHT_SKIP_BROWSER_GC"]).IsEqualTo("1");
         await Assert.That(ChildEnvironment.Forced["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"]).IsEqualTo("1");
-        await Assert.That(ChildEnvironment.Forced["MOZ_DISABLE_SAFE_MODE_KEY"]).IsEqualTo("1");
     }
 
-    /// <summary>
-    /// Every child is started with Firefox's safe-mode key switched off, whatever
-    /// this process carries.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Q312 b, decided 2026-10-03 by the maintainer, in his words: <i>"Q312
-    /// b"</i>.</b> On Windows a Firefox browser process that starts while Shift is
-    /// held, with Ctrl and Alt up, enters safe mode unless
-    /// <c>MOZ_DISABLE_SAFE_MODE_KEY</c> is set, and a safe-mode Firefox opens a
-    /// modal window before any browser window -- headless or not -- so juggler's
-    /// <c>Browser.enable</c> is never answered and the launch stops at Playwright's
-    /// own 180 s timeout. Reproduced 2026-09-25 at firefox 1549 in 4 of 133 serial
-    /// launches without the variable and 0 of 155 with it.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>This arm holds the mechanism and not the behaviour, and that is the
-    /// SECOND named exception to the plant-it-red rule</b>, made by the rule's
-    /// owner and recorded in <c>AGENTS.md</c>. The trigger is a key held on the
-    /// keyboard at the instant a browser process starts, so no run can plant it
-    /// red without driving the machine's keyboard. What a run CAN plant is the
-    /// detector: <c>SafeModeWatch</c> fails any run in which a Firefox of the
-    /// suite's starts in safe mode, and <c>MOZ_SAFE_MODE_RESTART=1</c> forces one,
-    /// which this variable does not cover.
-    /// </para>
-    /// <para>
-    /// <b>Forced and not inherited</b>, so it reaches every child whether or not
-    /// the host has it: the maintainer's own user environment carries it, which a
-    /// test host started from there inherits and an installed server started by a
-    /// client may not.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task EveryChildIsStartedWithFirefoxsSafeModeKeySwitchedOff()
-    {
-        await Assert.That(ChildEnvironment.Forced.ContainsKey("MOZ_DISABLE_SAFE_MODE_KEY")).IsTrue();
-        await Assert.That(ChildEnvironment.Forced["MOZ_DISABLE_SAFE_MODE_KEY"]).IsEqualTo("1");
-
-        // Through Build(), which is the block a child is actually handed.
-        await Assert.That(ChildEnvironment.Build()["MOZ_DISABLE_SAFE_MODE_KEY"]).IsEqualTo("1");
-
-        // And it is not refused: the list that turns a variable away must never
-        // contain the one that keeps Firefox out of safe mode.
-        await Assert.That(ChildEnvironment.Refused.Contains("MOZ_DISABLE_SAFE_MODE_KEY")).IsFalse();
-    }
+    // ⚠️ DELETED 2026-11-17: EveryChildIsStartedWithFirefoxsSafeModeKeySwitchedOff, which held
+    // MOZ_DISABLE_SAFE_MODE_KEY=1 in ChildEnvironment.Forced and in Build() from Q312 b of
+    // 2026-10-03, and was the second named exception to the plant-it-red rule, because no run can
+    // hold Shift down at a browser's start. The maintainer's 197 b of 2026-11-17, in his words
+    // verbatim: "197 b", took BrowserAI's copy out once Playwright set the variable itself, and
+    // SafeModeKeyTests reads the started Firefox's own environment in its place, which a run can
+    // plant red: the payload of @playwright/mcp 0.0.83 does not set it.
 
     [Test]
     public async Task ARefusedVariableCannotBeAddedByACaller()

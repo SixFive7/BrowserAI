@@ -1315,7 +1315,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       the notice, was closed and unpinned on 2026-10-03 *(previously "pinned and
       open")*.
 
-- [ ] **WATCH [microsoft/playwright#43089](https://github.com/microsoft/playwright/issues/43089),
+- [x] **WATCH [microsoft/playwright#43089](https://github.com/microsoft/playwright/issues/43089),
       the Firefox safe-mode hang.** Posted 2026-10-03 under SixFive7 on the
       maintainer's word (Q313 and Q357), with the reproduction in a public
       [gist](https://gist.github.com/SixFive7/a80adceb13f39d360713dad9ff57b102).
@@ -1354,6 +1354,12 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       `ChildEnvironment.Forced` is put to the maintainer and not done**, because the line is
       the second exception `AGENTS.md` names and only he changes that rule. Until he decides,
       the line stays.
+      ✅ **CLOSED 2026-11-17 by the maintainer's 197 b**, in his words verbatim: *"197 b"*.
+      `MOZ_DISABLE_SAFE_MODE_KEY` left `ChildEnvironment.Forced`, the arm that held it is
+      deleted, `SafeModeKeyTests.AgainstARealFirefoxASessionsBrowserStartsWithItsSafeModeKeySwitchedOff` reads the started Firefox's own
+      environment and is planted red against the payload of 0.0.83, and `AGENTS.md`'s second
+      exception is retired. The forced-restart probe was not run: the decision rests on the
+      variable in the browser's environment, not on a stall.
 - [ ] **WATCH our comment on
       [microsoft/playwright#23047](https://github.com/microsoft/playwright/issues/23047),
       closed shadow roots.** Posted 2026-10-03 under SixFive7 on the maintainer's

@@ -225,8 +225,11 @@ as a fact about the world. Nothing validates `arguments` against the page's
 schema -- whatever you send reaches the page's own code verbatim -- and `session`
 and `why` are BrowserAI's own and never reach the page.
 
-**A page tool that does not answer within 60 seconds is abandoned** and you are
-told. Upstream bounds this call with nothing, so BrowserAI does: the page's code
+**A page tool that does not answer within 20 seconds is abandoned** and you are
+told. *Corrected 2026-11-17 (previously "within 60 seconds" and "Upstream bounds this call with
+nothing, so BrowserAI does"), the maintainer's 201:* the Playwright BrowserAI carries gives up on
+the call itself after 30 seconds and nothing BrowserAI passes changes that, so BrowserAI gives up
+first and says so: the page's code
 is not stopped by that and the refusal says so, the rest of the session goes on
 working, and navigating the tab elsewhere or closing it releases the abandoned
 call.

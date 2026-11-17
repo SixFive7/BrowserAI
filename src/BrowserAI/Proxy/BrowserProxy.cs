@@ -1272,7 +1272,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // its own, so a page can hold a call open forever; every other tool
             // here is upstream's code with upstream's own limits and is left
             // alone. See `SessionToolSurface.PageToolBudget` for the number and
-            // why it is that number.
+            // why it is that number. Corrected 2026-11-17 by addition: since
+            // playwright-core 1.66.0-alpha-2026-11-09 upstream bounds the call at
+            // its default 30 s, which nothing here can set, so this clock is set
+            // below it and answers first (the maintainer's 201).
             using var budget = isPageTool ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken) : null;
 
             budget?.CancelAfter(SessionToolSurface.PageToolBudget);

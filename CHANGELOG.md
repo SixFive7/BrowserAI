@@ -236,7 +236,19 @@ more* link to its detail; nothing else depends on it.
   upstream's limit of five seconds, which BrowserAI does not set, is answered with
   upstream's timeout, and the open row of the hazard index says what else was measured.
 
+- 🔧 **A page's own tool that does not answer is given up after 20 seconds, down from 60.**
+  The Playwright this release carries stops waiting for a page tool after 30 seconds and
+  answers with a bare timeout, and nothing BrowserAI can pass changes that. So BrowserAI now
+  gives up first, and its answer says that the page's code may still be running, that the
+  session still answers, and that navigating the tab away releases it.
+
 ### Removed
+
+- 🗑️ **BrowserAI no longer sets Firefox's safe-mode variable, because Playwright sets it itself.**
+  A Firefox that starts while Shift is held opens in safe mode and never finishes starting,
+  unless `MOZ_DISABLE_SAFE_MODE_KEY` is set. BrowserAI set it on every launch; the Playwright
+  this release carries sets it for every Firefox it starts, so BrowserAI's copy came out, as the
+  maintainer decided. The suite reads it in a real session's Firefox.
 
 - 🗑️ **BrowserAI no longer adds `--disable-stack-profiler` to Chromium, because Playwright adds it itself.**
   The switch keeps Chrome for Testing's own stack sampling profiler from starting, whose stack

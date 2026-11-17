@@ -2316,7 +2316,10 @@ environment block of the Firefox browser process, with the variable absent from 
 environment, one launch each, headless: present under 1.66.0-alpha-2026-11-09 and Firefox
 159.0, absent under 1.64.0-alpha-1790635538000 and Firefox 156.0 ([evidence](../../docs/evidence/2026-11-17-adopted-playwright/README.md)). So
 `ChildEnvironment.Forced` now sets what Playwright sets. Whether BrowserAI's line goes is the
-maintainer's to decide, because it is the second exception `AGENTS.md` names. The forced arm
+maintainer's to decide, because it is the second exception `AGENTS.md` names. ⚠️ *Decided
+2026-11-17 by addition, the maintainer's 197 b, in his words verbatim: "197 b":* the line is
+gone, `SafeModeKeyTests` reads the variable in the session's own Firefox, and the exception
+is retired. The forced arm
 was not run on Firefox 159, so the stall itself is unmeasured there; re-verification row 168
 says what is owed.
 

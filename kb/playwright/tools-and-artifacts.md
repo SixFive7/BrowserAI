@@ -2213,6 +2213,20 @@ binary by `PageToolTests` that day, so a hung page tool is answered half way thr
 `SessionToolSurface.PageToolBudget`, which stays as the bound behind it. The session
 answered a snapshot afterwards; whether the page's code was stopped was not read.
 
+⚠️ *Corrected 2026-11-17 by addition, the maintainer's 201, in his words verbatim: "201 can we set the playwright limit to 600 sec. so ours comes earlier? If not, go with b."*
+**Upstream's 30 s is Playwright's default timeout, and nothing BrowserAI passes sets it.**
+`callWebMCPTool` calls `frame.webmcp.callTool(name, params2 ?? {})` with no options; the
+client's `callTool` passes `this._frame._timeout(options)` to `webmcpCallTool`; with no
+timeout in the options and none set on the page or its context, that is
+`DEFAULT_PLAYWRIGHT_TIMEOUT = 3e4` from `packages/isomorphic/time.ts`. Read in the payload's
+`coreBundle.js`: `callWebMCPTool` at line 66850, the client's `callTool` at 62309, the
+frame's `_timeout` at 62405 and `TimeoutSettings.timeout` at 59475, and the constant at 5002.
+The configuration's `timeouts` reach only the actions that pass them, `_defaultContextTimeout`
+is read and never set, and the one other way to a different value, `PWDEBUG=inspector`, opens
+Playwright's inspector, a window. So `SessionToolSurface.PageToolBudget` is 20 s since that
+day, below upstream's 30, and BrowserAI's own refusal answers a hung page tool first again,
+which `PageToolTests` holds against the payload's own number.
+
 
 ## The list compiled into the binary is the child's own bytes -- measured 2026-10-08
 

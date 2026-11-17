@@ -212,28 +212,79 @@ internal sealed class PageToolTests
     }
 
     [Test]
-    public async Task APageToolThatNeverAnswersIsEndedByUpstreamsOwnTimeoutBeforeBrowserAisAndTheSessionSurvivesIt()
+    public async Task APageToolThatNeverAnswersIsAbandonedOnBrowserAiSOwnClockAndTheSessionSurvivesIt()
     {
         await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
-        // ⚠️ UPSTREAM'S OWN TIMEOUT ENDS THE CALL SINCE 2026-11-17 (previously
-        // APageToolThatNeverAnswersIsAbandonedOnBrowserAiSOwnClockAndTheSessionSurvivesIt,
-        // which held BrowserAI's refusal "did not answer within", its three sentences
-        // and a lower bound of SessionToolSurface.PageToolBudget). playwright-core
-        // 1.66.0-alpha-2026-11-09 bounds a page tool's call itself and answers
-        // "browserBackend.callTool: Timeout 30000ms exceeded.", measured that day, so the
-        // call is ended by upstream half way through BrowserAI's budget, which stays as the
-        // bound behind it.
+        // ⚠️ BROWSERAI'S OWN CLOCK AGAIN SINCE 2026-11-17, the maintainer's 201, in his
+        // words verbatim: "201 can we set the playwright limit to 600 sec. so ours comes
+        // earlier? If not, go with b." (previously, for the same day, the arm was
+        // APageToolThatNeverAnswersIsEndedByUpstreamsOwnTimeoutBeforeBrowserAisAndTheSessionSurvivesIt
+        // and held upstream's "browserBackend.callTool: Timeout 30000ms exceeded." before a
+        // budget of 60 s). Upstream's limit cannot be set from here, so BrowserAI's budget
+        // went to 20 s, below it, and this arm holds what it held before 1.66.
         await Assert.That(run.IsError("hang")).IsTrue();
-        await Assert.That(run.Text("hang")).Contains("Timeout");
-        await Assert.That(run.HangElapsed).IsLessThan(SessionToolSurface.PageToolBudget);
+        await Assert.That(run.Text("hang")).Contains("did not answer within");
+        await Assert.That(run.Text("hang")).Contains("webmcp_hang_forever");
+
+        // The three things a caller has to be told, because all three are
+        // measured facts about what is left behind: the page's code was not
+        // stopped, the session still works, and navigating or closing the tab is
+        // what releases it.
+        await Assert.That(run.Text("hang")).Contains("may still be running");
+        await Assert.That(run.Text("hang")).Contains("still answers");
+        await Assert.That(run.Text("hang")).Contains("Navigating the tab elsewhere or closing it releases");
+
+        // ⚠️ A LOWER BOUND, WHICH IS THE CLAIM. It says the refusal came from
+        // BrowserAI's own budget and not from anything else giving up first;
+        // the upper bound is the exchange deadline the client already carries,
+        // and a second one written here would be the promptness assertion the
+        // house rules forbid.
+        await Assert.That(run.HangElapsed).IsGreaterThanOrEqualTo(SessionToolSurface.PageToolBudget);
 
         // And the session is genuinely still there, asked AFTER the abandonment
-        // and not before it.
+        // and not before it, while upstream's own call is still waiting on the page,
+        // which is the state 0.0.83 left it in for good.
         await Assert.That(run.IsError("afterHang")).IsFalse();
         await Assert.That(run.Text("afterHang")).Contains("- Page URL:");
+
+        // ⚠️ AND AGAIN ONCE UPSTREAM'S OWN LIMIT HAS PASSED, added 2026-11-17 with 201:
+        // since 1.66 the abandoned call does end, in upstream's timeout, after BrowserAI has
+        // answered, and the session goes on answering after that too.
+        await Assert.That(run.IsError("afterUpstreamLimit")).IsFalse();
+        await Assert.That(run.Text("afterUpstreamLimit")).Contains("- Page URL:");
+    }
+
+    /// <summary>
+    /// BrowserAI's budget for a page tool ends before the payload's own Playwright gives up on
+    /// the call, so a hung page tool is answered by BrowserAI's refusal and not by a bare
+    /// timeout.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 201, 2026-11-17, in his words verbatim:</b> <i>"201 can we set the
+    /// playwright limit to 600 sec. so ours comes earlier? If not, go with b."</i> Playwright's
+    /// limit is its default timeout, read out of the payload by <see cref="UpstreamPageTool"/>,
+    /// and nothing BrowserAI passes sets it, so this order is BrowserAI's to keep. A doctored
+    /// bundle is the control in both directions: a shorter upstream limit is caught, and the
+    /// payload's own spelling is what the reading needs.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task BrowserAisPageToolBudgetEndsBeforePlaywrightsOwnLimitOnTheCall()
+    {
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
+
+        var upstream = await UpstreamPageTool.TimeoutAsync();
+
+        await Assert.That(SessionToolSurface.PageToolBudget).IsLessThan(upstream);
+
+        var real = await File.ReadAllTextAsync(Path.Combine(RepositoryPayload.Layout.Root, "mcp", "node_modules", "playwright-core", "lib", "coreBundle.js"));
+        var shorter = real.Replace("DEFAULT_PLAYWRIGHT_TIMEOUT = 3e4;", "DEFAULT_PLAYWRIGHT_TIMEOUT = 1e4;", StringComparison.Ordinal);
+
+        await Assert.That(UpstreamPageTool.TimeoutIn(shorter)).IsLessThan(SessionToolSurface.PageToolBudget);
+        await Assert.That(UpstreamPageTool.TimeoutIn(real)).IsEqualTo(upstream);
     }
 
     [Test]
@@ -471,6 +522,19 @@ internal sealed record PageToolRun
         var hangElapsed = clock.Elapsed;
 
         answers["afterHang"] = await snapshotAsync().ConfigureAwait(false);
+
+        // Once upstream's own limit on the abandoned call has passed, with as much again as
+        // BrowserAI's budget leaves it for slack, the session is read once more: since 1.66 the
+        // call does end, in upstream's own timeout, after BrowserAI has answered for it.
+        var upstreamLimit = await UpstreamPageTool.TimeoutAsync().ConfigureAwait(false);
+        var pastUpstream = upstreamLimit + (upstreamLimit - SessionToolSurface.PageToolBudget) - clock.Elapsed;
+
+        if (pastUpstream > TimeSpan.Zero)
+        {
+            await Task.Delay(pastUpstream).ConfigureAwait(false);
+        }
+
+        answers["afterUpstreamLimit"] = await snapshotAsync().ConfigureAwait(false);
 
         _ = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
         {

@@ -285,10 +285,15 @@ internal static class SessionTimes
     public const int RecordReadRetryLongestDelayMilliseconds = 100;
 
     /// <summary>
-    /// How long BrowserAI waits for a page's own tool to answer: 60 s. The value of
+    /// How long BrowserAI waits for a page's own tool to answer: 20 s. The value of
     /// <c>SessionToolSurface.PageToolBudget</c>.
     /// </summary>
-    public static TimeSpan PageToolBudget { get; } = TimeSpan.FromSeconds(60);
+    /// <remarks>
+    /// ⚠️ <b>20 s since 2026-11-17 (previously 60 s), the maintainer's 201</b>, in his words
+    /// verbatim: <i>"201 can we set the playwright limit to 600 sec. so ours comes earlier? If not, go with b."</i> Playwright's own limit on the call cannot be set from here,
+    /// so this one went below it; see <c>SessionToolSurface.PageToolBudget</c> for why it is 20.
+    /// </remarks>
+    public static TimeSpan PageToolBudget { get; } = TimeSpan.FromSeconds(20);
 
     /// <summary>
     /// How old the measurement of the session folders may be and still be shown without

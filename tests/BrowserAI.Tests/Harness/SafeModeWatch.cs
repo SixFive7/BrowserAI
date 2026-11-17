@@ -166,6 +166,11 @@ internal sealed class SafeModeScan(SafeModeWatchContext context, IReadOnlyList<s
 /// without holding a key down -- the second named exception to the plant-it-red
 /// rule. <b>This watch is the half that CAN be planted red</b>:
 /// <c>MOZ_SAFE_MODE_RESTART=1</c> forces safe mode, 3 of 3 on 2026-09-25.
+/// ⚠️ <b>Playwright sets the variable since 2026-11-17, the maintainer's 197 b</b>, in his
+/// words verbatim: <i>"197 b"</i>: <c>playwright-core</c> 1.66.0-alpha-2026-11-09 starts
+/// Firefox's environment from it, BrowserAI's copy left <c>ChildEnvironment.Forced</c>,
+/// <c>SafeModeKeyTests</c> reads it in the session's own Firefox, and the exception is
+/// retired. This watch stays, for every other route into safe mode.
 /// </para>
 /// <para>
 /// <b>What it reads is the switch Firefox puts on a content process.</b> A browser
@@ -423,7 +428,7 @@ internal static class SafeModeWatch
         {
             _ = row.Append('\n')
                 .Append("      ⚠️  A FIREFOX THIS RUN STARTED WAS IN SAFE MODE, and the run fails for it (Q312 b).\n")
-                .Append("      A held Shift key is switched off by MOZ_DISABLE_SAFE_MODE_KEY in ChildEnvironment.Forced;\n")
+                .Append("      A held Shift key is switched off by MOZ_DISABLE_SAFE_MODE_KEY, which Playwright sets (SafeModeKeyTests);\n")
                 .Append("      MOZ_SAFE_MODE_RESTART and a -safe-mode argument are not, so look for those first.");
         }
 

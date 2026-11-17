@@ -1171,10 +1171,13 @@ the tool it asked for is missing.
 name is a different page's code after a navigation, so a resolution kept between
 calls would be a name pointing at whatever the tab happens to be showing now.
 
-**The call is bounded by BrowserAI and by nothing else.** Upstream awaits a
-handler the PAGE supplied with no timeout of its own, so a page can hold a call
-open forever -- measured silent at 61 s. `PageToolBudget` is sixty seconds, on a
-linked token, and when it fires the caller is told what is still running, that the
+**The call is bounded by BrowserAI first.** Upstream awaited a handler the PAGE
+supplied with no timeout of its own, so a page could hold a call open forever --
+measured silent at 61 s with `@playwright/mcp` 0.0.82. *Corrected 2026-11-17 (previously "The
+call is bounded by BrowserAI and by nothing else" and "`PageToolBudget` is sixty seconds"), the
+maintainer's 201, in his words verbatim: "201 can we set the playwright limit to 600 sec. so ours comes earlier? If not, go with b."* `playwright-core` 1.66.0-alpha-2026-11-09
+ends the call at its default timeout, 30 s, which nothing BrowserAI passes sets, so
+`PageToolBudget` is twenty seconds, on a linked token, and when it fires the caller is told what is still running, that the
 session goes on working, and that navigating the tab or closing it releases the
 abandoned call. All three of those are measurements, not reassurances: a
 pending page tool does not block the child, a snapshot answered in 4-7 ms beside

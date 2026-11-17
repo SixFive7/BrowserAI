@@ -338,6 +338,24 @@ internal static class SessionToolSurface
     /// 521 ms in the two measurements taken.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Twenty seconds since 2026-11-17 (previously sixty), the maintainer's 201</b>, in
+    /// his words verbatim: <i>"201 can we set the playwright limit to 600 sec. so ours comes earlier? If not, go with b."</i> <c>playwright-core</c> 1.66.0-alpha-2026-11-09
+    /// bounds the call itself: <c>callWebMCPTool</c> calls <c>frame.webmcp.callTool(name,
+    /// params)</c> with no options, the client's <c>webmcpCallTool</c> takes
+    /// <c>this._frame._timeout(options)</c>, and with no default set on the page or its context
+    /// that falls to <c>DEFAULT_PLAYWRIGHT_TIMEOUT</c>, 30 s, in <c>packages/isomorphic/time.ts</c>,
+    /// read in the payload's <c>coreBundle.js</c> on 2026-11-17. Nothing BrowserAI passes moves it:
+    /// no option, configuration key or environment variable sets a page's or a context's default
+    /// timeout, and the page tool takes the page's own arguments only, so the 600 s he asked about
+    /// cannot be set, and this went below 30. <b>Twenty and not twenty-five</b>, because the order
+    /// rests on the slack between the two clocks: this one starts when BrowserAI forwards the call
+    /// and upstream's a little later, and on 2026-10-14 a loaded machine was measured spending
+    /// most of upstream's five seconds on a Firefox screenshot, so ten seconds of slack keeps
+    /// BrowserAI's refusal first under load. Nothing measured answers between half a second and never, so the shorter
+    /// wait rescues no measured call by being longer. <c>PageToolTests</c> holds the order against
+    /// the payload's own number on every run.
+    /// </para>
+    /// <para>
     /// <b>It is a real recovery and not a give-up, and that was measured
     /// before it was chosen.</b> A pending page tool does not block the child:
     /// with one outstanding, <c>browser_snapshot</c> answered in 4-7 ms and a
