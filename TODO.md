@@ -1565,6 +1565,16 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       [#1089](https://github.com/velopack/velopack/pull/1089), the xdialog v4 dialogs (`9c006364`),
       so the installer BrowserAI ships shows what it showed; what the new one shows is read the day a
       stable release carries it, without starting it on this screen.
+      ⚠️ *Checked again 2026-11-17 by addition, the maintainer's 199 a, in his words verbatim:
+      "199 a + a todo.md entry for it - check now again".* Read through GitHub's API and
+      NuGet's version index that evening, the reading above holds: #1086 closed as completed and
+      PR #1087 merged on 2026-10-11 at 05:43Z *(previously "both are open", read 2026-10-10)*;
+      `1.3.39-g8d2844f`, a pre-release, is still the only release carrying `a69dc7b9`, on GitHub
+      and as the `Velopack` and `vpk` packages on NuGet; 1.2.161 is still the newest stable
+      release; and the newest commit on Velopack's default branch is of 2026-11-16. **Only a
+      stable Velopack release that carries the fix is adopted**; the pre-release is not. When one
+      ships, adopt it as this item already says, the tool and the library together, and re-run
+      the held-file case before the row closes.
 - [ ] **WATCH [velopack/velopack#38](https://github.com/velopack/velopack/issues/38),
       better support for console applications, where our ask for a start with no
       console window after an install went.** Added 2026-10-11, on the maintainer's
