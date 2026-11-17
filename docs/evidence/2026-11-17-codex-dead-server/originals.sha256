@@ -1,0 +1,4 @@
+# SHA-256, byte count and name of every file kept under a changed name, as taken
+0d3cc41181bf6d2f87e9c75b5cd510666bf92b7d6a3ac8d8452bba055ea6893f  2173  probes/cx-exec.sh
+b73bb8279b53044a83d022ba01537d69666a893567b4a56bda654b883ad4143d  1988  probes/cx-app.sh
+05f4192f597378df3eeb9b836713757221e3c93d21510152cce2fe95c98c1236  3586  rig/appserver.js

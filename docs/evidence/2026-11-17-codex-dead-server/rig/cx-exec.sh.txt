@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# One codex exec run against the recorded rig, with codex-cli 0.169.1 from scratch.
+# usage: cx-exec.sh <run-name> <server-mode> <stub-script> <waitbefore> <port> <prompt>
+set -u
+WU=/c/Source/SixFive7/BrowserAI/.work/clients-scratch/codex-0.169.1/run
+F=C:/Source/SixFive7/BrowserAI/.work/clients-scratch/codex-0.169.1/run
+NAME="$1"; SMODE="$2"; SCRIPT="$3"; WAITBEFORE="$4"; PORT="$5"; PROMPT="$6"
+NODE="C:/Program Files/nodejs/node.exe"
+CODEX=/c/Source/SixFive7/BrowserAI/.work/clients-scratch/codex-0.169.1/bin/codex.exe
+rm -f "$WU/logs/$NAME."* "$WU/logs/$NAME-stub."* "$WU/out/$NAME."*
+cat > "$WU/codexhome/config.toml" <<CFG
+model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "read-only"
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:$PORT"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.probe]
+command = "C:/Program Files/nodejs/node.exe"
+args = ["$F/rig/server.js"]
+env = { PROBE_LOGDIR = "$F/logs", PROBE_TAG = "$NAME", PROBE_MODE = "$SMODE" }
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+CFG
+export STUB_PORT="$PORT" STUB_LOGDIR="$F/logs" STUB_TAG="$NAME-stub" STUB_SCRIPT="$SCRIPT"
+export STUB_WAITFILE="$F/logs/$NAME.exited" STUB_WAITBEFORE="$WAITBEFORE"
+"$NODE" "$F/rig/openaistub.js" > "$WU/logs/$NAME.stub.out" 2>&1 &
+SP=$!
+sleep 1
+export CODEX_HOME="$F/codexhome" CLAUDE_CONFIG_DIR="$F/claudecfg"
+export STUB_KEY=not-a-real-key
+export RUST_LOG=codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info
+timeout 180 "$CODEX" exec --json --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox -C "$F/proj" "$PROMPT" \
+  > "$WU/out/$NAME.jsonl" 2> "$WU/out/$NAME.err.txt" < /dev/null
+echo "codex_exit=$?"
+kill $SP 2>/dev/null
+echo "--- $NAME launches: $(grep -c 'LAUNCH mode' "$WU/logs/$NAME.launches.log" 2>/dev/null || echo 0)"
+grep -o '"type":"mcp_tool_call"[^}]*"arguments":{[^}]*}[^}]*"error":[^}]*}' "$WU/out/$NAME.jsonl" | cut -c1-240
+grep -o '"type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{[^}]*},"result":{"content":\[{"type":"text","text":"pong #[0-9]* from [^ ]*' "$WU/out/$NAME.jsonl" | sed 's/.*"text":"//' | cut -c1-120

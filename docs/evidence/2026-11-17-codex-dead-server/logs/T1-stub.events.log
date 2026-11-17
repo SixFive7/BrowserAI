@@ -1,0 +1,9 @@
+2026-11-17T22:53:48.605Z LISTENING 8970 script=["tool:mcp__probe/ping:{\"note\":\"t1\"}","text:turn one done","tool:mcp__probe/ping:{\"note\":\"t2\"}","text:turn two done"]
+2026-11-17T22:53:50.716Z REQ POST /responses bytes=76430
+2026-11-17T22:53:50.720Z turn 0: function_call mcp__probe/ping {"note":"t1"}
+2026-11-17T22:53:50.781Z REQ POST /responses bytes=76887
+2026-11-17T22:53:50.782Z turn 1: message
+2026-11-17T22:53:54.473Z REQ POST /responses bytes=76905
+2026-11-17T22:53:54.475Z turn 2: function_call mcp__probe/ping {"note":"t2"}
+2026-11-17T22:53:54.552Z REQ POST /responses bytes=77326
+2026-11-17T22:53:54.554Z turn 3: message

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# One codex app-server run against the recorded rig, with codex-cli 0.169.1 from scratch,
+# with the responses stub (turns) or without it (tool calls straight through the protocol).
+# usage: cx-app.sh <run-name> <server-mode> <steps-json-file> <stub-script or -> <port>
+set -u
+WU=/c/Source/SixFive7/BrowserAI/.work/clients-scratch/codex-0.169.1/run
+F=C:/Source/SixFive7/BrowserAI/.work/clients-scratch/codex-0.169.1/run
+NAME="$1"; SMODE="$2"; STEPS="$3"; SCRIPT="$4"; PORT="$5"
+NODE="C:/Program Files/nodejs/node.exe"
+export CODEX_EXE="C:/Source/SixFive7/BrowserAI/.work/clients-scratch/codex-0.169.1/bin/codex.exe"
+export CODEX_HOME="$F/codexhome" CLAUDE_CONFIG_DIR="$F/claudecfg"
+export STUB_KEY=not-a-real-key
+export DRIVER_LOG="$F/logs/$NAME.driver.log"
+rm -f "$WU/logs/$NAME."* "$WU/logs/$NAME-stub."*
+cat > "$WU/codexhome/config.toml" <<CFG
+model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:$PORT"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.probe]
+command = "C:/Program Files/nodejs/node.exe"
+args = ["$F/rig/server.js"]
+env = { PROBE_LOGDIR = "$F/logs", PROBE_TAG = "$NAME", PROBE_MODE = "$SMODE" }
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+CFG
+SP=""
+if [ "$SCRIPT" != "-" ]; then
+  export STUB_PORT="$PORT" STUB_LOGDIR="$F/logs" STUB_TAG="$NAME-stub" STUB_SCRIPT="$SCRIPT" STUB_WAITFILE="" STUB_WAITBEFORE=-1
+  "$NODE" "$F/rig/openaistub.js" > "$WU/logs/$NAME.stub.out" 2>&1 &
+  SP=$!
+  sleep 1
+fi
+timeout 240 "$NODE" "$F/rig/appserver.js" "$(cat "$STEPS")" > "$WU/logs/$NAME.driver.out" 2>&1
+echo "driver_exit=$?"
+[ -n "$SP" ] && kill $SP 2>/dev/null
+echo "--- $NAME launches: $(grep -c 'LAUNCH mode' "$WU/logs/$NAME.launches.log" 2>/dev/null || echo 0)"
+grep -E "MARKER|NOTE .*[Mm]cpToolCall|RESP id=[3-9]|TIMEOUT|Transport closed" "$WU/logs/$NAME.driver.log" | sed -E 's/^[0-9T:.Z-]+ //' | cut -c1-230 | head -14

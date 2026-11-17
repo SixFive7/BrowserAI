@@ -1,0 +1,10 @@
+{"type":"thread.started","thread_id":"01a1ebb7-2737-7ae3-9fe1-3a72de7d4848"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Loaded only 32768 of 74689 bytes from `C:\\Source\\SixFive7\\BrowserAI\\AGENTS.md` in environment `local` under the 32768-byte project instruction budget. Trim your project instructions to fit the budget. If you need to keep them all, increase `project_doc_max_bytes`."}}
+{"type":"item.completed","item":{"id":"item_1","type":"error","message":"Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_2","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"first"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_2","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"first"},"result":{"content":[{"type":"text","text":"pong #1 from E3-pid88208-1794956011538. note=first. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"structured_content":null},"error":null,"status":"completed"}}
+{"type":"item.started","item":{"id":"item_3","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"second"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_3","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"second"},"result":null,"error":{"message":"tool call error: tool call failed for `probe/ping`\n\nCaused by:\n    Transport closed"},"status":"failed"}}
+{"type":"item.completed","item":{"id":"item_4","type":"agent_message","text":"codex probe done"}}
+{"type":"turn.completed","usage":{"input_tokens":126,"cached_input_tokens":36,"cache_write_input_tokens":0,"output_tokens":15,"reasoning_output_tokens":0}}

@@ -1,0 +1,8 @@
+2026-11-17T22:53:39.545Z LISTENING 8964 script=["tool:mcp__probe/ping:{\"note\":\"first\"}","tool:mcp__probe/ping:{\"note\":\"second\"}","text:codex probe done"]
+2026-11-17T22:53:41.299Z REQ POST /responses bytes=76639
+2026-11-17T22:53:41.312Z turn 0: function_call mcp__probe/ping {"note":"first"}
+2026-11-17T22:53:41.364Z REQ POST /responses bytes=77102
+2026-11-17T22:53:41.699Z WAITFILE present after 333ms
+2026-11-17T22:53:41.700Z turn 1: function_call mcp__probe/ping {"note":"second"}
+2026-11-17T22:53:41.745Z REQ POST /responses bytes=77527
+2026-11-17T22:53:41.746Z turn 2: message

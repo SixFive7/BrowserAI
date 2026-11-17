@@ -1,0 +1,24 @@
+2026-11-17T22:54:52.042Z SEND id=1 initialize {"clientInfo":{"name":"probe-driver","title":"probe","version":"1.0.0"}}
+2026-11-17T22:54:52.174Z RESP id=1 {"userAgent":"probe-driver/0.169.1 (Windows 10.0.26300; x86_64) xterm-256color (probe-driver; 1.0.0)","codexHome":"C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\codex-0.169.1\\run\\codexhome","platformFamily":"windows","platformOs":"windows"}
+2026-11-17T22:54:52.174Z SEND id=2 thread/start {}
+2026-11-17T22:54:52.175Z NOTE remoteControl/status/changed {"status":"disabled","serverName":"pc657","installationId":"5209dce9-7bd0-461e-9125-7e99b385bc89","environmentId":null}
+2026-11-17T22:54:52.321Z RESP id=2 {"thread":{"id":"01a1ebb8-6314-7480-9a1c-6dbb24420680","environments":[{"environmentId":"local","cwd":"C:\\Source\\SixFive7\\BrowserAI\\.work","runtimeWorkspaceRoots":["C:\\Source\\SixFive7\\BrowserAI\\.work"]}],"extra":null,"sessionId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","forkedFromId":null,"attachedToThreadId":null,"parentThreadId":null,"preview":"","ephemeral":false,"section":null,"sectionEnteredAt":null,"projectId":null,"historyMode":"paginated","modelProvider":"stub","model":"stub-model","reasoningEffort":null,"createdAt":1794956092,"updatedAt":1794956092,"recencyAt":1794956092,"status":{"type":"idle"},"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\codex-0.169.1\\run\\codexhome\\sessions\\2026\\11\\17\\rollout-2026-11-17T23-54-52-01a1ebb8-6314-7480-9a1c-6dbb24420680.jsonl","cwd":"c:\\Source\\SixFive7\\BrowserAI\\.work","cliVersion":"0.169.1","originator":"probe-
+2026-11-17T22:54:52.322Z THREAD_ID=01a1ebb8-6314-7480-9a1c-6dbb24420680
+2026-11-17T22:54:52.322Z SEND id=3 mcpServer/tool/call {"threadId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","server":"probe","tool":"ping","arguments":{"note":"c1"}}
+2026-11-17T22:54:52.323Z NOTE thread/started {"thread":{"id":"01a1ebb8-6314-7480-9a1c-6dbb24420680","environments":[{"environmentId":"local","cwd":"C:\\Source\\SixFive7\\BrowserAI\\.work","runtimeWorkspaceRoots":["C:\\Source\\SixFive7\\BrowserAI\\.work"]}],"extra":null,"sessionId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","forkedFromId":null,"attachedToThreadId":null,"parentThreadId":null,"preview":"","ephemeral":false,"section":null,"sectionEnteredAt":null,"projectId":null,"historyMode":"paginated","modelProvider":"stub","model":"stub-model","reasoningEffort":null,"createdAt":1794956092,"updatedAt":1794956092,"recencyAt":1794956092,"status":{"type":"idle"},"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\codex-0.169.1\\ru
+2026-11-17T22:54:52.323Z NOTE warning {"threadId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","message":"Loaded only 32768 of 74689 bytes from `C:\\Source\\SixFive7\\BrowserAI\\AGENTS.md` in environment `local` under the 32768-byte project instruction budget. Trim your project instructions to fit the budget. If you need to keep them all, increase `project_doc_max_bytes`."}
+2026-11-17T22:54:52.323Z NOTE mcpServer/startupStatus/updated {"threadId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","name":"probe","status":"starting","error":null,"failureReason":null}
+2026-11-17T22:54:52.470Z NOTE mcpServer/startupStatus/updated {"threadId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","name":"probe","status":"ready","error":null,"failureReason":null}
+2026-11-17T22:54:52.471Z RESP id=3 {"content":[{"type":"text","text":"pong #1 from X2-pid23228-1794956092462. note=c1. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}
+2026-11-17T22:54:54.479Z MARKER BASELINE call2 (no trigger)
+2026-11-17T22:54:54.480Z SEND id=4 mcpServer/tool/call {"threadId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","server":"probe","tool":"ping","arguments":{"note":"c2"}}
+2026-11-17T22:54:54.482Z RESP id=4 {"code":-32603,"message":"tool call failed for `probe/ping`: Transport closed"}
+2026-11-17T22:54:54.482Z MARKER TRIGGER config/mcpServer/reload
+2026-11-17T22:54:54.482Z SEND id=5 config/mcpServer/reload {}
+2026-11-17T22:54:54.489Z NOTE mcpServer/startupStatus/updated {"threadId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","name":"probe","status":"starting","error":null,"failureReason":null}
+2026-11-17T22:54:54.489Z RESP id=5 {}
+2026-11-17T22:54:54.555Z NOTE mcpServer/startupStatus/updated {"threadId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","name":"probe","status":"ready","error":null,"failureReason":null}
+2026-11-17T22:54:56.492Z MARKER call3 after reload
+2026-11-17T22:54:56.492Z SEND id=6 mcpServer/tool/call {"threadId":"01a1ebb8-6314-7480-9a1c-6dbb24420680","server":"probe","tool":"ping","arguments":{"note":"c3"}}
+2026-11-17T22:54:56.495Z RESP id=6 {"content":[{"type":"text","text":"pong #1 from X2-pid29240-1794956094546. note=c3. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}
+2026-11-17T22:54:57.996Z DONE

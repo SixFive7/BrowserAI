@@ -1082,6 +1082,16 @@ stderr reach Codex's tracing log only. At exit it hard-kills the server.
 **Both behaviours are known upstream and open**: `openai/codex` **#16899** is
 exactly this, and **#4955** asks for a restart command.
 
+> ⚠️ *Verified 2026-11-17 @ codex-cli 0.169.1 by addition, the maintainer's 195 a, with this
+> section's own rig (previously measured at 0.155.0-alpha.9.2 only).* **A dead stdio server is
+> still not started again inside the same thread.** A second call in the same `codex exec`
+> turn answered *Transport closed* after the server exited cleanly, 3 of 3, and after it
+> crashed with exit code 3, 3 of 3; in an app-server thread a new turn's call failed the same
+> way after a crash, 3 of 3; and `config/mcpServer/reload` still started a second server
+> that answered, 3 of 3, which is the rig's positive control. 0.169.1 was the newest stable
+> release that day, published 2026-11-17T22:21Z, run from a copy of the release asset in
+> scratch with no model called. [Evidence](../../docs/evidence/2026-11-17-codex-dead-server/README.md).
+
 ### Both clients decide from the PIPE, not from the process
 
 ⭐ **Nothing on either side watches the child exit.** Claude Code's transport

@@ -1509,6 +1509,13 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       files and nowhere else. **The kb section's rig has not been run against a
       release this new**, and only that run can say the condition above is still
       unmet.
+      ⚠️ *Measured 2026-11-17 @ codex-cli 0.169.1 by addition, the maintainer's 195 a
+      (previously "The kb section's rig has not been run against a release this new")*: the
+      rig ran against 0.169.1, the newest stable release, published 2026-11-17T22:21Z. A dead
+      stdio server, after a clean exit or a crash, was not started again inside the same
+      thread, 3 of 3 in each of three shapes, and a reload still started one, 3 of 3
+      ([evidence](docs/evidence/2026-11-17-codex-dead-server/README.md)). The condition
+      above is still unmet, and this item stays open.
 - [ ] **WATCH [velopack/velopack#1086](https://github.com/velopack/velopack/issues/1086)
       and [PR #1087](https://github.com/velopack/velopack/pull/1087), an update that leaves
       no program when its last rename fails.** Both were filed on 2026-10-10
