@@ -65,6 +65,11 @@ more* link to its detail; nothing else depends on it.
   session: the rest is OAuth, HTTP transports and a new skills extension, which BrowserAI does not
   use.
 
+- ⬆️ **SQLite 3.54.1 is compiled into BrowserAI, up from 3.54.0.**
+  Its source was checked against the hash sqlite.org publishes. The point release fixes a possible
+  heap-buffer overflow in 32-bit builds, which BrowserAI is not, and other problems reported
+  against 3.54.0.
+
 - ✅ **The suite's hand-moved clock no longer throws, moves back or drops a re-arm during a step.**
   Tests move this clock in steps while the code they test arms its timers on threads of its own.
   Such a thread could disarm a timer the clock had just chosen to fire, which ended the step with

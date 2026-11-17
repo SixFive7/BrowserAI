@@ -917,6 +917,29 @@ printed no warning, and `SqliteTests`' published arms read `sqlite=3.54.0` and
 `sqliteBuild=intended` off the binary's own process log the same hour. The pin, the
 archive record and the two file hashes are in [`drift-check.json`](../drift-check.json).
 
+⚠️ **The pin moved to 3.54.1 on 2026-11-17** -- *added by addition, under the maintainer's
+13 a of 2026-10-10, that every dependency is on its latest before a release is cut*. The
+daily check read sqlite.org's line as
+`PRODUCT,3.54.1,2026/sqlite-amalgamation-3540100.zip,2990966,92281c86e2957f9b9305890f9ac04204caa7b677cc868dc326d942689df28e30`
+at 14:56:33Z, and the same at 15:25:22Z, the page's `Last-Modified` header Mon, 16 Nov
+2026 16:20:48 GMT; the chronology dates 3.54.1 2026-10-16, and its release log names one
+fix, a possible heap-buffer overflow on 32-bit builds, which do not include this one, and
+other problems users reported in 3.54.0. The archive downloaded from that path was
+**2,990,966 bytes and hashed to exactly that SHA3-256 before it was unzipped**, the
+routine's positive control read the SHA3-256 of no bytes as the standard gives it, and the
+extracted `sqlite3.c` hashed to the SHA3-256 the release log publishes for it,
+`e2b869d3003b33c942b7dd7063604fbc53553e1b66609570df39b9b7b558ee81`, a second and independent
+check. Its `sqlite3.c` is 9,582,521 bytes with **271,131 LF and zero CR**, and its
+`sqlite3.h` 695,729 bytes with 14,447 LF and zero CR; `SQLITE_VERSION` is `"3.54.1"` and
+`SQLITE_SOURCE_ID` `2026-10-16 14:45:20 555e07ef...`. The 3.54.0 pair hashed to the recorded
+`2da161e3...` and `cd20a287...` just before it was replaced, the control that the hashing
+reads what the row records. The publish that followed, with SDK 11.0.100 and ILC 11.0.0,
+compiled the new pair and printed no warning, and the published binary's own process log read
+`sqlite=3.54.1 sqliteBuild=intended`. With the pair swapped and the row still pinning 3.54.0,
+`SqliteTests.ThePinnedVersionIsTheVersionOfTheVendoredSource` was watched red, reading 3.54.1
+in `sqlite3.c` against the pin, while the other four arms passed; with the row rewritten, all
+five passed.
+
 **The amalgamation ships LF and is warning-clean at `/W4`.** Measured
 2026-08-26: `sqlite3.c` carries **269,649 LF and zero CR**, so
 `.gitattributes`' `* text=auto eol=lf` rewrites nothing on the way into or out
