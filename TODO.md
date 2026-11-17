@@ -393,6 +393,13 @@ is named as candidates and says so.
       inferred from Chromium's source. Then the row in the hazard index gains the result,
       and either a measured answer that nothing leaves the machine or a question for the
       maintainer about the dumps a profile keeps.
+      ⚠️ *Added 2026-11-17 by addition:* the payload's Chrome for Testing 158 starts no stack
+      sampling profiler, with Playwright's switch, without it or with `--browser-test`, read
+      from the browser process's threads that day, so the rig cannot crash it the way it
+      crashed 155. The crash this item needs is now one on `chromium-1247`, Chrome for
+      Testing 155.0.8059.12, which the shared browsers root holds while the installed 2.0.0
+      uses it, launched without the switch
+      ([evidence](docs/evidence/2026-11-17-adopted-playwright/README.md)).
 
 ---
 
