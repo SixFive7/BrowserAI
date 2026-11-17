@@ -390,42 +390,17 @@ internal static class BrowserConfiguration
     /// </remarks>
     public const string HideCrashRestoreBubbleSwitch = "--hide-crash-restore-bubble";
 
-    /// <summary>
-    /// The Chromium switch that keeps the browser from starting Chromium's own stack
-    /// sampling profiler.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>129 a, decided 2026-10-13 by the maintainer, in his words verbatim:
-    /// <i>"129 a - but also d and add monitoring d to the long term todo. If it gets fixed
-    /// we reverse a."</i></b> The switch is on every Chromium launch, and it comes off again
-    /// once a Chrome for Testing that Playwright ships no longer crashes this way, which
-    /// <see href="../../../TODO.md">the TODO's watch item</see> checks with the rig that
-    /// measured it.
-    /// </para>
-    /// <para>
-    /// <b>Why it is needed.</b> Chrome for Testing carries no Google Chrome branding, so
-    /// Chromium takes it for a local build and starts the profiler in every browser process:
-    /// a sample every 100 ms for the first 30 s, then about 2 % of the time. The profiler
-    /// copies the main thread's stack and walks the copy with Windows' unwinder on a worker
-    /// thread. A sample that stops the main thread on the <c>vzeroupper</c> clang puts
-    /// between an epilogue's last <c>pop rbp</c> and its <c>ret</c> makes the unwinder take
-    /// the caller's frame pointer for this frame's, and with that at 0 it reads address
-    /// 0x218 and the browser process ends with 0xC0000005. Measured 2026-10-13 at
-    /// <c>chromium-1247</c> (Chrome for Testing 155.0.8059.12): the release run's red of the
-    /// real Chromium arm of <c>ScreenshotLimitTests</c> at <c>44368995</c> was that crash, and
-    /// full-page captures of 1920x16384 and 1920x16385 pages lost the browser in 5 of 10
-    /// launches with BrowserAI's launch arguments and in 0 of 10 with this switch added
-    /// (<see href="../../../kb/playwright/configuration.md#chrome-for-testing-samples-its-own-stacks-and-the-sampler-can-crash-the-browser----measured-2026-10-13">kb</see>).
-    /// </para>
-    /// <para>
-    /// <b>What it gives up</b>: the profiles the profiler would collect for Chromium's own
-    /// metrics, which nothing in BrowserAI reads. Chromium's source reads the switch in one
-    /// place, the profiler's configuration: read at 155.0.8059.12, and searched on Chromium's
-    /// main branch on 2026-10-13.
-    /// </para>
-    /// </remarks>
-    public const string StackProfilerSwitch = "--disable-stack-profiler";
+    // ⚠️ DELETED 2026-11-17: `StackProfilerSwitch`, "--disable-stack-profiler", which every
+    // Chromium launch carried from 2026-10-13 by the maintainer's 129 a, because Chrome for
+    // Testing started Chromium's own stack sampling profiler and its stack walk crashed the
+    // browser (kb/playwright/configuration.md). The maintainer's 178 b of 2026-11-17, in his
+    // words verbatim: "178 b - update the project now to the latest playwright and re-check
+    // all workarounds we have", which took the option to remove this copy in the update that
+    // brings Playwright's own. playwright-core puts the same switch in `chromiumSwitches` on
+    // every Chromium launch since microsoft/playwright#43364, which 1.66.0-alpha-2026-11-09
+    // carries, and Chrome for Testing 158 starts no such profiler of its own since Chromium's
+    // CL 8573923, first in 158.0.8106.0. StackProfilerTests reads the effect, a browser with no
+    // StackSamplingProfiler thread, and keeps guarding whoever passes the switch.
 
     /// <summary>
     /// The argument Playwright adds to open one blank page at launch, which a Chromium
@@ -726,9 +701,16 @@ internal static class BrowserConfiguration
     /// these five"), when a sixth of BrowserAI's own arrived.</i>
     /// </para>
     /// <para>
-    /// ⚠️ <b>Six since 2026-10-13 (previously five), the maintainer's 129 a.</b>
-    /// <see cref="StackProfilerSwitch"/> keeps Chromium's own stack sampling profiler
+    /// ⚠️ <b>Six from 2026-10-13 (previously five), the maintainer's 129 a.</b>
+    /// <c>--disable-stack-profiler</c> kept Chromium's own stack sampling profiler
     /// from starting, whose stack walk crashed the browser.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Five again since 2026-11-17 (previously six), the maintainer's 178 b.</b>
+    /// Playwright's own <c>chromiumSwitches</c> passes <c>--disable-stack-profiler</c> on every
+    /// Chromium launch since <c>playwright-core</c> 1.66.0-alpha-2026-11-09 carries
+    /// microsoft/playwright#43364, so BrowserAI's copy is gone, and
+    /// <c>StackProfilerTests</c> still reads the session's browser for the profiler's thread.
     /// </para>
     /// </remarks>
     public static IReadOnlyList<string> ChromiumArguments { get; } =
@@ -738,7 +720,6 @@ internal static class BrowserConfiguration
         RestoreLastSessionSwitch,
         AggressiveDomStorageFlushingSwitch,
         HideCrashRestoreBubbleSwitch,
-        StackProfilerSwitch,
     ];
 
     /// <param name="browser">The family, as upstream names it.</param>

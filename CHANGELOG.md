@@ -218,6 +218,15 @@ more* link to its detail; nothing else depends on it.
   upstream's limit of five seconds, which BrowserAI does not set, is answered with
   upstream's timeout, and the open row of the hazard index says what else was measured.
 
+### Removed
+
+- 🗑️ **BrowserAI no longer adds `--disable-stack-profiler` to Chromium, because Playwright adds it itself.**
+  The switch keeps Chrome for Testing's own stack sampling profiler from starting, whose stack
+  walk could crash the browser during a long full-page screenshot. Playwright passes it on every
+  Chromium launch in the version this release carries, and Chrome for Testing 158 starts that
+  profiler only in Chromium's own browser tests, so BrowserAI's copy came out, as the maintainer
+  decided. The suite still reads a Chromium session's browser for the profiler's thread.
+
 ### Fixed
 
 - 🐛 **A resume after a refused one no longer tells the client that created the session that it did not.**

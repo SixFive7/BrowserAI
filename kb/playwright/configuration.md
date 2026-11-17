@@ -1233,6 +1233,25 @@ every Chromium launch since 2026-10-13, the maintainer's 129 a
 `StackProfilerTests.AgainstARealChromiumASessionsBrowserStartsNoStackSamplingProfiler`
 reads the session's browser for the thread. `[FLOATS]`
 
+⚠️ *Corrected 2026-11-17 by addition (previously the paragraph above, which still stands as
+the record of 2026-10-13)*: **Playwright passes the switch itself, and Chrome for Testing 158
+starts no such profiler of its own.** `playwright-core` puts `--disable-stack-profiler` in
+`chromiumSwitches` on every Chromium launch since
+[microsoft/playwright#43364](https://github.com/microsoft/playwright/pull/43364), merged
+2026-10-14 at 18:19:40Z as its answer to #43327, which closed as completed the same minute;
+1.66.0-alpha-2026-11-09, which `@playwright/mcp` 0.0.85 pins, carries it, read in its
+`coreBundle.js`. And Chromium's [CL 8573923](https://chromium-review.googlesource.com/c/chromium/src/+/8573923),
+*"[profiler] Disable the stack sampling profiler in Chrome for Testing"*, merged 2026-10-14 at
+18:40:20Z as `7d8d8353` (commit position 1718823, bug 572877174), returns from the profiler's
+configuration in a Chrome for Testing build unless `IsBrowserTestModeEnabled()`, read in its
+diff; Chromium's dashboard puts its first build at 158.0.8106.0, and the payload's Chrome for
+Testing is 158.0.8127.18. Read on 2026-11-17 through the payload's own `playwright-core`, headless, one launch each, from the thread names Windows reports for the browser process: Chrome for Testing 158.0.8127.18 ran no `StackSamplingProfiler` thread with Playwright's switch, none with the switch taken out through `ignoreDefaultArgs`, and none with it taken out and `--browser-test` added; the earlier payload's Chrome for Testing 155.0.8059.12 ran one with no switch and none with BrowserAI's. ([evidence](../../docs/evidence/2026-11-17-adopted-playwright/README.md))
+So BrowserAI's copy is gone since 2026-11-17, the maintainer's 178 b, in his words verbatim:
+*"178 b - update the project now to the latest playwright and re-check all workarounds we
+have"*, and `StackProfilerTests` reads the effect for whoever passes the switch. The arm was planted red the same day by a scratch edit, never committed, that took Playwright's switch out through `ignoreDefaultArgs` and pointed the session's Chromium and the arm's lookup at `chromium-1247`: it found `StackSamplingProfiler` among the browser's threads and failed, and with the edit taken out it passed. On the payload's own Chrome for Testing no launch option tried could plant it red, since none of the three launches above started the profiler.
+The crash rig was not run again: with no profiler thread there is no walk to crash in, and
+the decision does not rest on it.
+
 **A crash leaves a minidump in the profile**, `profile\Crashpad\reports\<id>.dmp`, 2,805,056
 bytes for the release red and 2.8 MB for each of the rig's, although Playwright launches
 Chromium with `--disable-breakpad`; it holds memory of the browser process. Whether Crashpad

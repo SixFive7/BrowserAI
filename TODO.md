@@ -1554,9 +1554,22 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       this item; adopting the option is a question for the maintainer through
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md). If #38 closes without either, record
       the reason in the kb section and close this item.
-- [ ] **WATCH the reports to Chromium and to Playwright on Chrome for Testing's stack sampling
+- [x] **WATCH the reports to Chromium and to Playwright on Chrome for Testing's stack sampling
       profiler, whose stack walk crashes the browser, and take `--disable-stack-profiler` out
-      again when a fix ships.** The maintainer's 129 d of 2026-10-13, in his words verbatim:
+      again when a fix ships.** ✅ **CLOSED 2026-11-17 by the maintainer's 178 b**, in his words
+      verbatim: *"178 b - update the project now to the latest playwright and re-check all
+      workarounds we have"*. Both reports were answered by fixes: Playwright's #43327 closed as
+      completed on 2026-10-14 by [#43364](https://github.com/microsoft/playwright/pull/43364),
+      which passes the switch in `chromiumSwitches` and which `playwright-core`
+      1.66.0-alpha-2026-11-09 carries, and Chromium answered 572877174 with
+      [CL 8573923](https://chromium-review.googlesource.com/c/chromium/src/+/8573923), merged
+      2026-10-14 and first in 158.0.8106.0, which the payload's Chrome for Testing 158.0.8127.18
+      carries. Playwright passed the switch itself first, so by 178 b BrowserAI's copy came out
+      with the update that brought Playwright's: `BrowserConfiguration.StackProfilerSwitch` is
+      deleted, `StackProfilerTests` keeps reading the effect, and the kb section and
+      re-verification row 220 carry dated clauses. Read on 2026-11-17 through the payload's own `playwright-core`, headless, one launch each, from the thread names Windows reports for the browser process: Chrome for Testing 158.0.8127.18 ran no `StackSamplingProfiler` thread with Playwright's switch, none with the switch taken out through `ignoreDefaultArgs`, and none with it taken out and `--browser-test` added; the earlier payload's Chrome for Testing 155.0.8059.12 ran one with no switch and none with BrowserAI's. The rig's twenty
+      launches were not run: with no profiler thread there is no walk to crash in, and 178 b does
+      not rest on them. The maintainer's 129 d of 2026-10-13, in his words verbatim:
       *"129 a - but also d and add monitoring d to the long term todo. If it gets fixed we
       reverse a."* Chrome for Testing runs Chromium's own profiler in every browser, and a
       sample that stops the main thread on a `vzeroupper` between an epilogue's `pop rbp` and

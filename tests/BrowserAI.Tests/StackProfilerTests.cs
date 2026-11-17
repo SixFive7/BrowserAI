@@ -21,8 +21,19 @@ namespace BrowserAI.Tests;
 /// at <c>44368995</c> was the browser process ending with 0xC0000005 inside Windows'
 /// unwinder, called by that profiler on a worker thread
 /// (<see href="../../kb/playwright/configuration.md#chrome-for-testing-samples-its-own-stacks-and-the-sampler-can-crash-the-browser----measured-2026-10-13">kb</see>),
-/// and <see cref="BrowserConfiguration.StackProfilerSwitch"/> keeps the profiler from
-/// starting.
+/// and <c>--disable-stack-profiler</c> keeps the profiler from starting.
+/// </para>
+/// <para>
+/// ⚠️ <b>Whoever passes the switch, since 2026-11-17, the maintainer's 178 b</b>, in his words
+/// verbatim: <i>"178 b - update the project now to the latest playwright and re-check all
+/// workarounds we have"</i>. <c>playwright-core</c> 1.66.0-alpha-2026-11-09 passes
+/// <c>--disable-stack-profiler</c> in its own <c>chromiumSwitches</c>
+/// (microsoft/playwright#43364), so <c>BrowserConfiguration.ChromiumArguments</c> no longer
+/// carries BrowserAI's copy, and Chrome for Testing 158 starts no such profiler of its own
+/// (Chromium CL 8573923). The arm reads the effect, so it holds either fix and goes red if a
+/// roll loses both. Planted red that day against <c>chromium-1247</c>, Chrome for Testing 155,
+/// which still starts the profiler, with Playwright's switch taken out through
+/// <c>ignoreDefaultArgs</c>; none of the launches tried could make Chrome for Testing 158 start it.
 /// </para>
 /// <para>
 /// <b>The effect and not the string</b>: the arm reads the names of the threads of the
