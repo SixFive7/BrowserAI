@@ -1,0 +1,44 @@
+{
+  "label": "old-chromium-1",
+  "browser": "chromium",
+  "payload": "C:\\Source\\SixFive7\\BrowserAI\\.work\\payload-0.0.83-registerai-0.3.0",
+  "nodePid": 109032,
+  "navigated": true,
+  "processesBefore": 10,
+  "nodeExitedMs": 2215,
+  "nodeExitCode": 0,
+  "joinedAfterInputEnd": [
+    {
+      "pid": 77184,
+      "image": "C:\\Windows\\System32\\cmd.exe",
+      "ms": 52
+    },
+    {
+      "pid": 64680,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "ms": 81
+    },
+    {
+      "pid": 129016,
+      "image": "C:\\Windows\\System32\\taskkill.exe",
+      "ms": 208
+    }
+  ],
+  "taskkillJoined": [
+    {
+      "pid": 77184,
+      "image": "C:\\Windows\\System32\\cmd.exe",
+      "ms": 52
+    },
+    {
+      "pid": 129016,
+      "image": "C:\\Windows\\System32\\taskkill.exe",
+      "ms": 208
+    }
+  ],
+  "leftInJob": 0,
+  "gracefulStart": 1,
+  "gracefulEnd": 1,
+  "forcefullyClose": 1,
+  "willForceKill": 1
+}

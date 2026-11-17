@@ -1,0 +1,24 @@
+// pw lane, 2026-11-17: launches one headless Chrome for Testing through the given payload's own
+// playwright-core, persistent, into a scratch profile, with BrowserAI's Chromium switches but its
+// own --disable-stack-profiler left out, and optionally with Playwright's copy of that switch taken
+// out too through ignoreDefaultArgs. Prints READY and the node pid once a page has loaded, and
+// closes the browser when its standard input ends. Scratch, never committed.
+const path = require('path');
+const [payload, profile, mode] = process.argv.slice(2);
+const core = require(path.join(payload, 'mcp', 'node_modules', 'playwright-core'));
+const args = ['--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session',
+  '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble'];
+if (mode === 'ours') args.push('--disable-stack-profiler');
+const ignoreDefaultArgs = ['about:blank'];
+if (mode === 'none' || mode === 'browsertest') ignoreDefaultArgs.push('--disable-stack-profiler');
+if (mode === 'browsertest') args.push('--browser-test');
+(async () => {
+  const context = await core.chromium.launchPersistentContext(profile, {
+    channel: 'chrome-for-testing', headless: true, args, ignoreDefaultArgs, handleSIGINT: false, handleSIGTERM: false, timeout: 60000,
+  });
+  const page = context.pages()[0] ?? await context.newPage();
+  await page.goto('data:text/html,<p>threads</p>');
+  console.log('READY ' + process.pid + ' ' + mode);
+  process.stdin.resume();
+  process.stdin.on('end', async () => { await context.close(); console.log('CLOSED'); process.exit(0); });
+})().catch((e) => { console.log('FAILED ' + (e && e.message)); process.exit(1); });

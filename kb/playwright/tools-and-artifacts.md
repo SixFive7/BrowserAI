@@ -784,6 +784,17 @@ tell a format limit from a broken rig. `[FLOATS]`
 > 768,991 bytes. So the Chromium change this entry waits for is not in 155; the
 > run is in [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
+⚠️ *Corrected 2026-11-17 @ `@playwright/mcp` 0.0.85 / `playwright-core`
+1.66.0-alpha-2026-11-09, Chrome for Testing 158.0.8127.18 (`chromium-1254`), by addition
+(previously the verification above, which stands for 155 and earlier)*: **a 16,384 px `webp`
+is an error now.** The same rig on the raw child, headless, gave `isError: true` with
+*"Protocol error (Page.captureScreenshot): Unable to encode screenshot"* and no file for
+16,384 px as `webp`, a valid 8,732-byte 1280×16383 image for 16,383 px, and 137,816 and
+768,991 bytes for `png` and `jpeg` at 16,384 px. The error is the browser's own answer to
+`Page.captureScreenshot`, which is the route CL 8416650 took, first in 157.0.8083.0 by
+Chromium's dashboard. A first run that named a browser `@playwright/mcp` does not know drove
+the machine's Google Chrome 157 and gave the same error ([the batch](../../docs/evidence/2026-11-17-adopted-playwright/README.md)).
+
 ### A full-page screenshot past 16,384 px repeats its first 16,384 rows in Chromium, and Firefox refuses one past 32,767 px -- measured 2026-10-04
 
 `[FLOATS]` `@playwright/mcp` **0.0.83**, `playwright-core`
@@ -859,6 +870,16 @@ tracker serves them as numbers this reading could not map with confidence.
 then `tall_check.py` and `tall_repeat.py` over the image. The control in
 `tall_repeat.py` is not optional: a check that finds every row equal to another
 one proves nothing until it has been shown to find rows that differ.
+
+⚠️ *Re-measured 2026-11-17 in part, by addition:* **Chromium 158 still repeats past the
+line.** A raw-child rig of its own, and not `tall.mjs` through the published server, took a
+full-page screenshot of the banded page at 16,400 px on Chrome for Testing 158.0.8127.18
+under `playwright-core` 1.66.0-alpha-2026-11-09: `isError: false`, and an image 16,400 px
+tall whose rows from 16,384 down repeat the rows 16,384 above them, 16 of 16, while none of
+15,384 control rows above the line repeats the row 1,000 above it. Firefox 159.0 captured
+the same page with no error ([evidence](../../docs/evidence/2026-11-17-adopted-playwright/README.md)). The 50,000 px
+page and Firefox's 32,767 px bound were not run, for the machine's memory, so those halves
+stand as measured on 2026-10-04 and re-verification row 190 says what is owed.
 
 ### The exact line, the other direction, an element, a JPEG, and BrowserAI's refusal -- measured 2026-10-04
 

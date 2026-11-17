@@ -1,0 +1,11 @@
+2026-11-17T17:16:52.9155280Z the suite lock is held by the holder, pid 339578, and stays with it
+2026-11-17T17:16:57.8341798Z step started: node pid 123348, output C:\Source\SixFive7\BrowserAI\.work\wt\pw\.work\blank-page\runs\issue-0085\issue-repro-firefox
+2026-11-17T17:17:23.0991865Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-11-17T17:17:23.5405415Z issue-repro-firefox exit code: 0
+2026-11-17T17:17:23.9405564Z step started: node pid 90956, output C:\Source\SixFive7\BrowserAI\.work\wt\pw\.work\blank-page\runs\issue-0085\issue-restore
+2026-11-17T17:18:04.1459814Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-11-17T17:18:04.1576313Z issue-restore exit code: 0
+2026-11-17T17:18:04.2186232Z step started: node pid 89816, output C:\Source\SixFive7\BrowserAI\.work\wt\pw\.work\blank-page\runs\issue-0085\issue-repro-chromium
+2026-11-17T17:18:09.2619667Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-11-17T17:18:09.2715953Z issue-repro-chromium exit code: 0
+2026-11-17T17:18:09.4129228Z registry after issue: 7 line(s) in C:\Source\SixFive7\BrowserAI\.work\wt\pw\.work\blank-page\runs\issue-0085\registry-issue.txt

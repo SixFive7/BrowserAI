@@ -1,0 +1,68 @@
+// pw lane, 2026-11-17: what Chromium and Firefox give for a full-page screenshot of a tall page
+// at the adopted Playwright, through the payload's own @playwright/mcp child and NOT through
+// BrowserAI, whose ScreenshotLimit refuses a Chromium capture past 16,384 px before the image
+// reaches a caller. Re-verification rows 190 and 197 measure the browser's own answer, so the
+// child is driven directly, with a config shaped like BrowserAI's, headless. The page is the
+// lifetime rig's /tall, 100 px bands encoding their index. For each height the screenshot is taken
+// with a filename and inline, and the answer's isError and text are kept. Scratch, never committed.
+// Usage: node tall-raw.mjs <payload> <chromium|firefox> <scratch dir> <height,height,...>
+import { spawn } from 'node:child_process';
+import { mkdirSync, writeFileSync, rmSync, existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { startSite } from 'file:///C:/Source/SixFive7/BrowserAI/.work/wt/pw/docs/probes/2026-10-04-lifetime/site.mjs';
+
+const [payload, family, scratch, heightsArg] = process.argv.slice(2);
+const heights = heightsArg.split(',').map(Number);
+rmSync(scratch, { recursive: true, force: true });
+for (const d of ['profile', 'output', 'downloads', 'temp']) mkdirSync(join(scratch, d), { recursive: true });
+const site = await startSite('tall');
+
+const launch = { headless: true, downloadsPath: join(scratch, 'downloads') };
+if (family === 'chromium') {
+  launch.channel = 'chrome-for-testing';
+  launch.args = ['--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session', '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble'];
+  launch.ignoreDefaultArgs = ['about:blank'];
+} else {
+  launch.firefoxUserPrefs = { 'toolkit.winRegisterApplicationRestart': false, 'signon.rememberSignons': false };
+  launch.ignoreDefaultArgs = [];
+}
+const config = { browser: { browserName: family, userDataDir: join(scratch, 'profile'), launchOptions: launch, contextOptions: { viewport: { width: 1920, height: 1080 } } },
+  capabilities: ['config', 'vision', 'devtools', 'storage', 'network', 'pdf', 'testing'], outputDir: join(scratch, 'output'), timeouts: { idle: 0 }, filePaths: 'absolute', codegen: 'none' };
+const configPath = join(scratch, 'config.json');
+writeFileSync(configPath, JSON.stringify(config, null, 2));
+const env = { ...process.env, PLAYWRIGHT_BROWSERS_PATH: join(process.env.LOCALAPPDATA, 'BrowserAI', 'browsers'), PLAYWRIGHT_SKIP_BROWSER_GC: '1', PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1', MOZ_DISABLE_SAFE_MODE_KEY: '1', TEMP: join(scratch, 'temp'), TMP: join(scratch, 'temp') };
+for (const k of Object.keys(env)) if (k.startsWith('PLAYWRIGHT_MCP_') || k === 'DEBUG') delete env[k];
+const p = spawn(join(payload, 'node', 'node.exe'), [join(payload, 'mcp', 'node_modules', '@playwright', 'mcp', 'cli.js'), '--config', configPath], { cwd: join(scratch, 'output'), env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+let buf = ''; let id = 0; const waiters = new Map();
+p.stdout.setEncoding('utf8');
+p.stdout.on('data', (c) => { buf += c; for (let e = buf.indexOf('\n'); e >= 0; e = buf.indexOf('\n')) { const line = buf.slice(0, e).trim(); buf = buf.slice(e + 1); if (!line) continue; const m = JSON.parse(line); if (m.id !== undefined && waiters.has(m.id)) { waiters.get(m.id)(m); waiters.delete(m.id); } } });
+const call = (method, params) => new Promise((ok) => { const i = ++id; waiters.set(i, ok); p.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: i, method, params }) + '\n'); });
+const exited = new Promise((ok) => p.on('exit', ok));
+await call('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'tall-rig', version: '1' } });
+p.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+
+const results = [];
+for (const h of heights) {
+  await call('tools/call', { name: 'browser_navigate', arguments: { url: `${site.origin}/tall?h=${h}` } });
+  await call('tools/call', { name: 'browser_wait_for', arguments: { text: 'ROW 0000' } });
+  const file = join(scratch, 'output', `tall-${h}.png`);
+  const started = Date.now();
+  const toFile = await call('tools/call', { name: 'browser_take_screenshot', arguments: { fullPage: true, type: 'png', filename: file } });
+  const fileMs = Date.now() - started;
+  const t2 = Date.now();
+  const inline = await call('tools/call', { name: 'browser_take_screenshot', arguments: { fullPage: true, type: 'png' } });
+  const inlineMs = Date.now() - t2;
+  const image = (inline.result?.content ?? []).find((c) => c.type === 'image');
+  results.push({
+    height: h,
+    file: { isError: !!toFile.result?.isError, ms: fileMs, text: (toFile.result?.content ?? []).filter((c) => c.type === 'text').map((c) => c.text).join('\n').slice(0, 600), exists: existsSync(file), bytes: existsSync(file) ? statSync(file).size : 0, path: file },
+    inline: { isError: !!inline.result?.isError, ms: inlineMs, imageBase64Length: image ? image.data.length : 0, text: (inline.result?.content ?? []).filter((c) => c.type === 'text').map((c) => c.text).join('\n').slice(0, 600) },
+  });
+}
+await call('tools/call', { name: 'browser_close', arguments: {} });
+p.stdin.end();
+await exited;
+await site.close();
+writeFileSync(join(scratch, 'result.json'), JSON.stringify(results, null, 2));
+console.log(JSON.stringify(results.map((r) => ({ h: r.height, fileErr: r.file.isError, fileBytes: r.file.bytes, inlineErr: r.inline.isError, inlineLen: r.inline.imageBase64Length })), null, 1));
+process.exit(0);

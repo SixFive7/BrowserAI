@@ -1,0 +1,44 @@
+{
+  "label": "old-firefox-2",
+  "browser": "firefox",
+  "payload": "C:\\Source\\SixFive7\\BrowserAI\\.work\\payload-0.0.83-registerai-0.3.0",
+  "nodePid": 115400,
+  "navigated": true,
+  "processesBefore": 8,
+  "nodeExitedMs": 3175,
+  "nodeExitCode": 0,
+  "joinedAfterInputEnd": [
+    {
+      "pid": 97268,
+      "image": "C:\\Windows\\System32\\cmd.exe",
+      "ms": 48
+    },
+    {
+      "pid": 119860,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "ms": 153
+    },
+    {
+      "pid": 112272,
+      "image": "C:\\Windows\\System32\\taskkill.exe",
+      "ms": 494
+    }
+  ],
+  "taskkillJoined": [
+    {
+      "pid": 97268,
+      "image": "C:\\Windows\\System32\\cmd.exe",
+      "ms": 48
+    },
+    {
+      "pid": 112272,
+      "image": "C:\\Windows\\System32\\taskkill.exe",
+      "ms": 494
+    }
+  ],
+  "leftInJob": 1,
+  "gracefulStart": 1,
+  "gracefulEnd": 1,
+  "forcefullyClose": 1,
+  "willForceKill": 1
+}

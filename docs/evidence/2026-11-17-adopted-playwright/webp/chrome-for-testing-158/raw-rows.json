@@ -1,0 +1,117 @@
+{
+  "facts": {
+    "childPid": 102008,
+    "serverInfo": {
+      "name": "Playwright",
+      "version": "1.66.0-alpha-2026-11-09"
+    },
+    "toolCount": 25,
+    "screenshotSchemaKeys": [
+      "element",
+      "target",
+      "type",
+      "filename",
+      "fullPage",
+      "scale"
+    ],
+    "screenshotTypeEnum": {
+      "description": "Image format for the screenshot. If unset, inferred from the filename extension, otherwise png.",
+      "type": "string",
+      "enum": [
+        "png",
+        "jpeg",
+        "webp"
+      ]
+    },
+    "userAgent": "### Result\n\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => navigator.userAgent');\n```",
+    "exitCode": 0
+  },
+  "rows": [
+    {
+      "askedHeight": 16383,
+      "docHeight": 16383,
+      "type": "webp",
+      "ms": 2674,
+      "isError": false,
+      "rpcError": null,
+      "inlineMime": "image/webp",
+      "inlineBytes": 8732,
+      "inlineDims": {
+        "fmt": "webp",
+        "w": 1280,
+        "h": 16383,
+        "sub": "VP8X"
+      },
+      "diskFile": "page-2026-11-17T17-35-52-515Z.webp",
+      "diskBytes": 8732,
+      "diskDims": {
+        "fmt": "webp",
+        "w": 1280,
+        "h": 16383,
+        "sub": "VP8X"
+      },
+      "text": "### Result\n- [Screenshot of full page](output\\page-2026-11-17T17-35-52-515Z.webp)\n### Ran Playwright code\n```js\n// Screenshot full page and save it as output\\page-2026-11-17T17-35-52-515Z.webp\nawait page.screenshot({\n  fullPage: true,\n  path: 'output\\\\page-2026-11-17T17-35-52-515Z.webp',\n  scale: 'css',\n  type: 'webp'\n});\n```"
+    },
+    {
+      "askedHeight": 16384,
+      "docHeight": 16384,
+      "type": "webp",
+      "ms": 376,
+      "isError": true,
+      "rpcError": null,
+      "inlineMime": null,
+      "inlineBytes": null,
+      "inlineDims": null,
+      "diskFile": null,
+      "diskBytes": null,
+      "diskDims": null,
+      "text": "### Error\nError: browserBackend.callTool: Protocol error (Page.captureScreenshot): Unable to encode screenshot\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    },
+    {
+      "askedHeight": 16384,
+      "docHeight": 16384,
+      "type": "png",
+      "ms": 718,
+      "isError": false,
+      "rpcError": null,
+      "inlineMime": "image/png",
+      "inlineBytes": 137816,
+      "inlineDims": {
+        "fmt": "png",
+        "w": 1280,
+        "h": 16384
+      },
+      "diskFile": "page-2026-11-17T17-35-54-265Z.png",
+      "diskBytes": 137816,
+      "diskDims": {
+        "fmt": "png",
+        "w": 1280,
+        "h": 16384
+      },
+      "text": "### Result\n- [Screenshot of full page](output\\page-2026-11-17T17-35-54-265Z.png)\n### Ran Playwright code\n```js\n// Screenshot full page and save it as output\\page-2026-11-17T17-35-54-265Z.png\nawait page.screenshot({\n  fullPage: true,\n  path: 'output\\\\page-2026-11-17T17-35-54-265Z.png',\n  scale: 'css',\n  type: 'png'\n});\n```"
+    },
+    {
+      "askedHeight": 16384,
+      "docHeight": 16384,
+      "type": "jpeg",
+      "ms": 510,
+      "isError": false,
+      "rpcError": null,
+      "inlineMime": "image/jpeg",
+      "inlineBytes": 768991,
+      "inlineDims": {
+        "fmt": "jpeg",
+        "h": 16384,
+        "w": 1280
+      },
+      "diskFile": "page-2026-11-17T17-35-54-776Z.jpeg",
+      "diskBytes": 768991,
+      "diskDims": {
+        "fmt": "jpeg",
+        "h": 16384,
+        "w": 1280
+      },
+      "text": "### Result\n- [Screenshot of full page](output\\page-2026-11-17T17-35-54-776Z.jpeg)\n### Ran Playwright code\n```js\n// Screenshot full page and save it as output\\page-2026-11-17T17-35-54-776Z.jpeg\nawait page.screenshot({\n  fullPage: true,\n  path: 'output\\\\page-2026-11-17T17-35-54-776Z.jpeg',\n  quality: 90,\n  scale: 'css',\n  type: 'jpeg'\n});\n```"
+    }
+  ]
+}

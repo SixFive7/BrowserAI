@@ -1,0 +1,3 @@
+72df49a3846ddf718e19bf3f3c76f0c7c3f4a96e92bed61365db47cba0eb9dd7  profiler/arm-planted.log  132658 B  the test host's [Trace], [Debug] and [Information] log lines removed
+1de8094ffd75cf47aa786253a913b37e229847688256e27fcaa1bff467e3af8d  profiler/arm-green.log  5883 B  the test host's [Trace], [Debug] and [Information] log lines removed
+a541ea15e49a401d467da51be07000082974d6991e41c38fc42d50933a45d0b5  rows/row140.log  11189 B  terminal escape sequences removed

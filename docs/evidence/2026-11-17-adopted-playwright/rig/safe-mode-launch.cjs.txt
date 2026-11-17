@@ -1,0 +1,25 @@
+// pw lane, 2026-11-17: launches one headless Firefox through the given payload's own
+// playwright-core, persistent, into a scratch profile, exactly with the environment this process
+// was given, prints READY and the node pid, and closes the browser when its standard input ends.
+// Used to read the environment of the Firefox that Playwright starts. Scratch, never committed.
+const path = require('path');
+const payload = process.argv[2];
+const profile = process.argv[3];
+const core = require(path.join(payload, 'mcp', 'node_modules', 'playwright-core'));
+(async () => {
+  const context = await core.firefox.launchPersistentContext(profile, {
+    headless: true,
+    handleSIGINT: false,
+    handleSIGTERM: false,
+    timeout: 60000,
+  });
+  const page = context.pages()[0] ?? await context.newPage();
+  await page.goto('about:blank');
+  console.log('READY ' + process.pid + ' ' + core.firefox.executablePath());
+  process.stdin.resume();
+  process.stdin.on('end', async () => {
+    await context.close();
+    console.log('CLOSED');
+    process.exit(0);
+  });
+})().catch((e) => { console.log('FAILED ' + (e && e.message)); process.exit(1); });

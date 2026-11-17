@@ -1,0 +1,10 @@
+# C:\Source\SixFive7\BrowserAI\.work\wt\pw\.work\blank-page\runs\repro-0085
+
+| Variant | Outcome | ms | Pages, or the load wait |
+|---|---|--:|---|
+| restore, blank page left out, no-store, server ended | browserType.launchPersistentContext: Timeout 30000ms exceeded. | 30004 |  |
+| restore, blank page kept, no-store, server ended | launched | 1863 | about:blank |
+| restore, blank page left out, no-store, server answering | launched | 1999 | http://127.0.0.1:52715/ |
+| restore, blank page left out, cacheable, server ended | launched | 2783 | http://127.0.0.1:52739/ |
+| firefox: goto a refused address, then wait for load | goto: page.goto: NS_ERROR_CONNECTION_REFUSED; load: resolved | 1 | about:blank |
+| chromium: goto a refused address, then wait for load | goto: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:52772/; load: resolved | 0 | about:blank |

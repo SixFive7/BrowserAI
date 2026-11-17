@@ -1,0 +1,4 @@
+payload=C:\Source\SixFive7\BrowserAI\.work\wt\pw\payload
+playwrightCore=1.66.0-alpha-2026-11-09
+commit=2780f5b90cbabdfc76cfa5f69f3846679f664da3
+stage=repro arms=one-dead,one-alive,three-mixed,none,fresh rounds=3

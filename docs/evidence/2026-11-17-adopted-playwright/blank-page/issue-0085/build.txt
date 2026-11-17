@@ -1,0 +1,4 @@
+payload=C:\Source\SixFive7\BrowserAI\.work\wt\pw\payload
+playwrightCore=1.66.0-alpha-2026-11-09
+commit=2e847012b590c13270a3ab6afeffdb456f620035
+stage=issue arms=one-dead,one-alive,three-mixed,none,fresh rounds=3

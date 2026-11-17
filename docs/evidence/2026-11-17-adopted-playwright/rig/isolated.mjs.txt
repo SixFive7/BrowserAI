@@ -1,0 +1,87 @@
+// pw lane, 2026-11-17: what browser_tabs' new isolatedContext does inside a session shaped like
+// BrowserAI's, with the network capture on. The payload's @playwright/mcp child is started with a
+// config like BrowserAI's for one family, recordHar into the output folder and serviceWorkers
+// blocked; the default tab opens page A of a local server, a tab in the isolated context "iso"
+// opens page B, each page sets a cookie, browser_cookie_list is read from each tab, then
+// browser_close closes the browser. Then the archive is read for which pages it holds, and a second
+// child on the same profile lists the cookies the profile kept. Headless. Scratch, never committed.
+// Usage: node isolated.mjs <payload> <chromium|firefox> <scratch dir>
+import { spawn } from 'node:child_process';
+import http from 'node:http';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+
+const [payload, family, scratch] = process.argv.slice(2);
+rmSync(scratch, { recursive: true, force: true });
+for (const d of ['profile', 'output', 'downloads', 'temp']) mkdirSync(join(scratch, d), { recursive: true });
+
+const server = http.createServer((req, res) => {
+  const name = req.url.includes('page-b') ? 'b' : 'a';
+  res.writeHead(200, { 'content-type': 'text/html', 'set-cookie': `cookie_${name}=${name}; Max-Age=3600; Path=/` });
+  res.end(`<title>page ${name}</title><p>page ${name}</p>`);
+});
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const base = `http://127.0.0.1:${server.address().port}`;
+
+function config(har) {
+  const launch = { headless: true, downloadsPath: join(scratch, 'downloads') };
+  if (family === 'chromium') {
+    launch.channel = 'chrome-for-testing';
+    launch.args = ['--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session', '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble'];
+    launch.ignoreDefaultArgs = ['about:blank'];
+  } else {
+    launch.firefoxUserPrefs = { 'toolkit.winRegisterApplicationRestart': false, 'signon.rememberSignons': false };
+    launch.ignoreDefaultArgs = [];
+  }
+  const contextOptions = { viewport: { width: 1920, height: 1080 }, ignoreHTTPSErrors: false };
+  if (har) { contextOptions.serviceWorkers = 'block'; contextOptions.recordHar = { path: har, mode: 'full', content: 'embed' }; }
+  return { browser: { browserName: family, userDataDir: join(scratch, 'profile'), launchOptions: launch, contextOptions },
+    capabilities: ['config', 'vision', 'devtools', 'storage', 'network', 'pdf', 'testing'], outputDir: join(scratch, 'output'),
+    timeouts: { idle: 0 }, filePaths: 'absolute', codegen: 'none' };
+}
+
+function child(label, cfg) {
+  const path = join(scratch, `${label}.json`);
+  writeFileSync(path, JSON.stringify(cfg, null, 2));
+  const env = { ...process.env, PLAYWRIGHT_BROWSERS_PATH: join(process.env.LOCALAPPDATA, 'BrowserAI', 'browsers'), PLAYWRIGHT_SKIP_BROWSER_GC: '1', PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1', MOZ_DISABLE_SAFE_MODE_KEY: '1', TEMP: join(scratch, 'temp'), TMP: join(scratch, 'temp') };
+  for (const k of Object.keys(env)) if (k.startsWith('PLAYWRIGHT_MCP_') || k === 'DEBUG') delete env[k];
+  const p = spawn(join(payload, 'node', 'node.exe'), [join(payload, 'mcp', 'node_modules', '@playwright', 'mcp', 'cli.js'), '--config', path], { cwd: join(scratch, 'output'), env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+  let buf = ''; let id = 0; const waiters = new Map();
+  p.stdout.setEncoding('utf8');
+  p.stdout.on('data', (c) => { buf += c; for (let e = buf.indexOf('\n'); e >= 0; e = buf.indexOf('\n')) { const line = buf.slice(0, e).trim(); buf = buf.slice(e + 1); if (!line) continue; const m = JSON.parse(line); if (m.id !== undefined && waiters.has(m.id)) { waiters.get(m.id)(m); waiters.delete(m.id); } } });
+  const call = (method, params) => new Promise((ok) => { const i = ++id; waiters.set(i, ok); p.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: i, method, params }) + '\n'); });
+  const tool = async (name, args) => { const m = await call('tools/call', { name, arguments: args }); return (m.result?.content ?? []).map((c) => c.text ?? '').join('\n'); };
+  const exited = new Promise((ok) => p.on('exit', ok));
+  return { call, tool, end: async () => { p.stdin.end(); await exited; }, notify: (method) => p.stdin.write(JSON.stringify({ jsonrpc: '2.0', method }) + '\n') };
+}
+
+const out = {};
+const har = join(scratch, 'output', 'network.har');
+const c1 = child('first', config(har));
+await c1.call('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'isolated-rig', version: '1' } });
+c1.notify('notifications/initialized');
+out.navigateA = (await c1.tool('browser_navigate', { url: `${base}/page-a` })).slice(0, 200);
+out.newIsolated = (await c1.tool('browser_tabs', { action: 'new', url: `${base}/page-b`, isolatedContext: 'iso' })).slice(0, 600);
+out.cookiesOnIsolatedTab = (await c1.tool('browser_cookie_list', {})).slice(0, 400);
+out.tabs = (await c1.tool('browser_tabs', { action: 'list' })).slice(0, 600);
+out.selectDefault = (await c1.tool('browser_tabs', { action: 'select', index: 0 })).slice(0, 200);
+out.cookiesOnDefaultTab = (await c1.tool('browser_cookie_list', {})).slice(0, 400);
+out.close = (await c1.tool('browser_close', {})).slice(0, 200);
+await c1.end();
+out.outputFiles = readdirSync(join(scratch, 'output'));
+try {
+  const h = JSON.parse(readFileSync(har, 'utf8'));
+  out.harPages = h.log.pages?.map((pg) => pg.title) ?? [];
+  out.harEntries = h.log.entries.map((e) => e.request.url.replace(base, ''));
+} catch (e) { out.harError = String(e.message); }
+
+const c2 = child('second', config(null));
+await c2.call('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'isolated-rig', version: '1' } });
+c2.notify('notifications/initialized');
+out.cookiesAfterRelaunch = (await c2.tool('browser_cookie_list', {})).slice(0, 400);
+await c2.tool('browser_close', {});
+await c2.end();
+server.close();
+writeFileSync(join(scratch, 'result.json'), JSON.stringify(out, null, 2));
+console.log(JSON.stringify(out, null, 2));
+process.exit(0);

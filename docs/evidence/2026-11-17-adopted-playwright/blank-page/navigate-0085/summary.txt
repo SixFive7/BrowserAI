@@ -1,0 +1,6 @@
+# C:\Source\SixFive7\BrowserAI\.work\wt\pw\.work\blank-page\runs\navigate-0085
+
+| Variant | The navigation | URL after it | Wait for load | ms | document.documentURI |
+|---|---|---|---|--:|---|
+| firefox: the page navigates itself to a refused address, then wait for load | committed | http://127.0.0.1:57555/ | page.waitForLoadState: Timeout 15000ms exceeded. | 15013 | about:neterror?e=connectionFailure&u=http%3A//127.0.0.1%3A57 |
+| chromium: the page navigates itself to a refused address, then wait for load | committed | chrome-error://chromewebdata/ | resolved | 59 | chrome-error://chromewebdata/ |

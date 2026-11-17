@@ -1,0 +1,20 @@
+[
+ {
+  "h": 16384,
+  "fileErr": false,
+  "fileBytes": 749804,
+  "inlineErr": false,
+  "inlineLen": 999740
+ },
+ {
+  "h": 16385,
+  "fileErr": false,
+  "fileBytes": 749804,
+  "inlineErr": false,
+  "inlineLen": 999740
+ }
+]
+
+--- stderr ---
+
+EXIT finished=True code=0

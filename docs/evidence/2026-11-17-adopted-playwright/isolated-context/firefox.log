@@ -1,0 +1,27 @@
+{
+  "navigateA": "### Page\n- Page URL: http://127.0.0.1:64307/page-a\n- Page Title: page a\n- Console: 0 errors, 1 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\isolated\\runs\\firefox\\ou",
+  "newIsolated": "### Result\n- 0: [page a](http://127.0.0.1:64307/page-a)\n- 1: (current) [page b](http://127.0.0.1:64307/page-b) [isolatedContext: iso]\n### Open tabs\n- 0: [page a](http://127.0.0.1:64307/page-a)\n- 1: (current) [page b](http://127.0.0.1:64307/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:64307/page-b\n- Page Title: page b\n- Isolated context: iso\n- Console: 0 errors, 1 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\isolated\\runs\\firefox\\output\\page-2026-11-17T17-29-37-496Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.w",
+  "cookiesOnIsolatedTab": "### Result\ncookie_b=b (domain: 127.0.0.1, path: /)\ncookie_a=a (domain: 127.0.0.1, path: /)",
+  "tabs": "### Result\n- 0: [page a](http://127.0.0.1:64307/page-a)\n- 1: (current) [page b](http://127.0.0.1:64307/page-b) [isolatedContext: iso]",
+  "selectDefault": "### Result\n- 0: (current) [page a](http://127.0.0.1:64307/page-a)\n- 1: [page b](http://127.0.0.1:64307/page-b) [isolatedContext: iso]",
+  "cookiesOnDefaultTab": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)",
+  "close": "### Result\nNo open tabs. Navigate to a URL to create one.",
+  "outputFiles": [
+    "console-2026-11-17T17-29-35-969Z.log",
+    "console-2026-11-17T17-29-37-247Z.log",
+    "network.har",
+    "page-2026-11-17T17-29-36-545Z.yml",
+    "page-2026-11-17T17-29-37-496Z.yml"
+  ],
+  "harPages": [
+    "page a"
+  ],
+  "harEntries": [
+    "/page-a"
+  ],
+  "cookiesAfterRelaunch": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)\n### Page\n- Page URL: about:blank"
+}
+
+--- stderr ---
+
+EXIT finished=True code=0

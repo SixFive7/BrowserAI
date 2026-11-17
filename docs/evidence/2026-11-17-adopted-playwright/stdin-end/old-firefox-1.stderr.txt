@@ -1,0 +1,38 @@
+2026-11-17T17:16:00.601Z pw:browser <launching> C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\pw-scratch\stdinend\runs\old-firefox-1\profile -juggler-pipe about:blank
+2026-11-17T17:16:00.655Z pw:browser <launched> pid=75256
+2026-11-17T17:16:01.222Z pw:browser [pid=75256][err] *** You are running in headless mode.
+2026-11-17T17:16:01.484Z pw:browser [pid=75256][err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+2026-11-17T17:16:02.268Z pw:browser [pid=75256][out] 
+2026-11-17T17:16:02.268Z pw:browser [pid=75256][out] Juggler listening to the pipe
+2026-11-17T17:16:02.877Z pw:browser [pid=75256][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=2.2571) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+2026-11-17T17:16:03.928Z pw:browser [pid=75256][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+2026-11-17T17:16:05.141Z pw:browser [pid=75256][err] [ERROR shell_windows::limited_access_features] Error generating feature token: NS_ERROR_FAILURE
+2026-11-17T17:16:05.385Z pw:browser [pid=75256][err] JavaScript error: , line 0: SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data
+2026-11-17T17:16:05.418Z pw:browser [pid=75256][out] console.error: services.settings: 
+2026-11-17T17:16:05.418Z pw:browser [pid=75256][out]   Message: EmptyDatabaseError: "main/nimbus-desktop-experiments" has not been synced yet
+2026-11-17T17:16:05.418Z pw:browser [pid=75256][out]   Stack:
+2026-11-17T17:16:05.419Z pw:browser [pid=75256][out]     EmptyDatabaseError@resource://services-settings/Database.sys.mjs:19:5
+2026-11-17T17:16:05.419Z pw:browser [pid=75256][out] list@resource://services-settings/Database.sys.mjs:96:13
+2026-11-17T17:16:05.419Z pw:browser [pid=75256][out] 
+2026-11-17T17:16:06.069Z pw:browser [pid=75256][out] console.error: [Exception... "Component returned failure code: 0x80070057 (NS_ERROR_ILLEGAL_VALUE) [nsIWinTaskbar.getTaskbarProgress]"  nsresult: "0x80070057 (NS_ERROR_ILLEGAL_VALUE)"  location: "JS frame :: moz-src:///browser/components/downloads/DownloadsTaskbar.sys.mjs :: #windowsAttachIndicator :: line 181"  data: no]
+2026-11-17T17:16:07.795Z pw:browser [pid=75256][out] console.warn: services.settings: #fetchAttachment: Forcing fallbackToDump to false due to Utils.LOAD_DUMPS being false
+2026-11-17T17:16:07.796Z pw:browser [pid=75256][out] console.error: (new NotFoundError("Could not find fa0fc42c-d91d-fca7-34eb-806ff46062dc in cache or dump", "resource://services-settings/Attachments.sys.mjs", 48))
+2026-11-17T17:16:07.796Z pw:browser [pid=75256][out] console.warn: "Unable to find the attachment for" "fa0fc42c-d91d-fca7-34eb-806ff46062dc"
+2026-11-17T17:16:07.991Z pw:browser [pid=75256] <gracefully close start>
+2026-11-17T17:16:07.993Z pw:browser [pid=75256] <forcefully close>
+2026-11-17T17:16:07.993Z pw:browser [pid=75256] <kill>
+2026-11-17T17:16:07.993Z pw:browser [pid=75256] <will force kill>
+2026-11-17T17:16:11.049Z pw:browser [pid=75256][out] 
+2026-11-17T17:16:11.049Z pw:browser [pid=75256][out]         ERROR: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIRemoteDebuggingPipe.sendMessage] send@chrome://juggler/content/components/Juggler.js:135:18
+2026-11-17T17:16:11.049Z pw:browser [pid=75256][out] _dispatch@chrome://juggler/content/protocol/Dispatcher.js:76:24
+2026-11-17T17:16:11.049Z pw:browser [pid=75256][out] observe/browserHandler<@chrome://juggler/content/components/Juggler.js:144:16
+2026-11-17T17:16:11.049Z pw:browser [pid=75256][out] Browser.close@chrome://juggler/content/protocol/BrowserHandler.js:156:10
+2026-11-17T17:16:11.049Z pw:browser [pid=75256][out] 
+2026-11-17T17:16:11.050Z pw:browser [pid=75256][err] JavaScript error: chrome://juggler/content/components/Juggler.js, line 135: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIRemoteDebuggingPipe.sendMessage]
+2026-11-17T17:16:11.050Z pw:browser [pid=75256][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+2026-11-17T17:16:11.052Z pw:browser [pid=75256][out]       
+2026-11-17T17:16:11.055Z pw:browser [pid=75256] <process did exit: exitCode=0, signal=null>
+2026-11-17T17:16:11.055Z pw:browser [pid=75256] starting temporary directories cleanup
+2026-11-17T17:16:11.065Z pw:browser [pid=75256] finished temporary directories cleanup
+2026-11-17T17:16:11.065Z pw:browser [pid=75256] <gracefully close end>
+

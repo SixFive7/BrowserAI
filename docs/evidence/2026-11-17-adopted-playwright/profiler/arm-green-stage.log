@@ -1,0 +1,7 @@
+STAMPED C:\Source\SixFive7\BrowserAI\.work\wt\pw\src\BrowserAI\Runtime\BrowserConfiguration.cs
+STAMPED C:\Source\SixFive7\BrowserAI\.work\wt\pw\tests\BrowserAI.Tests\StackProfilerTests.cs
+CONTENT-CHECK planted-config=1 planted-arm=0
+PUBLISH-EXIT 0
+BINARY-CHECK chromium-1247-in-exe=False written=2026-11-17T17:40:21.3403825Z
+RUN-DONE exit=0
+DONE 2026-11-17T17:41:54.9180222+00:00

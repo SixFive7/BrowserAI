@@ -1,0 +1,17 @@
+run 1 shot 1     3561 B  9834f156149409bc32e5c0b79c3b7745b7c4b579cb84a41568a182398ed96b06
+run 1 shot 2     3561 B  9834f156149409bc32e5c0b79c3b7745b7c4b579cb84a41568a182398ed96b06
+run 1 shot 3     3561 B  9834f156149409bc32e5c0b79c3b7745b7c4b579cb84a41568a182398ed96b06
+run 2 shot 1     3561 B  9834f156149409bc32e5c0b79c3b7745b7c4b579cb84a41568a182398ed96b06
+run 2 shot 2     3561 B  9834f156149409bc32e5c0b79c3b7745b7c4b579cb84a41568a182398ed96b06
+run 2 shot 3     3561 B  9834f156149409bc32e5c0b79c3b7745b7c4b579cb84a41568a182398ed96b06
+run CONTROL shot different-page     3633 B  2c3c97dbb3ed3ec4253a929894946188f5aeb8ce3fc15d167236f5138ef25e5c
+
+distinct hashes over 6 captures of the SAME page: 1
+within run 1 identical: true
+within run 2 identical: true
+run1 == run2          : true
+CONTROL (different page) differs from run 2: true
+
+--- stderr ---
+
+EXIT finished=True code=0

@@ -1,0 +1,30 @@
+{
+  "label": "old-0.0.83-b",
+  "payload": "C:\\Source\\SixFive7\\BrowserAI\\.work\\payload-0.0.83-registerai-0.3.0",
+  "nodePid": 2696,
+  "variableInNodeEnvironment": false,
+  "ready": "READY 2696 C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+  "children": [
+    {
+      "pid": 127564,
+      "executable": "C:\\WINDOWS\\system32\\conhost.exe"
+    },
+    {
+      "pid": 124044,
+      "executable": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe"
+    }
+  ],
+  "browserPid": 124044,
+  "browserExecutable": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+  "browserVariables": 26,
+  "mozDisableSafeModeKey": [],
+  "mozVariables": [
+    "MOZ_HEADLESS=1"
+  ],
+  "controlPlaywrightBrowsersPath": [
+    "PLAYWRIGHT_BROWSERS_PATH=C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers"
+  ],
+  "nodeExited": true,
+  "launcherValuesAdded": [],
+  "launcherValuesRemovedByThisScript": 0
+}

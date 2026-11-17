@@ -1,0 +1,128 @@
+# pw lane, 2026-11-17: whether a Chrome for Testing that a payload's Playwright starts runs
+# Chromium's stack sampling profiler, read the way StackProfilerTests reads it: the names of the
+# browser main process's threads, StackSamplingProfiler for the profiler and CrBrowserMain as the
+# positive control. Starts the payload's node.exe with launch.cjs inside a kill-on-close job this
+# script creates, finds the browser as the direct child of that node pid whose command line carries
+# no --type= (a filter on the parent pid this script holds, never on a name), waits five seconds
+# after the page loaded, reads the thread descriptions, and ends node's input. Headless,
+# below-normal priority. Scratch, never committed.
+param(
+    [Parameter(Mandatory)] [string] $Payload,
+    [Parameter(Mandatory)] [ValidateSet('upstream', 'none', 'ours', 'browsertest')] [string] $Mode,
+    [Parameter(Mandatory)] [string] $Out,
+    [Parameter(Mandatory)] [string] $Label
+)
+$ErrorActionPreference = 'Stop'
+(Get-Process -Id $PID).PriorityClass = 'BelowNormal'
+
+Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+public static class PwThreads
+{
+    [StructLayout(LayoutKind.Sequential)] struct THREADENTRY32 { public int dwSize; public int cntUsage; public int th32ThreadID; public int th32OwnerProcessID; public int tpBasePri; public int tpDeltaPri; public int dwFlags; }
+    [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr CreateToolhelp32Snapshot(int flags, int pid);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool Thread32First(IntPtr snap, ref THREADENTRY32 e);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool Thread32Next(IntPtr snap, ref THREADENTRY32 e);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr OpenThread(int access, bool inherit, int tid);
+    [DllImport("kernel32.dll")] static extern int GetThreadDescription(IntPtr h, out IntPtr description);
+    [DllImport("kernel32.dll")] static extern IntPtr LocalFree(IntPtr p);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool CloseHandle(IntPtr h);
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern IntPtr CreateJobObject(IntPtr a, string name);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetInformationJobObject(IntPtr job, int cls, byte[] info, int len);
+
+    public static IntPtr KillOnCloseJob()
+    {
+        IntPtr job = CreateJobObject(IntPtr.Zero, null);
+        byte[] info = new byte[144];
+        BitConverter.GetBytes(0x2000).CopyTo(info, 16);
+        if (!SetInformationJobObject(job, 9, info, info.Length)) throw new System.ComponentModel.Win32Exception();
+        return job;
+    }
+
+    public static string[] Descriptions(int pid)
+    {
+        var names = new List<string>();
+        IntPtr snap = CreateToolhelp32Snapshot(0x4, 0);
+        try
+        {
+            var e = new THREADENTRY32 { dwSize = Marshal.SizeOf(typeof(THREADENTRY32)) };
+            if (!Thread32First(snap, ref e)) return names.ToArray();
+            do
+            {
+                if (e.th32OwnerProcessID != pid) continue;
+                IntPtr h = OpenThread(0x0800, false, e.th32ThreadID); // THREAD_QUERY_LIMITED_INFORMATION
+                if (h == IntPtr.Zero) continue;
+                try
+                {
+                    IntPtr p;
+                    if (GetThreadDescription(h, out p) >= 0 && p != IntPtr.Zero)
+                    {
+                        names.Add(Marshal.PtrToStringUni(p) ?? "");
+                        LocalFree(p);
+                    }
+                }
+                finally { CloseHandle(h); }
+            } while (Thread32Next(snap, ref e));
+        }
+        finally { CloseHandle(snap); }
+        return names.ToArray();
+    }
+}
+'@
+
+$null = New-Item -ItemType Directory -Force -Path $Out
+$profile = Join-Path $Out "$Label-profile"
+Remove-Item -LiteralPath $profile -Recurse -Force -ErrorAction SilentlyContinue
+$info = [System.Diagnostics.ProcessStartInfo]::new((Join-Path $Payload 'node\node.exe'))
+$info.ArgumentList.Add('C:\Source\SixFive7\BrowserAI\.work\pw-scratch\profiler\launch.cjs')
+$info.ArgumentList.Add($Payload)
+$info.ArgumentList.Add($profile)
+$info.ArgumentList.Add($Mode)
+$info.UseShellExecute = $false
+$info.CreateNoWindow = $true
+$info.RedirectStandardInput = $true
+$info.RedirectStandardOutput = $true
+$info.RedirectStandardError = $true
+$info.Environment['PLAYWRIGHT_BROWSERS_PATH'] = Join-Path $env:LOCALAPPDATA 'BrowserAI\browsers'
+$info.Environment['PLAYWRIGHT_SKIP_BROWSER_GC'] = '1'
+$info.Environment['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1'
+foreach ($k in @($info.Environment.Keys)) { if ($k -like 'PLAYWRIGHT_MCP_*' -or $k -eq 'DEBUG' -or $k -eq 'NODE_OPTIONS') { $info.Environment.Remove($k) } }
+
+$job = [PwThreads]::KillOnCloseJob()
+$process = [System.Diagnostics.Process]::Start($info)
+if (-not [PwThreads]::AssignProcessToJobObject($job, $process.Handle)) { throw 'AssignProcessToJobObject failed' }
+try { $process.PriorityClass = 'BelowNormal' } catch { }
+$result = [ordered]@{ label = $Label; mode = $Mode; payload = $Payload; nodePid = $process.Id }
+$ready = $null
+$deadline = [DateTime]::UtcNow.AddSeconds(90)
+while ($null -eq $ready -and [DateTime]::UtcNow -lt $deadline) {
+    $line = $process.StandardOutput.ReadLine()
+    if ($null -eq $line) { break }
+    if ($line.StartsWith('READY') -or $line.StartsWith('FAILED')) { $ready = $line }
+}
+$result.ready = $ready
+if ($ready -and $ready.StartsWith('READY')) {
+    Start-Sleep -Seconds 5
+    $children = @(Get-CimInstance Win32_Process -Filter "ParentProcessId = $($process.Id)" | Select-Object ProcessId, ExecutablePath, CommandLine)
+    $browsersRoot = (Join-Path $env:LOCALAPPDATA 'BrowserAI\browsers') + '\'
+    $browser = $children | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($browsersRoot, [StringComparison]::OrdinalIgnoreCase) -and $_.CommandLine -notmatch '--type=' } | Select-Object -First 1
+    if ($browser) {
+        $names = [PwThreads]::Descriptions([int]$browser.ProcessId)
+        $result.browserPid = $browser.ProcessId
+        $result.browserExecutable = $browser.ExecutablePath
+        $result.stackProfilerSwitchOnCommandLine = $browser.CommandLine.Contains('--disable-stack-profiler')
+        $result.threads = $names.Count
+        $result.crBrowserMain = @($names | Where-Object { $_ -eq 'CrBrowserMain' }).Count
+        $result.stackSamplingProfiler = @($names | Where-Object { $_ -eq 'StackSamplingProfiler' }).Count
+        $result.names = @($names | Sort-Object -Unique)
+    }
+}
+$process.StandardInput.Close()
+$null = $process.WaitForExit(30000)
+$result.nodeExited = $process.HasExited
+[PwThreads]::CloseHandle($job) | Out-Null
+$result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $Out "$Label.json") -Encoding utf8NoBOM
+"$Label mode=$Mode switchOnCommandLine=$($result.stackProfilerSwitchOnCommandLine) threads=$($result.threads) CrBrowserMain=$($result.crBrowserMain) StackSamplingProfiler=$($result.stackSamplingProfiler) exited=$($result.nodeExited)"

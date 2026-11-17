@@ -1,0 +1,149 @@
+# pw lane, 2026-11-17: does the Firefox that a payload's Playwright starts carry
+# MOZ_DISABLE_SAFE_MODE_KEY when the environment it is started from does not? Starts the
+# payload's node.exe with launch.cjs inside a kill-on-close job this script creates, with an
+# environment built from a short allowlist and WITHOUT that variable, waits for READY, finds the
+# browser process as the direct child of that node pid (a filter on the parent pid this script
+# holds, never on a name), reads its environment block out of its PEB, ends node's input, and
+# closes the job. HKCU\Software\Mozilla\Firefox\Launcher is listed before and after, and the
+# values the run added are removed by this script and named in its output. Below-normal priority,
+# headless, one launch. Scratch, never committed.
+param(
+    [Parameter(Mandatory)] [string] $Payload,
+    [Parameter(Mandatory)] [string] $Out,
+    [string] $Label = 'run'
+)
+$ErrorActionPreference = 'Stop'
+(Get-Process -Id $PID).PriorityClass = 'BelowNormal'
+
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class PwRig
+{
+    [StructLayout(LayoutKind.Sequential)]
+    struct PBI { public IntPtr Reserved1; public IntPtr PebBaseAddress; public IntPtr Reserved2_0; public IntPtr Reserved2_1; public IntPtr UniqueProcessId; public IntPtr Reserved3; }
+    [DllImport("ntdll.dll")] static extern int NtQueryInformationProcess(IntPtr h, int cls, ref PBI pbi, int len, out int ret);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr OpenProcess(int access, bool inherit, int pid);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool ReadProcessMemory(IntPtr h, IntPtr addr, byte[] buf, IntPtr size, out IntPtr read);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool CloseHandle(IntPtr h);
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] public static extern IntPtr CreateJobObject(IntPtr a, string name);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetInformationJobObject(IntPtr job, int cls, byte[] info, int len);
+
+    public static IntPtr KillOnCloseJob()
+    {
+        IntPtr job = CreateJobObject(IntPtr.Zero, null);
+        // JOBOBJECT_EXTENDED_LIMIT_INFORMATION, x64: LimitFlags at offset 16, total 144 bytes.
+        byte[] info = new byte[144];
+        BitConverter.GetBytes(0x2000).CopyTo(info, 16); // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        if (!SetInformationJobObject(job, 9, info, info.Length)) throw new System.ComponentModel.Win32Exception();
+        return job;
+    }
+
+    static IntPtr ReadPointer(IntPtr h, IntPtr addr)
+    {
+        byte[] b = new byte[8]; IntPtr r;
+        if (!ReadProcessMemory(h, addr, b, (IntPtr)8, out r)) throw new System.ComponentModel.Win32Exception();
+        return (IntPtr)BitConverter.ToInt64(b, 0);
+    }
+
+    public static string[] Environment(int pid)
+    {
+        IntPtr h = OpenProcess(0x0400 | 0x0010, false, pid); // QUERY_INFORMATION | VM_READ
+        if (h == IntPtr.Zero) throw new System.ComponentModel.Win32Exception();
+        try
+        {
+            PBI pbi = new PBI(); int ret;
+            int status = NtQueryInformationProcess(h, 0, ref pbi, Marshal.SizeOf(typeof(PBI)), out ret);
+            if (status != 0) throw new Exception("NtQueryInformationProcess " + status);
+            IntPtr parameters = ReadPointer(h, pbi.PebBaseAddress + 0x20);
+            IntPtr env = ReadPointer(h, parameters + 0x80);
+            byte[] sizeBytes = new byte[8]; IntPtr r;
+            if (!ReadProcessMemory(h, parameters + 0x3F0, sizeBytes, (IntPtr)8, out r)) throw new System.ComponentModel.Win32Exception();
+            long size = BitConverter.ToInt64(sizeBytes, 0);
+            byte[] block = new byte[size];
+            if (!ReadProcessMemory(h, env, block, (IntPtr)size, out r)) throw new System.ComponentModel.Win32Exception();
+            return Encoding.Unicode.GetString(block).Split(new[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
+        }
+        finally { CloseHandle(h); }
+    }
+}
+'@
+
+$launcherKey = 'HKCU:\Software\Mozilla\Firefox\Launcher'
+function Read-Launcher {
+    if (-not (Test-Path $launcherKey)) { return @{} }
+    $item = Get-Item $launcherKey
+    $values = @{}
+    foreach ($name in $item.GetValueNames()) { $values[$name] = $item.GetValue($name) }
+    return $values
+}
+$before = Read-Launcher
+
+$null = New-Item -ItemType Directory -Force -Path $Out
+$profile = Join-Path $Out "$Label-profile"
+Remove-Item -LiteralPath $profile -Recurse -Force -ErrorAction SilentlyContinue
+
+$node = Join-Path $Payload 'node\node.exe'
+$script = 'C:\Source\SixFive7\BrowserAI\.work\pw-scratch\safemode\launch.cjs'
+$info = [System.Diagnostics.ProcessStartInfo]::new($node)
+$info.ArgumentList.Add($script)
+$info.ArgumentList.Add($Payload)
+$info.ArgumentList.Add($profile)
+$info.UseShellExecute = $false
+$info.CreateNoWindow = $true
+$info.RedirectStandardInput = $true
+$info.RedirectStandardOutput = $true
+$info.RedirectStandardError = $true
+$info.Environment.Clear()
+foreach ($name in 'SystemRoot', 'windir', 'SystemDrive', 'COMSPEC', 'PATH', 'PATHEXT', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE', 'OS', 'TEMP', 'TMP', 'USERPROFILE', 'LOCALAPPDATA', 'APPDATA', 'HOMEDRIVE', 'HOMEPATH', 'ProgramData', 'ProgramFiles', 'USERNAME', 'COMPUTERNAME') {
+    $value = [Environment]::GetEnvironmentVariable($name)
+    if ($null -ne $value) { $info.Environment[$name] = $value }
+}
+$info.Environment['PLAYWRIGHT_BROWSERS_PATH'] = Join-Path $env:LOCALAPPDATA 'BrowserAI\browsers'
+$info.Environment['PLAYWRIGHT_SKIP_BROWSER_GC'] = '1'
+$info.Environment['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1'
+$setInNode = $info.Environment.ContainsKey('MOZ_DISABLE_SAFE_MODE_KEY')
+
+$job = [PwRig]::KillOnCloseJob()
+$process = [System.Diagnostics.Process]::Start($info)
+if (-not [PwRig]::AssignProcessToJobObject($job, $process.Handle)) { throw 'AssignProcessToJobObject failed' }
+try { $process.PriorityClass = 'BelowNormal' } catch { }
+
+$result = [ordered]@{ label = $Label; payload = $Payload; nodePid = $process.Id; variableInNodeEnvironment = $setInNode }
+$ready = $null
+$deadline = [DateTime]::UtcNow.AddSeconds(90)
+while ($null -eq $ready -and [DateTime]::UtcNow -lt $deadline) {
+    $line = $process.StandardOutput.ReadLine()
+    if ($null -eq $line) { break }
+    if ($line.StartsWith('READY') -or $line.StartsWith('FAILED')) { $ready = $line }
+}
+$result.ready = $ready
+if ($ready -and $ready.StartsWith('READY')) {
+    $children = @(Get-CimInstance Win32_Process -Filter "ParentProcessId = $($process.Id)" | Select-Object ProcessId, ExecutablePath, CommandLine)
+    $result.children = @($children | ForEach-Object { [ordered]@{ pid = $_.ProcessId; executable = $_.ExecutablePath } })
+    $browsersRoot = (Join-Path $env:LOCALAPPDATA 'BrowserAI\browsers') + '\'
+    $browser = $children | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($browsersRoot, [StringComparison]::OrdinalIgnoreCase) -and $_.CommandLine -notmatch '-contentproc' } | Select-Object -First 1
+    if ($browser) {
+        $envBlock = [PwRig]::Environment([int]$browser.ProcessId)
+        $result.browserPid = $browser.ProcessId
+        $result.browserExecutable = $browser.ExecutablePath
+        $result.browserVariables = $envBlock.Count
+        $result.mozDisableSafeModeKey = @($envBlock | Where-Object { $_ -like 'MOZ_DISABLE_SAFE_MODE_KEY=*' })
+        $result.mozVariables = @($envBlock | Where-Object { $_ -like 'MOZ_*' })
+        $result.controlPlaywrightBrowsersPath = @($envBlock | Where-Object { $_ -like 'PLAYWRIGHT_BROWSERS_PATH=*' })
+    }
+}
+$process.StandardInput.Close()
+$null = $process.WaitForExit(30000)
+$result.nodeExited = $process.HasExited
+[PwRig]::CloseHandle($job) | Out-Null
+
+$after = Read-Launcher
+$added = @($after.Keys | Where-Object { -not $before.ContainsKey($_) })
+foreach ($name in $added) { Remove-ItemProperty -Path $launcherKey -Name $name }
+$result.launcherValuesAdded = $added
+$result.launcherValuesRemovedByThisScript = $added.Count
+$result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $Out "$Label.json") -Encoding utf8NoBOM
+$result | ConvertTo-Json -Depth 5

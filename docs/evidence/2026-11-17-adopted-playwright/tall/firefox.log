@@ -1,0 +1,13 @@
+[
+ {
+  "h": 16385,
+  "fileErr": false,
+  "fileBytes": 709188,
+  "inlineErr": false,
+  "inlineLen": 945584
+ }
+]
+
+--- stderr ---
+
+EXIT finished=True code=0

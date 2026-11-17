@@ -1,0 +1,17 @@
+{
+  "label": "new-chromium-1",
+  "browser": "chromium",
+  "payload": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\pw\\payload",
+  "nodePid": 126256,
+  "navigated": true,
+  "processesBefore": 10,
+  "nodeExitedMs": 359,
+  "nodeExitCode": 0,
+  "joinedAfterInputEnd": [],
+  "taskkillJoined": [],
+  "leftInJob": 1,
+  "gracefulStart": 1,
+  "gracefulEnd": 1,
+  "forcefullyClose": 0,
+  "willForceKill": 0
+}

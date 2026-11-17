@@ -1,0 +1,4 @@
+chromium-1254 copied from C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1254
+firefox-1573 copied from C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1573
+ffmpeg-1013 copied from C:\Users\jori\AppData\Local\BrowserAI\browsers\ffmpeg-1013
+winldd-1007 copied from C:\Users\jori\AppData\Local\BrowserAI\browsers\winldd-1007

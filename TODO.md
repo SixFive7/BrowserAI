@@ -933,7 +933,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       **The row still stays open**, and what it is waiting for has changed: the
       review, not the roll.
 
-- [ ] **Ask `@playwright/mcp` to stop returning an empty image when a WebP
+- [x] **Ask `@playwright/mcp` to stop returning an empty image when a WebP
       screenshot exceeds WebP's own dimension limit.** `browser_take_screenshot`
       with `type: "webp"` and `fullPage: true` over a document taller than
       **16,383 px** returns a zero-length inline image **and** writes a
@@ -1048,6 +1048,13 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       **The settlement condition is unchanged:** a released build in which a
       16,384 px `webp` screenshot errors instead of returning empty. **This item
       stays open as a watch**, not as work.
+      ✅ **CLOSED 2026-11-17: the settlement condition is met.** Chrome for Testing
+      158.0.8127.18 (`chromium-1254`), which `@playwright/mcp` 0.0.85 provisions, answers a
+      16,384 px `webp` with `isError` and *"Protocol error (Page.captureScreenshot): Unable to
+      encode screenshot"*, measured on the raw child by
+      [re-verification rows 122 and 138](kb/re-verification.md) that day
+      ([kb](kb/playwright/tools-and-artifacts.md#a-webp-screenshot-past-16383-px-comes-back-as-zero-bytes-with-iserror-false----measured-2026-09-14)).
+      #42717 was closed as completed on 2026-10-19. The hazard row is closed with it.
 
 - [x] **WATCH for the `@playwright/mcp` release that carries #42497, and delete
       the override when it lands.** ✅ **CLOSED 2026-09-21. Condition met
@@ -1328,6 +1335,15 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       `ChildEnvironmentTests.EveryChildIsStartedWithFirefoxsSafeModeKeySwitchedOff` round
       or retire it with a remark, record it in the kb entry and row 168 with dated
       previously clauses, and close this item. Until then the line stays.
+      ⚠️ *Added 2026-11-17 by addition:* the payload carries #43178 since `@playwright/mcp`
+      0.0.85 (`playwright-core` 1.66.0-alpha-2026-11-09), adopted that day, and the variable
+      is in the Firefox browser process's environment with nothing set in node's own,
+      measured from the process's environment block
+      ([kb](kb/playwright/provisioning-and-timings.md#a-headless-firefox-that-starts-while-shift-is-held-never-finishes-launching----measured-2026-09-25)).
+      The probe this item names was not run. **Taking `MOZ_DISABLE_SAFE_MODE_KEY` out of
+      `ChildEnvironment.Forced` is put to the maintainer and not done**, because the line is
+      the second exception `AGENTS.md` names and only he changes that rule. Until he decides,
+      the line stays.
 - [ ] **WATCH our comment on
       [microsoft/playwright#23047](https://github.com/microsoft/playwright/issues/23047),
       closed shadow roots.** Posted 2026-10-03 under SixFive7 on the maintainer's
@@ -1371,10 +1387,18 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       SIGTERM 41 ms before it closed the server's stdin (2026-10-17), and an
       app-server 0.163.0 on Linux, traced with `strace`, sent SIGTERM, closed stdin
       0.6 ms later and sent SIGKILL 8.5 ms after the SIGTERM (2026-10-18).
-- [ ] **WATCH https://github.com/microsoft/playwright/issues/43098, the Windows
+- [x] **WATCH https://github.com/microsoft/playwright/issues/43098, the Windows
       Playwright MCP browser kill.** On Windows, the stdio server force-kills
       its own browser 1 ms after the graceful close begins. Posted 2026-10-03.
       Watch for a reply.
+      ✅ **CLOSED 2026-11-17.** #43098 was closed as completed on 2026-10-06 by
+      [microsoft/playwright#43174](https://github.com/microsoft/playwright/pull/43174), which
+      `playwright-core` 1.66.0-alpha-2026-11-09 carries and `@playwright/mcp` 0.0.85 pins,
+      adopted that day. Measured then: an end of input with no close in flight closes the
+      browser gracefully, 6 of 6, and one during a close still kills, 6 of 6, so BrowserAI
+      keeps its close before the input ends; the [hazard row](HAZARDS.md#hazard-index) and
+      [the kb entry](kb/playwright/provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03)
+      carry it.
 - [ ] **WATCH the Microsoft response to report 1, sent 2026-10-03 to
       secure@microsoft.com.** The Playwright dashboard control WebSocket
       performs no Origin check. Watch for a response.
@@ -1401,6 +1425,9 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       [`DECISIONS.md`](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it).
       If Chromium fails such a capture with an error instead, the check is no
       longer needed either, because the error reaches the caller as it is.
+      ⚠️ *Added 2026-11-17 by addition:* row 190 at `chromium-1254`, Chrome for Testing
+      158.0.8127.18, read by a raw-child rig: still repeated, 16 rows past the line of a
+      16,400 px page with `isError: false` ([evidence](docs/evidence/2026-11-17-adopted-playwright/README.md)). The check stays.
 - [ ] **WATCH [openai/codex#11489](https://github.com/openai/codex/issues/11489)
       and [#16899](https://github.com/openai/codex/issues/16899), a Codex thread
       that never starts a dead stdio server again.** The maintainer decided on
@@ -1585,7 +1612,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       open, with no labels and no reply beyond the cross-link of 01:29:06Z. **Read both again**
       with an anonymous GET of `https://issues.chromium.org/action/issues/572877174` and
       `gh issue view 43327 --repo microsoft/playwright`.
-- [ ] **WATCH [microsoft/playwright#43341](https://github.com/microsoft/playwright/issues/43341),
+- [x] **WATCH [microsoft/playwright#43341](https://github.com/microsoft/playwright/issues/43341),
       the report to Playwright on a Firefox persistent launch that waits out its
       timeout on a restored tab Firefox's error page holds, and put Playwright's blank page
       back out of a Firefox launch when it is fixed.** The maintainer's 161 of 2026-10-13, in
@@ -1630,6 +1657,16 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       Firefox reports `load` for its error page; the replay above then says it through the
       payload's own child, and only both together put the blank page back out. This item is
       to 161 what the watch item of 129 d, on #43327, is to 129 a.
+      ✅ **CLOSED 2026-11-17, as this item says to when the issue closes without a fix.**
+      #43341 was closed as not planned on 2026-10-13 at 20:50:01Z by `yury-s`, whose reason is
+      quoted in
+      [the kb entry](kb/playwright/provisioning-and-timings.md#firefox-reports-no-load-for-its-network-error-page-with-every-launch-option-at-its-default----measured-2026-10-13):
+      a failed navigation can be detected without `load`, and the launch hang needs session
+      restore with `about:blank` removed through `ignoreDefaultArgs`, launch options Playwright
+      does not support (#42093). #43345 was closed unmerged. The rig's `issue`, `navigate` and
+      `repro` stages, run on 2026-11-17 against `@playwright/mcp` 0.0.85 with Firefox 159.0,
+      gave what they gave on 2026-10-13 ([evidence](docs/evidence/2026-11-17-adopted-playwright/README.md)), so 161's blank page
+      stays in a Firefox launch and `FirefoxRestore` stays as it is.
 
 ---
 

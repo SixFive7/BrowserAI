@@ -1,0 +1,33 @@
+{
+ "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\tall\\chromium\\output\\tall-16385.png",
+ "width": 1920,
+ "height": 16400,
+ "bands_checked": 164,
+ "bands_correct": 164,
+ "bands_wrong": 0,
+ "wrong_that_match_a_16384_repeat": 0,
+ "first_wrong": null,
+ "last_correct_y": 16350,
+ "samples": [
+  {
+   "band": 0,
+   "y": 50,
+   "shows": 0
+  },
+  {
+   "band": 1,
+   "y": 150,
+   "shows": 1
+  },
+  {
+   "band": 162,
+   "y": 16250,
+   "shows": 162
+  },
+  {
+   "band": 163,
+   "y": 16350,
+   "shows": 163
+  }
+ ]
+}

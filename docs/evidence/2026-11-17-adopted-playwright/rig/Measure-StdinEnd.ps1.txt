@@ -1,0 +1,170 @@
+# pw lane, 2026-11-17: what an @playwright/mcp child does to its browser when its standard input
+# ends, the shape of the hazard row "On every end of its input, @playwright/mcp force-kills its own
+# browser". One run: the payload's node.exe runs cli.js --config <a config shaped like
+# BrowserAI's> inside a kill-on-close job this script creates, with DEBUG=pw:browser; the child is
+# initialised, one browser_navigate opens the browser, then the child's standard input is closed
+# and nothing else is sent. While the child ends, the job's process list is read every 10 ms and
+# the image of every process that joins it is recorded with the time since the input closed. What
+# the child's standard error says about the close, upstream's own markers <gracefully close
+# start>, <gracefully close end>, <forcefully close> and <will force kill>, is kept whole. Headless,
+# below-normal priority, one browser at a time. Scratch, never committed.
+param(
+    [Parameter(Mandatory)] [string] $Payload,
+    [Parameter(Mandatory)] [ValidateSet('chromium', 'firefox')] [string] $Browser,
+    [Parameter(Mandatory)] [string] $Out,
+    [Parameter(Mandatory)] [string] $Label
+)
+$ErrorActionPreference = 'Stop'
+(Get-Process -Id $PID).PriorityClass = 'BelowNormal'
+
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class PwJob
+{
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern IntPtr CreateJobObject(IntPtr a, string name);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetInformationJobObject(IntPtr job, int cls, byte[] info, int len);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool QueryInformationJobObject(IntPtr job, int cls, byte[] info, int len, out int ret);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr OpenProcess(int access, bool inherit, int pid);
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern bool QueryFullProcessImageName(IntPtr h, int flags, StringBuilder name, ref int size);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool CloseHandle(IntPtr h);
+
+    public static IntPtr KillOnCloseJob()
+    {
+        IntPtr job = CreateJobObject(IntPtr.Zero, null);
+        byte[] info = new byte[144];
+        BitConverter.GetBytes(0x2000).CopyTo(info, 16);
+        if (!SetInformationJobObject(job, 9, info, info.Length)) throw new System.ComponentModel.Win32Exception();
+        return job;
+    }
+
+    public static long[] Pids(IntPtr job)
+    {
+        byte[] buf = new byte[8 + 8 * 1024]; int ret;
+        if (!QueryInformationJobObject(job, 3, buf, buf.Length, out ret)) return new long[0];
+        int count = BitConverter.ToInt32(buf, 4);
+        long[] pids = new long[count];
+        for (int i = 0; i < count; i++) pids[i] = BitConverter.ToInt64(buf, 8 + 8 * i);
+        return pids;
+    }
+
+    public static string Image(long pid)
+    {
+        IntPtr h = OpenProcess(0x1000, false, (int)pid);
+        if (h == IntPtr.Zero) return null;
+        try { var sb = new StringBuilder(1024); int size = sb.Capacity; return QueryFullProcessImageName(h, 0, sb, ref size) ? sb.ToString() : null; }
+        finally { CloseHandle(h); }
+    }
+}
+'@
+
+$null = New-Item -ItemType Directory -Force -Path $Out
+$dir = Join-Path $Out $Label
+Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
+$null = New-Item -ItemType Directory -Force -Path (Join-Path $dir 'output'), (Join-Path $dir 'downloads'), (Join-Path $dir 'temp')
+
+$launch = [ordered]@{ headless = $true; downloadsPath = (Join-Path $dir 'downloads') }
+if ($Browser -eq 'chromium') {
+    $launch.channel = 'chrome-for-testing'
+    $launch.args = @('--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session', '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble')
+    $launch.ignoreDefaultArgs = @('about:blank')
+}
+else {
+    $launch.firefoxUserPrefs = [ordered]@{ 'toolkit.winRegisterApplicationRestart' = $false; 'signon.rememberSignons' = $false }
+    $launch.ignoreDefaultArgs = @()
+}
+$config = [ordered]@{
+    browser = [ordered]@{ browserName = $Browser; userDataDir = (Join-Path $dir 'profile'); launchOptions = $launch; contextOptions = [ordered]@{ viewport = [ordered]@{ width = 1920; height = 1080 } } }
+    outputDir = (Join-Path $dir 'output')
+    timeouts = [ordered]@{ idle = 0 }
+    filePaths = 'absolute'
+    codegen = 'none'
+}
+$configPath = Join-Path $dir 'config.json'
+$config | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $configPath -Encoding utf8NoBOM
+
+$info = [System.Diagnostics.ProcessStartInfo]::new((Join-Path $Payload 'node\node.exe'))
+$info.ArgumentList.Add((Join-Path $Payload 'mcp\node_modules\@playwright\mcp\cli.js'))
+$info.ArgumentList.Add('--config')
+$info.ArgumentList.Add($configPath)
+$info.WorkingDirectory = Join-Path $dir 'output'
+$info.UseShellExecute = $false
+$info.CreateNoWindow = $true
+$info.RedirectStandardInput = $true
+$info.RedirectStandardOutput = $true
+$info.RedirectStandardError = $true
+$info.Environment.Clear()
+foreach ($name in 'SystemRoot', 'windir', 'SystemDrive', 'COMSPEC', 'PATH', 'PATHEXT', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE', 'OS', 'USERPROFILE', 'LOCALAPPDATA', 'APPDATA', 'HOMEDRIVE', 'HOMEPATH', 'ProgramData', 'ProgramFiles', 'USERNAME', 'COMPUTERNAME') {
+    $value = [Environment]::GetEnvironmentVariable($name)
+    if ($null -ne $value) { $info.Environment[$name] = $value }
+}
+$info.Environment['TEMP'] = Join-Path $dir 'temp'
+$info.Environment['TMP'] = Join-Path $dir 'temp'
+$info.Environment['PLAYWRIGHT_BROWSERS_PATH'] = Join-Path $env:LOCALAPPDATA 'BrowserAI\browsers'
+$info.Environment['PLAYWRIGHT_SKIP_BROWSER_GC'] = '1'
+$info.Environment['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1'
+$info.Environment['MOZ_DISABLE_SAFE_MODE_KEY'] = '1'
+$info.Environment['DEBUG'] = 'pw:browser'
+
+$job = [PwJob]::KillOnCloseJob()
+$process = [System.Diagnostics.Process]::Start($info)
+if (-not [PwJob]::AssignProcessToJobObject($job, $process.Handle)) { throw 'AssignProcessToJobObject failed' }
+try { $process.PriorityClass = 'BelowNormal' } catch { }
+$stderr = [System.Text.StringBuilder]::new()
+$errTask = $process.StandardError.ReadToEndAsync()
+
+function Send($obj) { $process.StandardInput.WriteLine(($obj | ConvertTo-Json -Depth 8 -Compress)); $process.StandardInput.Flush() }
+function Receive($id, $seconds) {
+    $deadline = [DateTime]::UtcNow.AddSeconds($seconds)
+    while ([DateTime]::UtcNow -lt $deadline) {
+        $task = $process.StandardOutput.ReadLineAsync()
+        if (-not $task.Wait(([TimeSpan]($deadline - [DateTime]::UtcNow)))) { return $null }
+        $line = $task.Result
+        if ($null -eq $line) { return $null }
+        $message = $line | ConvertFrom-Json -AsHashtable
+        if ($message.ContainsKey('id') -and $message['id'] -eq $id) { return $message }
+    }
+    return $null
+}
+
+$result = [ordered]@{ label = $Label; browser = $Browser; payload = $Payload; nodePid = $process.Id }
+Send @{ jsonrpc = '2.0'; id = 1; method = 'initialize'; params = @{ protocolVersion = '2025-11-25'; capabilities = @{}; clientInfo = @{ name = 'stdin-end-rig'; version = '1' } } }
+$init = Receive 1 30
+Send @{ jsonrpc = '2.0'; method = 'notifications/initialized' }
+Send @{ jsonrpc = '2.0'; id = 2; method = 'tools/call'; params = @{ name = 'browser_navigate'; arguments = @{ url = 'data:text/html,<title>stdin end</title><p>stdin end</p>' } } }
+$nav = Receive 2 120
+$result.navigated = ($null -ne $nav) -and -not ($nav['result'] -and $nav['result']['isError'])
+$before = @([PwJob]::Pids($job) | ForEach-Object { [ordered]@{ pid = $_; image = [PwJob]::Image($_) } })
+$result.processesBefore = $before.Count
+$known = @{}
+foreach ($p in $before) { $known[[long]$p.pid] = $true }
+
+$clock = [System.Diagnostics.Stopwatch]::StartNew()
+$process.StandardInput.Close()
+$joined = [System.Collections.Generic.List[object]]::new()
+while (-not $process.HasExited -and $clock.ElapsedMilliseconds -lt 30000) {
+    foreach ($pid2 in [PwJob]::Pids($job)) {
+        if (-not $known.ContainsKey([long]$pid2)) {
+            $known[[long]$pid2] = $true
+            $joined.Add([ordered]@{ pid = $pid2; image = [PwJob]::Image($pid2); ms = $clock.ElapsedMilliseconds })
+        }
+    }
+    Start-Sleep -Milliseconds 10
+}
+$result.nodeExitedMs = if ($process.HasExited) { $clock.ElapsedMilliseconds } else { $null }
+$result.nodeExitCode = if ($process.HasExited) { $process.ExitCode } else { $null }
+$result.joinedAfterInputEnd = @($joined)
+$result.taskkillJoined = @($joined | Where-Object { $_.image -and ($_.image.ToLowerInvariant().EndsWith('\taskkill.exe') -or $_.image.ToLowerInvariant().EndsWith('\cmd.exe')) })
+$result.leftInJob = @([PwJob]::Pids($job)).Count
+[PwJob]::CloseHandle($job) | Out-Null
+$null = $errTask.Wait(5000)
+$err = $errTask.Result
+Set-Content -LiteralPath (Join-Path $dir 'stderr.txt') -Value $err -Encoding utf8NoBOM
+$result.gracefulStart = ([regex]::Matches($err, '<gracefully close start>')).Count
+$result.gracefulEnd = ([regex]::Matches($err, '<gracefully close end>')).Count
+$result.forcefullyClose = ([regex]::Matches($err, '<forcefully close>')).Count
+$result.willForceKill = ([regex]::Matches($err, '<will force kill>')).Count
+$result | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $dir 'result.json') -Encoding utf8NoBOM
+"$Label $Browser navigated=$($result.navigated) graceful=$($result.gracefulStart)/$($result.gracefulEnd) forcefully=$($result.forcefullyClose) willForceKill=$($result.willForceKill) taskkill/cmd=$($result.taskkillJoined.Count) nodeExitMs=$($result.nodeExitedMs) left=$($result.leftInJob)"

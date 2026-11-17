@@ -1,0 +1,38 @@
+{
+  "label": "new-0.0.85-b",
+  "payload": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\pw\\payload",
+  "nodePid": 48728,
+  "variableInNodeEnvironment": false,
+  "ready": "READY 48728 C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe",
+  "children": [
+    {
+      "pid": 69448,
+      "executable": "C:\\WINDOWS\\system32\\conhost.exe"
+    },
+    {
+      "pid": 114416,
+      "executable": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe"
+    }
+  ],
+  "browserPid": 114416,
+  "browserExecutable": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe",
+  "browserVariables": 26,
+  "mozDisableSafeModeKey": [
+    "MOZ_DISABLE_SAFE_MODE_KEY=1"
+  ],
+  "mozVariables": [
+    "MOZ_DISABLE_SAFE_MODE_KEY=1"
+  ],
+  "controlPlaywrightBrowsersPath": [
+    "PLAYWRIGHT_BROWSERS_PATH=C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers"
+  ],
+  "nodeExited": true,
+  "launcherValuesAdded": [
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Browser",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Launcher",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Blocklist",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Telemetry",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Image"
+  ],
+  "launcherValuesRemovedByThisScript": 5
+}

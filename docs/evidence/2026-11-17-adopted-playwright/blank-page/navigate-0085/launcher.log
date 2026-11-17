@@ -1,0 +1,5 @@
+2026-11-17T17:18:11.9031162Z the suite lock is held by the holder, pid 339578, and stays with it
+2026-11-17T17:18:12.1811958Z step started: node pid 129264, output C:\Source\SixFive7\BrowserAI\.work\wt\pw\.work\blank-page\runs\navigate-0085\navigate
+2026-11-17T17:18:37.3497591Z step ended: node exit 0, 0 process(es) of the job were still running and were ended with it
+2026-11-17T17:18:37.3626679Z navigate exit code: 0
+2026-11-17T17:18:37.4826618Z registry after navigate: 5 line(s) in C:\Source\SixFive7\BrowserAI\.work\wt\pw\.work\blank-page\runs\navigate-0085\registry-navigate.txt

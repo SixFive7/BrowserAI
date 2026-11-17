@@ -1,0 +1,45 @@
+{
+  "label": "inflight-new-firefox-1",
+  "browser": "firefox",
+  "payload": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\pw\\payload",
+  "nodePid": 128660,
+  "navigated": true,
+  "processesBefore": 8,
+  "closeSentFirstMs": 100,
+  "nodeExitedMs": 2392,
+  "nodeExitCode": 0,
+  "joinedAfterInputEnd": [
+    {
+      "pid": 106844,
+      "image": "C:\\Windows\\System32\\cmd.exe",
+      "ms": 119
+    },
+    {
+      "pid": 30904,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "ms": 170
+    },
+    {
+      "pid": 105436,
+      "image": "C:\\Windows\\System32\\taskkill.exe",
+      "ms": 292
+    }
+  ],
+  "taskkillJoined": [
+    {
+      "pid": 106844,
+      "image": "C:\\Windows\\System32\\cmd.exe",
+      "ms": 119
+    },
+    {
+      "pid": 105436,
+      "image": "C:\\Windows\\System32\\taskkill.exe",
+      "ms": 292
+    }
+  ],
+  "leftInJob": 0,
+  "gracefulStart": 1,
+  "gracefulEnd": 1,
+  "forcefullyClose": 1,
+  "willForceKill": 1
+}

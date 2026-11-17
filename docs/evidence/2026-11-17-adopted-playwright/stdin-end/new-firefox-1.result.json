@@ -1,0 +1,17 @@
+{
+  "label": "new-firefox-1",
+  "browser": "firefox",
+  "payload": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\pw\\payload",
+  "nodePid": 125724,
+  "navigated": true,
+  "processesBefore": 8,
+  "nodeExitedMs": 1895,
+  "nodeExitCode": 0,
+  "joinedAfterInputEnd": [],
+  "taskkillJoined": [],
+  "leftInJob": 0,
+  "gracefulStart": 1,
+  "gracefulEnd": 1,
+  "forcefullyClose": 0,
+  "willForceKill": 0
+}

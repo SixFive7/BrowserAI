@@ -1,0 +1,26 @@
+{
+  "navigateA": "### Page\n- Page URL: http://127.0.0.1:59962/page-a\n- Page Title: page a\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\isolated\\runs\\chromium\\output\\page-2026-11-17T17-29-28-0",
+  "newIsolated": "### Result\n- 0: [page a](http://127.0.0.1:59962/page-a)\n- 1: (current) [page b](http://127.0.0.1:59962/page-b) [isolatedContext: iso]\n### Open tabs\n- 0: [page a](http://127.0.0.1:59962/page-a)\n- 1: (current) [page b](http://127.0.0.1:59962/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:59962/page-b\n- Page Title: page b\n- Isolated context: iso\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\isolated\\runs\\chromium\\output\\page-2026-11-17T17-29-28-440Z.yml)",
+  "cookiesOnIsolatedTab": "### Result\ncookie_b=b (domain: 127.0.0.1, path: /)\ncookie_a=a (domain: 127.0.0.1, path: /)",
+  "tabs": "### Result\n- 0: [page a](http://127.0.0.1:59962/page-a)\n- 1: (current) [page b](http://127.0.0.1:59962/page-b) [isolatedContext: iso]",
+  "selectDefault": "### Result\n- 0: (current) [page a](http://127.0.0.1:59962/page-a)\n- 1: [page b](http://127.0.0.1:59962/page-b) [isolatedContext: iso]",
+  "cookiesOnDefaultTab": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)",
+  "close": "### Result\nNo open tabs. Navigate to a URL to create one.",
+  "outputFiles": [
+    "network.har",
+    "page-2026-11-17T17-29-28-059Z.yml",
+    "page-2026-11-17T17-29-28-440Z.yml"
+  ],
+  "harPages": [
+    "page a"
+  ],
+  "harEntries": [
+    "chrome://resources/cr_components/searchbox/icons/google_logo.svg",
+    "/page-a"
+  ],
+  "cookiesAfterRelaunch": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)\n### Page\n- Page URL: http://127.0.0.1:59962/page-a\n- Page Title: page a"
+}
+
+--- stderr ---
+
+EXIT finished=True code=0

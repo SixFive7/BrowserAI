@@ -1,0 +1,48 @@
+# pw lane, 2026-11-17: runs one command inside a kill-on-close job object this script creates,
+# at below-normal priority, with its output in a file, and closes the job when the command ends
+# or its time runs out, so nothing it started outlives it. A new file.
+param(
+    [Parameter(Mandatory)] [string] $Exe,
+    [Parameter(Mandatory)] [string[]] $Arguments,
+    [Parameter(Mandatory)] [string] $Log,
+    [int] $TimeoutSeconds = 600
+)
+$ErrorActionPreference = 'Stop'
+(Get-Process -Id $PID).PriorityClass = 'BelowNormal'
+if (-not ('PwRunJob' -as [type])) { Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class PwRunJob
+{
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern IntPtr CreateJobObject(IntPtr a, string name);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetInformationJobObject(IntPtr job, int cls, byte[] info, int len);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool CloseHandle(IntPtr h);
+    public static IntPtr KillOnCloseJob()
+    {
+        IntPtr job = CreateJobObject(IntPtr.Zero, null);
+        byte[] info = new byte[144];
+        BitConverter.GetBytes(0x2000).CopyTo(info, 16);
+        if (!SetInformationJobObject(job, 9, info, info.Length)) throw new System.ComponentModel.Win32Exception();
+        return job;
+    }
+}
+'@
+}
+$info = [System.Diagnostics.ProcessStartInfo]::new($Exe)
+foreach ($a in $Arguments) { $info.ArgumentList.Add($a) }
+$info.UseShellExecute = $false
+$info.CreateNoWindow = $true
+$info.RedirectStandardOutput = $true
+$info.RedirectStandardError = $true
+$job = [PwRunJob]::KillOnCloseJob()
+$process = [System.Diagnostics.Process]::Start($info)
+if (-not [PwRunJob]::AssignProcessToJobObject($job, $process.Handle)) { throw 'AssignProcessToJobObject failed' }
+try { $process.PriorityClass = 'BelowNormal' } catch { }
+$out = $process.StandardOutput.ReadToEndAsync()
+$err = $process.StandardError.ReadToEndAsync()
+$finished = $process.WaitForExit($TimeoutSeconds * 1000)
+[PwRunJob]::CloseHandle($job) | Out-Null
+$null = $out.Wait(5000); $null = $err.Wait(5000)
+Set-Content -LiteralPath $Log -Value ($out.Result + "`n--- stderr ---`n" + $err.Result + "`nEXIT finished=$finished code=$(if ($finished) { $process.ExitCode } else { 'timeout' })") -Encoding utf8NoBOM
+"EXIT finished=$finished code=$(if ($finished) { $process.ExitCode } else { 'timeout' })"

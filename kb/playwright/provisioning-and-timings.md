@@ -1920,6 +1920,26 @@ keys**, 16 and 19 runs of each. **A `browser_close` first kept everything, 6 of
 6**, even with the tree killed the moment the tool answered: 203 to 286 ms for
 Chromium and 533 to 592 ms for Firefox.
 
+⚠️ *Narrowed 2026-11-17 by addition (previously the paragraph above alone, which stands as
+the record of 1.64)*: **at `playwright-core` 1.66.0-alpha-2026-11-09, which `@playwright/mcp`
+0.0.85 pins, the end of the input alone closes the browser once and gracefully, and the end
+of the input during a close still kills it.**
+[microsoft/playwright#43174](https://github.com/microsoft/playwright/pull/43174), merged for
+#43098, removed the transport's end-of-stream handler, so the exit watchdog is the one
+caller left: 1.64.0-alpha-1790635538000 has `process.stdin.on("end", () => void
+transport.close())` and 1.66.0-alpha-2026-11-09 has no such line, read in both payloads'
+`coreBundle.js`. Measured on 2026-11-17 with a rig of its own, headless, three runs per
+family on each payload: on 0.0.85 every run logged `<gracefully close start>` and
+`<gracefully close end>` and no `<forcefully close>`, nothing joined the child's job, and node
+exited 359 to 408 ms after the input closed with Chromium and 988 to 1,895 ms with Firefox;
+on 0.0.83 every run took the force branch 2 to 6 ms after the graceful start, and
+`taskkill.exe` joined 208 to 920 ms after the input closed. With a `browser_close` sent
+100 ms before the input closed, 0.0.85 took the force branch in six runs of six, 99 to 124 ms
+after the close's own graceful start, because a second graceful close of a browser already
+closing is the force branch, `gracefullyClose` in `processLauncher` ([evidence](../../docs/evidence/2026-11-17-adopted-playwright/README.md)). So
+BrowserAI's own close before the input ends still decides what is kept, and a close that
+runs out its cap is still ended by a kill. The survival table above was not taken again.
+
 **What a hard kill leaves of a session**, read off a stand-in for BrowserAI's
 session holders and not off the product, 3 of 3: the process is gone 37 to 40
 ms after the kill, `browserai.lock` can be opened again 37 to 49 ms after it,
@@ -2286,6 +2306,20 @@ deterministic arm and the one to run first**: three of three stuck, no keyboard
 involved. A newer Firefox that launches under it, or a `playwright-core` that
 sets the variable itself, is the change to look for.
 
+⚠️ *Added 2026-11-17 by addition:* **`playwright-core` 1.66.0-alpha-2026-11-09 sets the
+variable itself**, the second change named above.
+[microsoft/playwright#43178](https://github.com/microsoft/playwright/pull/43178), merged for
+#43089, makes both Firefox launchers' `amendEnvironment` start from
+`MOZ_DISABLE_SAFE_MODE_KEY: "1"` beneath the caller's own environment, read in the payload's
+`coreBundle.js`; 1.64.0-alpha-1790635538000 has no such line. Measured the same day from the
+environment block of the Firefox browser process, with the variable absent from node's own
+environment, one launch each, headless: present under 1.66.0-alpha-2026-11-09 and Firefox
+159.0, absent under 1.64.0-alpha-1790635538000 and Firefox 156.0 ([evidence](../../docs/evidence/2026-11-17-adopted-playwright/README.md)). So
+`ChildEnvironment.Forced` now sets what Playwright sets. Whether BrowserAI's line goes is the
+maintainer's to decide, because it is the second exception `AGENTS.md` names. The forced arm
+was not run on Firefox 159, so the stall itself is unmeasured there; re-verification row 168
+says what is owed.
+
 ### A Firefox session resumed onto a page that can neither load nor come back from the cache waits out the 180 s launch -- measured 2026-10-13
 
 `[FLOATS]` Firefox **156.0** (`firefox-1553`, build 20260927184314) under `playwright-core`
@@ -2540,6 +2574,33 @@ change to look for is #43341 fixed in a `playwright-core` the payload pins, or i
 build it brings: the `repro` stage's first variant and the `issue` stage's `restore.mjs` then
 launch, and the `navigate` stage's Firefox row resolves. That is the day 161's blank page can
 go again, [re-verification](../re-verification.md) row 222.
+
+⚠️ *Re-measured 2026-11-17 by addition, on the maintainer's 178 b:* **unchanged on the payload
+of `@playwright/mcp` 0.0.85**, `playwright-core` 1.66.0-alpha-2026-11-09 with Firefox 159.0
+(`firefox-1573`) and Chrome for Testing 158.0.8127.18. The `issue`, `navigate` and `repro`
+stages gave what they gave above: `repro.mjs` timed out waiting for `load` on
+`about:neterror`, `restore.mjs` after 30,015 ms, the page that navigates itself waited out
+15,013 ms, Chromium's `load` came after 32 and 59 ms, and the restore with the blank page left
+out and its server ended timed out at 30,004 ms where with the blank page kept it launched in
+1,863 ms ([evidence](../../docs/evidence/2026-11-17-adopted-playwright/README.md)). **#43341 was closed as not planned** on 2026-10-13 at
+20:50:01Z by `yury-s`, in his words verbatim:
+
+> We're treating this as browser-specific behaviour. When a navigation fails, `goto`,
+> `waitForURL` and `reload` already throw `NS_ERROR_CONNECTION_REFUSED` right away, and
+> `page.on('requestfailed')` fires for the navigation request with the same error, so the
+> failure can be detected without waiting for `load`. Only a bare `waitForLoadState('load')`
+> waits out its timeout. WebKit doesn't show an error page at all and stays on the previous
+> page.
+>
+> The launch hang needs session restore (`browser.sessionstore.resume_session_once`) together
+> with removing `about:blank` through `ignoreDefaultArgs`. Custom launch arguments/options like
+> that aren't supported (see #42093); with the default arguments, the persistent launch works.
+> Closing.
+
+The contributor's change to juggler,
+[microsoft/playwright#43345](https://github.com/microsoft/playwright/pull/43345), was closed
+unmerged. So nothing upstream is going to take this wait away, and 161's blank page stays in
+a Firefox launch.
 
 ### What a server's start costs before its first answer -- measured 2026-10-04
 

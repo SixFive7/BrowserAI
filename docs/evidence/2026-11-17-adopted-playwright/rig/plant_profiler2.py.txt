@@ -1,0 +1,39 @@
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+# The plant for StackProfilerTests once BrowserAI's --disable-stack-profiler is gone, a scratch edit
+# never committed. Chrome for Testing 158 starts no stack sampling profiler outside a browser test
+# (Chromium CL 8573923 returns before the channel check unless IsBrowserTestModeEnabled(), which no
+# switch sets), so the plant points the session's Chromium at chromium-1247, Chrome for Testing
+# 155.0.8059.12, which starts the profiler when nothing switches it off, takes Playwright's own copy
+# of the switch out through ignoreDefaultArgs, and points the arm's browser lookup at the same
+# revision. Restored from the copies in pw-scratch\w06 before the green run.
+W = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\pw\\'
+old_exe = 'C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe'
+
+p = W + 'src\\BrowserAI\\Runtime\\BrowserConfiguration.cs'
+t = open(p, encoding='utf-8', newline='').read()
+a1 = '                writer.WriteString("channel", Channel);\n'
+b1 = a1 + '                writer.WriteString("executablePath", @"' + old_exe + '");\n'
+a2 = ('            if (!IsFirefox(request.Browser))\n'
+      '            {\n'
+      '                writer.WriteStringValue(DefaultPageArgument);\n'
+      '            }\n')
+b2 = ('            if (!IsFirefox(request.Browser))\n'
+      '            {\n'
+      '                writer.WriteStringValue(DefaultPageArgument);\n'
+      '                writer.WriteStringValue("--disable-stack-profiler");\n'
+      '            }\n')
+for a, b in ((a1, b1), (a2, b2)):
+    n = t.count(a)
+    assert n == 1, (a[:60], n)
+    t = t.replace(a, b)
+open(p, 'w', encoding='utf-8', newline='').write(t)
+print('planted the configuration')
+
+p = W + 'tests\\BrowserAI.Tests\\StackProfilerTests.cs'
+t = open(p, encoding='utf-8', newline='').read()
+a3 = '$"chromium-{BrowserAiPaths.ChromiumRevision}"'
+assert t.count(a3) == 1
+t = t.replace(a3, '"chromium-1247"')
+open(p, 'w', encoding='utf-8', newline='').write(t)
+print('planted the arm')

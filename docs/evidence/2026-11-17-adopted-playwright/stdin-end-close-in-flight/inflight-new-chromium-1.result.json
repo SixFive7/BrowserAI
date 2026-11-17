@@ -1,0 +1,45 @@
+{
+  "label": "inflight-new-chromium-1",
+  "browser": "chromium",
+  "payload": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\pw\\payload",
+  "nodePid": 127812,
+  "navigated": true,
+  "processesBefore": 10,
+  "closeSentFirstMs": 100,
+  "nodeExitedMs": 2018,
+  "nodeExitCode": 0,
+  "joinedAfterInputEnd": [
+    {
+      "pid": 50112,
+      "image": "C:\\Windows\\System32\\cmd.exe",
+      "ms": 37
+    },
+    {
+      "pid": 105024,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "ms": 113
+    },
+    {
+      "pid": 97668,
+      "image": "C:\\Windows\\System32\\taskkill.exe",
+      "ms": 225
+    }
+  ],
+  "taskkillJoined": [
+    {
+      "pid": 50112,
+      "image": "C:\\Windows\\System32\\cmd.exe",
+      "ms": 37
+    },
+    {
+      "pid": 97668,
+      "image": "C:\\Windows\\System32\\taskkill.exe",
+      "ms": 225
+    }
+  ],
+  "leftInJob": 0,
+  "gracefulStart": 1,
+  "gracefulEnd": 1,
+  "forcefullyClose": 1,
+  "willForceKill": 1
+}
