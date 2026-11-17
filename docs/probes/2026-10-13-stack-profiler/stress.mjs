@@ -18,7 +18,7 @@ const [outDir, launchesText, secondsText, order] = process.argv.slice(2);
 const launches = Number(launchesText);
 const seconds = Number(secondsText);
 const exe = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\shot-diag-scratch\\chromium-1247\\chrome-win64\\chrome.exe';
-const python = 'C:\\Program Files\\Python312\\python.exe';
+const python = 'python';
 const scripts = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\shot-diag-scratch\\scripts';
 
 // The arguments BrowserAI handed Playwright for the arm's session, read from the
