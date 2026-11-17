@@ -1,0 +1,1 @@
+{"mcpServers":{"probe":{"command":"C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe","type":"stdio","args":["server","--logdir","C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cc3\\a-d500-r1","--delay-ms","500"]}}}

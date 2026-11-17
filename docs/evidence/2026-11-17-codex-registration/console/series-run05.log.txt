@@ -1,0 +1,3 @@
+run05-codex-freshcopy-warm-01  elapsed 518 ms  exit 0  queue 0/0  commit 64.8% (91,499 MiB of 141,229 MiB), 595 processes, 17002 threads
+run05-codex-freshcopy-warm-02  elapsed 472 ms  exit 0  queue 2/1  commit 64.9% (91,726 MiB of 141,229 MiB), 608 processes, 17117 threads
+run05-codex-freshcopy-warm-03  elapsed 402 ms  exit 0  queue 0/0  commit 64.9% (91,717 MiB of 141,229 MiB), 601 processes, 17070 threads

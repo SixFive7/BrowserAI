@@ -1,0 +1,780 @@
+{
+  "progress": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\batches\\cx3.progress.log",
+  "gapMs": 1500,
+  "stubs": [
+    {
+      "name": "anthropic",
+      "exe": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\stub\\anthropic-stub.js"
+      ],
+      "env": {
+        "STUB_PORT": "8944",
+        "STUB_LOG": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\stub\\anthropic-stub.cx3.log"
+      }
+    },
+    {
+      "name": "openai",
+      "exe": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\stub\\openai-stub.js"
+      ],
+      "env": {
+        "STUB_PORT": "8945",
+        "STUB_LOG": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\stub\\openai-stub.cx3.log"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "name": "d1-d100-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d100-r1",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-C",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+        "Call the probe ping tool, then say done."
+      ],
+      "stdin": "closed",
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d100-r1', '--delay-ms', '100']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ]
+    },
+    {
+      "name": "d1-d100-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d100-r2",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-C",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+        "Call the probe ping tool, then say done."
+      ],
+      "stdin": "closed",
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d100-r2', '--delay-ms', '100']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ]
+    },
+    {
+      "name": "d1-d100-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d100-r3",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-C",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+        "Call the probe ping tool, then say done."
+      ],
+      "stdin": "closed",
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d100-r3', '--delay-ms', '100']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ]
+    },
+    {
+      "name": "d1-d15000-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d15000-r1",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-C",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+        "Call the probe ping tool, then say done."
+      ],
+      "stdin": "closed",
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d15000-r1', '--delay-ms', '15000']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ]
+    },
+    {
+      "name": "d1-d15000-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d15000-r2",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-C",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+        "Call the probe ping tool, then say done."
+      ],
+      "stdin": "closed",
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d15000-r2', '--delay-ms', '15000']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ]
+    },
+    {
+      "name": "d1-d15000-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d15000-r3",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-C",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+        "Call the probe ping tool, then say done."
+      ],
+      "stdin": "closed",
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d1-d15000-r3', '--delay-ms', '15000']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ]
+    },
+    {
+      "name": "d2-d100-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d100-r1",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "app-server",
+        "--listen",
+        "stdio://"
+      ],
+      "stdin": "pipe",
+      "autoReplyJsonRpc": true,
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d100-r1', '--delay-ms', '100']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ],
+      "steps": [
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"exit-probe\",\"title\":\"exit probe\",\"version\":\"1.0.0\"}}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":1\\b",
+          "timeoutMs": 30000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+          "timeoutMs": 60000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe ping tool, then say done.\"}]}}",
+          "do": "send"
+        },
+        {
+          "pattern": "turn/completed",
+          "timeoutMs": 90000,
+          "do": "waitFor"
+        },
+        {
+          "ms": 2000,
+          "do": "sleep"
+        },
+        {
+          "text": "end: close stdin",
+          "do": "mark"
+        },
+        {
+          "do": "closeStdin"
+        }
+      ]
+    },
+    {
+      "name": "d2-d100-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d100-r2",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "app-server",
+        "--listen",
+        "stdio://"
+      ],
+      "stdin": "pipe",
+      "autoReplyJsonRpc": true,
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d100-r2', '--delay-ms', '100']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ],
+      "steps": [
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"exit-probe\",\"title\":\"exit probe\",\"version\":\"1.0.0\"}}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":1\\b",
+          "timeoutMs": 30000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+          "timeoutMs": 60000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe ping tool, then say done.\"}]}}",
+          "do": "send"
+        },
+        {
+          "pattern": "turn/completed",
+          "timeoutMs": 90000,
+          "do": "waitFor"
+        },
+        {
+          "ms": 2000,
+          "do": "sleep"
+        },
+        {
+          "text": "end: close stdin",
+          "do": "mark"
+        },
+        {
+          "do": "closeStdin"
+        }
+      ]
+    },
+    {
+      "name": "d2-d100-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d100-r3",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "app-server",
+        "--listen",
+        "stdio://"
+      ],
+      "stdin": "pipe",
+      "autoReplyJsonRpc": true,
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d100-r3', '--delay-ms', '100']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ],
+      "steps": [
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"exit-probe\",\"title\":\"exit probe\",\"version\":\"1.0.0\"}}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":1\\b",
+          "timeoutMs": 30000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+          "timeoutMs": 60000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe ping tool, then say done.\"}]}}",
+          "do": "send"
+        },
+        {
+          "pattern": "turn/completed",
+          "timeoutMs": 90000,
+          "do": "waitFor"
+        },
+        {
+          "ms": 2000,
+          "do": "sleep"
+        },
+        {
+          "text": "end: close stdin",
+          "do": "mark"
+        },
+        {
+          "do": "closeStdin"
+        }
+      ]
+    },
+    {
+      "name": "d2-d15000-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d15000-r1",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "app-server",
+        "--listen",
+        "stdio://"
+      ],
+      "stdin": "pipe",
+      "autoReplyJsonRpc": true,
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d15000-r1', '--delay-ms', '15000']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ],
+      "steps": [
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"exit-probe\",\"title\":\"exit probe\",\"version\":\"1.0.0\"}}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":1\\b",
+          "timeoutMs": 30000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+          "timeoutMs": 60000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe ping tool, then say done.\"}]}}",
+          "do": "send"
+        },
+        {
+          "pattern": "turn/completed",
+          "timeoutMs": 90000,
+          "do": "waitFor"
+        },
+        {
+          "ms": 2000,
+          "do": "sleep"
+        },
+        {
+          "text": "end: close stdin",
+          "do": "mark"
+        },
+        {
+          "do": "closeStdin"
+        }
+      ]
+    },
+    {
+      "name": "d2-d15000-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d15000-r2",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "app-server",
+        "--listen",
+        "stdio://"
+      ],
+      "stdin": "pipe",
+      "autoReplyJsonRpc": true,
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d15000-r2', '--delay-ms', '15000']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ],
+      "steps": [
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"exit-probe\",\"title\":\"exit probe\",\"version\":\"1.0.0\"}}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":1\\b",
+          "timeoutMs": 30000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+          "timeoutMs": 60000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe ping tool, then say done.\"}]}}",
+          "do": "send"
+        },
+        {
+          "pattern": "turn/completed",
+          "timeoutMs": 90000,
+          "do": "waitFor"
+        },
+        {
+          "ms": 2000,
+          "do": "sleep"
+        },
+        {
+          "text": "end: close stdin",
+          "do": "mark"
+        },
+        {
+          "do": "closeStdin"
+        }
+      ]
+    },
+    {
+      "name": "d2-d15000-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d15000-r3",
+      "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj",
+      "maxMs": 150000,
+      "settleMs": 25000,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\bin\\codex\\codex.exe",
+      "args": [
+        "app-server",
+        "--listen",
+        "stdio://"
+      ],
+      "stdin": "pipe",
+      "autoReplyJsonRpc": true,
+      "env": {
+        "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\claude-sdk",
+        "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex",
+        "DISABLE_AUTOUPDATER": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:8944",
+        "ANTHROPIC_API_KEY": "stub-key-not-real",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "DISABLE_TELEMETRY": "1",
+        "DISABLE_ERROR_REPORTING": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "never",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\roaming",
+        "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\appdata\\local",
+        "STUB_KEY": "not-a-real-key",
+        "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2",
+        "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+      },
+      "writeFiles": [
+        {
+          "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\cfg\\codex\\config.toml",
+          "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8945\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe'\nargs = ['server', '--logdir', 'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\cx3\\d2-d15000-r3', '--delay-ms', '15000']\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\clients-scratch\\part2\\proj']\ntrust_level = \"trusted\""
+        }
+      ],
+      "steps": [
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"exit-probe\",\"title\":\"exit probe\",\"version\":\"1.0.0\"}}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":1\\b",
+          "timeoutMs": 30000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{}}",
+          "do": "send"
+        },
+        {
+          "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+          "timeoutMs": 60000,
+          "do": "waitFor"
+        },
+        {
+          "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe ping tool, then say done.\"}]}}",
+          "do": "send"
+        },
+        {
+          "pattern": "turn/completed",
+          "timeoutMs": 90000,
+          "do": "waitFor"
+        },
+        {
+          "ms": 2000,
+          "do": "sleep"
+        },
+        {
+          "text": "end: close stdin",
+          "do": "mark"
+        },
+        {
+          "do": "closeStdin"
+        }
+      ]
+    }
+  ]
+}

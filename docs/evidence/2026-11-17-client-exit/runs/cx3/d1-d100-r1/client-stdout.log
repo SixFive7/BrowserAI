@@ -1,0 +1,8 @@
+364170540.027	2026-11-17T15:23:48.2331616Z	27880	client	OUT	{"type":"thread.started","thread_id":"01a1ea1b-6ac7-7fc0-9164-53e753ca4bb4"}
+364170690.918	2026-11-17T15:23:48.3840439Z	27880	client	OUT	{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+364171095.979	2026-11-17T15:23:48.7891137Z	27880	client	OUT	{"type":"turn.started"}
+364171398.304	2026-11-17T15:23:49.0914358Z	27880	client	OUT	{"type":"item.started","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{},"result":null,"error":null,"status":"in_progress"}}
+364171433.890	2026-11-17T15:23:49.1270143Z	27880	client	OUT	{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{},"result":{"content":[{"type":"text","text":"pong from pid 27132"}],"structured_content":null},"error":null,"status":"completed"}}
+364171523.625	2026-11-17T15:23:49.2167508Z	27880	client	OUT	{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"done"}}
+364171628.096	2026-11-17T15:23:49.3212236Z	27880	client	OUT	{"type":"turn.completed","usage":{"input_tokens":84,"cached_input_tokens":24,"cache_write_input_tokens":0,"output_tokens":10,"reasoning_output_tokens":0}}
+364171924.701	2026-11-17T15:23:49.6178281Z	27880	client	OUT_EOF	

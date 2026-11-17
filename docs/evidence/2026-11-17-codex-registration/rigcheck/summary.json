@@ -1,0 +1,136 @@
+{
+  "label": "rigcheck-02-whoami",
+  "condition": "rig check, whoami.exe named as codex",
+  "client": "codex",
+  "registerAi": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\payload\\registerai\\RegisterAI.exe",
+  "arguments": [
+    "register",
+    "--name",
+    "browserai",
+    "--client",
+    "codex",
+    "--scope",
+    "user",
+    "--owned-root",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app",
+    "--client-exe",
+    "codex=C:\\Windows\\System32\\whoami.exe",
+    "--timeout",
+    "12",
+    "--",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "--mcp"
+  ],
+  "environmentRemoved": [
+    "CLAUDECODE",
+    "VSCODE_IPC_HOOK",
+    "CLAUDE_CODE_ENABLE_TASKS",
+    "CLAUDE_CODE_QUESTION_PREVIEW_FORMAT",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "VSCODE_NODE_COMPILE_CACHE_KIND",
+    "VSCODE_NODE_COMPILE_CACHE_ROOT",
+    "VSCODE_CODE_CACHE_PATH",
+    "CLAUDE_CODE_MESSAGING_SOCKET",
+    "VSCODE_CWD",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING",
+    "VSCODE_HANDLES_UNCAUGHT_ERRORS",
+    "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING",
+    "CLAUDE_CODE_EFFORT_LEVEL",
+    "CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY",
+    "MCP_CONNECTION_NONBLOCKING",
+    "CLAUDE_CODE_SESSION_ID",
+    "CLAUDE_CODE_STARTUP_FAILURE_RESULTS",
+    "ELECTRON_RUN_AS_NODE",
+    "CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION",
+    "CLAUDE_CODE_SESSION_ATTENDED",
+    "CLAUDE_CODE_ENTRYPOINT",
+    "VSCODE_PID",
+    "CLAUDE_PID",
+    "CLAUDE_CODE_CHILD_SESSION",
+    "VSCODE_DOTNET_INSTALL_TOOL_ORIGINAL_HOME",
+    "VSCODE_NLS_CONFIG",
+    "CLAUDE_AGENT_SDK_VERSION",
+    "VSCODE_CRASH_REPORTER_PROCESS_TYPE",
+    "VSCODE_ESM_ENTRYPOINT",
+    "CLAUDE_CODE_MAX_RETRIES",
+    "CLAUDE_CODE_MESSAGING_TOKEN"
+  ],
+  "codexFile": {
+    "path": "C:\\Windows\\System32\\whoami.exe",
+    "length": 98304,
+    "lastWriteUtc": "2024-11-08T21:09:55Z",
+    "processesRunningFromItBefore": 0
+  },
+  "before": {
+    "utc": "2026-11-17T15:03:37.542Z",
+    "bootUtc": "2026-11-13T10:14:07Z",
+    "uptime": "4.04:49:30",
+    "processorQueueLength": 0,
+    "commitCharge": "58.7% (82,865 MiB of 141,229 MiB), 605 processes, 17002 threads"
+  },
+  "elapsedMs": 149.5,
+  "registerAiLifeMs": 106.5,
+  "exited": true,
+  "exitCode": 4,
+  "overProductBudget14s": false,
+  "jobEmptied": true,
+  "processes": [
+    {
+      "pid": 73772,
+      "image": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\payload\\registerai\\RegisterAI.exe",
+      "startMs": 0.0,
+      "lifeMs": 106.5,
+      "cpuMs": 46.9,
+      "exitCode": 4,
+      "newAtMs": 56.9,
+      "exitAtMs": 145.6
+    },
+    {
+      "pid": 48372,
+      "image": "C:\\Windows\\System32\\whoami.exe",
+      "startMs": 58.0,
+      "lifeMs": 43.2,
+      "cpuMs": 15.6,
+      "exitCode": 1,
+      "newAtMs": 96.7,
+      "exitAtMs": 140.3
+    },
+    {
+      "pid": 56240,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 68.1,
+      "lifeMs": 34.8,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 106.8,
+      "exitAtMs": 142.1
+    }
+  ],
+  "results": [
+    {
+      "client": "codex",
+      "clientPath": "C:\\Windows\\System32\\whoami.exe",
+      "action": "refused-unreadable",
+      "error": "'codex mcp list --json' exited 1, saying: ERROR: Invalid argument/option - 'mcp'.\r\nType \"WHOAMI /?\" for usage., so what Codex has registered is not known. Nothing was changed.",
+      "ran": [
+        "{\"argv\":[\"C:\\\\Windows\\\\System32\\\\whoami.exe\",\"mcp\",\"list\",\"--json\"],\"exitCode\":1,\"timedOut\":false}"
+      ]
+    }
+  ],
+  "events": [
+    "56.9 msg=6 pid=73772",
+    "96.7 msg=6 pid=48372",
+    "106.8 msg=6 pid=56240",
+    "140.3 msg=7 pid=48372",
+    "142.1 msg=7 pid=56240",
+    "145.6 msg=7 pid=73772",
+    "148.3 msg=4 pid=0"
+  ],
+  "after": {
+    "utc": "2026-11-17T15:03:38.066Z",
+    "bootUtc": "2026-11-13T10:14:07Z",
+    "uptime": "4.04:49:30",
+    "processorQueueLength": 0,
+    "commitCharge": "58.7% (82,858 MiB of 141,229 MiB), 605 processes, 16996 threads"
+  }
+}

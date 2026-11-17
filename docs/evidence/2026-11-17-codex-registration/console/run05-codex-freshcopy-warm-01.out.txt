@@ -1,0 +1,9 @@
+run05-codex-freshcopy-warm-01  elapsed 518 ms  exit 0  queue 0/0  commit 64.8% (91,499 MiB of 141,229 MiB), 595 processes, 17002 threads
+   pid 86404  start +    0,0 ms  life    464,6 ms  cpu    46,9 ms  exit 0  C:\Users\jori\AppData\Local\BrowserAI.app\current\payload\registerai\RegisterAI.exe
+   pid 33212  start +   62,4 ms  life     83,4 ms  cpu   156,2 ms  exit 0  C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part1\fresh-codex\codex.exe
+   pid 76460  start +   76,9 ms  life     71,1 ms  cpu     0,0 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 28360  start +  211,5 ms  life     70,9 ms  cpu    78,1 ms  exit 0  C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part1\fresh-codex\codex.exe
+   pid 86536  start +  218,4 ms  life     66,2 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 54652  start +  378,2 ms  life     77,4 ms  cpu    46,9 ms  exit 0  C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part1\fresh-codex\codex.exe
+   pid 58528  start +  384,0 ms  life     73,9 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   codex: action added, error 

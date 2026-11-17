@@ -1,0 +1,2 @@
+capture listening on 127.0.0.1:8791
+captured POST /v1/messages?beta=true 205365B -> C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\trunc\cap-02-sonnet-no-tool-search\capture\req-001.json

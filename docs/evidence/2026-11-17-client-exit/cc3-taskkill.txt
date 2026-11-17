@@ -1,0 +1,42 @@
+a-d0-r1       self-exit (77)  eof->exit     21.4  no taskkill
+a-d0-r2       self-exit (77)  eof->exit      3.1  no taskkill
+a-d0-r3       self-exit (77)  eof->exit      7.6  no taskkill
+a-d100-r1     self-exit (77)  eof->exit    137.8  no taskkill
+a-d100-r2     self-exit (77)  eof->exit    116.4  no taskkill
+a-d100-r3     self-exit (77)  eof->exit    108.3  no taskkill
+a-d1000-r1    self-exit (77)  eof->exit   1023.6  taskkill created +584.0 exited +1124.5
+a-d1000-r2    self-exit (77)  eof->exit   1018.0  taskkill created +303.6 exited +1081.7
+a-d1000-r3    KILLED code 1   eof->exit   1002.7  taskkill created +304.0 exited +1004.0
+a-d15000-r1   KILLED code 1   eof->exit   1429.5  taskkill created +375.7 exited +1429.5
+a-d15000-r2   KILLED code 1   eof->exit   1451.6  taskkill created +358.4 exited +1455.2
+a-d15000-r3   KILLED code 1   eof->exit   1273.2  taskkill created +374.6 exited +1275.6
+a-d200-r1     self-exit (77)  eof->exit    206.5  no taskkill
+a-d200-r2     self-exit (77)  eof->exit    219.3  no taskkill
+a-d200-r3     self-exit (77)  eof->exit    207.5  no taskkill
+a-d3000-r1    KILLED code 1   eof->exit   1075.5  taskkill created +302.2 exited +1078.9
+a-d3000-r2    KILLED code 1   eof->exit   1696.9  taskkill created +311.6 exited +1699.2
+a-d3000-r3    KILLED code 1   eof->exit   1735.1  taskkill created +635.2 exited +1741.8
+a-d500-r1     self-exit (77)  eof->exit    515.8  taskkill created +302.1 exited +554.7
+a-d500-r2     self-exit (77)  eof->exit    523.2  taskkill created +303.9 exited +610.7
+a-d500-r3     self-exit (77)  eof->exit    505.2  taskkill created +304.4 exited +559.2
+b1-d0-r1      self-exit (77)  eof->exit      3.6  no taskkill
+b1-d0-r2      self-exit (77)  eof->exit     24.4  no taskkill
+b1-d0-r3      self-exit (77)  eof->exit      4.5  no taskkill
+b1-d100-r1    self-exit (77)  eof->exit    103.8  no taskkill
+b1-d100-r2    self-exit (77)  eof->exit    119.6  no taskkill
+b1-d100-r3    self-exit (77)  eof->exit    115.1  no taskkill
+b1-d1000-r1   self-exit (77)  eof->exit   1010.5  taskkill created +375.6 exited +1052.3
+b1-d1000-r2   self-exit (77)  eof->exit   1020.9  taskkill created +302.3 exited +1066.7
+b1-d1000-r3   self-exit (77)  eof->exit   1022.7  taskkill created +303.6 exited +1112.8
+b1-d15000-r1  KILLED code 1   eof->exit   1162.0  taskkill created +302.7 exited +1162.1
+b1-d15000-r2  KILLED code 1   eof->exit   1195.0  taskkill created +303.5 exited +1197.0
+b1-d15000-r3  KILLED code 1   eof->exit   1240.6  taskkill created +304.0 exited +1243.5
+b1-d200-r1    self-exit (77)  eof->exit    215.7  no taskkill
+b1-d200-r2    self-exit (77)  eof->exit    213.9  no taskkill
+b1-d200-r3    self-exit (77)  eof->exit   1939.9  taskkill created +2102.7 exited +2286.5
+b1-d3000-r1   KILLED code 1   eof->exit   1402.9  taskkill created +303.0 exited +1402.9
+b1-d3000-r2   KILLED code 1   eof->exit   1488.7  taskkill created +307.3 exited +1489.3
+b1-d3000-r3   KILLED code 1   eof->exit   1132.5  taskkill created +304.4 exited +1138.4
+b1-d500-r1    self-exit (77)  eof->exit    523.6  taskkill created +303.7 exited +572.8
+b1-d500-r2    self-exit (77)  eof->exit    519.3  taskkill created +306.0 exited +592.9
+b1-d500-r3    self-exit (77)  eof->exit    505.5  no taskkill

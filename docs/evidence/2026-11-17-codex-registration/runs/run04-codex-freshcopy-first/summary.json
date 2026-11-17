@@ -1,0 +1,198 @@
+{
+  "label": "run04-codex-freshcopy-first",
+  "condition": "first execution ever of a fresh copy of codex.exe at a new path, started right after the copy, named with --client-exe",
+  "client": "codex",
+  "registerAi": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\payload\\registerai\\RegisterAI.exe",
+  "arguments": [
+    "register",
+    "--name",
+    "browserai",
+    "--client",
+    "codex",
+    "--scope",
+    "user",
+    "--owned-root",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app",
+    "--client-exe",
+    "codex=C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\fresh-codex\\codex.exe",
+    "--timeout",
+    "12",
+    "--",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "--mcp"
+  ],
+  "environmentRemoved": [
+    "VSCODE_NLS_CONFIG",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CODE_ENABLE_TASKS",
+    "CLAUDE_PID",
+    "CLAUDE_CODE_CHILD_SESSION",
+    "CLAUDE_CODE_ENTRYPOINT",
+    "VSCODE_IPC_HOOK",
+    "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING",
+    "VSCODE_NODE_COMPILE_CACHE_ROOT",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING",
+    "VSCODE_PID",
+    "VSCODE_DOTNET_INSTALL_TOOL_ORIGINAL_HOME",
+    "VSCODE_CRASH_REPORTER_PROCESS_TYPE",
+    "CLAUDE_CODE_QUESTION_PREVIEW_FORMAT",
+    "CLAUDECODE",
+    "CLAUDE_AGENT_SDK_VERSION",
+    "VSCODE_ESM_ENTRYPOINT",
+    "CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION",
+    "CLAUDE_CODE_EFFORT_LEVEL",
+    "CLAUDE_CODE_SESSION_ATTENDED",
+    "CLAUDE_CODE_MESSAGING_TOKEN",
+    "ELECTRON_RUN_AS_NODE",
+    "CLAUDE_CODE_MAX_RETRIES",
+    "CLAUDE_CODE_MESSAGING_SOCKET",
+    "VSCODE_NODE_COMPILE_CACHE_KIND",
+    "CLAUDE_CODE_STARTUP_FAILURE_RESULTS",
+    "VSCODE_CWD",
+    "CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY",
+    "VSCODE_CODE_CACHE_PATH",
+    "CLAUDE_CODE_SESSION_ID",
+    "MCP_CONNECTION_NONBLOCKING",
+    "VSCODE_HANDLES_UNCAUGHT_ERRORS"
+  ],
+  "codexFile": {
+    "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\fresh-codex\\codex.exe",
+    "length": 371731248,
+    "lastWriteUtc": "2026-11-05T02:11:03Z",
+    "processesRunningFromItBefore": 0
+  },
+  "before": {
+    "utc": "2026-11-17T15:07:35.508Z",
+    "bootUtc": "2026-11-13T10:14:07Z",
+    "uptime": "4.04:53:28",
+    "processorQueueLength": 1,
+    "commitCharge": "64.5% (91,147 MiB of 141,229 MiB), 606 processes, 17134 threads"
+  },
+  "elapsedMs": 1157.3,
+  "registerAiLifeMs": 1061.9,
+  "exited": true,
+  "exitCode": 0,
+  "overProductBudget14s": false,
+  "jobEmptied": true,
+  "processes": [
+    {
+      "pid": 86368,
+      "image": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\payload\\registerai\\RegisterAI.exe",
+      "startMs": 0.0,
+      "lifeMs": 1061.9,
+      "cpuMs": 171.9,
+      "exitCode": 0,
+      "newAtMs": 102.5,
+      "exitAtMs": 1152.7
+    },
+    {
+      "pid": 82552,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 14.2,
+      "lifeMs": 1051.2,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 104.4,
+      "exitAtMs": 1156.3
+    },
+    {
+      "pid": 22416,
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\fresh-codex\\codex.exe",
+      "startMs": 713.3,
+      "lifeMs": 123.4,
+      "cpuMs": 93.8,
+      "exitCode": 0,
+      "newAtMs": 803.5,
+      "exitAtMs": 928.2
+    },
+    {
+      "pid": 50572,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 727.1,
+      "lifeMs": 113.7,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 817.3,
+      "exitAtMs": 932.0
+    },
+    {
+      "pid": 84548,
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\fresh-codex\\codex.exe",
+      "startMs": 846.1,
+      "lifeMs": 106.1,
+      "cpuMs": 140.6,
+      "exitCode": 0,
+      "newAtMs": 936.4,
+      "exitAtMs": 1043.9
+    },
+    {
+      "pid": 86044,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 856.3,
+      "lifeMs": 101.8,
+      "cpuMs": 46.9,
+      "exitCode": 0,
+      "newAtMs": 946.6,
+      "exitAtMs": 1049.3
+    },
+    {
+      "pid": 28764,
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\fresh-codex\\codex.exe",
+      "startMs": 964.9,
+      "lifeMs": 84.1,
+      "cpuMs": 109.4,
+      "exitCode": 0,
+      "newAtMs": 1055.1,
+      "exitAtMs": 1140.2
+    },
+    {
+      "pid": 81444,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 971.9,
+      "lifeMs": 79.8,
+      "cpuMs": 0.0,
+      "exitCode": 0,
+      "newAtMs": 1062.1,
+      "exitAtMs": 1142.4
+    }
+  ],
+  "results": [
+    {
+      "client": "codex",
+      "clientPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\fresh-codex\\codex.exe",
+      "action": "added",
+      "error": null,
+      "ran": [
+        "{\"argv\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\clients-scratch\\\\part1\\\\fresh-codex\\\\codex.exe\",\"mcp\",\"list\",\"--json\"],\"exitCode\":0,\"timedOut\":false}",
+        "{\"argv\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\clients-scratch\\\\part1\\\\fresh-codex\\\\codex.exe\",\"mcp\",\"add\",\"browserai\",\"--\",\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI.app\\\\current\\\\BrowserAI.exe\",\"--mcp\"],\"exitCode\":0,\"timedOut\":false}",
+        "{\"argv\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\clients-scratch\\\\part1\\\\fresh-codex\\\\codex.exe\",\"mcp\",\"list\",\"--json\"],\"exitCode\":0,\"timedOut\":false}"
+      ]
+    }
+  ],
+  "events": [
+    "102.5 msg=6 pid=86368",
+    "104.4 msg=6 pid=82552",
+    "803.5 msg=6 pid=22416",
+    "817.3 msg=6 pid=50572",
+    "928.2 msg=7 pid=22416",
+    "932.0 msg=7 pid=50572",
+    "936.4 msg=6 pid=84548",
+    "946.6 msg=6 pid=86044",
+    "1043.9 msg=7 pid=84548",
+    "1049.3 msg=7 pid=86044",
+    "1055.1 msg=6 pid=28764",
+    "1062.1 msg=6 pid=81444",
+    "1140.2 msg=7 pid=28764",
+    "1142.4 msg=7 pid=81444",
+    "1152.7 msg=7 pid=86368",
+    "1156.3 msg=7 pid=82552",
+    "1158.2 msg=4 pid=0"
+  ],
+  "after": {
+    "utc": "2026-11-17T15:07:37.032Z",
+    "bootUtc": "2026-11-13T10:14:07Z",
+    "uptime": "4.04:53:29",
+    "processorQueueLength": 2,
+    "commitCharge": "64.7% (91,417 MiB of 141,229 MiB), 613 processes, 17189 threads"
+  }
+}

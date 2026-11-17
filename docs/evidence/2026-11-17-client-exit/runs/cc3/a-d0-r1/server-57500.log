@@ -1,0 +1,18 @@
+363806055.034	2026-11-17T15:17:43.7487349Z	57500	server	START	delayMs=0 ppid=4884 parentImage=C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\bin\cli\claude.exe cmdline=C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\rig\bin\ExitRig.dll server --logdir C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\runs\cc3\a-d0-r1 --delay-ms 0
+363806062.576	2026-11-17T15:17:43.7557218Z	57500	server	CONSOLE	consoleWindow=0x0 visible=False consoleProcs=[57500]
+363806065.030	2026-11-17T15:17:43.7581590Z	57500	server	JOB	inJob=True immediateJobLimitFlags=0x3C00 assigned=3 listed=3 first64=[4884,57500,89632]
+363806065.909	2026-11-17T15:17:43.7590371Z	57500	server	STDIO	stdin=pipe stdout=pipe stderr=pipe
+363806068.315	2026-11-17T15:17:43.7614428Z	57500	server	PARENT_WATCH	pid=4884 image=C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\bin\cli\claude.exe created=2026-11-17T15:17:42.1916440Z
+363806098.029	2026-11-17T15:17:43.7911595Z	57500	server	STANDIN	pid=87504 jobFlagsReadBack=0x2000 
+363806122.937	2026-11-17T15:17:43.8160709Z	57500	server	RECV	method=server/discover id="server-discover-probe-1" bytes=458
+363806127.521	2026-11-17T15:17:43.8206537Z	57500	server	SENT	id="server-discover-probe-1" for=server/discover
+363806136.198	2026-11-17T15:17:43.8293308Z	57500	server	RECV	method=initialize id=0 bytes=341
+363806136.395	2026-11-17T15:17:43.8295225Z	57500	server	SENT	id=0 for=initialize
+363806137.699	2026-11-17T15:17:43.8308241Z	57500	server	RECV	method=notifications/initialized id=- bytes=54
+363806140.672	2026-11-17T15:17:43.8338009Z	57500	server	RECV	method=tools/list id=1 bytes=46
+363806141.050	2026-11-17T15:17:43.8341763Z	57500	server	SENT	id=1 for=tools/list
+363806655.355	2026-11-17T15:17:44.3484898Z	57500	server	RECV	method=tools/call id=2 bytes=162
+363806655.815	2026-11-17T15:17:44.3489461Z	57500	server	SENT	id=2 for=tools/call
+363806967.656	2026-11-17T15:17:44.6607935Z	57500	server	EOF	how=EOF messagesReceived=5
+363806970.761	2026-11-17T15:17:44.6639255Z	57500	server	CLOSING_JOB	sinceEofMs=0.0
+363806970.949	2026-11-17T15:17:44.6640742Z	57500	server	EXIT	code=77

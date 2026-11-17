@@ -1,0 +1,139 @@
+#Requires -Version 7
+# One timed run of the installed BrowserAI's own RegisterAI, with the command line
+# McpRegistrar builds, into a fresh scratch CODEX_HOME and CLAUDE_CONFIG_DIR. The
+# process tree is watched through a job object's completion port (JobWatch.cs), so
+# each client process it starts is timed by the kernel's own creation and exit times.
+param(
+    [Parameter(Mandatory)][string] $Label,
+    [Parameter(Mandatory)][ValidateSet('all', 'codex', 'claude-code')][string] $Client,
+    [string] $CodexExe,
+    [string] $Condition = '',
+    [string] $RegisterAi = (Join-Path $env:LOCALAPPDATA 'BrowserAI.app\current\payload\registerai\RegisterAI.exe'),
+    [string] $OutRoot = 'C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part1\runs',
+    [int] $HangSeconds = 120
+)
+
+$ErrorActionPreference = 'Stop'
+Add-Type -Path (Join-Path $PSScriptRoot 'JobWatch.cs')
+
+$run = Join-Path $OutRoot $Label
+if (Test-Path -LiteralPath $run) { throw "The run folder '$run' exists already." }
+$codexHome = Join-Path $run 'codex-home'
+$claudeConfig = Join-Path $run 'claude-config'
+New-Item -ItemType Directory -Path $codexHome, $claudeConfig | Out-Null
+
+$installRoot = Join-Path $env:LOCALAPPDATA 'BrowserAI.app'
+$server = Join-Path $installRoot 'current\BrowserAI.exe'
+$arguments = [System.Collections.Generic.List[string]]::new()
+$arguments.AddRange([string[]]@('register', '--name', 'browserai', '--client', $Client, '--scope', 'user', '--owned-root', $installRoot))
+if ($CodexExe) { $arguments.AddRange([string[]]@('--client-exe', "codex=$CodexExe")) }
+$arguments.AddRange([string[]]@('--timeout', '12', '--', $server, '--mcp'))
+
+function Read-Machine {
+    $os = Get-CimInstance Win32_OperatingSystem -Property LastBootUpTime
+    $system = Get-CimInstance Win32_PerfFormattedData_PerfOS_System -Property ProcessorQueueLength
+    [ordered]@{
+        utc = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+        bootUtc = $os.LastBootUpTime.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+        uptime = ([DateTime]::Now - $os.LastBootUpTime).ToString('d\.hh\:mm\:ss')
+        processorQueueLength = $system.ProcessorQueueLength
+        commitCharge = [JobWatch]::CommitCharge()
+    }
+}
+
+# What the codex file was, read from the file system only, and whether any process
+# ran from it at that moment: one that did holds its image in memory.
+$codexPath = if ($CodexExe) { $CodexExe } else { 'C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe' }
+$codexItem = Get-Item -LiteralPath $codexPath -ErrorAction SilentlyContinue
+$runningFromIt = @(Get-CimInstance Win32_Process -Property ProcessId, ExecutablePath | Where-Object { $_.ExecutablePath -eq $codexPath }).Count
+
+$start = [System.Diagnostics.ProcessStartInfo]::new($RegisterAi)
+foreach ($argument in $arguments) { $start.ArgumentList.Add($argument) }
+$start.WorkingDirectory = Split-Path -Parent $RegisterAi
+$start.UseShellExecute = $false
+$start.CreateNoWindow = $true
+$start.RedirectStandardInput = $true
+$start.RedirectStandardOutput = $true
+$start.RedirectStandardError = $true
+$start.StandardOutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$start.StandardErrorEncoding = [System.Text.UTF8Encoding]::new($false)
+$removed = @()
+foreach ($name in @($start.Environment.Keys)) {
+    if ($name -match '^(CLAUDE|ANTHROPIC|ELECTRON_|VSCODE_|MCP_|CODEX|OPENAI)') { $removed += $name; [void]$start.Environment.Remove($name) }
+}
+$start.Environment['CODEX_HOME'] = $codexHome
+$start.Environment['CLAUDE_CONFIG_DIR'] = $claudeConfig
+
+$before = Read-Machine
+$clock = [System.Diagnostics.Stopwatch]::new()
+$watch = [JobWatch]::new($clock)
+$clock.Start()
+$process = [System.Diagnostics.Process]::Start($start)
+$watch.Adopt($process.Handle)
+$process.StandardInput.Close()
+$outTask = $process.StandardOutput.ReadToEndAsync()
+$errTask = $process.StandardError.ReadToEndAsync()
+$exited = $process.WaitForExit($HangSeconds * 1000)
+$elapsedMs = $clock.Elapsed.TotalMilliseconds
+if (-not $exited) { $process.Kill() }
+$empty = $watch.WaitForEmpty(20000)
+$null = [System.Threading.Tasks.Task]::WaitAll(@($outTask, $errTask), 10000)
+$after = Read-Machine
+$watch.Dispose()
+
+$document = $outTask.Result
+Set-Content -LiteralPath (Join-Path $run 'stdout.json') -Value $document -NoNewline -Encoding utf8NoBOM
+Set-Content -LiteralPath (Join-Path $run 'stderr.txt') -Value $errTask.Result -NoNewline -Encoding utf8NoBOM
+
+$root = $watch.Processes | Where-Object { $_.Pid -eq $process.Id } | Select-Object -First 1
+$table = foreach ($seen in $watch.Processes) {
+    [ordered]@{
+        pid = $seen.Pid
+        image = $seen.Image
+        startMs = [math]::Round($(if ($root -and $root.CreationUtc) { ($seen.CreationUtc - $root.CreationUtc) / 10000.0 } else { $seen.NewAtMs }), 1)
+        lifeMs = [math]::Round($(if ($seen.ExitUtc) { ($seen.ExitUtc - $seen.CreationUtc) / 10000.0 } else { -1 }), 1)
+        cpuMs = [math]::Round($seen.KernelMs + $seen.UserMs, 1)
+        exitCode = $seen.ExitCode
+        newAtMs = [math]::Round($seen.NewAtMs, 1)
+        exitAtMs = [math]::Round($seen.ExitAtMs, 1)
+    }
+}
+
+$parsed = $null
+try { $parsed = $document | ConvertFrom-Json } catch { }
+$results = foreach ($result in @($parsed.results)) {
+    [ordered]@{
+        client = $result.client
+        clientPath = $result.clientPath
+        action = $result.action
+        error = $result.error
+        ran = @($result.ran | ForEach-Object { $_ | ConvertTo-Json -Compress -Depth 5 })
+    }
+}
+
+$summary = [ordered]@{
+    label = $Label
+    condition = $Condition
+    client = $Client
+    registerAi = $RegisterAi
+    arguments = @($arguments)
+    environmentRemoved = $removed
+    codexFile = [ordered]@{ path = $codexPath; length = $codexItem.Length; lastWriteUtc = $codexItem.LastWriteTimeUtc.ToString('yyyy-MM-ddTHH:mm:ssZ'); processesRunningFromItBefore = $runningFromIt }
+    before = $before
+    elapsedMs = [math]::Round($elapsedMs, 1)
+    registerAiLifeMs = $(if ($root -and $root.ExitUtc) { [math]::Round(($root.ExitUtc - $root.CreationUtc) / 10000.0, 1) } else { -1 })
+    exited = $exited
+    exitCode = $(if ($exited) { $process.ExitCode } else { $null })
+    overProductBudget14s = $elapsedMs -gt 14000
+    jobEmptied = $empty
+    processes = @($table)
+    results = @($results)
+    events = @($watch.Events)
+    after = $after
+}
+$summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $run 'summary.json') -Encoding utf8NoBOM
+
+$line = "{0}  elapsed {1:F0} ms  exit {2}  queue {3}/{4}  commit {5}" -f $Label, $elapsedMs, $summary.exitCode, $before.processorQueueLength, $after.processorQueueLength, $before.commitCharge
+$line
+foreach ($row in $table) { "   pid {0,-6} start +{1,7:F1} ms  life {2,8:F1} ms  cpu {3,7:F1} ms  exit {4}  {5}" -f $row.pid, $row.startMs, $row.lifeMs, $row.cpuMs, $row.exitCode, $row.image }
+foreach ($result in $results) { "   {0}: action {1}, error {2}" -f $result.client, $result.action, $result.error }

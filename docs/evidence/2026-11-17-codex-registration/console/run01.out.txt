@@ -1,0 +1,17 @@
+run01-all-first-since-0645Z  elapsed 1681 ms  exit 0  queue 0/0  commit 58.7% (82,891 MiB of 141,229 MiB), 591 processes, 16908 threads
+   pid 72000  start +    0,0 ms  life   1618,7 ms  cpu   171,9 ms  exit 0  C:\Users\jori\AppData\Local\BrowserAI.app\current\payload\registerai\RegisterAI.exe
+   pid 63612  start +    9,9 ms  life   1610,8 ms  cpu    46,9 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 37452  start +   49,5 ms  life   1101,7 ms  cpu   765,6 ms  exit 0  C:\Users\jori\.local\bin\claude.exe
+   pid 23872  start +   59,5 ms  life   1095,8 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 79876  start +  117,2 ms  life     42,9 ms  cpu    15,6 ms  exit 1  C:\Windows\System32\reg.exe
+   pid 85640  start +  128,0 ms  life     44,6 ms  cpu    15,6 ms  exit 1  C:\Windows\System32\reg.exe
+   pid 85280  start +  131,5 ms  life     31,1 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 49592  start +  140,6 ms  life     33,9 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 30992  start + 1177,1 ms  life    232,4 ms  cpu    46,9 ms  exit 0  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+   pid 73276  start + 1186,2 ms  life    225,5 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 67324  start + 1471,3 ms  life     68,5 ms  cpu    46,9 ms  exit 0  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+   pid 30508  start + 1478,6 ms  life     63,5 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 85316  start + 1548,0 ms  life     63,7 ms  cpu    31,2 ms  exit 0  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+   pid 34180  start + 1552,7 ms  life     60,8 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   claude-code: action added, error 
+   codex: action added, error 

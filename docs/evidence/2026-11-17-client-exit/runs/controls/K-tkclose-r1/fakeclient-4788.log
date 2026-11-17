@@ -1,0 +1,8 @@
+363746467.964	2026-11-17T15:16:44.1616213Z	4788	fakeclient	SPAWNED	pid=69312 action=taskkill-then-close
+363747105.405	2026-11-17T15:16:44.7985500Z	4788	fakeclient	RESP	{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"exitprobe","version":"1.0.0"}}}
+363747105.940	2026-11-17T15:16:44.7990649Z	4788	fakeclient	RESP	{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"ping","description":"Returns pong.","inputSchema":{"type":"object","properties":{}}}]}}
+363747106.870	2026-11-17T15:16:44.7999978Z	4788	fakeclient	RESP	{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"pong from pid 69312"}],"isError":false}}
+363747422.699	2026-11-17T15:16:45.1158314Z	4788	fakeclient	TASKKILL_SPAWNED	pid=81356
+363747422.796	2026-11-17T15:16:45.1159201Z	4788	fakeclient	CLOSED_STDIN	
+363749298.913	2026-11-17T15:16:46.9920449Z	4788	fakeclient	TASKKILL_DONE	code=0 out=SUCCESS: The process with PID 84224 (child process of PID 35816) has been terminated.  SUCCESS: The process with PID 64748 (child process of PID 69312) has been terminated.  SUCCESS: The process with PID 35816 (child process of PID 69312) has been terminated.  SUCCESS: The process with PID 69312 (child process of PID 4788) has been terminated.  
+363749299.000	2026-11-17T15:16:46.9921224Z	4788	fakeclient	SERVER_DONE	exited=True code=1

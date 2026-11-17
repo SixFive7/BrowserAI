@@ -1,0 +1,19 @@
+# SHA-256, byte count and path under trunc\ of every file of the captures not kept here
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  0  cap-01-sonnet\capture.out
+125b92fa8a7bebf43537e3a00f6c9f677c80515437ef4ea272f3c1928857b989  1046  cap-01-sonnet\claude-config\.claude.json
+b9f839425faf3081f13f06affc226c76de0bbbd99fe6313d8a417ae5e42f2216  213  cap-01-sonnet\claude-config\settings.json
+4989ab8c1965348dc27f0bd40fabe67d2f5562f10e1130889d9278b247e3bcde  53  cap-01-sonnet\claude-config\backups\.claude.json.backup.1794928987483
+75f5f43d897f9b48eb814a3e2c27d465a148601f757ef6de7447206050f2096e  92  cap-01-sonnet\claude-config\plugins\store\cc-plugin-agents-md_builtin-b049b47b3618.json
+fa1ba04207b643aac91d88f406560fcc6bf8a7ede4cbefa7c27ca794e3260a5b  387197  cap-01-sonnet\claude-config\projects\C--Source-SixFive7-BrowserAI--work-clients-scratch-part2-proj\bb91e96c-a82d-4b82-8e95-b8afc2952485.jsonl
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  0  cap-02-sonnet-no-tool-search\capture.out
+fc7a1bca7a553f85a0fec552797d633d0cf77101b9a55023c27f61a75b02f4f3  1046  cap-02-sonnet-no-tool-search\claude-config\.claude.json
+b9f839425faf3081f13f06affc226c76de0bbbd99fe6313d8a417ae5e42f2216  213  cap-02-sonnet-no-tool-search\claude-config\settings.json
+4989ab8c1965348dc27f0bd40fabe67d2f5562f10e1130889d9278b247e3bcde  53  cap-02-sonnet-no-tool-search\claude-config\backups\.claude.json.backup.1794929001467
+617af6690533e4a435014cdd880c4f418ec612c8d5f2a3168aba2ceb2dcee0a7  92  cap-02-sonnet-no-tool-search\claude-config\plugins\store\cc-plugin-agents-md_builtin-b049b47b3618.json
+c858bcf9d8226a6c5aa37d9fde1a395faa9e56c22124426eee19e767af0128ce  580809  cap-02-sonnet-no-tool-search\claude-config\projects\C--Source-SixFive7-BrowserAI--work-clients-scratch-part2-proj\cb55db8f-1299-48a3-832f-6bcd69d009ea.jsonl
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  0  cap-03-haiku-no-tool-search\capture.out
+87051fba4daa285c35eaffaa402aff0ed254283b355fbb68208a476241ba5ffd  1046  cap-03-haiku-no-tool-search\claude-config\.claude.json
+b9f839425faf3081f13f06affc226c76de0bbbd99fe6313d8a417ae5e42f2216  213  cap-03-haiku-no-tool-search\claude-config\settings.json
+4989ab8c1965348dc27f0bd40fabe67d2f5562f10e1130889d9278b247e3bcde  53  cap-03-haiku-no-tool-search\claude-config\backups\.claude.json.backup.1794929015907
+e1742572d65e231666598cf247439c50a9ca8c2291b8e444e10a01e7fae1489d  92  cap-03-haiku-no-tool-search\claude-config\plugins\store\cc-plugin-agents-md_builtin-b049b47b3618.json
+10ad63ced598a8f731e828736c48ca5f30a555ffab0f6477b997058376197e75  590012  cap-03-haiku-no-tool-search\claude-config\projects\C--Source-SixFive7-BrowserAI--work-clients-scratch-part2-proj\c2df867c-43ea-4076-a047-4227ceb9e96d.jsonl

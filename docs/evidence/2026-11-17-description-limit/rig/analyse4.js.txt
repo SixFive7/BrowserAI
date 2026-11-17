@@ -1,0 +1,50 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+// Reads every captured request body in a folder and reports, for each probe string,
+// the length that arrived, whether its end marker arrived, and what it ends with.
+const fs = require('fs');
+const path = require('path');
+const dir = process.argv[2];
+const S = '7C4E';
+const bodies = fs.readdirSync(dir).filter((f) => f.startsWith('body-')).sort();
+for (const file of bodies) {
+  const raw = fs.readFileSync(path.join(dir, file), 'utf8');
+  let body;
+  try { body = JSON.parse(raw); } catch { console.log(file, 'not JSON'); continue; }
+  const tools = body.tools || [];
+  const probe = tools.filter((t) => typeof t.name === 'string' && t.name.includes('probe_'));
+  console.log(`${file}: ${raw.length} chars, ${tools.length} tools, ${probe.length} probe tools, url-less model=${body.model}`);
+  for (const t of probe) {
+    const d = t.description || '';
+    const label = (d.match(/MK-START-([A-Z0-9]+)-/) || [])[1] || '?';
+    const end = d.includes('MK-END-' + label + '-' + S);
+    const param = t.input_schema && t.input_schema.properties && t.input_schema.properties.p && t.input_schema.properties.p.description;
+    console.log(`   ${t.name}: arrived ${d.length} units, end marker ${end ? 'present' : 'MISSING'}, ends with ${JSON.stringify(d.slice(-16))}` +
+      (param ? `; parameter ${param.length} units, end marker ${param.includes('MK-END-P20000-' + S) ? 'present' : 'MISSING'}` : ''));
+  }
+  const names = tools.map((t) => t.name).filter((n) => n && (n.includes('probe') || n.toLowerCase().includes('search')));
+  if (names.length) console.log('   tool names of interest: ' + names.join(', '));
+  const text = raw;
+  const at = text.indexOf('MK-START-I5000-' + S);
+  if (at >= 0) {
+    const decoded = JSON.stringify(body);
+    const i = decoded.indexOf('MK-START-I5000-' + S);
+    const endAt = decoded.indexOf('MK-END-I5000-' + S);
+    // Measure in the decoded string: find the instructions inside the message text.
+    const holder = JSON.stringify(body.messages || []) + JSON.stringify(body.system || '');
+    const msgs = [];
+    const walk = (v) => { if (typeof v === 'string') msgs.push(v); else if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+    walk(body.messages || []); walk(body.system || []);
+    for (const m of msgs) {
+      const s = m.indexOf('MK-START-I5000-' + S);
+      if (s < 0) continue;
+      const e = m.indexOf('MK-END-I5000-' + S);
+      const tail = m.slice(s);
+      const cut = tail.indexOf('… [truncated]');
+      console.log(`   instructions: start found${e >= 0 ? ', end marker present' : ', end marker MISSING'}; ` +
+        (cut >= 0 ? `cut after ${cut} units with the suffix` : `no truncation suffix after the start`) +
+        `; in ${m === (body.system && body.system[0] && body.system[0].text) ? 'system' : 'messages'}`);
+    }
+    if (i >= 0 && endAt < 0) console.log('   (end marker absent from the whole body)');
+  }
+}

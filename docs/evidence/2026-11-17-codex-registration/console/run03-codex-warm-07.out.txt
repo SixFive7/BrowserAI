@@ -1,0 +1,9 @@
+run03-codex-warm-07  elapsed 512 ms  exit 0  queue 40/9  commit 58.7% (82,897 MiB of 141,229 MiB), 601 processes, 17035 threads
+   pid 29116  start +    0,0 ms  life    435,5 ms  cpu    15,6 ms  exit 0  C:\Users\jori\AppData\Local\BrowserAI.app\current\payload\registerai\RegisterAI.exe
+   pid 86896  start +   60,3 ms  life     81,2 ms  cpu    46,9 ms  exit 0  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+   pid 48052  start +   69,5 ms  life     76,9 ms  cpu     0,0 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 85344  start +  151,7 ms  life    116,2 ms  cpu    78,1 ms  exit 0  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+   pid 85692  start +  160,2 ms  life    111,3 ms  cpu    31,2 ms  exit 0  C:\Windows\System32\conhost.exe
+   pid 85984  start +  278,2 ms  life    147,5 ms  cpu   125,0 ms  exit 0  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+   pid 81248  start +  354,8 ms  life     73,6 ms  cpu    31,2 ms  exit 0  C:\Windows\System32\conhost.exe
+   codex: action added, error 

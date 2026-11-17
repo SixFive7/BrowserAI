@@ -1,0 +1,352 @@
+{
+  "progress": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\batches\\controls.progress.log",
+  "gapMs": 500,
+  "runs": [
+    {
+      "name": "K-close-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-close-r1",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-close-r1",
+        "--action",
+        "close",
+        "--delay-ms",
+        "1000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-tkclose-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-tkclose-r1",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-tkclose-r1",
+        "--action",
+        "taskkill-then-close",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-taskkill-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-taskkill-r1",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-taskkill-r1",
+        "--action",
+        "taskkill",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-terminate-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-terminate-r1",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-terminate-r1",
+        "--action",
+        "terminate",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-exitself-r1",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-exitself-r1",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-exitself-r1",
+        "--action",
+        "exit-self",
+        "--delay-ms",
+        "3000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-close-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-close-r2",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-close-r2",
+        "--action",
+        "close",
+        "--delay-ms",
+        "1000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-tkclose-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-tkclose-r2",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-tkclose-r2",
+        "--action",
+        "taskkill-then-close",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-taskkill-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-taskkill-r2",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-taskkill-r2",
+        "--action",
+        "taskkill",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-terminate-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-terminate-r2",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-terminate-r2",
+        "--action",
+        "terminate",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-exitself-r2",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-exitself-r2",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-exitself-r2",
+        "--action",
+        "exit-self",
+        "--delay-ms",
+        "3000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-close-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-close-r3",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-close-r3",
+        "--action",
+        "close",
+        "--delay-ms",
+        "1000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-tkclose-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-tkclose-r3",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-tkclose-r3",
+        "--action",
+        "taskkill-then-close",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-taskkill-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-taskkill-r3",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-taskkill-r3",
+        "--action",
+        "taskkill",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-terminate-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-terminate-r3",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-terminate-r3",
+        "--action",
+        "terminate",
+        "--delay-ms",
+        "15000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    },
+    {
+      "name": "K-exitself-r3",
+      "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-exitself-r3",
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\rig\\bin\\ExitRig.exe",
+      "args": [
+        "fakeclient",
+        "--logdir",
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\runs\\controls\\K-exitself-r3",
+        "--action",
+        "exit-self",
+        "--delay-ms",
+        "3000",
+        "--after-ms",
+        "300"
+      ],
+      "stdin": "closed",
+      "maxMs": 60000,
+      "settleMs": 25000,
+      "env": {
+        "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp",
+        "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part2\\tmp"
+      }
+    }
+  ]
+}
+

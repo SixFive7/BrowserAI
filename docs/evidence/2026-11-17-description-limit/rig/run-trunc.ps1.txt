@@ -1,0 +1,54 @@
+#Requires -Version 7
+# One capture of what Claude Code sends the API with probe-server4.js connected: the
+# capture server from docs/probes/2026-08-18-truncation answers locally, so no model is
+# called and no credential is used. Scratch configuration, project servers refused.
+param(
+    [Parameter(Mandatory)][string] $Label,
+    [string] $Claude = 'C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\bin\cli\claude.exe',
+    [string] $Model = 'sonnet',
+    [int] $Port = 8791,
+    [hashtable] $Extra = @{}
+)
+$ErrorActionPreference = 'Stop'
+$S = 'C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2'
+$T = "$S\trunc"
+$out = "$T\$Label"
+if (Test-Path -LiteralPath $out) { throw "'$out' exists already." }
+$cfg = "$out\claude-config"
+New-Item -ItemType Directory -Path $out, $cfg, "$out\capture" | Out-Null
+'{"hasCompletedOnboarding":true,"autoUpdates":false}' | Set-Content -Encoding utf8NoBOM "$cfg\.claude.json"
+'{"enableAllProjectMcpServers":false,"disabledMcpjsonServers":["microsoft-learn","context7","nuget","github"],"autoUpdates":false}' | Set-Content -Encoding utf8NoBOM "$cfg\settings.json"
+$node = 'C:\Program Files\nodejs\node.exe'
+$mcp = @{ mcpServers = @{ probe = @{ type = 'stdio'; command = $node; args = @("$T\probe-server4.js") } } } | ConvertTo-Json -Depth 6 -Compress
+Set-Content -LiteralPath "$out\mcp.json" -Value $mcp -Encoding utf8NoBOM
+
+$capture = Start-Process -FilePath $node -ArgumentList @("$T\capture.js","$out\capture", "$Port") -NoNewWindow -PassThru -RedirectStandardError "$out\capture.err" -RedirectStandardOutput "$out\capture.out"
+$capture.PriorityClass = 'BelowNormal'
+Start-Sleep -Milliseconds 800
+
+$psi = [System.Diagnostics.ProcessStartInfo]::new($Claude)
+foreach ($a in @('-p', 'Reply with the single word OK.', '--mcp-config', "$out\mcp.json", '--strict-mcp-config', '--model', $Model, '--output-format', 'json')) { $psi.ArgumentList.Add($a) }
+$psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
+$psi.RedirectStandardInput = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+$psi.WorkingDirectory = "$S\proj"
+foreach ($n in @($psi.Environment.Keys)) { if ($n -match '^(CLAUDE|ANTHROPIC|CODEX|OPENAI|MCP_|ELECTRON_|VSCODE_)') { [void]$psi.Environment.Remove($n) } }
+$env2 = [ordered]@{
+    CLAUDE_CONFIG_DIR = $cfg; ANTHROPIC_BASE_URL = "http://127.0.0.1:$Port"; ANTHROPIC_AUTH_TOKEN = 'throwaway-not-a-token'
+    DISABLE_AUTOUPDATER = '1'; CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = '1'; DISABLE_TELEMETRY = '1'; DISABLE_ERROR_REPORTING = '1'
+    TEMP = "$S\tmp"; TMP = "$S\tmp"; APPDATA = "$S\appdata\roaming"; LOCALAPPDATA = "$S\appdata\local"; GIT_CEILING_DIRECTORIES = $S
+    GIT_TERMINAL_PROMPT = '0'; GCM_INTERACTIVE = 'never'
+}
+foreach ($k in $env2.Keys) { $psi.Environment[$k] = $env2[$k] }
+foreach ($k in $Extra.Keys) { $psi.Environment[$k] = [string]$Extra[$k] }
+$p = [System.Diagnostics.Process]::Start($psi)
+$p.PriorityClass = 'BelowNormal'
+$p.StandardInput.Close()
+$o = $p.StandardOutput.ReadToEndAsync(); $e = $p.StandardError.ReadToEndAsync()
+$done = $p.WaitForExit(180000)
+if (-not $done) { $p.Kill($true) }
+$null = [System.Threading.Tasks.Task]::WaitAll(@($o, $e), 10000)
+Set-Content -LiteralPath "$out\claude.stdout.txt" -Value $o.Result -Encoding utf8NoBOM
+Set-Content -LiteralPath "$out\claude.stderr.txt" -Value $e.Result -Encoding utf8NoBOM
+"claude exit=$(if ($done) { $p.ExitCode } else { 'killed at 180 s' })"
+if (-not $capture.HasExited) { $capture.Kill() }
+& $node "$T\analyse4.js" "$out\capture"

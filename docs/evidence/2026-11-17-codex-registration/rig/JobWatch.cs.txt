@@ -1,0 +1,217 @@
+// Scratch rig for timing one RegisterAI run. It starts nothing itself: the runner
+// starts RegisterAI and hands its handle here, and this class puts it in a job object
+// it created, with a completion port, so that every process RegisterAI starts (and
+// every process those start) is reported when it is created and when it exits. No
+// polling: the watcher thread waits in GetQueuedCompletionStatus.
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+
+public sealed class JobWatch : IDisposable
+{
+    [StructLayout(LayoutKind.Sequential)]
+    private struct AssociateCompletionPort
+    {
+        public IntPtr CompletionKey;
+        public IntPtr CompletionPort;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PerformanceInformation
+    {
+        public uint cb;
+        public UIntPtr CommitTotal;
+        public UIntPtr CommitLimit;
+        public UIntPtr CommitPeak;
+        public UIntPtr PhysicalTotal;
+        public UIntPtr PhysicalAvailable;
+        public UIntPtr SystemCache;
+        public UIntPtr KernelTotal;
+        public UIntPtr KernelPaged;
+        public UIntPtr KernelNonpaged;
+        public UIntPtr PageSize;
+        public uint HandleCount;
+        public uint ProcessCount;
+        public uint ThreadCount;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern IntPtr CreateJobObjectW(IntPtr attributes, string name);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr CreateIoCompletionPort(IntPtr file, IntPtr existing, UIntPtr key, uint threads);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetInformationJobObject(IntPtr job, int infoClass, ref AssociateCompletionPort info, uint length);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetQueuedCompletionStatus(IntPtr port, out uint bytes, out UIntPtr key, out IntPtr overlapped, uint milliseconds);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool PostQueuedCompletionStatus(IntPtr port, uint bytes, UIntPtr key, IntPtr overlapped);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetProcessTimes(IntPtr process, out long creation, out long exit, out long kernel, out long user);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetExitCodeProcess(IntPtr process, out uint code);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool QueryFullProcessImageNameW(IntPtr process, uint flags, StringBuilder name, ref uint size);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool CloseHandle(IntPtr handle);
+
+    [DllImport("psapi.dll", SetLastError = true)]
+    private static extern bool GetPerformanceInfo(out PerformanceInformation info, uint size);
+
+    private const uint QueryLimited = 0x1000;
+    private const uint Synchronize = 0x00100000;
+    private const uint NewProcess = 6;
+    private const uint ExitProcess = 7;
+    private const uint AbnormalExitProcess = 8;
+    private const uint ActiveProcessZero = 4;
+    private static readonly UIntPtr StopKey = new UIntPtr(0xDEAD);
+
+    public sealed class Seen
+    {
+        public uint Pid;
+        public string Image = "";
+        public double NewAtMs = -1;
+        public double ExitAtMs = -1;
+        public long CreationUtc;
+        public long ExitUtc;
+        public double KernelMs;
+        public double UserMs;
+        public long ExitCode = -1;
+        public bool Abnormal;
+        internal IntPtr Handle;
+    }
+
+    private readonly IntPtr _job;
+    private readonly IntPtr _port;
+    private readonly Stopwatch _clock;
+    private readonly Thread _thread;
+    private readonly ManualResetEventSlim _zero = new ManualResetEventSlim(false);
+    public readonly List<Seen> Processes = new List<Seen>();
+    public readonly List<string> Events = new List<string>();
+
+    public JobWatch(Stopwatch clock)
+    {
+        _clock = clock;
+        _job = CreateJobObjectW(IntPtr.Zero, null);
+        if (_job == IntPtr.Zero) throw new System.ComponentModel.Win32Exception();
+        _port = CreateIoCompletionPort(new IntPtr(-1), IntPtr.Zero, UIntPtr.Zero, 1);
+        if (_port == IntPtr.Zero) throw new System.ComponentModel.Win32Exception();
+        var info = new AssociateCompletionPort { CompletionKey = _job, CompletionPort = _port };
+        if (!SetInformationJobObject(_job, 7, ref info, (uint)Marshal.SizeOf<AssociateCompletionPort>()))
+            throw new System.ComponentModel.Win32Exception();
+        _thread = new Thread(Loop) { IsBackground = true, Name = "JobWatch" };
+        _thread.Start();
+    }
+
+    public void Adopt(IntPtr processHandle)
+    {
+        if (!AssignProcessToJobObject(_job, processHandle))
+            throw new System.ComponentModel.Win32Exception();
+    }
+
+    public bool WaitForEmpty(int milliseconds) => _zero.Wait(milliseconds);
+
+    private void Loop()
+    {
+        while (true)
+        {
+            uint message;
+            UIntPtr key;
+            IntPtr overlapped;
+            if (!GetQueuedCompletionStatus(_port, out message, out key, out overlapped, 0xFFFFFFFF))
+                continue;
+            if (key == StopKey) return;
+            var at = _clock.Elapsed.TotalMilliseconds;
+            var pid = unchecked((uint)overlapped.ToInt64());
+            lock (Processes)
+            {
+                Events.Add(string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:F1} msg={1} pid={2}", at, message, pid));
+                if (message == NewProcess)
+                {
+                    var seen = new Seen { Pid = pid, NewAtMs = at };
+                    seen.Handle = OpenProcess(QueryLimited | Synchronize, false, pid);
+                    if (seen.Handle != IntPtr.Zero)
+                    {
+                        var name = new StringBuilder(1024);
+                        uint size = (uint)name.Capacity;
+                        if (QueryFullProcessImageNameW(seen.Handle, 0, name, ref size)) seen.Image = name.ToString();
+                    }
+                    Processes.Add(seen);
+                }
+                else if (message == ExitProcess || message == AbnormalExitProcess)
+                {
+                    Seen found = null;
+                    for (var i = Processes.Count - 1; i >= 0; i--)
+                    {
+                        if (Processes[i].Pid == pid && Processes[i].ExitAtMs < 0) { found = Processes[i]; break; }
+                    }
+                    if (found != null)
+                    {
+                        found.ExitAtMs = at;
+                        found.Abnormal = message == AbnormalExitProcess;
+                        if (found.Handle != IntPtr.Zero)
+                        {
+                            long creation, exit, kernel, user;
+                            if (GetProcessTimes(found.Handle, out creation, out exit, out kernel, out user))
+                            {
+                                found.CreationUtc = creation;
+                                found.ExitUtc = exit;
+                                found.KernelMs = kernel / 10000.0;
+                                found.UserMs = user / 10000.0;
+                            }
+                            uint code;
+                            if (GetExitCodeProcess(found.Handle, out code)) found.ExitCode = code;
+                        }
+                    }
+                }
+                else if (message == ActiveProcessZero)
+                {
+                    _zero.Set();
+                }
+            }
+        }
+    }
+
+    public static string CommitCharge()
+    {
+        PerformanceInformation info;
+        if (!GetPerformanceInfo(out info, (uint)Marshal.SizeOf<PerformanceInformation>())) return "unread";
+        var page = (double)info.PageSize.ToUInt64();
+        var total = info.CommitTotal.ToUInt64() * page;
+        var limit = info.CommitLimit.ToUInt64() * page;
+        return string.Format(System.Globalization.CultureInfo.InvariantCulture,
+            "{0:F1}% ({1:N0} MiB of {2:N0} MiB), {3} processes, {4} threads",
+            total / limit * 100, total / 1048576, limit / 1048576, info.ProcessCount, info.ThreadCount);
+    }
+
+    public void Dispose()
+    {
+        PostQueuedCompletionStatus(_port, 0, StopKey, IntPtr.Zero);
+        _thread.Join(5000);
+        lock (Processes)
+        {
+            foreach (var seen in Processes)
+            {
+                if (seen.Handle != IntPtr.Zero) { CloseHandle(seen.Handle); seen.Handle = IntPtr.Zero; }
+            }
+        }
+        CloseHandle(_job);
+        CloseHandle(_port);
+    }
+}

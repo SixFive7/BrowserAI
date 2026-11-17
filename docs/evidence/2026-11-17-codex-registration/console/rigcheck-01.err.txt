@@ -1,0 +1,1 @@
+run-registerai.ps1: Cannot process argument transformation on parameter 'HangSeconds'. Cannot convert value "whoami.exe" to type "System.Int32". Error: "The input string 'whoami.exe' was not in a correct format."

@@ -198,6 +198,30 @@ connected server's, and not in the `system` prompt -- cut at 2,048 characters
 with the same suffix. A 2,600-character probe `instructions` string lost
 everything past 2,048.
 
+> ⚠️ *Corrected 2026-11-17 @ Claude Code 2.1.326 by addition (previously "The predicate is
+> **`length > 2048`**, and the cut is to 2,048", for tool descriptions and server
+> `instructions` alike).* **The cut is at `length > 4096` now, for a tool description sent
+> up front and for server `instructions`, and with the client's defaults no MCP tool
+> description is sent up front at all.** Re-measured with the probe record's own
+> `capture.js` and a fourth probe server publishing descriptions of 2,047, 2,048, 2,049,
+> 2,600, 4,095, 4,096, 4,097 and 5,000 characters, a 20,000-character parameter description
+> and `instructions` of 5,000, through `claude -p` with `--strict-mcp-config`, a scratch
+> `CLAUDE_CONFIG_DIR` whose settings refuse this repository's project servers, and a
+> throwaway `ANTHROPIC_AUTH_TOKEN`, so no model was called and no credential used. With
+> the defaults the captured request carried 14 tools, `ToolSearch` among them, and none of
+> the probe's: an MCP tool waits behind tool search. With `ENABLE_TOOL_SEARCH=false` all
+> nine went up front: 4,096 characters and fewer arrived whole, 4,097 and 5,000 arrived as
+> their first 4,096 and the same 13-character suffix, 4,109 in all, and the parameter
+> description arrived whole. `instructions` was cut at 4,096 with the suffix in every
+> capture, inside `messages` as before. Reproduced against `sonnet` and `haiku`,
+> identical. Claude Code's changelog, read on 2026-11-17, says the same under 2.1.296,
+> *"Changed the default limit on MCP tool descriptions sent up front and on MCP server
+> instructions from 2,048 to 4,096 characters"*, and under 2.1.295 that a description the
+> model loads through tool search is cut at 16,384. That second figure was read there and
+> not measured: loading a description through tool search takes a model turn that calls
+> the search. `ModelSurfaceTests` still holds every string to 2,048, which is inside both
+> limits. [Evidence](../../docs/evidence/2026-11-17-description-limit/README.md).
+
 **What it means for BrowserAI: nothing is truncated, and nothing ever was.**
 Measured against the same capture with the shipped binary registered, the surface
 sends **65 tools totalling 51,149 B** of tool entries and not one of them is cut.
@@ -533,6 +557,73 @@ the first browser call and not during startup, so it cannot reach a startup time
 `initialize` and timing the first framed answer, then `tools/list`; and by reading
 `codex mcp add --help` for the option set. The probe is
 `.work/startup-probe.mjs` in the batch that produced this entry.
+
+## How long BrowserAI's registration with Codex takes -- measured 2026-11-17
+
+`[FLOATS]` `[MACHINE]` codex-cli **0.166.0-alpha.6**, RegisterAI **0.3.0** as BrowserAI
+2.0.0 installed it, Claude Code **2.1.326**, Windows 11 Pro 10.0.26300. Taken for the
+maintainer's question 174, which offered *"measure Codex's cold start after the next
+reboot, then decide"* and was answered *"174 b - I have rebooted."* 25 timed runs of the
+command line `McpRegistrar` builds, each into a fresh scratch `CODEX_HOME` and
+`CLAUDE_CONFIG_DIR`, one at a time, at normal priority, which is the priority BrowserAI's
+background runs at. [Evidence](../../docs/evidence/2026-11-17-codex-registration/README.md).
+
+**Which Codex.** RegisterAI found `~\.codex\plugins\.plugin-appserver\codex.exe` through
+the desktop manifest, as on 2026-09-24: no `codex.exe` was on the process, user or machine
+PATH, in `~\.local\bin` or under npm. The file is 371,731,248 bytes, written
+2026-11-05T02:11:03Z, SHA-256 `925c7d0665ffa49b0dcf748e034a805a04da984164ac92301432073b47789b99`.
+It carries no version resource. Its own `--version` answered `codex-cli 0.166.0-alpha.6`,
+asked after the first run so that nothing read the file before it, and the first entry of
+`%LOCALAPPDATA%\OpenAI\Codex\chrome-native-hosts-v2.json` that names the file says
+`26.1002.52244`, the desktop app's numbering.
+
+**The two command lines**, as `McpRegistrar.Arguments` builds them for this install:
+`register --name browserai --client all --scope user --owned-root <install root> --timeout 12 -- <install root>\current\BrowserAI.exe --mcp`
+is the install and update hooks' form, both clients in one run, and the same with
+`--client codex` is the page's register for Codex. RegisterAI runs Claude Code's
+`mcp add` first, then Codex's `mcp list --json`, `mcp add` and `mcp list --json`, one
+after another, so the 12 s covers all four.
+
+| Condition | Runs | End to end | Each Codex call | Claude Code's `mcp add` |
+|---|--:|---|---|---|
+| The first start of that `codex.exe` since 06:45:10Z the same day, 8 h 18 min before, both clients | 1 | **1,681 ms** | 232, 68 and 64 ms | 1,102 ms |
+| Warm, both clients | 10 | 866 to 2,223 ms, median 1,443 | 53 to 369 ms, median 69 | 594 to 1,640 ms, median 785 |
+| Warm, Codex alone | 10 | 280 to 2,450 ms, median 417 | 61 to 2,181 ms, median 74 | - |
+| The first run ever of a fresh copy at a new path, named with `--client-exe`, Codex alone | 1 | **1,157 ms** | 123, 106 and 84 ms | - |
+| Warm, the fresh copy | 3 | 402 to 518 ms | 71 to 133 ms | - |
+
+⭐ **No run came near 12 s.** The slowest took 2,450 ms end to end, a warm run in which one
+`mcp list --json` took 2,181 ms, and the budget is 4.9 times that. The first start in eight
+hours was not slow: its first Codex call took 232 ms against a warm median of 69 ms. A file
+Windows had never run cost about 0.65 s once, all of it before the first Codex process
+existed, which was created 713 ms after RegisterAI against 44 to 191 ms warm, and nothing
+after it. The machine was quiet: a processor queue of 0 to 2 at 24 of the 25 starts and 40
+at one, whose run took 512 ms, and a commit charge of 58.3 to 64.9 %.
+
+⚠️ **Not established:** a first start after a reboot, when the 354.5 MiB file has to come
+off the disk; a run under the suite's load; and a run against a real Codex home, whose
+state database and logs a fresh scratch home does not have. The machine had been up since
+2026-11-13T10:14:07Z and the file had last started at 06:45:10Z that day, so whether its
+pages were still in memory was not read. The fourth sighting in
+[the hazard index](../../HAZARDS.md#hazard-index), the first gate after a reboot, had all
+three.
+
+**How it was timed.** RegisterAI's document gives no times, so the rig put RegisterAI in a
+job object of its own with a completion port: every process it started was reported as it
+was created and as it exited, and a handle opened at its creation gave the kernel's own
+creation and exit times. The rig selects no process by name.
+
+**Earlier readings, for comparison:** a Codex-alone registration took 229 to 256 ms at
+codex-cli 0.159.0-alpha.12.1 on 2026-10-10, thirty runs
+([batch](../../docs/evidence/2026-10-10-registerai-eof/README.md)); one
+`codex mcp list --json` took 0.67 s on 2026-10-14; a pass took 1 to 2 s in the 2026-10-01
+survey.
+
+**Re-establish** with the rig in the evidence batch's `rig` folder, stored under `.txt`
+names: `run-registerai.ps1` takes one run with the installed BrowserAI's RegisterAI,
+`series.ps1` takes serial runs, and `tabulate.ps1` and `stats.ps1` print the tables. The
+paths are compiled in. A first start after a reboot has to be taken before anything else
+on the machine starts Codex.
 
 ## What Codex hands a stdio server, and how it ends one -- measured 2026-09-24
 
@@ -1235,6 +1326,28 @@ before the server saw its end of file. The SDK transport's
 own close, which would wait 2 s before a `SIGTERM`, is never what ends the
 server. The 2.1.287 binary carries the same cleanup.
 
+> ⚠️ *Corrected 2026-11-17 @ Claude Code 2.1.326 by addition (previously "**In Claude
+> Code's graceful exits a server has about half a second.** ... the `taskkill` process was
+> created 5.2 to 112.6 ms before the server saw its end of file").* **Claude Code closes a
+> stdio server's stdin first now, and starts `taskkill /T /F` about 300 ms later, only for
+> a server still running.** Re-measured with the same rig on 2.1.326, the CLI's binary,
+> which is byte for byte the binary the VS Code extension 2.1.326 ships (SHA-256
+> `44e85ac6d3e36b924a0d631d3f69c13a6907491115d71e97c8eb6160c82b2aed`), after the probe
+> record's 15 controls had reproduced every signature the analysis reads: 42 graceful
+> exits, 21 of `claude -p` finishing and 21 of the stream-json input closed, at delays of
+> 0, 100, 200, 500, 1,000, 3,000 and 15,000 ms. End of file reached the server in 42 of 42.
+> `taskkill` was created after it in all 24 runs where the harness saw one, 302 to 635 ms
+> after it in 23 and at 2,103 ms in one whose server, having logged its exit 306 ms after
+> its end of file, took until 1,940 ms to end; none was created before it. Servers that
+> exited within 0 to 500 ms of end of file got out every time, 24 of 24, at 1,000 ms 5 of
+> 6, and at 3,000 and 15,000 ms none: the 13 kills landed 1,003 to 1,735 ms after the end
+> of file, `taskkill` taking 0.7 to 1.4 s from its own start. So a server has about 300 ms
+> before the tree kill starts and about a second before it lands. A collaborator closed
+> [anthropics/claude-code#99238](https://github.com/anthropics/claude-code/issues/99238),
+> filed from the 2026-10-03 measurement, on 2026-10-12, saying 2.1.296 made this change;
+> only 2.1.326 was run here.
+> [Evidence](../../docs/evidence/2026-11-17-client-exit/README.md).
+
 ⭐ **Codex never closes a server's stdin. It terminates the server's job, at
 once.** Read in `openai/codex` at `rust-v0.155.0-alpha.9.2`: each stdio server
 starts in a job created with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`
@@ -1246,12 +1359,24 @@ is consistent with
 whose fourth finding saw the BrowserAI server gone about 100 ms after the
 app-server's own end of file.
 
+> ⚠️ *Verified 2026-11-17 @ codex-cli 0.166.0-alpha.6 by addition*, with the same rig, 12
+> runs of `codex exec` finishing and of the app-server's stdin closed, at 100 and 15,000
+> ms: end of file reached the server in 0 of 12, and every server died with exit code 1
+> by its job, 168 to 320 ms before `codex exec` exited and 4.5 to 10.3 ms after the
+> app-server's stdin was closed.
+> [Evidence](../../docs/evidence/2026-11-17-client-exit/README.md).
+
 **What it means for BrowserAI, read and not measured here:** a clean shutdown
 starts with end of file, closes node's stdin and waits up to 5 s for it. Under
 Claude Code that wait is cut at about half a second by the tree kill, and under
 Codex and a killed Claude Code it never starts. What a browser loses when it is
 killed and not closed is
 [a separate measurement](../playwright/provisioning-and-timings.md#a-browser-server-that-ends-itself-loses-the-same-stores-as-one-that-is-killed----measured-2026-09-22).
+⚠️ *Corrected 2026-11-17 @ Claude Code 2.1.326 by addition (previously "cut at about half
+a second by the tree kill"), read and not measured as before:* under 2.1.326 that wait is
+cut about a second after the end of file, 1.0 to 1.7 s in the runs above, by a tree kill
+that starts about 300 ms after it. Under Codex, re-measured above, it still never starts;
+a killed Claude Code was not run again.
 
 ⚠️ **Not established.** The VS Code extension itself was not driven: a node
 stand-in for its host was written from a reading of its `extension.js`. The Codex

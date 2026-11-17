@@ -1,0 +1,13 @@
+364193589.280	2026-11-17T15:24:11.2830267Z	49564	server	START	delayMs=100 ppid=72828 parentImage=C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\bin\codex\codex.exe cmdline=C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\rig\bin\ExitRig.dll server --logdir C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\runs\cx3\d2-d100-r1 --delay-ms 100
+364193598.894	2026-11-17T15:24:11.2920384Z	49564	server	CONSOLE	consoleWindow=0x0 visible=False consoleProcs=[49564]
+364193601.289	2026-11-17T15:24:11.2944185Z	49564	server	JOB	inJob=True immediateJobLimitFlags=0x2000 assigned=2 listed=2 first64=[49564,32476]
+364193602.051	2026-11-17T15:24:11.2951763Z	49564	server	STDIO	stdin=pipe stdout=pipe stderr=pipe
+364193603.912	2026-11-17T15:24:11.2970415Z	49564	server	PARENT_WATCH	pid=72828 image=C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part2\bin\codex\codex.exe created=2026-11-17T15:24:10.8423819Z
+364193619.655	2026-11-17T15:24:11.3127837Z	49564	server	STANDIN	pid=21476 jobFlagsReadBack=0x2000 
+364193630.226	2026-11-17T15:24:11.3233627Z	49564	server	RECV	method=initialize id=0 bytes=265
+364193636.974	2026-11-17T15:24:11.3301142Z	49564	server	SENT	id=0 for=initialize
+364193637.343	2026-11-17T15:24:11.3304704Z	49564	server	RECV	method=notifications/initialized id=- bytes=54
+364193638.049	2026-11-17T15:24:11.3311751Z	49564	server	RECV	method=tools/list id=1 bytes=85
+364193638.305	2026-11-17T15:24:11.3314279Z	49564	server	SENT	id=1 for=tools/list
+364193789.062	2026-11-17T15:24:11.4821927Z	49564	server	RECV	method=tools/call id=2 bytes=753
+364193789.607	2026-11-17T15:24:11.4827334Z	49564	server	SENT	id=2 for=tools/call

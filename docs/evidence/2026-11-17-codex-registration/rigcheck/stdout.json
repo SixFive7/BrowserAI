@@ -1,0 +1,58 @@
+{
+  "tool": "registerai",
+  "version": "0.3.0",
+  "schema": 1,
+  "verb": "register",
+  "dryRun": false,
+  "exitCode": 4,
+  "error": null,
+  "server": {
+    "name": "browserai",
+    "command": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "args": [
+      "--mcp"
+    ],
+    "env": []
+  },
+  "results": [
+    {
+      "client": "codex",
+      "scope": "user",
+      "project": null,
+      "clientPath": "C:\\Windows\\System32\\whoami.exe",
+      "config": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\rigchecks\\rigcheck-02-whoami\\codex-home\\config.toml",
+      "before": {
+        "state": "unreadable",
+        "command": null,
+        "args": [],
+        "env": [],
+        "resolvesTo": null
+      },
+      "action": "refused-unreadable",
+      "after": {
+        "state": "unreadable",
+        "command": null,
+        "args": [],
+        "env": [],
+        "resolvesTo": null
+      },
+      "ran": [
+        {
+          "argv": [
+            "C:\\Windows\\System32\\whoami.exe",
+            "mcp",
+            "list",
+            "--json"
+          ],
+          "exitCode": 1,
+          "timedOut": false
+        }
+      ],
+      "said": null,
+      "advice": [],
+      "manual": "codex mcp add browserai -- 'C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe' --mcp",
+      "error": "'codex mcp list --json' exited 1, saying: ERROR: Invalid argument/option - 'mcp'.\r\nType \"WHOAMI /?\" for usage., so what Codex has registered is not known. Nothing was changed."
+    }
+  ],
+  "path": null
+}

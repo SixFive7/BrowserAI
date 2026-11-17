@@ -1,0 +1,10 @@
+run02-all-warm-01  elapsed 1284 ms  exit 0  queue 0/0  commit 58.4% (82,461 MiB of 141,229 MiB), 580 processes, 16678 threads
+run02-all-warm-02  elapsed 2079 ms  exit 0  queue 0/0  commit 58.6% (82,767 MiB of 141,229 MiB), 600 processes, 16830 threads
+run02-all-warm-03  elapsed 1092 ms  exit 0  queue 0/0  commit 58.3% (82,386 MiB of 141,229 MiB), 576 processes, 16756 threads
+run02-all-warm-04  elapsed 1025 ms  exit 0  queue 0/0  commit 58.3% (82,317 MiB of 141,229 MiB), 582 processes, 16782 threads
+run02-all-warm-05  elapsed 1602 ms  exit 0  queue 0/0  commit 58.7% (82,905 MiB of 141,229 MiB), 608 processes, 17141 threads
+run02-all-warm-06  elapsed 866 ms  exit 0  queue 0/0  commit 58.6% (82,815 MiB of 141,229 MiB), 583 processes, 16901 threads
+run02-all-warm-07  elapsed 1623 ms  exit 0  queue 0/0  commit 58.8% (83,004 MiB of 141,229 MiB), 620 processes, 17192 threads
+run02-all-warm-08  elapsed 1677 ms  exit 0  queue 0/0  commit 59.0% (83,276 MiB of 141,229 MiB), 597 processes, 17121 threads
+run02-all-warm-09  elapsed 1036 ms  exit 0  queue 0/0  commit 59.2% (83,571 MiB of 141,229 MiB), 608 processes, 17208 threads
+run02-all-warm-10  elapsed 2223 ms  exit 0  queue 0/0  commit 59.6% (84,153 MiB of 141,229 MiB), 609 processes, 17181 threads

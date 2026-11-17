@@ -1,0 +1,277 @@
+{
+  "label": "run01-all-first-since-0645Z",
+  "condition": "first run of the codex.exe RegisterAI picks since its last start at 2026-11-17T06:45:10Z, same boot (2026-11-13T10:14:07Z), no process running from it",
+  "client": "all",
+  "registerAi": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\payload\\registerai\\RegisterAI.exe",
+  "arguments": [
+    "register",
+    "--name",
+    "browserai",
+    "--client",
+    "all",
+    "--scope",
+    "user",
+    "--owned-root",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app",
+    "--timeout",
+    "12",
+    "--",
+    "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "--mcp"
+  ],
+  "environmentRemoved": [
+    "CLAUDE_CODE_SESSION_ID",
+    "CLAUDE_CODE_ENABLE_TASKS",
+    "VSCODE_IPC_HOOK",
+    "VSCODE_PID",
+    "VSCODE_CODE_CACHE_PATH",
+    "CLAUDE_CODE_MAX_RETRIES",
+    "CLAUDE_AGENT_SDK_VERSION",
+    "CLAUDECODE",
+    "CLAUDE_CODE_CHILD_SESSION",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING",
+    "CLAUDE_CODE_MESSAGING_SOCKET",
+    "CLAUDE_PID",
+    "CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY",
+    "VSCODE_NLS_CONFIG",
+    "CLAUDE_CODE_EFFORT_LEVEL",
+    "MCP_CONNECTION_NONBLOCKING",
+    "CLAUDE_CODE_STARTUP_FAILURE_RESULTS",
+    "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING",
+    "VSCODE_ESM_ENTRYPOINT",
+    "CLAUDE_CODE_SESSION_ATTENDED",
+    "VSCODE_NODE_COMPILE_CACHE_ROOT",
+    "CLAUDE_CODE_QUESTION_PREVIEW_FORMAT",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "ELECTRON_RUN_AS_NODE",
+    "VSCODE_NODE_COMPILE_CACHE_KIND",
+    "VSCODE_CRASH_REPORTER_PROCESS_TYPE",
+    "VSCODE_CWD",
+    "VSCODE_HANDLES_UNCAUGHT_ERRORS",
+    "CLAUDE_CODE_ENTRYPOINT",
+    "CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION",
+    "VSCODE_DOTNET_INSTALL_TOOL_ORIGINAL_HOME",
+    "CLAUDE_CODE_MESSAGING_TOKEN"
+  ],
+  "codexFile": {
+    "path": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "length": 371731248,
+    "lastWriteUtc": "2026-11-05T02:11:03Z",
+    "processesRunningFromItBefore": 0
+  },
+  "before": {
+    "utc": "2026-11-17T15:04:03.131Z",
+    "bootUtc": "2026-11-13T10:14:07Z",
+    "uptime": "4.04:49:55",
+    "processorQueueLength": 0,
+    "commitCharge": "58.7% (82,891 MiB of 141,229 MiB), 591 processes, 16908 threads"
+  },
+  "elapsedMs": 1681.1,
+  "registerAiLifeMs": 1618.7,
+  "exited": true,
+  "exitCode": 0,
+  "overProductBudget14s": false,
+  "jobEmptied": true,
+  "processes": [
+    {
+      "pid": 72000,
+      "image": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\payload\\registerai\\RegisterAI.exe",
+      "startMs": 0.0,
+      "lifeMs": 1618.7,
+      "cpuMs": 171.9,
+      "exitCode": 0,
+      "newAtMs": 67.4,
+      "exitAtMs": 1677.8
+    },
+    {
+      "pid": 63612,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 9.9,
+      "lifeMs": 1610.8,
+      "cpuMs": 46.9,
+      "exitCode": 0,
+      "newAtMs": 68.5,
+      "exitAtMs": 1679.9
+    },
+    {
+      "pid": 37452,
+      "image": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+      "startMs": 49.5,
+      "lifeMs": 1101.7,
+      "cpuMs": 765.6,
+      "exitCode": 0,
+      "newAtMs": 108.1,
+      "exitAtMs": 1210.8
+    },
+    {
+      "pid": 23872,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 59.5,
+      "lifeMs": 1095.8,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 118.2,
+      "exitAtMs": 1214.3
+    },
+    {
+      "pid": 79876,
+      "image": "C:\\Windows\\System32\\reg.exe",
+      "startMs": 117.2,
+      "lifeMs": 42.9,
+      "cpuMs": 15.6,
+      "exitCode": 1,
+      "newAtMs": 175.8,
+      "exitAtMs": 219.4
+    },
+    {
+      "pid": 85640,
+      "image": "C:\\Windows\\System32\\reg.exe",
+      "startMs": 128.0,
+      "lifeMs": 44.6,
+      "cpuMs": 15.6,
+      "exitCode": 1,
+      "newAtMs": 186.6,
+      "exitAtMs": 231.7
+    },
+    {
+      "pid": 85280,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 131.5,
+      "lifeMs": 31.1,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 190.1,
+      "exitAtMs": 221.9
+    },
+    {
+      "pid": 49592,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 140.6,
+      "lifeMs": 33.9,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 199.2,
+      "exitAtMs": 233.6
+    },
+    {
+      "pid": 30992,
+      "image": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+      "startMs": 1177.1,
+      "lifeMs": 232.4,
+      "cpuMs": 46.9,
+      "exitCode": 0,
+      "newAtMs": 1235.7,
+      "exitAtMs": 1468.7
+    },
+    {
+      "pid": 73276,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 1186.2,
+      "lifeMs": 225.5,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 1244.8,
+      "exitAtMs": 1470.7
+    },
+    {
+      "pid": 67324,
+      "image": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+      "startMs": 1471.3,
+      "lifeMs": 68.5,
+      "cpuMs": 46.9,
+      "exitCode": 0,
+      "newAtMs": 1529.9,
+      "exitAtMs": 1599.1
+    },
+    {
+      "pid": 30508,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 1478.6,
+      "lifeMs": 63.5,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 1537.2,
+      "exitAtMs": 1601.2
+    },
+    {
+      "pid": 85316,
+      "image": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+      "startMs": 1548.0,
+      "lifeMs": 63.7,
+      "cpuMs": 31.2,
+      "exitCode": 0,
+      "newAtMs": 1606.5,
+      "exitAtMs": 1670.9
+    },
+    {
+      "pid": 34180,
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "startMs": 1552.7,
+      "lifeMs": 60.8,
+      "cpuMs": 15.6,
+      "exitCode": 0,
+      "newAtMs": 1611.3,
+      "exitAtMs": 1672.5
+    }
+  ],
+  "results": [
+    {
+      "client": "claude-code",
+      "clientPath": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+      "action": "added",
+      "error": null,
+      "ran": [
+        "{\"argv\":[\"C:\\\\Users\\\\jori\\\\.local\\\\bin\\\\claude.exe\",\"mcp\",\"add\",\"browserai\",\"--scope\",\"user\",\"--\",\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI.app\\\\current\\\\BrowserAI.exe\",\"--mcp\"],\"exitCode\":0,\"timedOut\":false}"
+      ]
+    },
+    {
+      "client": "codex",
+      "clientPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+      "action": "added",
+      "error": null,
+      "ran": [
+        "{\"argv\":[\"C:\\\\Users\\\\jori\\\\.codex\\\\plugins\\\\.plugin-appserver\\\\codex.exe\",\"mcp\",\"list\",\"--json\"],\"exitCode\":0,\"timedOut\":false}",
+        "{\"argv\":[\"C:\\\\Users\\\\jori\\\\.codex\\\\plugins\\\\.plugin-appserver\\\\codex.exe\",\"mcp\",\"add\",\"browserai\",\"--\",\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI.app\\\\current\\\\BrowserAI.exe\",\"--mcp\"],\"exitCode\":0,\"timedOut\":false}",
+        "{\"argv\":[\"C:\\\\Users\\\\jori\\\\.codex\\\\plugins\\\\.plugin-appserver\\\\codex.exe\",\"mcp\",\"list\",\"--json\"],\"exitCode\":0,\"timedOut\":false}"
+      ]
+    }
+  ],
+  "events": [
+    "67.4 msg=6 pid=72000",
+    "68.5 msg=6 pid=63612",
+    "108.1 msg=6 pid=37452",
+    "118.2 msg=6 pid=23872",
+    "175.8 msg=6 pid=79876",
+    "186.6 msg=6 pid=85640",
+    "190.1 msg=6 pid=85280",
+    "199.2 msg=6 pid=49592",
+    "219.4 msg=7 pid=79876",
+    "221.9 msg=7 pid=85280",
+    "231.7 msg=7 pid=85640",
+    "233.6 msg=7 pid=49592",
+    "1210.8 msg=7 pid=37452",
+    "1214.3 msg=7 pid=23872",
+    "1235.7 msg=6 pid=30992",
+    "1244.8 msg=6 pid=73276",
+    "1468.7 msg=7 pid=30992",
+    "1470.7 msg=7 pid=73276",
+    "1529.9 msg=6 pid=67324",
+    "1537.2 msg=6 pid=30508",
+    "1599.1 msg=7 pid=67324",
+    "1601.2 msg=7 pid=30508",
+    "1606.5 msg=6 pid=85316",
+    "1611.3 msg=6 pid=34180",
+    "1670.9 msg=7 pid=85316",
+    "1672.5 msg=7 pid=34180",
+    "1677.8 msg=7 pid=72000",
+    "1679.9 msg=7 pid=63612",
+    "1681.1 msg=4 pid=0"
+  ],
+  "after": {
+    "utc": "2026-11-17T15:04:05.176Z",
+    "bootUtc": "2026-11-13T10:14:07Z",
+    "uptime": "4.04:49:57",
+    "processorQueueLength": 0,
+    "commitCharge": "58.3% (82,337 MiB of 141,229 MiB), 567 processes, 16638 threads"
+  }
+}

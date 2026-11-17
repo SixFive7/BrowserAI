@@ -1,0 +1,20 @@
+#Requires -Version 7
+# One line per run: end to end, RegisterAI's own life, and each client process's start
+# offset and life, read from the summary.json files run-registerai.ps1 wrote.
+param([string] $Runs = 'C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part1\runs')
+$inv = [System.Globalization.CultureInfo]::InvariantCulture
+foreach ($folder in Get-ChildItem -LiteralPath $Runs -Directory | Sort-Object Name) {
+    $summary = Get-Content -LiteralPath (Join-Path $folder.FullName 'summary.json') -Raw | ConvertFrom-Json
+    $clients = @($summary.processes | Where-Object { $_.image -match '\\(codex|claude)\.exe$' })
+    $parts = foreach ($p in $clients) {
+        $name = if ($p.image -match 'claude\.exe$') { 'claude' } else { 'codex' }
+        [string]::Format($inv, '{0}@+{1:F0}:{2:F0}', $name, $p.startMs, $p.lifeMs)
+    }
+    $codexLife = ($clients | Where-Object { $_.image -match 'codex\.exe$' } | Measure-Object -Property lifeMs -Sum).Sum
+    $firstCodex = ($clients | Where-Object { $_.image -match 'codex\.exe$' } | Select-Object -First 1).startMs
+    $actions = (@($summary.results) | ForEach-Object { "$($_.client)=$($_.action)" }) -join ','
+    [string]::Format($inv, '{0,-32} e2e {1,6:F0} ms  registerai {2,6:F0}  codex-sum {3,5:F0}  first-codex@+{4,5:F0}  q {5}/{6}  {7}  [{8}]  {9}',
+        $folder.Name, $summary.elapsedMs, $summary.registerAiLifeMs, $codexLife, $firstCodex,
+        $summary.before.processorQueueLength, $summary.after.processorQueueLength,
+        ($summary.before.commitCharge -split ' ')[0], ($parts -join ' '), $actions)
+}

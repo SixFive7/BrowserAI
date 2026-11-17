@@ -1,0 +1,5 @@
+claude exit=0
+body-001.json: 131269 chars, 14 tools, 0 probe tools, url-less model=claude-sonnet-5-5
+   tool names of interest: ToolSearch
+   instructions: start found, end marker MISSING; cut after 4096 units with the suffix; in messages
+   (end marker absent from the whole body)

@@ -1,0 +1,33 @@
+#Requires -Version 7
+# Minimum, median and maximum per group of runs, from the summary.json files.
+param([string] $Runs = 'C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part1\runs')
+$inv = [System.Globalization.CultureInfo]::InvariantCulture
+function Spread([double[]] $values) {
+    if (-not $values -or $values.Count -eq 0) { return 'none' }
+    $sorted = $values | Sort-Object
+    $n = $sorted.Count
+    $median = if ($n % 2) { $sorted[($n - 1) / 2] } else { ($sorted[$n / 2 - 1] + $sorted[$n / 2]) / 2 }
+    [string]::Format($inv, 'n={0} min {1:F0} median {2:F0} max {3:F0}', $n, $sorted[0], $median, $sorted[-1])
+}
+$groups = Get-ChildItem -LiteralPath $Runs -Directory | Group-Object { $_.Name -replace '-\d\d$', '' } | Sort-Object Name
+foreach ($group in $groups) {
+    $e2e = @(); $claude = @(); $codex = @(); $codexSum = @(); $firstCodex = @(); $calls = @{ 1 = @(); 2 = @(); 3 = @() }
+    foreach ($folder in $group.Group) {
+        $s = Get-Content -LiteralPath (Join-Path $folder.FullName 'summary.json') -Raw | ConvertFrom-Json
+        $e2e += [double]$s.elapsedMs
+        $c = @($s.processes | Where-Object { $_.image -match 'claude\.exe$' })
+        if ($c) { $claude += [double]$c[0].lifeMs }
+        $x = @($s.processes | Where-Object { $_.image -match 'codex\.exe$' })
+        for ($i = 0; $i -lt $x.Count; $i++) { $codex += [double]$x[$i].lifeMs; if ($calls.ContainsKey($i + 1)) { $calls[$i + 1] += [double]$x[$i].lifeMs } }
+        if ($x) { $codexSum += ($x | Measure-Object -Property lifeMs -Sum).Sum; $firstCodex += [double]$x[0].startMs }
+    }
+    "== $($group.Name)"
+    "   end to end      $(Spread $e2e)"
+    if ($claude) { "   claude mcp add  $(Spread $claude)" }
+    "   codex, each     $(Spread $codex)"
+    "   codex list 1    $(Spread $calls[1])"
+    "   codex add       $(Spread $calls[2])"
+    "   codex list 2    $(Spread $calls[3])"
+    "   codex, sum      $(Spread $codexSum)"
+    "   first codex at  $(Spread $firstCodex)"
+}

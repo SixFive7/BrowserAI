@@ -1,0 +1,6 @@
+rigcheck-02-whoami  elapsed 149 ms  exit 4  queue 0/0  commit 58.7% (82,865 MiB of 141,229 MiB), 605 processes, 17002 threads
+   pid 73772  start +    0,0 ms  life    106,5 ms  cpu    46,9 ms  exit 4  C:\Users\jori\AppData\Local\BrowserAI.app\current\payload\registerai\RegisterAI.exe
+   pid 48372  start +   58,0 ms  life     43,2 ms  cpu    15,6 ms  exit 1  C:\Windows\System32\whoami.exe
+   pid 56240  start +   68,1 ms  life     34,8 ms  cpu    15,6 ms  exit 0  C:\Windows\System32\conhost.exe
+   codex: action refused-unreadable, error 'codex mcp list --json' exited 1, saying: ERROR: Invalid argument/option - 'mcp'.
+Type "WHOAMI /?" for usage., so what Codex has registered is not known. Nothing was changed.

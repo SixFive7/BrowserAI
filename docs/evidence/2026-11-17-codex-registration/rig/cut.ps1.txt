@@ -1,0 +1,56 @@
+#Requires -Version 7
+# Cuts the kept copy of the 2026-11-17 Codex registration timing into the evidence batch:
+# each run's summary.json and RegisterAI document, the console lines, the tables, and the
+# rig under .txt names. Every other file of the raw runs is listed in left-out.sha256, and
+# every file kept under a changed name in originals.sha256.
+param(
+    [string] $Scratch = 'C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part1',
+    [Parameter(Mandatory)][string] $Batch
+)
+$ErrorActionPreference = 'Stop'
+if (Test-Path -LiteralPath $Batch) { throw "'$Batch' exists already." }
+New-Item -ItemType Directory -Path $Batch, "$Batch\runs", "$Batch\rig", "$Batch\console" | Out-Null
+
+function Line([string] $path, [string] $name) {
+    $hash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+    '{0}  {1}  {2}' -f $hash, (Get-Item -LiteralPath $path).Length, $name
+}
+
+$originals = [System.Collections.Generic.List[string]]::new()
+$originals.Add('# SHA-256, byte count and name of every file kept under a changed name, as taken')
+$leftOut = [System.Collections.Generic.List[string]]::new()
+$leftOut.Add('# SHA-256, byte count and path under the scratch runs folder of every file of the raw runs not kept here')
+
+foreach ($run in Get-ChildItem -LiteralPath "$Scratch\runs" -Directory | Sort-Object Name) {
+    New-Item -ItemType Directory -Path "$Batch\runs\$($run.Name)" | Out-Null
+    foreach ($file in Get-ChildItem -LiteralPath $run.FullName -Recurse -File -Force) {
+        $relative = $file.FullName.Substring("$Scratch\runs\".Length)
+        if ($file.DirectoryName -eq $run.FullName -and $file.Name -in 'summary.json', 'stdout.json') {
+            Copy-Item -LiteralPath $file.FullName -Destination "$Batch\runs\$($run.Name)\$($file.Name)"
+        }
+        else {
+            $leftOut.Add((Line $file.FullName $relative))
+        }
+    }
+}
+
+foreach ($file in Get-ChildItem -LiteralPath $Scratch -File | Where-Object { $_.Extension -in '.out', '.err', '.log' -or $_.Name -in 'table.txt', 'stats.txt' }) {
+    if ($file.Length -eq 0) { $leftOut.Add((Line $file.FullName "..\$($file.Name)")); continue }
+    $target = if ($file.Name -in 'table.txt', 'stats.txt') { "$Batch\$($file.Name)" } else { "$Batch\console\$($file.Name).txt" }
+    Copy-Item -LiteralPath $file.FullName -Destination $target
+    if ($target -like '*\console\*') { $originals.Add((Line $file.FullName $file.Name)) }
+}
+
+foreach ($file in Get-ChildItem -LiteralPath "$Scratch\rig" -File) {
+    Copy-Item -LiteralPath $file.FullName -Destination "$Batch\rig\$($file.Name).txt"
+    $originals.Add((Line $file.FullName $file.Name))
+}
+
+$check = "$Scratch\rigchecks\rigcheck-02-whoami"
+New-Item -ItemType Directory -Path "$Batch\rigcheck" | Out-Null
+Copy-Item -LiteralPath "$check\summary.json", "$check\stdout.json" -Destination "$Batch\rigcheck\"
+
+$originals | Set-Content -LiteralPath "$Batch\originals.sha256" -Encoding utf8NoBOM
+$leftOut | Set-Content -LiteralPath "$Batch\left-out.sha256" -Encoding utf8NoBOM
+$kept = Get-ChildItem -LiteralPath $Batch -Recurse -File
+'{0} files, {1:N0} bytes kept; {2} files left out' -f $kept.Count, ($kept | Measure-Object Length -Sum).Sum, ($leftOut.Count - 1)

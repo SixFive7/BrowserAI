@@ -1,0 +1,14 @@
+claude exit=0
+body-001.json: 207809 chars, 32 tools, 9 probe tools, url-less model=claude-haiku-5-5
+   mcp__probe__probe_d2047: arrived 2047 units, end marker present, ends with "K-END-D2047-7C4E"
+   mcp__probe__probe_d2048: arrived 2048 units, end marker present, ends with "K-END-D2048-7C4E"
+   mcp__probe__probe_d2049: arrived 2049 units, end marker present, ends with "K-END-D2049-7C4E"
+   mcp__probe__probe_d2600: arrived 2600 units, end marker present, ends with "K-END-D2600-7C4E"
+   mcp__probe__probe_d4095: arrived 4095 units, end marker present, ends with "K-END-D4095-7C4E"
+   mcp__probe__probe_d4096: arrived 4096 units, end marker present, ends with "K-END-D4096-7C4E"
+   mcp__probe__probe_d4097: arrived 4109 units, end marker MISSING, ends with "7C4… [truncated]"
+   mcp__probe__probe_d5000: arrived 4109 units, end marker MISSING, ends with "def… [truncated]"
+   mcp__probe__probe_param: arrived 37 units, end marker MISSING, ends with "-PARAM-TOOL-7C4E"; parameter 20000 units, end marker present
+   tool names of interest: WebSearch, mcp__probe__probe_d2047, mcp__probe__probe_d2048, mcp__probe__probe_d2049, mcp__probe__probe_d2600, mcp__probe__probe_d4095, mcp__probe__probe_d4096, mcp__probe__probe_d4097, mcp__probe__probe_d5000, mcp__probe__probe_param
+   instructions: start found, end marker MISSING; cut after 4096 units with the suffix; in messages
+   (end marker absent from the whole body)

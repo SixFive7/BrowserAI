@@ -1,0 +1,25 @@
+run01-all-first-since-0645Z      e2e   1681 ms  registerai   1619  codex-sum   365  first-codex@+ 1177  q 0/0  58.7%  [claude@+50:1102 codex@+1177:232 codex@+1471:68 codex@+1548:64]  claude-code=added,codex=added
+run02-all-warm-01                e2e   1284 ms  registerai   1229  codex-sum   196  first-codex@+  972  q 0/0  58.4%  [claude@+132:818 codex@+972:67 codex@+1047:64 codex@+1156:64]  claude-code=added,codex=added
+run02-all-warm-02                e2e   2079 ms  registerai   2066  codex-sum   313  first-codex@+ 1727  q 0/0  58.6%  [claude@+86:1567 codex@+1727:144 codex@+1881:101 codex@+1989:68]  claude-code=added,codex=added
+run02-all-warm-03                e2e   1092 ms  registerai   1058  codex-sum   207  first-codex@+  829  q 0/0  58.3%  [claude@+53:751 codex@+829:69 codex@+905:72 codex@+985:66]  claude-code=added,codex=added
+run02-all-warm-04                e2e   1025 ms  registerai   1015  codex-sum   264  first-codex@+  729  q 0/0  58.3%  [claude@+47:624 codex@+729:69 codex@+805:66 codex@+878:129]  claude-code=added,codex=added
+run02-all-warm-05                e2e   1602 ms  registerai   1587  codex-sum   753  first-codex@+  795  q 0/0  58.7%  [claude@+54:679 codex@+795:300 codex@+1108:369 codex@+1493:84]  claude-code=added,codex=added
+run02-all-warm-06                e2e    866 ms  registerai    856  codex-sum   174  first-codex@+  661  q 0/0  58.6%  [claude@+44:594 codex@+661:58 codex@+726:63 codex@+795:53]  claude-code=added,codex=added
+run02-all-warm-07                e2e   1623 ms  registerai   1549  codex-sum   275  first-codex@+ 1247  q 0/0  58.8%  [claude@+107:1033 codex@+1247:103 codex@+1359:94 codex@+1461:78]  claude-code=added,codex=added
+run02-all-warm-08                e2e   1677 ms  registerai   1663  codex-sum   192  first-codex@+ 1450  q 0/0  59.0%  [claude@+67:1358 codex@+1450:64 codex@+1521:65 codex@+1594:63]  claude-code=added,codex=added
+run02-all-warm-09                e2e   1036 ms  registerai   1022  codex-sum   192  first-codex@+  808  q 0/0  59.2%  [claude@+52:734 codex@+808:64 codex@+880:68 codex@+955:59]  claude-code=added,codex=added
+run02-all-warm-10                e2e   2223 ms  registerai   2197  codex-sum   347  first-codex@+ 1797  q 0/0  59.6%  [claude@+113:1640 codex@+1797:111 codex@+1921:118 codex@+2062:118]  claude-code=added,codex=added
+run03-codex-warm-01              e2e    280 ms  registerai    270  codex-sum   196  first-codex@+   49  q 0/0  58.9%  [codex@+49:71 codex@+127:65 codex@+198:61]  codex=added
+run03-codex-warm-02              e2e    971 ms  registerai    956  codex-sum   853  first-codex@+   65  q 0/0  59.0%  [codex@+65:647 codex@+726:114 codex@+851:92]  codex=added
+run03-codex-warm-03              e2e    305 ms  registerai    294  codex-sum   203  first-codex@+   47  q 0/0  58.7%  [codex@+47:68 codex@+123:68 codex@+219:67]  codex=added
+run03-codex-warm-04              e2e   2450 ms  registerai   2438  codex-sum  2309  first-codex@+  104  q 0/0  58.6%  [codex@+104:66 codex@+177:62 codex@+246:2181]  codex=added
+run03-codex-warm-05              e2e    313 ms  registerai    297  codex-sum   221  first-codex@+   50  q 0/0  59.0%  [codex@+50:70 codex@+127:75 codex@+209:76]  codex=added
+run03-codex-warm-06              e2e    280 ms  registerai    270  codex-sum   205  first-codex@+   44  q 0/0  58.7%  [codex@+44:63 codex@+115:66 codex@+187:76]  codex=added
+run03-codex-warm-07              e2e    512 ms  registerai    436  codex-sum   345  first-codex@+   60  q 40/9  58.7%  [codex@+60:81 codex@+152:116 codex@+278:148]  codex=added
+run03-codex-warm-08              e2e    321 ms  registerai    256  codex-sum   186  first-codex@+   47  q 0/0  58.8%  [codex@+47:62 codex@+117:63 codex@+187:61]  codex=added
+run03-codex-warm-09              e2e    592 ms  registerai    576  codex-sum   283  first-codex@+   52  q 0/0  58.9%  [codex@+52:82 codex@+209:72 codex@+436:129]  codex=added
+run03-codex-warm-10              e2e    720 ms  registerai    703  codex-sum   474  first-codex@+  191  q 0/0  61.9%  [codex@+191:201 codex@+403:171 codex@+585:103]  codex=added
+run04-codex-freshcopy-first      e2e   1157 ms  registerai   1062  codex-sum   314  first-codex@+  713  q 1/2  64.5%  [codex@+713:123 codex@+846:106 codex@+965:84]  codex=added
+run05-codex-freshcopy-warm-01    e2e    518 ms  registerai    465  codex-sum   232  first-codex@+   62  q 0/0  64.8%  [codex@+62:83 codex@+212:71 codex@+378:77]  codex=added
+run05-codex-freshcopy-warm-02    e2e    472 ms  registerai    450  codex-sum   320  first-codex@+   95  q 2/1  64.9%  [codex@+95:133 codex@+242:95 codex@+346:92]  codex=added
+run05-codex-freshcopy-warm-03    e2e    402 ms  registerai    390  codex-sum   252  first-codex@+  108  q 0/0  64.9%  [codex@+108:80 codex@+200:90 codex@+300:82]  codex=added

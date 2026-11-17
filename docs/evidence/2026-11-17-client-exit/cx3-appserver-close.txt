@@ -1,0 +1,1 @@
+cx3/d2: server death after app-server stdin close 4.5..10.3 (median 6.5, n=6); app-server exit after close 11.3..462.6 (median 20.5)

@@ -1,0 +1,24 @@
+#Requires -Version 7
+# Serial runs of run-registerai.ps1, one at a time, each in a fresh pwsh, each into
+# fresh scratch homes, with a pause between them.
+param(
+    [Parameter(Mandatory)][string] $Prefix,
+    [Parameter(Mandatory)][ValidateSet('all', 'codex', 'claude-code')][string] $Client,
+    [Parameter(Mandatory)][int] $Count,
+    [string] $CodexExe,
+    [string] $Condition = 'warm',
+    [int] $PauseSeconds = 3
+)
+$ErrorActionPreference = 'Stop'
+$scratch = 'C:\Source\SixFive7\BrowserAI\.work\clients-scratch\part1'
+for ($i = 1; $i -le $Count; $i++) {
+    $label = '{0}-{1:D2}' -f $Prefix, $i
+    $arguments = @('-NoProfile', '-File', "$scratch\rig\run-registerai.ps1", '-Label', $label, '-Client', $Client, '-Condition', ('"{0}"' -f $Condition))
+    if ($CodexExe) { $arguments += @('-CodexExe', $CodexExe) }
+    $process = Start-Process -FilePath pwsh -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardOutput "$scratch\$label.out" -RedirectStandardError "$scratch\$label.err"
+    $null = $process.WaitForExit(200000)
+    Get-Content -LiteralPath "$scratch\$label.out" -TotalCount 1
+    $complaint = Get-Content -LiteralPath "$scratch\$label.err" -Raw
+    if ($complaint) { "   STDERR: $complaint" }
+    Start-Sleep -Seconds $PauseSeconds
+}

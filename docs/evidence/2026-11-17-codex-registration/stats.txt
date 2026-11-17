@@ -1,0 +1,42 @@
+== run01-all-first-since-0645Z
+   end to end      n=1 min 1681 median 1681 max 1681
+   claude mcp add  n=1 min 1102 median 1102 max 1102
+   codex, each     n=3 min 64 median 68 max 232
+   codex list 1    n=1 min 232 median 232 max 232
+   codex add       n=1 min 68 median 68 max 68
+   codex list 2    n=1 min 64 median 64 max 64
+   codex, sum      n=1 min 365 median 365 max 365
+   first codex at  n=1 min 1177 median 1177 max 1177
+== run02-all-warm
+   end to end      n=10 min 866 median 1443 max 2223
+   claude mcp add  n=10 min 594 median 785 max 1640
+   codex, each     n=30 min 53 median 69 max 369
+   codex list 1    n=10 min 58 median 69 max 300
+   codex add       n=10 min 63 median 70 max 369
+   codex list 2    n=10 min 53 median 67 max 129
+   codex, sum      n=10 min 174 median 236 max 753
+   first codex at  n=10 min 661 median 900 max 1797
+== run03-codex-warm
+   end to end      n=10 min 280 median 417 max 2450
+   codex, each     n=30 min 61 median 74 max 2181
+   codex list 1    n=10 min 62 median 70 max 647
+   codex add       n=10 min 62 median 70 max 171
+   codex list 2    n=10 min 61 median 84 max 2181
+   codex, sum      n=10 min 186 median 252 max 2309
+   first codex at  n=10 min 44 median 51 max 191
+== run04-codex-freshcopy-first
+   end to end      n=1 min 1157 median 1157 max 1157
+   codex, each     n=3 min 84 median 106 max 123
+   codex list 1    n=1 min 123 median 123 max 123
+   codex add       n=1 min 106 median 106 max 106
+   codex list 2    n=1 min 84 median 84 max 84
+   codex, sum      n=1 min 314 median 314 max 314
+   first codex at  n=1 min 713 median 713 max 713
+== run05-codex-freshcopy-warm
+   end to end      n=3 min 402 median 472 max 518
+   codex, each     n=9 min 71 median 83 max 133
+   codex list 1    n=3 min 80 median 83 max 133
+   codex add       n=3 min 71 median 90 max 95
+   codex list 2    n=3 min 77 median 82 max 92
+   codex, sum      n=3 min 232 median 252 max 320
+   first codex at  n=3 min 62 median 95 max 108

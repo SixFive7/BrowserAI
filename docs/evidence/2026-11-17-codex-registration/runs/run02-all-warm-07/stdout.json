@@ -1,0 +1,140 @@
+{
+  "tool": "registerai",
+  "version": "0.3.0",
+  "schema": 1,
+  "verb": "register",
+  "dryRun": false,
+  "exitCode": 0,
+  "error": null,
+  "server": {
+    "name": "browserai",
+    "command": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "args": [
+      "--mcp"
+    ],
+    "env": []
+  },
+  "results": [
+    {
+      "client": "claude-code",
+      "scope": "user",
+      "project": null,
+      "clientPath": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+      "config": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\runs\\run02-all-warm-07\\claude-config\\.claude.json",
+      "before": {
+        "state": "absent",
+        "command": null,
+        "args": [],
+        "env": [],
+        "resolvesTo": null
+      },
+      "action": "added",
+      "after": {
+        "state": "ours",
+        "command": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+        "args": [
+          "--mcp"
+        ],
+        "env": [],
+        "resolvesTo": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+      },
+      "ran": [
+        {
+          "argv": [
+            "C:\\Users\\jori\\.local\\bin\\claude.exe",
+            "mcp",
+            "add",
+            "browserai",
+            "--scope",
+            "user",
+            "--",
+            "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+            "--mcp"
+          ],
+          "exitCode": 0,
+          "timedOut": false
+        }
+      ],
+      "said": "Added stdio MCP server browserai with command: C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe --mcp to user config\nFile modified: C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\runs\\run02-all-warm-07\\claude-config\\.claude.json",
+      "advice": [
+        {
+          "code": "claude-restart-session",
+          "text": "Claude Code reads its MCP configuration when a session starts. Sessions already open do not see this change until they are restarted.",
+          "command": null
+        }
+      ],
+      "manual": "claude mcp add browserai --scope user -- 'C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe' --mcp",
+      "error": null
+    },
+    {
+      "client": "codex",
+      "scope": "user",
+      "project": null,
+      "clientPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+      "config": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\part1\\runs\\run02-all-warm-07\\codex-home\\config.toml",
+      "before": {
+        "state": "absent",
+        "command": null,
+        "args": [],
+        "env": [],
+        "resolvesTo": null
+      },
+      "action": "added",
+      "after": {
+        "state": "ours",
+        "command": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+        "args": [
+          "--mcp"
+        ],
+        "env": [],
+        "resolvesTo": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+      },
+      "ran": [
+        {
+          "argv": [
+            "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+            "mcp",
+            "list",
+            "--json"
+          ],
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "argv": [
+            "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+            "mcp",
+            "add",
+            "browserai",
+            "--",
+            "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+            "--mcp"
+          ],
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "argv": [
+            "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+            "mcp",
+            "list",
+            "--json"
+          ],
+          "exitCode": 0,
+          "timedOut": false
+        }
+      ],
+      "said": "Added global MCP server 'browserai'.",
+      "advice": [
+        {
+          "code": "codex-new-thread",
+          "text": "Codex does not pick up this change in a thread that is already open. Start a new thread to use it.",
+          "command": null
+        }
+      ],
+      "manual": "codex mcp add browserai -- 'C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe' --mcp",
+      "error": null
+    }
+  ],
+  "path": null
+}
