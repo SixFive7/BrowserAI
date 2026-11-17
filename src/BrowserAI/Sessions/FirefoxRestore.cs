@@ -514,7 +514,7 @@ internal static class FirefoxRestore
         {
             var trimmed = line.Trim();
 
-            if (!trimmed.StartsWith('['))
+            if (!trimmed.StartsWith('[', StringComparison.Ordinal))
             {
                 continue;
             }
@@ -656,7 +656,7 @@ internal static class FirefoxRestore
         {
             var trimmed = line.Trim();
 
-            if (trimmed.Length is not 0 && !trimmed.StartsWith('#'))
+            if (trimmed.Length is not 0 && !trimmed.StartsWith('#', StringComparison.Ordinal))
             {
                 return trimmed.TrimEnd('.');
             }
@@ -759,7 +759,7 @@ internal sealed record UpstreamTab(int Index, bool IsCurrent, string Title, stri
             return null;
         }
 
-        var colon = line.IndexOf(':', 2);
+        var colon = line.IndexOf(':', 2, StringComparison.Ordinal);
 
         if (colon < 3 || !int.TryParse(line.AsSpan(2, colon - 2), NumberStyles.None, CultureInfo.InvariantCulture, out var index))
         {
@@ -792,7 +792,7 @@ internal sealed record UpstreamTab(int Index, bool IsCurrent, string Title, stri
         // last "](" up to the closing parenthesis at the end of the line.
         var split = rest.LastIndexOf("](", StringComparison.Ordinal);
 
-        if (split < 0 || !rest.EndsWith(')'))
+        if (split < 0 || !rest.EndsWith(')', StringComparison.Ordinal))
         {
             return null;
         }

@@ -323,7 +323,7 @@ internal sealed class ScriptedRelays(ConcurrentQueue<string> events) : IUpdateRe
 {
     private readonly Lock _gate = new();
     private readonly List<RelayState> _listed = [];
-    private readonly Dictionary<string, TaskCompletionSource<RelayReadiness>> _waiting = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, TaskCompletionSource<RelayReadiness>> _waiting = [with(StringComparer.Ordinal)];
     private int _namedReads;
 
     /// <summary>

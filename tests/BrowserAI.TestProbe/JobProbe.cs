@@ -1066,7 +1066,7 @@ internal static partial class JobProbe
         {
             lock (_gate)
             {
-                return new Dictionary<int, HeldMember>(_held);
+                return [with(_held)];
             }
         }
 

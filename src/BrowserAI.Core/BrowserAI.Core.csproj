@@ -53,7 +53,7 @@
 
       Without it this project's packages.lock.json has TWO stable states and the
       last restore wins: a RID-specific restore, which every publish and
-      build/New-Release.ps1 performs, writes a `net10.0-windows7.0/win-x64`
+      build/New-Release.ps1 performs, writes a `net11.0-windows7.0/win-x64`
       section, and a solution restore, which `dotnet test` performs, removes it
       again. Neither is wrong and neither is an artifact; they are two honest
       answers to two different questions, and the cost was a tree that opened

@@ -130,7 +130,7 @@ internal sealed class UpdateFeed
         }
 
         var trimmed = baseUrl.TrimEnd('/');
-        var lastSegment = trimmed[(trimmed.LastIndexOf('/') + 1)..];
+        var lastSegment = trimmed[(trimmed.LastIndexOf('/', StringComparison.Ordinal) + 1)..];
 
         if (string.Equals(lastSegment, channel, StringComparison.OrdinalIgnoreCase))
         {

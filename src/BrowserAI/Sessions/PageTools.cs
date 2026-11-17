@@ -276,7 +276,7 @@ internal static class PageTools
         {
             var trimmed = line.TrimEnd('\r', ' ');
 
-            if (!trimmed.Contains(CurrentTabMarker, StringComparison.Ordinal) || !trimmed.EndsWith(')'))
+            if (!trimmed.Contains(CurrentTabMarker, StringComparison.Ordinal) || !trimmed.EndsWith(')', StringComparison.Ordinal))
             {
                 continue;
             }

@@ -40,13 +40,13 @@ internal sealed class FakeRegisterAi : IRegisterAi
     public Dictionary<(string Client, string Scope, string Project), string> Entries { get; } = [];
 
     /// <summary>Clients whose executable is not found.</summary>
-    public HashSet<string> Missing { get; } = new(StringComparer.Ordinal);
+    public HashSet<string> Missing { get; } = [with(StringComparer.Ordinal)];
 
     /// <summary>Clients whose configuration cannot be read.</summary>
-    public HashSet<string> Unreadable { get; } = new(StringComparer.Ordinal);
+    public HashSet<string> Unreadable { get; } = [with(StringComparer.Ordinal)];
 
     /// <summary>Clients whose write fails.</summary>
-    public HashSet<string> Failing { get; } = new(StringComparer.Ordinal);
+    public HashSet<string> Failing { get; } = [with(StringComparer.Ordinal)];
 
     /// <summary>A run that replaces the model's answer for every call, when set.</summary>
     public ToolRun? Answer { get; set; }
@@ -332,7 +332,7 @@ internal sealed class FakeRegisterAi : IRegisterAi
         if (client is "claude-code" && text.Contains("${", StringComparison.Ordinal))
         {
             var open = text.IndexOf("${", StringComparison.Ordinal);
-            var close = text.IndexOf('}', open);
+            var close = text.IndexOf('}', open, StringComparison.Ordinal);
             var name = text[(open + 2)..close];
 
             text = text[..open] + (Environment.GetEnvironmentVariable(name) ?? text[open..(close + 1)]) + text[(close + 1)..];

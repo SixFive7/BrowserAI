@@ -259,7 +259,7 @@ internal sealed partial class ReVerificationIndexTests
 
         foreach (var line in await File.ReadAllLinesAsync(IndexPath))
         {
-            if (!line.StartsWith('|'))
+            if (!line.StartsWith('|', StringComparison.Ordinal))
             {
                 continue;
             }

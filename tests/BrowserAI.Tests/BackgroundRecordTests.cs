@@ -48,7 +48,7 @@ internal sealed class BackgroundRecordTests
         var pipe = BackgroundPipe.NamePrefix + "suite-" + Guid.NewGuid().ToString("N");
         var path = BackgroundRecord.PathFor(data.Path, pipe);
 
-        await Assert.That(path).IsEqualTo(Path.Combine(data.Path, BackgroundRecord.DirectoryName, pipe[(pipe.LastIndexOf('\\') + 1)..] + ".json"));
+        await Assert.That(path).IsEqualTo(Path.Combine(data.Path, BackgroundRecord.DirectoryName, pipe[(pipe.LastIndexOf('\\', StringComparison.Ordinal) + 1)..] + ".json"));
 
         var written = await BackgroundRecord.StartedAsync(path, "9.9.9-record-tests", @"C:\Users\someone\BrowserAI\current\BrowserAI.exe", StartedAt);
 

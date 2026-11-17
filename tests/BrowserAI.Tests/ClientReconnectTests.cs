@@ -681,8 +681,8 @@ internal sealed class ClientReconnectTests
                 }
 
                 var stamp = line.IndexOf(" pid=", StringComparison.Ordinal);
-                var at = line.IndexOf('@', stamp);
-                var end = line.IndexOf(' ', at);
+                var at = line.IndexOf('@', stamp, StringComparison.Ordinal);
+                var end = line.IndexOf(' ', at, StringComparison.Ordinal);
 
                 return (
                     int.Parse(line[(stamp + 5)..at], CultureInfo.InvariantCulture),

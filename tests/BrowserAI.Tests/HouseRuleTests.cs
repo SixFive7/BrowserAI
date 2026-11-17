@@ -394,7 +394,7 @@ internal sealed partial class HouseRuleTests
                 // carries it onto.
                 var invocation = code[line];
 
-                for (var next = line; next < code.Length - 1 && next - line < GuiLookbackLines && code[next].TrimEnd().EndsWith('`'); next++)
+                for (var next = line; next < code.Length - 1 && next - line < GuiLookbackLines && code[next].TrimEnd().EndsWith('`', StringComparison.Ordinal); next++)
                 {
                     invocation += "\n" + code[next + 1];
                 }
@@ -993,7 +993,7 @@ internal sealed partial class HouseRuleTests
         {
             var line = lines[index].Trim();
 
-            if (line.Length is 0 || line.StartsWith('['))
+            if (line.Length is 0 || line.StartsWith('[', StringComparison.Ordinal))
             {
                 continue;
             }
@@ -1015,12 +1015,12 @@ internal sealed partial class HouseRuleTests
         var first = at;
         var last = at;
 
-        while (first > 0 && lines[first - 1].Trim().StartsWith('['))
+        while (first > 0 && lines[first - 1].Trim().StartsWith('[', StringComparison.Ordinal))
         {
             first--;
         }
 
-        while (last + 1 < lines.Length && lines[last + 1].Trim().StartsWith('['))
+        while (last + 1 < lines.Length && lines[last + 1].Trim().StartsWith('[', StringComparison.Ordinal))
         {
             last++;
         }
@@ -3510,7 +3510,7 @@ internal sealed partial class HouseRuleTests
         if (IsProse(suffix))
         {
             body = FencedBlock().Replace(body, string.Empty);
-            body = string.Join('\n', body.Split('\n').Where(line => !line.TrimStart().StartsWith('>')));
+            body = string.Join('\n', body.Split('\n').Where(line => !line.TrimStart().StartsWith('>', StringComparison.Ordinal)));
         }
 
         // Paragraphs wrap at 76 columns here, so a quotation is read whole.
@@ -3887,7 +3887,7 @@ internal sealed partial class HouseRuleTests
             return true;
         }
 
-        var start = text.LastIndexOf('\n', Math.Max(0, at - 1)) + 1;
+        var start = text.LastIndexOf('\n', Math.Max(0, at - 1), StringComparison.Ordinal) + 1;
 
         return text.AsSpan(start, at - start).Contains("[Arguments(", StringComparison.Ordinal);
     }

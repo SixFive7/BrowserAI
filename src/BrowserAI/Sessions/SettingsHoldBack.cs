@@ -303,7 +303,7 @@ internal static class SettingsHoldBack
 internal sealed class HeldBackCalls
 {
     private readonly Lock _gate = new();
-    private readonly Dictionary<string, SessionRunSettings> _held = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SessionRunSettings> _held = [with(StringComparer.Ordinal)];
 
     /// <summary>
     /// Whether this call is the one held back just before for the same tool and

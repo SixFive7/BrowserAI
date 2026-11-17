@@ -20,9 +20,10 @@
 ; ⚠️ WHAT THIS FILE CAN AND CANNOT SEE, stated here because an entry for a type
 ; that does not resolve matches nothing and reads as coverage anyway, which is
 ; ForbiddenDependencyTests' own observation about banned symbols. The two test
-; projects target net10.0-windows with no Windows SDK version, so the WinRT
-; projection below does not resolve in either of them today: these entries go
-; live the day a projection is referenced, at edit time. The route that needs no
+; projects target net11.0-windows (net10.0-windows until 2026-11-17) with no
+; Windows SDK version, so the WinRT projection below does not resolve in either
+; of them today: these entries go live the day a projection is referenced, at
+; edit time. The route that needs no
 ; projection at all, handing the runtime class name to RoGetActivationFactory,
 ; is held by HouseRuleTests.NoTestRaisesARealToast, which reads the tests' code
 ; for that name.

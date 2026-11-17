@@ -531,7 +531,7 @@ internal sealed partial class PayloadTests
         }
 
         var fence = decisions.IndexOf(Fence, anchor, StringComparison.Ordinal);
-        var start = fence < 0 ? -1 : decisions.IndexOf('\n', fence) + 1;
+        var start = fence < 0 ? -1 : decisions.IndexOf('\n', fence, StringComparison.Ordinal) + 1;
         var close = start <= 0 ? -1 : decisions.IndexOf(Fence, start, StringComparison.Ordinal);
 
         if (close < 0)

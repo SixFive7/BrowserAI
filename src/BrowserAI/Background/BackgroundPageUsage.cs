@@ -171,7 +171,7 @@ internal sealed class BackgroundPageUsage : IPageUsage, IDisposable
     private bool IsBrowser(string image)
     {
         _browserPrefixes ??= [.. ImageSpellings.OfDirectory(_browsersRoot).Matched
-            .Select(static spelling => spelling.EndsWith(Path.DirectorySeparatorChar) ? spelling : spelling + Path.DirectorySeparatorChar)];
+            .Select(static spelling => spelling.EndsWith(Path.DirectorySeparatorChar, StringComparison.Ordinal) ? spelling : spelling + Path.DirectorySeparatorChar)];
 
         return Array.Exists(_browserPrefixes, prefix => image.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
     }

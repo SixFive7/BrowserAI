@@ -223,7 +223,7 @@ internal sealed class SessionPath
         // one.
         var trimmed = canonical.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-        if (trimmed.Length is 0 || trimmed.EndsWith(':'))
+        if (trimmed.Length is 0 || trimmed.EndsWith(':', StringComparison.Ordinal))
         {
             throw new ArgumentException(
                 $"'{canonical}' is a volume root, not a session directory. A session directory must be a real directory on the volume.");

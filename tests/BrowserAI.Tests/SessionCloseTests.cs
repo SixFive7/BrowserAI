@@ -978,7 +978,7 @@ internal sealed class SessionCloseTests
         }
 
         var start = at + Lead.Length;
-        var end = answer.IndexOf('\'', start);
+        var end = answer.IndexOf('\'', start, StringComparison.Ordinal);
 
         return end < 0 ? null : answer[start..end];
     }

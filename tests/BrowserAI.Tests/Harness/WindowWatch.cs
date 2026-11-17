@@ -224,7 +224,7 @@ internal static partial class WindowWatch
 
     private static readonly Lock Gate = new();
     private static readonly List<(WindowSighting Sighting, WindowOwnership Ownership)> OffenceList = [];
-    private static readonly HashSet<string> SeenClasses = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> SeenClasses = [with(StringComparer.Ordinal)];
 
     /// <summary>
     /// Completed by the hook thread once its hooks are in or have failed, and awaited

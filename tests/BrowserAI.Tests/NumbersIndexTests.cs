@@ -377,7 +377,7 @@ internal sealed partial class NumbersIndexTests
         {
             var line = lines[index];
 
-            if (!line.StartsWith('|'))
+            if (!line.StartsWith('|', StringComparison.Ordinal))
             {
                 continue;
             }
@@ -596,7 +596,7 @@ internal sealed partial class NumbersIndexTests
 
     private static (object? Value, string Problem) Resolve(string symbol)
     {
-        var dot = symbol.LastIndexOf('.');
+        var dot = symbol.LastIndexOf('.', StringComparison.Ordinal);
         var typeName = symbol[..dot];
         var memberName = symbol[(dot + 1)..];
         var types = ProductTypes.Where(type => type.Name == typeName || type.FullName == typeName).ToList();

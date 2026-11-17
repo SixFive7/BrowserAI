@@ -406,7 +406,7 @@ internal sealed class AppBinaryTests
     private static string Built(string project, string executable)
     {
         var path = Path.Combine(
-            RepositoryLayout.Root.FullName, "src", project, "bin", "Debug", "net10.0-windows", executable);
+            RepositoryLayout.Root.FullName, "src", project, "bin", "Debug", "net11.0-windows", executable);
 
         return File.Exists(path)
             ? path

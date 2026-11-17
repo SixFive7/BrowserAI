@@ -564,7 +564,7 @@ internal sealed partial class DocumentationLinkTests
             {
                 // An absolute URL is somebody else's to keep working, exactly as
                 // it is for the link scan.
-                if (Uri.TryCreate(target, UriKind.Absolute, out _) || target.StartsWith('#'))
+                if (Uri.TryCreate(target, UriKind.Absolute, out _) || target.StartsWith('#', StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -797,7 +797,7 @@ internal sealed partial class DocumentationLinkTests
 
                     // An absolute URL is somebody else's to keep working, and a
                     // bare fragment is a link within one document.
-                    if (Uri.TryCreate(target, UriKind.Absolute, out _) || target.StartsWith('#'))
+                    if (Uri.TryCreate(target, UriKind.Absolute, out _) || target.StartsWith('#', StringComparison.Ordinal))
                     {
                         continue;
                     }

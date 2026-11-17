@@ -129,7 +129,7 @@ internal static class BackgroundRecord
         ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
         ArgumentException.ThrowIfNullOrWhiteSpace(pipeName);
 
-        var leaf = pipeName[(pipeName.LastIndexOf('\\') + 1)..];
+        var leaf = pipeName[(pipeName.LastIndexOf('\\', StringComparison.Ordinal) + 1)..];
         var safe = new StringBuilder(leaf.Length);
 
         foreach (var character in leaf)

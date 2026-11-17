@@ -44,8 +44,9 @@ internal sealed class DashboardTests
     private static readonly DateTimeOffset Now = DateTimeOffset.UnixEpoch;
 
     /// <summary>The actions a page may post, and nothing among them removes anything.</summary>
-    private static readonly HashSet<string> Actions = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> Actions =
+    [
+        with(StringComparer.Ordinal),
         "open-folder",
         "open-session",
         "measure-sessions",
@@ -59,7 +60,7 @@ internal sealed class DashboardTests
 
         // The after-update notice's dismiss, 57 a, which takes away a notice and no file.
         "dismiss-notice",
-    };
+    ];
 
     /// <summary>
     /// Every address a start, a toast or <c>--sessions</c> hands out still opens, on the page

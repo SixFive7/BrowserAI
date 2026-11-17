@@ -34,7 +34,7 @@ namespace BrowserAI.Tests;
 internal sealed partial class RelayTests
 {
     /// <summary>The rows an arm has matched, gathered across the arms for the census.</summary>
-    private static readonly HashSet<string> Provoked = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> Provoked = [with(StringComparer.Ordinal)];
 
     private static readonly Lock CensusGate = new();
 

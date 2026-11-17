@@ -801,7 +801,7 @@ internal static class UpdateToastContent
     /// <summary>The folder a log file is in, as its path names it, or the path itself when it names none.</summary>
     /// <param name="path">The path.</param>
     /// <returns>The folder.</returns>
-    private static string FolderOf(string path) => path.LastIndexOf('\\') is > 0 and var cut ? path[..cut] : path;
+    private static string FolderOf(string path) => path.LastIndexOf('\\', StringComparison.Ordinal) is > 0 and var cut ? path[..cut] : path;
 
     private static string Escape(string text) => SecurityElement.Escape(text);
 }

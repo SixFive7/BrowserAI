@@ -818,7 +818,7 @@ internal sealed class SessionIndexTests
     {
         var key = Path.GetFullPath(root).ToUpperInvariant();
 
-        return key.EndsWith(Path.DirectorySeparatorChar) ? key : key + Path.DirectorySeparatorChar;
+        return key.EndsWith(Path.DirectorySeparatorChar, StringComparison.Ordinal) ? key : key + Path.DirectorySeparatorChar;
     }
 
     private static SessionLockRequest Request(string purpose) =>

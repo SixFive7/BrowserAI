@@ -524,7 +524,7 @@ internal sealed partial class BuildConfigurationTests
         Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName);
 
     // Three or more dot-separated numbers. Two parts are excluded on purpose:
-    // `net10.0-windows` is a target framework, not a dependency version.
+    // `net11.0-windows` is a target framework, not a dependency version.
     [GeneratedRegex(@"\d+\.\d+\.\d+[\w.\-+]*")]
     private static partial Regex VersionLiteral();
 }

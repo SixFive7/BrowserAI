@@ -85,7 +85,7 @@ internal sealed class WindowWatchTests
 
         // An image under each suite root, with no chain at all: the parent is gone,
         // which is the orphaned-console rig's whole shape.
-        await Assert.That(WindowWatch.Classify(Sighting(5555, 7000, image: Repository + @"\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe"), Context))
+        await Assert.That(WindowWatch.Classify(Sighting(5555, 7000, image: Repository + @"\src\BrowserAI\bin\Release\net11.0-windows\win-x64\publish\BrowserAI.Server.exe"), Context))
             .IsEqualTo(WindowOwnership.UnderSuiteRoot);
         await Assert.That(WindowWatch.Classify(Sighting(5555, 7000, image: ProfileScratch + @"\real-install-window-1\current\BrowserAI.exe"), Context))
             .IsEqualTo(WindowOwnership.UnderSuiteRoot);

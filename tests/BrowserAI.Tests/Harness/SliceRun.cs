@@ -366,7 +366,7 @@ internal sealed record SliceRun(
                 continue;
             }
 
-            var closed = line.IndexOf(')', opened + 2);
+            var closed = line.IndexOf(')', opened + 2, StringComparison.Ordinal);
 
             if (closed < 0)
             {

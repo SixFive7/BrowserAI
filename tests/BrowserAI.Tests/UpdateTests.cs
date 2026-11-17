@@ -1092,7 +1092,7 @@ internal sealed class UpdateTests
 
             while (at >= 0)
             {
-                var close = code.IndexOf(')', at + Composition.Length);
+                var close = code.IndexOf(')', at + Composition.Length, StringComparison.Ordinal);
                 var argument = close > 0 ? code[(at + Composition.Length)..close].Trim() : "<unterminated>";
 
                 // Case-insensitively, because the local a call site reads it into

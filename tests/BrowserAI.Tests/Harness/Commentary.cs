@@ -156,7 +156,7 @@ internal static class Commentary
 
             if (c is '/' && i + 1 < text.Length && text[i + 1] is '/')
             {
-                var end = text.IndexOf('\n', i);
+                var end = text.IndexOf('\n', i, StringComparison.Ordinal);
                 end = end < 0 ? text.Length : end;
                 found.Add((i, end));
                 i = end;
@@ -214,7 +214,7 @@ internal static class Commentary
 
             if (c is '#')
             {
-                var end = text.IndexOf('\n', i);
+                var end = text.IndexOf('\n', i, StringComparison.Ordinal);
                 end = end < 0 ? text.Length : end;
                 found.Add((i, end));
                 i = end;
@@ -386,7 +386,7 @@ internal static class Commentary
 
             if (c is '/' && i + 1 < text.Length && text[i + 1] is '/')
             {
-                var end = text.IndexOf('\n', i);
+                var end = text.IndexOf('\n', i, StringComparison.Ordinal);
                 i = end < 0 ? text.Length : end;
                 continue;
             }
@@ -448,7 +448,7 @@ internal static class Commentary
 
             if (c is '#')
             {
-                var end = text.IndexOf('\n', i);
+                var end = text.IndexOf('\n', i, StringComparison.Ordinal);
                 i = end < 0 ? text.Length : end;
                 continue;
             }
@@ -484,9 +484,9 @@ internal static class Commentary
         var body = without.ToString();
         var found = new List<string>();
 
-        for (var i = body.IndexOf('"', 0); i >= 0; i = body.IndexOf('"', i + 1))
+        for (var i = body.IndexOf('"', 0, StringComparison.Ordinal); i >= 0; i = body.IndexOf('"', i + 1, StringComparison.Ordinal))
         {
-            var close = body.IndexOf('"', i + 1);
+            var close = body.IndexOf('"', i + 1, StringComparison.Ordinal);
 
             if (close < 0)
             {

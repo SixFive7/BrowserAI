@@ -340,8 +340,8 @@ internal static class RepositoryLayout
                 // continuation and closing lines of a block comment.
                 return !trimmed.StartsWith("//", StringComparison.Ordinal)
                     && !trimmed.StartsWith("/*", StringComparison.Ordinal)
-                    && !trimmed.StartsWith('*')
-                    && !trimmed.StartsWith('#');
+                    && !trimmed.StartsWith('*', StringComparison.Ordinal)
+                    && !trimmed.StartsWith('#', StringComparison.Ordinal);
             }));
     }
 

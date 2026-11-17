@@ -757,7 +757,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
 
         try
         {
-            return JsonSerializer.Deserialize(buffer.AsSpan(0, length), McpJsonUtilities.DefaultOptions.GetTypeInfo(typeof(JsonRpcMessage))) as JsonRpcMessage;
+            return JsonSerializer.Deserialize(buffer.AsSpan(0, length), McpJsonUtilities.DefaultOptions.GetTypeInfo<JsonRpcMessage>());
         }
         catch (JsonException)
         {
@@ -776,7 +776,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     private static JsonRpcError Refusal(RequestId id, int code, string sentence, string kind) => new()
     {
         Id = id,
-        Error = new JsonRpcErrorDetail { Code = code, Message = sentence, Data = JsonSerializer.SerializeToElement(new JsonObject { ["refusal"] = kind }, McpJsonUtilities.DefaultOptions.GetTypeInfo(typeof(JsonObject))) },
+        Error = new JsonRpcErrorDetail { Code = code, Message = sentence, Data = JsonSerializer.SerializeToElement(new JsonObject { ["refusal"] = kind }, McpJsonUtilities.DefaultOptions.GetTypeInfo<JsonObject>()) },
     };
 
     private static string? Text(JsonNode? parameters, string name) =>

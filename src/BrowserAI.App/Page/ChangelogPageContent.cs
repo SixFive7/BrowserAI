@@ -158,7 +158,7 @@ internal static partial class ChangelogPageContent
         var anchor = hash < 0 ? string.Empty : target[(hash + 1)..];
 
         if (path.Contains(':', StringComparison.Ordinal) || path.Contains('?', StringComparison.Ordinal) || path.Contains('\\', StringComparison.Ordinal)
-            || path.StartsWith('/') || anchor.Contains('#', StringComparison.Ordinal))
+            || path.StartsWith('/', StringComparison.Ordinal) || anchor.Contains('#', StringComparison.Ordinal))
         {
             return null;
         }

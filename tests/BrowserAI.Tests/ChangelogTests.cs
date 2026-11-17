@@ -447,7 +447,7 @@ internal sealed partial class ChangelogTests
             .LastOrDefault(paragraph => paragraph
                 .Split('\n')
                 .Where(line => line.Trim().Length > 0)
-                .All(line => line.TrimStart().StartsWith('|')));
+                .All(line => line.TrimStart().StartsWith('|', StringComparison.Ordinal)));
 
         return block is null
             ? []
@@ -745,7 +745,7 @@ internal sealed partial class ChangelogTests
                 offences.Add($"CHANGELOG.md:{number}: '{icon}' is not in the legend's palette -- {Excerpt(line)}");
             }
 
-            if (!headline.EndsWith('.'))
+            if (!headline.EndsWith('.', StringComparison.Ordinal))
             {
                 offences.Add($"CHANGELOG.md:{number}: the headline does not end in a full stop -- {headline}");
             }

@@ -103,7 +103,7 @@ internal static class GitOracle
                 // not as its contents. It is not a file, cannot be compared
                 // against one, and the divergence it stands for is reported by
                 // the walk's side of the comparison anyway.
-                .Where(path => !path.EndsWith('/')),
+                .Where(path => !path.EndsWith('/', StringComparison.Ordinal)),
         ];
     }
 

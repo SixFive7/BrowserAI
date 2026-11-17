@@ -280,7 +280,7 @@ internal static class ScreenshotLimit
                 var label = trimmed.IndexOf("[Screenshot", StringComparison.Ordinal);
                 var opens = label < 0 ? -1 : trimmed.IndexOf("](", label, StringComparison.Ordinal);
 
-                if (opens < 0 || !trimmed.EndsWith(')'))
+                if (opens < 0 || !trimmed.EndsWith(')', StringComparison.Ordinal))
                 {
                     continue;
                 }

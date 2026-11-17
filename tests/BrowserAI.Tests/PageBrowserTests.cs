@@ -849,7 +849,7 @@ internal sealed class PageBrowserTests
     private static string PlainAddressOf(string handed)
     {
         var uri = new Uri(handed);
-        var rest = uri.PathAndQuery[(uri.PathAndQuery.IndexOf('/', 1) + 1)..];
+        var rest = uri.PathAndQuery[(uri.PathAndQuery.IndexOf('/', 1, StringComparison.Ordinal) + 1)..];
 
         return $"{uri.Scheme}://{uri.Authority}/{rest}";
     }

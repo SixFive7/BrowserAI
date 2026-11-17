@@ -105,6 +105,25 @@ internal sealed class SessionLockTests
     /// </remarks>
     private static readonly TimeSpan StillBlocked = TimeSpan.FromSeconds(3);
 
+    /// <summary>
+    /// Whichever finishes first, <paramref name="call"/> or <see cref="StillBlocked"/>,
+    /// with the delay's timer stopped once the answer is in.
+    /// </summary>
+    /// <remarks>
+    /// Added 2026-11-17 with the move to .NET 11, whose CA2027 refuses a bare
+    /// <c>Task.Delay</c> raced in <c>Task.WhenAny</c>: a call that wins leaves the delay's
+    /// timer running to its end. What each arm compares is unchanged.
+    /// </remarks>
+    /// <param name="call">The call that must still be waiting.</param>
+    /// <returns>The task that finished first.</returns>
+    private static async Task<Task> FirstOfAsync(Task call)
+    {
+        using var stop = new CancellationTokenSource();
+        var first = await Task.WhenAny(call, Task.Delay(StillBlocked, stop.Token));
+        await stop.CancelAsync();
+        return first;
+    }
+
     [Test]
     public async Task UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho()
     {
@@ -344,7 +363,7 @@ internal sealed class SessionLockTests
 
             await entered.Task;
 
-            var blocked = await Task.WhenAny(call, Task.Delay(StillBlocked));
+            var blocked = await FirstOfAsync(call);
 
             await Assert.That(blocked).IsNotEqualTo((Task)call).Because(
                 "the per-directory gate is held by another process, so a TryAcquire that reached it cannot have returned; "
@@ -507,7 +526,7 @@ internal sealed class SessionLockTests
 
             await entered.Task;
 
-            var first = await Task.WhenAny(call, Task.Delay(StillBlocked));
+            var first = await FirstOfAsync(call);
             var early = first == call ? await call : null;
 
             if (early is not null)
@@ -1903,7 +1922,7 @@ internal sealed class SessionLockTests
 
             await entered.Task;
 
-            var blocked = await Task.WhenAny(take, Task.Delay(StillBlocked));
+            var blocked = await FirstOfAsync(take);
 
             await Assert.That(blocked).IsNotEqualTo((Task)take).Because(
                 "the hold taken after this process's own write must wait a transient handle out rather than answer it: "
@@ -2242,8 +2261,8 @@ internal sealed class SessionLockTests
             return "nothing";
         }
 
-        var start = source.LastIndexOf('\n', at) + 1;
-        var end = source.IndexOf('\n', at);
+        var start = source.LastIndexOf('\n', at, StringComparison.Ordinal) + 1;
+        var end = source.IndexOf('\n', at, StringComparison.Ordinal);
 
         return source[start..(end < 0 ? source.Length : end)].Trim();
     }

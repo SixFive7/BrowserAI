@@ -84,7 +84,7 @@ internal static partial class BrowserProcesses
         // and here that empties RevisionPrune's live set -- which is the census a
         // tree is DELETED on when it comes back empty.
         var prefixes = ImageSpellings.OfDirectory(root).Matched
-            .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar) ? spelling : spelling + Path.DirectorySeparatorChar)
+            .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar, StringComparison.Ordinal) ? spelling : spelling + Path.DirectorySeparatorChar)
             .ToArray();
 
         var found = new List<RunningImage>();
@@ -291,7 +291,7 @@ internal static partial class BrowserProcesses
         ArgumentException.ThrowIfNullOrWhiteSpace(root);
 
         var prefixes = ImageSpellings.OfDirectory(root).Matched
-            .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar) ? spelling : spelling + Path.DirectorySeparatorChar)
+            .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar, StringComparison.Ordinal) ? spelling : spelling + Path.DirectorySeparatorChar)
             .ToArray();
 
         var handle = OpenProcess(ProcessQueryLimitedInformation | ProcessTerminate, bInheritHandle: false, (uint)processId);

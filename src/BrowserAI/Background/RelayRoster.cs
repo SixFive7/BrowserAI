@@ -116,7 +116,7 @@ internal sealed record NamedRelay(RelayGreeting Greeting, DateTimeOffset IdleAt,
 internal sealed class RelayRoster : IUpdateRelays
 {
     private readonly Lock _gate = new();
-    private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Entry> _entries = [with(StringComparer.Ordinal)];
     private readonly TimeProvider _clock;
     private readonly ConversationReader _reader;
     private readonly ILogger _logger;

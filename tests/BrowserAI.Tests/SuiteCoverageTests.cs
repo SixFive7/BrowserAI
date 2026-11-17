@@ -2258,7 +2258,7 @@ internal sealed partial class SuiteCoverageTests
 
         foreach (var line in lines)
         {
-            if (!line.StartsWith(' '))
+            if (!line.StartsWith(' ', StringComparison.Ordinal))
             {
                 inside = line.Contains(".claude.json", StringComparison.Ordinal)
                     || line.Contains("config.toml", StringComparison.Ordinal);
@@ -2359,7 +2359,7 @@ internal sealed partial class SuiteCoverageTests
             var match = ShellCaseForcing().Match(text);
 
             return match.Success
-                ? match.Groups["from"].Value.StartsWith('A') ? "lower" : "upper"
+                ? match.Groups["from"].Value.StartsWith('A', StringComparison.Ordinal) ? "lower" : "upper"
                 : null;
         }
 

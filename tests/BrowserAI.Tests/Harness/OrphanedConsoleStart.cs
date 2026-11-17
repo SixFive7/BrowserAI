@@ -790,7 +790,7 @@ internal sealed partial class OrphanedConsoleStart : IAsyncDisposable
         }
 
         var digits = opens + "  pid=".Length;
-        var at = line.IndexOf('@', digits);
+        var at = line.IndexOf('@', digits, StringComparison.Ordinal);
 
         if (at < 0)
         {

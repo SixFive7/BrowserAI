@@ -334,7 +334,7 @@ internal sealed partial class HouseRuleTests
         {
             var open = loop.Index + loop.Length - 1;
             var close = MatchingAt(code, open, '(', ')');
-            var brace = code.IndexOf('{', close);
+            var brace = code.IndexOf('{', close, StringComparison.Ordinal);
             var end = brace >= 0 && code[(close + 1)..brace].Trim().Length is 0 ? MatchingAt(code, brace, '{', '}') + 1 : close + 1;
             var spanned = code[open..end];
 
@@ -400,7 +400,7 @@ internal sealed partial class HouseRuleTests
     {
         if (code[at] is '\'')
         {
-            var end = code.IndexOf('\'', at + (code.Length > at + 1 && code[at + 1] is '\\' ? 3 : 2));
+            var end = code.IndexOf('\'', at + (code.Length > at + 1 && code[at + 1] is '\\' ? 3 : 2), StringComparison.Ordinal);
 
             return end < 0 ? code.Length : end + 1;
         }

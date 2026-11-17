@@ -74,7 +74,7 @@ internal sealed class StandardErrorClassifierTests
 
         var patterns = excerpt
             .Where(line => line.Contains("-match", StringComparison.Ordinal))
-            .Select(line => line[(line.IndexOf('\'', StringComparison.Ordinal) + 1)..line.LastIndexOf('\'')])
+            .Select(line => line[(line.IndexOf('\'', StringComparison.Ordinal) + 1)..line.LastIndexOf('\'', StringComparison.Ordinal)])
             .ToList();
 
         // Exactly two, in the reference's own order. A third would mean the

@@ -118,7 +118,7 @@ internal static class PublishedSlice
     /// <summary>Where <c>dotnet publish -r win-x64 --self-contained</c> puts it.</summary>
     public static string Directory { get; } = Path.Combine(
         RepositoryLayout.Root.FullName,
-        "src", "BrowserAI", "bin", "Release", "net10.0-windows", "win-x64", "publish");
+        "src", "BrowserAI", "bin", "Release", "net11.0-windows", "win-x64", "publish");
 
     /// <summary>The published binary.</summary>
     /// <remarks>

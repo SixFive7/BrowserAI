@@ -129,7 +129,7 @@ internal sealed partial class HouseRuleTests
 
         for (var at = code.IndexOf(OptionsNeedle, StringComparison.Ordinal); at >= 0; at = code.IndexOf(OptionsNeedle, at + OptionsNeedle.Length, StringComparison.Ordinal))
         {
-            var brace = code.IndexOf('{', at);
+            var brace = code.IndexOf('{', at, StringComparison.Ordinal);
             var end = brace < 0 ? -1 : ClosingBrace(code, brace);
 
             if (end < 0 || !text[brace..end].Contains("FileOptions.Asynchronous", StringComparison.Ordinal))

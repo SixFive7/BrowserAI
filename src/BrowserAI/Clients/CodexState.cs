@@ -131,7 +131,7 @@ internal static class CodexState
         var slashed = path.Replace('\\', '/');
         var uri = new StringBuilder("file://", slashed.Length + 32);
 
-        if (!slashed.StartsWith('/'))
+        if (!slashed.StartsWith('/', StringComparison.Ordinal))
         {
             _ = uri.Append('/');
         }

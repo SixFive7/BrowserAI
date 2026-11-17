@@ -34,7 +34,7 @@ internal sealed class CallerConnection(int? clientProcessId = null)
     private static long _numbers;
 
     private readonly Lock _gate = new();
-    private readonly Dictionary<string, DateTimeOffset> _created = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, DateTimeOffset> _created = [with(StringComparer.Ordinal)];
     private McpServer? _server;
     private int _ended;
 

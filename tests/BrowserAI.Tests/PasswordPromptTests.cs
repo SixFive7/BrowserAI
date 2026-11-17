@@ -311,7 +311,7 @@ internal sealed class PasswordPromptTests
             .Select(block => (string?)block?["text"] ?? string.Empty));
 
         var start = text.IndexOf('{', StringComparison.Ordinal);
-        var end = text.LastIndexOf('}');
+        var end = text.LastIndexOf('}', StringComparison.Ordinal);
 
         return (start >= 0 && end > start
             ? JsonNode.Parse(text[start..(end + 1)])?.AsObject()

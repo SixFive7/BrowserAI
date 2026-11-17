@@ -97,7 +97,7 @@ internal static partial class HazardIndex
         {
             number++;
 
-            if (!line.StartsWith('|'))
+            if (!line.StartsWith('|', StringComparison.Ordinal))
             {
                 continue;
             }
@@ -159,7 +159,7 @@ internal static partial class HazardIndex
             {
                 var cells = SplitRow(line);
 
-                if (line.StartsWith('|') && cells.Length == Fields && cells[1].Trim() is HeaderCell)
+                if (line.StartsWith('|', StringComparison.Ordinal) && cells.Length == Fields && cells[1].Trim() is HeaderCell)
                 {
                     started = true;
                     region.Add((index + 1, line));
@@ -168,7 +168,7 @@ internal static partial class HazardIndex
                 continue;
             }
 
-            if (!line.StartsWith('|'))
+            if (!line.StartsWith('|', StringComparison.Ordinal))
             {
                 break;
             }

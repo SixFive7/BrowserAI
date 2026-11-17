@@ -601,8 +601,8 @@ internal sealed class ThirdPartyNoticeTests
         [
             .. section[at..]
                 .Split('\n')
-                .SkipWhile(line => !line.StartsWith('|'))
-                .TakeWhile(line => line.StartsWith('|'))
+                .SkipWhile(line => !line.StartsWith('|', StringComparison.Ordinal))
+                .TakeWhile(line => line.StartsWith('|', StringComparison.Ordinal))
                 .Where(line => !Regex.IsMatch(line, @"^\|[\s|:-]*$")),
         ];
     }

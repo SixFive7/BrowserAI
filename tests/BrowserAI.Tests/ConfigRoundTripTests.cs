@@ -402,7 +402,7 @@ internal sealed class ConfigRoundTripTests
     {
         var text = run.Text("getConfig");
         var start = text.IndexOf('{', StringComparison.Ordinal);
-        var end = text.LastIndexOf('}');
+        var end = text.LastIndexOf('}', StringComparison.Ordinal);
 
         return (start >= 0 && end > start
             ? JsonNode.Parse(text[start..(end + 1)])?.AsObject()

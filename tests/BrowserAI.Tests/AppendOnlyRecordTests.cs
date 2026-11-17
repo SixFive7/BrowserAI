@@ -444,7 +444,7 @@ internal sealed partial class AppendOnlyRecordTests
         await Assert.That(otherHeading).IsNotEqualTo(realHeading);
         await Assert.That(heading).IsNotNull();
         await Assert.That(heading!).Contains("HEADING LINE");
-        await Assert.That(heading).Contains(otherHeading[(otherHeading.LastIndexOf(' ') + 1)..]);
+        await Assert.That(heading).Contains(otherHeading[(otherHeading.LastIndexOf(' ', StringComparison.Ordinal) + 1)..]);
         await Assert.That(heading).Contains("ONE commit");
         await Assert.That(heading).Contains("Re-seal it here");
 

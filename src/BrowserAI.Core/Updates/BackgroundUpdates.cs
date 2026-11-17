@@ -81,8 +81,8 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     private readonly CancellationToken _ending;
     private readonly ITimer _checkTimer;
     private readonly ITimer _holdTimer;
-    private readonly HashSet<string> _toasted = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _failed = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _toasted = [with(StringComparer.OrdinalIgnoreCase)];
+    private readonly HashSet<string> _failed = [with(StringComparer.OrdinalIgnoreCase)];
 
     private IBackgroundUpdateClient? _client;
     private Phase _phase;
@@ -1873,7 +1873,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         public HashSet<string> Asked { get; }
 
         /// <summary>The relays that said yes.</summary>
-        public HashSet<string> Yes { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> Yes { get; } = [with(StringComparer.Ordinal)];
 
         /// <summary>Cancelled once the question is settled either way.</summary>
         public CancellationToken Token { get; }

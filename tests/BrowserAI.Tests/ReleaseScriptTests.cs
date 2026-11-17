@@ -622,7 +622,7 @@ internal sealed class ReleaseScriptTests
 
         var passed = string.Join(
             '\n',
-            script[start..end].Split('\n').Where(line => !line.TrimStart().StartsWith('#')));
+            script[start..end].Split('\n').Where(line => !line.TrimStart().StartsWith('#', StringComparison.Ordinal)));
 
         // Never per-machine: --msi PerMachine installs to Program Files and
         // makes the updater self-elevate.
@@ -1146,7 +1146,7 @@ internal sealed class ReleaseScriptTests
             "  Determining projects to restore...",
             "      IlcCompile:",
             "        Generating native code",
-            "        \"C:\\ilc\" @\"obj\\Release\\net10.0-windows\\win-x64\\native\\BrowserAI.ilc.rsp\"",
+            "        \"C:\\ilc\" @\"obj\\Release\\net11.0-windows\\win-x64\\native\\BrowserAI.ilc.rsp\"",
             "  Build succeeded."));
 
         await File.WriteAllTextAsync(incremental, string.Join(
@@ -1835,7 +1835,7 @@ internal sealed class ReleaseScriptTests
         }
 
         const string ProductLock = """
-            {"version":1,"dependencies":{"net10.0-windows":{
+            {"version":1,"dependencies":{"net11.0-windows":{
               "ModelContextProtocol":{"type":"Direct","resolved":"7.7.7"},
               "Velopack":{"type":"Direct","resolved":"9.9.9"},
               "MinVer":{"type":"Direct","resolved":"6.6.6"}}}}
@@ -1843,10 +1843,10 @@ internal sealed class ReleaseScriptTests
 
         await writeAsync("src/BrowserAI/packages.lock.json", ProductLock);
         await writeAsync("tests/BrowserAI.Tests/packages.lock.json", """
-            {"version":1,"dependencies":{"net10.0-windows":{"TUnit":{"type":"Direct","resolved":"8.8.8"}}}}
+            {"version":1,"dependencies":{"net11.0-windows":{"TUnit":{"type":"Direct","resolved":"8.8.8"}}}}
             """);
         await writeAsync("tests/BrowserAI.TestProbe/packages.lock.json", """
-            {"version":1,"dependencies":{"net10.0-windows":{}}}
+            {"version":1,"dependencies":{"net11.0-windows":{}}}
             """);
         // ⚠️ THE EMPTY-STRING KEY IS THE POINT OF THIS FIXTURE, not noise. npm
         // records the root project under "" and PowerShell's ConvertFrom-Json
@@ -1983,7 +1983,7 @@ internal sealed class ReleaseScriptTests
         var end = script.IndexOf("\n)", start, StringComparison.Ordinal);
         var passed = string.Join(
             '\n',
-            script[start..end].Split('\n').Where(line => !line.TrimStart().StartsWith('#')));
+            script[start..end].Split('\n').Where(line => !line.TrimStart().StartsWith('#', StringComparison.Ordinal)));
 
         await Assert.That(passed)
             .Contains("'--delta', 'None'")
@@ -2618,7 +2618,7 @@ internal sealed class ReleaseScriptTests
     /// <returns>Each entry's <c>RelativeFileName</c>, in the order written.</returns>
     private static List<string> Names(string json) =>
     [
-        .. JsonDocument.Parse(json).RootElement.EnumerateArray()
+        .. JsonElement.Parse(json).EnumerateArray()
             .Select(entry => entry.GetProperty("RelativeFileName").GetString()!),
     ];
 

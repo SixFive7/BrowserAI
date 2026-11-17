@@ -40,11 +40,12 @@ more* link to its detail; nothing else depends on it.
 
 ### Changed
 
-- ⬆️ **BrowserAI is built with .NET 10.0.13, up from 10.0.12.**
-  The compiler that builds the one executable, its trimmer, the runtime it carries and the logging
-  libraries it links moved with the .NET update published on 2026-10-13. The suite's own TUnit
-  moved to 1.75.0 and its CsWin32 to 0.3.363 in the same re-resolve, and neither reaches an
-  installed BrowserAI.
+- ⬆️ **BrowserAI is built with .NET 11, up from .NET 10.0.12.**
+  The maintainer moved the whole tree to the new major on 2026-11-17. The executable carries the
+  11.0.0 runtime, compiled in ahead of time as before, so nothing has to be installed beside it,
+  and the logging libraries it links moved to 11.0.0 with it. The suite's own TUnit moved to
+  1.86.0 and its CsWin32 to 0.3.371 in the same re-resolve, and neither reaches an installed
+  BrowserAI.
 
 - ✅ **The suite's hand-moved clock no longer throws, moves back or drops a re-arm during a step.**
   Tests move this clock in steps while the code they test arms its timers on threads of its own.

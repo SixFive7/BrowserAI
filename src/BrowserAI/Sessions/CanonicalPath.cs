@@ -174,7 +174,7 @@ internal static class CanonicalPath
 
         var folded = canonical.ToUpperInvariant();
 
-        return folded.EndsWith(Path.DirectorySeparatorChar) ? folded : folded + Path.DirectorySeparatorChar;
+        return folded.EndsWith(Path.DirectorySeparatorChar, StringComparison.Ordinal) ? folded : folded + Path.DirectorySeparatorChar;
     }
 
     /// <summary>The full treatment: normalise, resolve, refuse.</summary>

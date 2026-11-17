@@ -40,7 +40,7 @@ namespace BrowserAI.Tests;
 internal sealed partial class ErrorCatalogueTests
 {
     /// <summary>Which catalogue methods a trigger matched, accumulated across the arms.</summary>
-    private static readonly HashSet<string> Triggered = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> Triggered = [with(StringComparer.Ordinal)];
     private static readonly Lock Gate = new();
 
     /// <summary>
