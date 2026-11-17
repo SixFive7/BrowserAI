@@ -111,12 +111,15 @@ internal sealed class ThirdPartyNoticeTests
         // LICENSE came back byte-identical: 1,091 bytes, SHA-256 91845db8..., at
         // the new package's own nuspec repository commit. 2026-09-22 ->
         // 2026-10-03 with the 1.2.158 -> 1.2.161 bump, byte-identical again at
-        // commit 92d6a1c. **The version
+        // commit 92d6a1c. The MCP SDK's moved 2026-08-16 -> 2026-11-17 with the
+        // 2.2.0 -> 2.4.0 bump, its LICENSE byte-identical at the new nuspec's
+        // commit 4cbf42ef, 12,227 bytes with SHA-256 7c6a686d..., so only the
+        // stamp moved. **The version
         // placeholder is what makes this bite** -- the date alone would let a
         // re-stamp with no re-fetch look identical to a real one, which is
         // exactly what the remarks above are about.
         ("Velopack", ["Velopack {0} - MIT", "Retrieved 2026-10-03 against Velopack {0}."]),
-        ("ModelContextProtocol", ["ModelContextProtocol {0} and", "Retrieved 2026-08-16 against ModelContextProtocol {0}."]),
+        ("ModelContextProtocol", ["ModelContextProtocol {0} and", "Retrieved 2026-11-17 against ModelContextProtocol {0}."]),
         ("ModelContextProtocol.Core", ["ModelContextProtocol.Core {0} - Apache-2.0"]),
     ];
 

@@ -57,6 +57,14 @@ more* link to its detail; nothing else depends on it.
   1.86.0 and its CsWin32 to 0.3.371 in the same re-resolve, and neither reaches an installed
   BrowserAI.
 
+- ⬆️ **BrowserAI speaks MCP through ModelContextProtocol 2.4.0, up from 2.2.0.**
+  When a client cancels a browser call, the SDK now tells the browser's server itself. Until this
+  release it never did, because of a defect upstream fixed in 2.4.0, and BrowserAI sent that
+  notification on its own; that send is gone, so the browser's server still hears of a
+  cancellation exactly once. Nothing else in the three releases between reaches a BrowserAI
+  session: the rest is OAuth, HTTP transports and a new skills extension, which BrowserAI does not
+  use.
+
 - ✅ **The suite's hand-moved clock no longer throws, moves back or drops a re-arm during a step.**
   Tests move this clock in steps while the code they test arms its timers on threads of its own.
   Such a thread could disarm a timer the clock had just chosen to fire, which ended the step with

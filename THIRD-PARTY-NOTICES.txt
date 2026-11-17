@@ -175,7 +175,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
-ModelContextProtocol 2.2.0 and ModelContextProtocol.Core 2.2.0 - Apache-2.0
+ModelContextProtocol 2.4.0 and ModelContextProtocol.Core 2.4.0 - Apache-2.0
 ---------------------------------------------------------------------------
 
 The MCP C# SDK. Both are NuGet dependencies compiled into BrowserAI.exe with no
@@ -193,11 +193,17 @@ Copyright (c) Model Context Protocol a Series of LF Projects, LLC.
 
 Copied verbatim from the commit modelcontextprotocol.nuspec records as the
 source of the resolved package - repository commit
-6fa3825973949a9c4f0cd8af344e15a8db09dc35:
-https://raw.githubusercontent.com/modelcontextprotocol/csharp-sdk/6fa3825973949a9c4f0cd8af344e15a8db09dc35/LICENSE
-Retrieved 2026-08-16 against ModelContextProtocol 2.2.0. The version above is
+4cbf42ef107763f0bc75c358af8cb2dfe47a769a:
+https://raw.githubusercontent.com/modelcontextprotocol/csharp-sdk/4cbf42ef107763f0bc75c358af8cb2dfe47a769a/LICENSE
+Retrieved 2026-11-17 against ModelContextProtocol 2.4.0. The version above is
 asserted against src/BrowserAI/packages.lock.json by ThirdPartyNoticeTests, so
-an SDK bump is a red build until this text has been re-fetched.
+an SDK bump is a red build until this text has been re-fetched. Re-fetched that
+day from the package's own nuspec repository commit, and byte-identical to what
+commit 6fa3825973949a9c4f0cd8af344e15a8db09dc35 served for 2.2.0: 12,227 bytes,
+SHA-256 7c6a686d2b34b86ad8c726e0ac4d76903b525f251d73e617f8db3879fa8f11fc.
+Nothing in this block moved but the versions, the commit and this paragraph.
+Previously "Retrieved 2026-08-16 against ModelContextProtocol 2.2.0.", at
+repository commit 6fa3825973949a9c4f0cd8af344e15a8db09dc35.
 
 Upstream's copy carries Apache-2.0 sections 1 to 9 and ends at END OF TERMS AND
 CONDITIONS. It omits the appendix that its own section 4 refers to as "an
@@ -429,11 +435,12 @@ BrowserAI.exe links the Microsoft.Extensions libraries it uses from the ASP.NET
 Core shared framework, Microsoft.AspNetCore.App, which the product references
 since 2026-10-08, when the server and the configuration app became one
 executable. They are MIT, and none has a file of its own in this artifact. The
-win-x64 runtime pack of that framework, 10.0.13, names
+win-x64 runtime pack of that framework, 11.0.0, names
 https://github.com/dotnet/dotnet as its repository, MIT as its licence and
 "Copyright (c) .NET Foundation and Contributors" in its own LICENSE.txt, read
-2026-10-14 from the package's .nuspec and LICENSE.txt (previously 10.0.12, read
-2026-10-08 the same way, with the same three answers). Until 2026-10-08 the server
+2026-11-17 from the package's .nuspec and LICENSE.txt, which is byte-identical
+to 10.0.13's (previously 10.0.13, read 2026-10-14, and 10.0.12, read 2026-10-08,
+the same way, with the same three answers). Until 2026-10-08 the server
 took 17 Microsoft.Extensions packages from NuGet instead, two of them directly,
 and this section listed all 17.
 
@@ -484,8 +491,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-dotnet/extensions, commit ccb356f31db9d894807c4fd0c97c2f41553d1524, covering
-Microsoft.Extensions.AI.Abstractions:
+dotnet/extensions, commit 25f07afa51034e37b334210642d7dc5f191c142d, the commit
+the 10.11.0 package's .nuspec records, covering
+Microsoft.Extensions.AI.Abstractions. Re-fetched there 2026-11-17 and
+byte-identical to what commit ccb356f31db9d894807c4fd0c97c2f41553d1524 served,
+1,121 bytes, SHA-256
+47f0ad8ba753eae5de6178291cd8f38bbb42d2368b177f8e11714ad17c701275 (previously
+"dotnet/extensions, commit ccb356f31db9d894807c4fd0c97c2f41553d1524, covering
+Microsoft.Extensions.AI.Abstractions:"):
 
 The MIT License (MIT)
 

@@ -379,9 +379,12 @@ internal sealed class LosslessPassthroughTests
         await WaitUntilAsync(() => rig.Child.MethodsReceived.Contains("tools/call"));
 
         // The caller cancels the way a caller does: a notification naming the
-        // id it sent. Everything after this is about what BrowserAI does with
-        // that, and the SDK's answer -- measured on both the raw and the typed
-        // client paths -- is nothing at all.
+        // id it sent. Everything after this is about what reaches the child.
+        // Corrected 2026-11-17 (previously "Everything after this is about what
+        // BrowserAI does with that, and the SDK's answer -- measured on both the
+        // raw and the typed client paths -- is nothing at all."): since
+        // ModelContextProtocol 2.4.0 the SDK's own answer is the notification,
+        // csharp-sdk#1917.
         await rig.Client.NotifyAsync(
             "notifications/cancelled",
             new JsonObject { ["requestId"] = id, ["reason"] = "the test changed its mind" });
@@ -401,9 +404,12 @@ internal sealed class LosslessPassthroughTests
         await Assert.That(cancelled!["params"]!["requestId"]!.GetValue<string>())
             .IsEqualTo(call!["id"]!.GetValue<string>());
 
-        // Exactly one, which is re-verification row 28's actual requirement: if
-        // the SDK ever starts relaying cancellation itself, the hand-rolled
-        // path becomes a double-send and nothing else in the suite would say so.
+        // Exactly one, which is re-verification row 28's actual requirement: two
+        // senders are a double-send and nothing else in the suite would say so.
+        // It said so on 2026-11-17, red in both halves of the gate at 88dd8a13
+        // with "Sequence contains more than one matching element", when the SDK
+        // started sending the notification itself beside BrowserAI's own send
+        // from its catch, which was deleted that day.
         await Assert.That(rig.Child.MethodsReceived.Count(method => method == "notifications/cancelled")).IsEqualTo(1);
 
         await release.CancelAsync();

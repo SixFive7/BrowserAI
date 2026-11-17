@@ -597,6 +597,25 @@ Re-establish with
 the double sees `notifications/cancelled`, that its `requestId` equals the id
 BrowserAI actually sent, and that it sees **exactly one**. `[FLOATS]`
 
+⚠️ **At ModelContextProtocol 2.4.0 the SDK sends the notification itself, and
+BrowserAI's own send is deleted** -- *added 2026-11-17 by addition; the two paragraphs
+above are the 2.2.0 record and stand as measured*. csharp-sdk#1917, *"Fix dropped
+notifications/cancelled when a request is canceled"*, merged 2026-10-22 as `4f972443`,
+starts `tcs.Task.WaitAsync(cancellationToken)` before `RegisterCancellation`, so the
+notification's callback is registered last, runs first and is no longer disposed
+before it runs. Read from the shipped IL of both versions with ilspycmd 11.2.0:
+2.2.0's `SendRequestAsync` registers and then waits, 2.4.0's waits and then registers.
+The arm above caught it the way it was written to: at 88dd8a13, the first tree
+on 2.4.0, `LosslessPassthroughTests.CancellingACallIsObservedAtTheFakeChild` was red in
+both halves of the gate with *"Sequence contains more than one matching element"*,
+the SDK's notification and BrowserAI's. The send from the `catch` and its two log
+messages were deleted the same day, and the child sees exactly one again. What the
+SDK's own notification does differently, both upstream's choices and accepted: it
+names the request by the id BrowserAI chose, carries no `reason`, and is sent
+without being awaited, from a callback that runs only after the request was sent.
+**The id stays ours**, because the verbatim payload is keyed on it. `[FLOATS]` --
+re-establish with the same arm, which now holds the SDK's send to exactly one.
+
 **A short-circuiting message filter keeps the request cancellable, because the
 CTS is registered before the filter runs.** `ProcessMessageAsync` stores the
 per-request `CancellationTokenSource` in `_handlingRequests[id]` **before**

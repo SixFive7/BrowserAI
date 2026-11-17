@@ -120,6 +120,14 @@ wins and the notification callback is cancelled before it can run.
 > load-bearing** -- the id must be ours, or there is nothing to name. Proven at the
 > double by `LosslessPassthroughTests.CancellingACallIsObservedAtTheFakeChild`.
 
+> ⚠️ **Retired 2026-11-17 by addition, at ModelContextProtocol 2.4.0.** The SDK's
+> own send works now: csharp-sdk#1917 starts the wait before it registers the
+> notification's callback, so LIFO runs the callback first. The same arm went red
+> with two notifications, the SDK's and the one from our `catch`, and ours was
+> deleted. What is left of this deviation is its first half: the id on the outgoing
+> request is still ours, because the verbatim payload is keyed on it, and the SDK's
+> notification names it ([kb](kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames)).
+
 **7. `McpClientOptions` has no `Filters`.** Every filter API is server-side.
 ⚠️ **Corrected 2026-08-16 (previously: "so observing and forwarding *child→caller*
 notifications needs an `ITransport` decorator").** The premise is true and the

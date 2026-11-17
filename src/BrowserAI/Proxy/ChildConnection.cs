@@ -29,14 +29,23 @@ namespace BrowserAI.Proxy;
 /// compiled into the binary, and the run starts no child of its own.</i>
 /// </para>
 /// <para>
-/// <b>The id on the outgoing request is ours, and that is what makes
-/// cancellation possible.</b> The SDK never emits
-/// <c>notifications/cancelled</c> downstream on either the raw or the typed
-/// path: <c>McpSessionHandler</c> has the machinery, but its registration is
-/// disposed as <c>tcs.Task.WaitAsync(ct)</c> unwinds and CTS callbacks run LIFO,
-/// so the callback is unregistered before it can run. An id we chose is an id we
-/// can name in a notification we send ourselves, from the <c>catch</c> -- where it
-/// is awaited and cannot fire before the request it names was sent.
+/// <b>The id on the outgoing request is ours, and the SDK names it when the
+/// caller cancels.</b> Since ModelContextProtocol 2.4.0 the SDK's own
+/// <c>McpSessionHandler.SendRequestAsync</c> sends <c>notifications/cancelled</c>
+/// for a request whose token fires: csharp-sdk#1917 starts the wait before it
+/// registers the notification's callback, so the callback runs first, after the
+/// request was sent. ⚠️ <i>Corrected 2026-11-17 (previously "The id on the
+/// outgoing request is ours, and that is what makes cancellation possible. The SDK
+/// never emits <c>notifications/cancelled</c> downstream on either the raw or the
+/// typed path: <c>McpSessionHandler</c> has the machinery, but its registration is
+/// disposed as <c>tcs.Task.WaitAsync(ct)</c> unwinds and CTS callbacks run LIFO, so
+/// the callback is unregistered before it can run. An id we chose is an id we can
+/// name in a notification we send ourselves, from the <c>catch</c> -- where it is
+/// awaited and cannot fire before the request it names was sent.")</i>: that send
+/// became a second notification at 2.4.0, which
+/// <c>LosslessPassthroughTests.CancellingACallIsObservedAtTheFakeChild</c> refused,
+/// and it is deleted. The id stays ours, because the verbatim payload is kept
+/// under it.
 /// </para>
 /// </remarks>
 internal sealed class ChildConnection : IAsyncDisposable
@@ -318,9 +327,8 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// <exception cref="OperationCanceledException">The caller cancelled. The child has been told.</exception>
     public async Task<ChildAnswer> AskAsync(string method, JsonNode? parameters, CancellationToken cancellationToken)
     {
-        // Before anything is registered or sent. A token that is already
-        // cancelled would otherwise announce the cancellation of a request that
-        // was never sent.
+        // Before anything is registered or sent: a request whose caller has already
+        // gone is not sent at all.
         cancellationToken.ThrowIfCancellationRequested();
 
         var name = _idPrefix + Interlocked.Increment(ref _requests).ToString(CultureInfo.InvariantCulture);
@@ -349,7 +357,9 @@ internal sealed class ChildConnection : IAsyncDisposable
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            await AnnounceCancellationAsync(name).ConfigureAwait(false);
+            // The caller's own cancellation, which the SDK reports to the child
+            // by the id above. It is the caller's to see, and the catch below must
+            // not turn it into the child failing to answer.
             throw;
         }
         catch (OperationCanceledException failure)
@@ -405,35 +415,6 @@ internal sealed class ChildConnection : IAsyncDisposable
         _link.Session.TryTakePayload(childId, out var payload) && payload.IsError == wantError
             ? payload
             : null;
-
-    /// <summary>Tells the child to stop, by the id BrowserAI put on the request.</summary>
-    private async Task AnnounceCancellationAsync(string childId)
-    {
-        try
-        {
-            // Not the caller's token: it is the thing that just fired, and a
-            // notification sent under it would be cancelled before it left.
-            await _client.SendMessageAsync(
-                new JsonRpcNotification
-                {
-                    Method = NotificationMethods.CancelledNotification,
-                    Params = new JsonObject
-                    {
-                        ["requestId"] = childId,
-                        ["reason"] = "The caller cancelled the request.",
-                    },
-                },
-                CancellationToken.None).ConfigureAwait(false);
-
-            ProxyLog.CancellationForwarded(_logger, childId);
-        }
-#pragma warning disable CA1031 // A child that has already gone cannot be told to stop, and that is not a failure of this call.
-        catch (Exception ex)
-#pragma warning restore CA1031
-        {
-            ProxyLog.CancellationNotForwarded(_logger, childId, ex);
-        }
-    }
 }
 
 /// <summary>What one request to a child produced.</summary>

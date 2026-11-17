@@ -1860,25 +1860,6 @@ internal static partial class ProxyLog
         Message = "The child did not answer '{Method}' for caller request {CallerRequestId}.")]
     public static partial void ChildDidNotAnswer(ILogger logger, string method, string callerRequestId, Exception exception);
 
-    /// <summary>A cancellation was forwarded to a child.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="childRequestId">The id BrowserAI put on the outgoing request.</param>
-    [LoggerMessage(
-        EventId = 4,
-        Level = LogLevel.Information,
-        Message = "Forwarded notifications/cancelled for child request {ChildRequestId}.")]
-    public static partial void CancellationForwarded(ILogger logger, string childRequestId);
-
-    /// <summary>A cancellation could not be forwarded.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="childRequestId">The id BrowserAI put on the outgoing request.</param>
-    /// <param name="exception">Why.</param>
-    [LoggerMessage(
-        EventId = 5,
-        Level = LogLevel.Warning,
-        Message = "Could not forward notifications/cancelled for child request {ChildRequestId}; the child may still be working.")]
-    public static partial void CancellationNotForwarded(ILogger logger, string childRequestId, Exception exception);
-
     /// <summary>
     /// <paramref name="cancellable"/> is not decoration: a filter handed an
     /// uncancellable token would leave every cancellation a local abort with
