@@ -1383,10 +1383,20 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       a page has no open root mode for testing. **So no reply is left to watch for
       here.** Whether a new issue goes out is the maintainer's to decide, because
       it goes out under his name; the item stays open until he does.
-- [ ] **WATCH https://github.com/anthropics/claude-code/issues/99238, the
+- [x] **WATCH https://github.com/anthropics/claude-code/issues/99238, the
       Windows stdio MCP tree-kill.** On Windows, Claude Code tree-kills a stdio
       MCP server before its stdin is closed. Posted 2026-10-03. Watch for a
       maintainer reply.
+      ✅ **CLOSED 2026-11-17.** A Claude Code collaborator closed #99238 as completed on
+      2026-10-12, read through GitHub's API: as of 2.1.296 a stdio server's stdin is
+      closed first, and `taskkill /T /F` runs only as a backstop for a server still
+      running after 300 ms. Measured on 2.1.326 with the 2026-10-03 rig the kb names,
+      and not with the posted `slow-exit-server.js`: end of file reached the server in
+      42 of 42 graceful exits, and no `taskkill` started before it, 302 to 635 ms after
+      it in 23 of the 24 runs that started one. The fix holds, so nothing was reopened
+      and nothing was posted;
+      [the kb entry](kb/mcp/protocol.md#what-each-client-does-to-a-stdio-server-when-the-session-ends----measured-2026-10-03)
+      and re-verification row 169 carry it.
 - [ ] **WATCH https://github.com/openai/codex/issues/48524#issuecomment-5969839400,
       our Windows comment on Codex server-shutdown issue #48524.** Posted
       2026-10-03. Watch for a reply.
