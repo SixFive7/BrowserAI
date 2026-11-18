@@ -244,14 +244,21 @@ internal sealed class StraySweep
 
             if (acquisition is MutexAcquisition.NotAcquired)
             {
-                // R9 as well as the herd: a pass that overruns the ten-minute
-                // re-check simply means the re-check does nothing. No pile-up
-                // is possible because nothing in the PRODUCT ever queues here
-                // -- `RunAsync()` hands this a zero timeout and a scan keeps it that
-                // way. (Corrected 2026-08-26, previously "because nothing ever
-                // queues here": the suite's own passes wait, which is how an arm
-                // that needs a pass to have run stops losing to a peer that
-                // started a BrowserAI at the wrong moment.)
+                // R9 as well as the herd: a pass that cannot have the gate does
+                // nothing, because the pass that has it is looking at the same
+                // machine. No pile-up is possible because nothing in the PRODUCT
+                // ever queues here -- `RunAsync()` hands this a zero timeout and a
+                // scan keeps it that way. (Corrected 2026-08-26, previously
+                // "because nothing ever queues here": the suite's own passes
+                // wait, which is how an arm that needs a pass to have run stops
+                // losing to a peer that started a BrowserAI at the wrong moment.)
+                // (Corrected 2026-11-18, previously "a pass that overruns the
+                // ten-minute re-check simply means the re-check does nothing":
+                // the re-check was the logon sweep task's second pass, and that
+                // task was dropped on 2026-08-16, the day this remark was
+                // written. Read 2026-11-18: the product makes one pass when its
+                // background starts, and `--sweep` makes one for a measurement,
+                // both through `RunAsync()`.)
                 SweepLog.AlreadyRunning(_logger, LockScopes.Sweep);
                 return new StraySweepResult { Outcome = StraySweepOutcome.Skipped, Elapsed = clock.Elapsed };
             }

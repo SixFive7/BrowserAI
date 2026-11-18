@@ -957,13 +957,22 @@ internal static class BrowserConfiguration
             UserAgent = headed || IsFirefox(browser) ? null : hiddenUserAgent,
 
             // ⚠️ A NEW FILENAME PER LAUNCH, and it is the whole reason the path
-            // is computed here and not fixed. `recordHar` truncates and
-            // rewrites whatever path it is given at every context creation, so a
-            // fixed name would silently destroy the previous run's capture the
-            // moment a session was resumed -- an overwrite that a caller would
-            // find out about by looking for evidence that had gone. The config
-            // is regenerated per launch, so a timestamp in the name makes the
-            // problem avoidable and not documentable.
+            // is computed here and not fixed. `recordHar` empties the path it is
+            // given and writes the whole archive into it when the context
+            // closes, so a fixed name would silently destroy the previous run's
+            // capture at the first close after a session was resumed -- an
+            // overwrite that a caller would find out about by looking for
+            // evidence that had gone. The config is regenerated per launch, so a
+            // timestamp in the name makes the problem avoidable and not
+            // documentable. (Corrected 2026-11-18, previously "`recordHar`
+            // truncates and rewrites whatever path it is given at every context
+            // creation, so a fixed name would silently destroy the previous run's
+            // capture the moment a session was resumed": at Playwright 1.66 the
+            // creation writes nothing to the path, and the archive's one write
+            // is `HarRecorder._flush`, which `BrowserContext.close` reaches
+            // through `_exportAllHars`. Read in the 0.0.85 payload's
+            // `coreBundle.js`, line 27096, and in upstream's `harRecorder.ts`,
+            // line 116 on `main` the same day.)
             //
             // ⚠️ At the OUTPUT ROOT since 2026-08-26 (previously
             // `output\network\`). The output directory is flat and BrowserAI
@@ -1493,9 +1502,13 @@ internal sealed record BrowserConfigurationRequest
     /// </summary>
     /// <remarks>
     /// <b>A path and not a boolean, because the path is per launch.</b>
-    /// <c>recordHar</c> truncates whatever it is given at every context
-    /// creation, so the name carries a timestamp and the decision about what it
-    /// is called belongs to the caller that knows which launch this is.
+    /// <c>recordHar</c> empties whatever it is given and writes the whole archive
+    /// into it when the context closes, so the name carries a timestamp and the
+    /// decision about what it is called belongs to the caller that knows which
+    /// launch this is. <i>Corrected 2026-11-18 (previously "truncates whatever it
+    /// is given at every context creation"): the creation writes nothing to the
+    /// path at Playwright 1.66, which the remark in
+    /// <see cref="BrowserConfiguration.ForSession"/> cites.</i>
     /// </remarks>
     public string? HarPath { get; init; }
 }
