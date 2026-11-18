@@ -414,6 +414,24 @@ ways a driver starts a child, that the child is in the job and gone after the la
 and `JobContainmentTests.OnlyAnAppExecutionAliasTakesThePackagedLaunch` that only an alias takes
 that launch.
 
+⚠️ **A DRIVER RUNS NOTHING ON A MACHINE THAT IS NOT CLEAN -- 212 c, the
+maintainer's words verbatim: *"212 c"*, added 2026-11-18 by addition.** The
+snapshots either side of a run are compared, and a reading flagged on both sides
+compares equal: that day a gate's PowerShell half ended *"clearance clean"* while
+both of its snapshots flagged `browserai-test` ([the hazard
+index](HAZARDS.md#hazard-index)). Each driver now takes its before snapshot first,
+under the installer lock and before the test pack, and when it flags anything as
+`MUST BE ABSENT` the driver packs nothing, runs nothing, lets the lock go and ends
+with `ORDINARY-PS-REFUSED-ON-CLEARANCE`, or its own shell's and gate's form of it,
+after printing each flagged reading with the `remove with:` line the snapshot
+writes beside it. The command is printed and never run: clearing a reading is a
+person's call, and the leftover uninstall key's line carries the two checks the
+section on that key names. A release driver's snapshot before its test pack is
+`<prefix>-before`; each of its runs still takes its own pair.
+`GateDriverTests.ADriverRunsNothingWhenItsBeforeSnapshotFlagsWhatMustBeAbsentAndNamesTheRemoval`
+holds all four, and `SuiteCoverageTests.TheClearanceNamesATestPacksLinkSchemeLeftBehind`
+the removal line.
+
 ⚠️ **Between two runs, wait for `.work\test-scratch` to be released, not
 for the first run to report.** *Added 2026-09-15.* A test host that has printed
 its summary has not necessarily let go: on the 2026-09-15 release gate, **137

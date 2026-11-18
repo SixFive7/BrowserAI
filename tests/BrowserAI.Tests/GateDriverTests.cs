@@ -10,7 +10,8 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// Each gate driver finishes its run while a child the run left behind still holds what
-/// the run wrote, and copies every kept folder into its run's records.
+/// the run wrote, copies every kept folder into its run's records, and runs nothing on a
+/// machine whose before snapshot flags what must be absent.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -288,6 +289,137 @@ internal sealed class GateDriverTests
         await Assert.That(said).Contains(notWhole).Because(said);
         await Assert.That(log).Contains(notWhole).Because(log);
     }
+
+    /// <summary>
+    /// A driver whose before snapshot flags a reading that must be absent runs nothing:
+    /// no test pack and no run. It prints the reading and the command that removes it,
+    /// ends with its refusal and lets the installer lock go.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The maintainer's 212 c, 2026-11-18, in his words verbatim:</b> <i>"212 c"</i>.
+    /// Until then a driver took its before snapshot after the test pack and compared it
+    /// with the after snapshot, and a reading flagged on both sides compared equal: that
+    /// day a gate's driver called its clearance clean while both of its snapshots flagged
+    /// <c>browserai-test</c>. The stand-in snapshot here flags that reading, with the
+    /// removal line the real snapshot prints beside it; the stand-in test pack and the
+    /// stand-in run each leave a file behind if they are reached.
+    /// </remarks>
+    /// <param name="driver">The driver's file name under <c>build/</c>.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments("Invoke-OrdinaryGate.ps1")]
+    [Arguments("Invoke-ReleaseGate.ps1")]
+    [Arguments("invoke-ordinary-gate.sh")]
+    [Arguments("invoke-release-gate.sh")]
+    public async Task ADriverRunsNothingWhenItsBeforeSnapshotFlagsWhatMustBeAbsentAndNamesTheRemoval(string driver)
+    {
+        ArgumentNullException.ThrowIfNull(driver);
+
+        var bash = driver.EndsWith(".sh", StringComparison.Ordinal);
+
+        if (bash)
+        {
+            await SuiteEnvironment.RequireGitAsync();
+        }
+
+        var shell = bash ? Shells.GitBash : Shells.PowerShell;
+
+        await Assert.That(shell).IsNotNull()
+            .Because(bash
+                ? "git is on the search path and no bin\\bash.exe was found beside it, so Git Bash's half of the gate cannot be run here"
+                : "no pwsh.exe is on the search path, and every PowerShell driver runs under it");
+
+        using var sandbox = await ScratchDirectory.CreateAsync("gate-driver-refusal");
+
+        var build = Directory.CreateDirectory(Path.Combine(sandbox.Path, "build")).FullName;
+        var standIn = Directory.CreateDirectory(Path.Combine(sandbox.Path, bash ? "bin-bash" : "bin")).FullName;
+        var packed = Path.Combine(sandbox.Path, "packed.txt");
+        var ran = Path.Combine(sandbox.Path, "ran.txt");
+        var lockLog = Path.Combine(sandbox.Path, "lock.txt");
+        const string Flagged = "  browserai-test: PRESENT <<< MUST BE ABSENT (starts=\"C:\\left-behind\\current\\BrowserAI.exe\" --link \"%1\")";
+        const string Removal = "  remove with: Remove-Item -LiteralPath 'HKCU:\\Software\\Classes\\browserai-test' -Recurse";
+
+        await CopyAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", driver), Path.Combine(build, driver));
+        await WriteStandInsAsync(build);
+
+        // The three stand-ins this arm needs to see reached or not: a lock that records
+        // its take and its release, a test pack that leaves a file, and a snapshot that
+        // flags one reading with its removal line, both before and after.
+        await File.WriteAllTextAsync(
+            Path.Combine(build, "InstallerLock.ps1"),
+            "param([switch] $Take, [switch] $Release, [int] $HolderPid)\n"
+            + $"if ($Take) {{ Add-Content -LiteralPath '{lockLog}' -Value 'take'; \"pid=$HolderPid created=0\" }}\n"
+            + $"if ($Release) {{ Add-Content -LiteralPath '{lockLog}' -Value 'release' }}\n"
+            + "exit 0\n");
+
+        await File.WriteAllTextAsync(
+            Path.Combine(build, "New-Release.ps1"),
+            "param([switch] $TestPackOnly, [switch] $FromReleasePublish)\n"
+            + $"Set-Content -LiteralPath '{packed}' -Value 'packed'\n"
+            + "exit 0\n");
+
+        await File.WriteAllTextAsync(
+            Path.Combine(build, "Get-ClearanceSnapshot.ps1"),
+            "param([string] $Tag)\n"
+            + "$directory = Join-Path ([System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))) '.work' 'clearance'\n"
+            + "$null = New-Item -ItemType Directory -Force -Path $directory\n"
+            + $"Set-Content -LiteralPath (Join-Path $directory \"$Tag.txt\") -Value @('the same machine', '{Flagged.Replace("'", "''", StringComparison.Ordinal)}', '{Removal.Replace("'", "''", StringComparison.Ordinal)}')\n");
+
+        if (bash)
+        {
+            await File.WriteAllTextAsync(Path.Combine(standIn, "dotnet"), "#!/usr/bin/env bash\n" + $"echo ran > \"{ran.Replace('\\', '/')}\"\n");
+        }
+        else
+        {
+            await File.WriteAllTextAsync(Path.Combine(standIn, "dotnet.cmd"), $"@echo ran> \"{ran}\"\r\n");
+        }
+
+        var release = driver.Contains("Release", StringComparison.OrdinalIgnoreCase);
+        var tag = "gate-refusal";
+        var script = Path.Combine(build, driver);
+
+        string[] arguments = (bash, release) switch
+        {
+            (false, false) => ["-NoProfile", "-NonInteractive", "-File", script, "-Tag", tag],
+            (false, true) => ["-NoProfile", "-NonInteractive", "-File", script, "-Runs", "1", "-Prefix", tag],
+            (true, false) => ["--noprofile", "--norc", script.Replace('\\', '/'), tag],
+            (true, true) => ["--noprofile", "--norc", script.Replace('\\', '/'), "1", tag],
+        };
+
+        var environment = ChildEnvironment.Build(
+        [
+            new("PATH", standIn + Path.PathSeparator + Environment.GetEnvironmentVariable("PATH")),
+        ]);
+
+        using var scope = new JobObjectScope();
+        var running = await scope.LaunchWithAsync(shell!, sandbox.Path, environment, arguments);
+
+        var finished = await running.WaitForExitAsync(TestDefaults.ProcessHang);
+        var said = await scope.SaidByAsync(running.Id);
+
+        await Assert.That(finished).IsTrue().Because($"{driver} had not finished after {TestDefaults.ProcessHang.TotalMinutes:F0} minutes. It said: {said}");
+        await Assert.That(said).Contains(Refusal(driver)).Because(said);
+        await Assert.That(said).DoesNotContain(Outcome(driver)).Because(said);
+        await Assert.That(said).Contains(Flagged).Because("the refusal names the reading that must be absent");
+        await Assert.That(said).Contains(Removal).Because("the refusal names the command that removes it");
+        await Assert.That(File.Exists(packed)).IsFalse().Because($"{driver} packed the test pack on a machine whose before snapshot flagged {Flagged.Trim()}. It said: {said}");
+        await Assert.That(File.Exists(ran)).IsFalse().Because($"{driver} started the run on a machine whose before snapshot flagged {Flagged.Trim()}. It said: {said}");
+
+        List<string> locked = File.Exists(lockLog) ? [.. (await File.ReadAllLinesAsync(lockLog)).Select(line => line.Trim())] : [];
+
+        await Assert.That(locked).Contains("release").Because($"{driver} took the installer lock and never let it go; its lock record reads: {string.Join(", ", locked)}");
+    }
+
+    /// <summary>The line a driver ends with when its before snapshot is not clean.</summary>
+    /// <param name="driver">The driver's file name.</param>
+    /// <returns>The line.</returns>
+    private static string Refusal(string driver) => driver switch
+    {
+        "Invoke-OrdinaryGate.ps1" => "ORDINARY-PS-REFUSED-ON-CLEARANCE",
+        "Invoke-ReleaseGate.ps1" => "RELEASE-PS-REFUSED-ON-CLEARANCE",
+        "invoke-ordinary-gate.sh" => "ORDINARY-BASH-REFUSED-ON-CLEARANCE",
+        _ => "RELEASE-BASH-REFUSED-ON-CLEARANCE",
+    };
 
     /// <summary>The one file of a kept folder these arms write: its session's record.</summary>
     /// <param name="kept">The folder the kept folder is in.</param>

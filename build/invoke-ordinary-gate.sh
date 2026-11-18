@@ -95,6 +95,20 @@ export BROWSERAI_INSTALLER_LOCK_HELD="$token"
 trap 'pwsh -NoProfile -File "$windows\\build\\InstallerLock.ps1" -Release -HolderPid "$winpid" >/dev/null 2>&1' EXIT
 echo "installer lock held: $token"
 
+# A MACHINE THAT IS NOT CLEAN RUNS NOTHING -- 212 c, the maintainer's words verbatim:
+# "212 c". See Invoke-OrdinaryGate.ps1: the before snapshot is taken here, before the
+# test pack, and a reading it flags as one that must be absent stops the gate with the
+# command that removes it, which the snapshot prints beside the reading. A reading
+# flagged on both sides of a run compares equal, which is how a gate called its
+# clearance clean on 2026-11-18 while both of its snapshots flagged browserai-test.
+pwsh -NoProfile -File "$windows\\build\\Get-ClearanceSnapshot.ps1" -Tag "$tag-before" >/dev/null
+if grep -q -E '<<< MUST BE ABSENT|^[[:space:]]+remove with: ' ".work/clearance/$tag-before.txt"; then
+  echo "=== CLEARANCE BEFORE $tag FLAGS WHAT MUST BE ABSENT - NOTHING RUNS ==="
+  grep -E '<<< MUST BE ABSENT|^[[:space:]]+remove with: ' ".work/clearance/$tag-before.txt"
+  echo 'ORDINARY-BASH-REFUSED-ON-CLEARANCE'
+  exit 1
+fi
+
 # THE SUITE'S INSTALLER, PACKED FROM THIS TREE UNDER THE LOCK AND BEFORE THE FIRST
 # RUN -- Q287, the maintainer's words verbatim: "Q287 a". See
 # Invoke-OrdinaryGate.ps1: New-Release.ps1 -TestPackOnly packs Releases/test-pack
@@ -107,8 +121,6 @@ if ! pwsh -NoProfile -File "$windows\\build\\New-Release.ps1" -TestPackOnly > "$
   exit 1
 fi
 grep -E '^vpk pack of .* took' "$pack_log"
-
-pwsh -NoProfile -File "$windows\\build\\Get-ClearanceSnapshot.ps1" -Tag "$tag-before" >/dev/null
 
 # Wait for the rig tree to be RELEASED and not for the previous run to have
 # reported: a test host that has printed its summary has not necessarily let go.

@@ -165,6 +165,21 @@ if ($LASTEXITCODE -ne 0) {
 $env:BROWSERAI_INSTALLER_LOCK_HELD = $token
 Write-Host "installer lock held: $token"
 
+# ⚠️ A MACHINE THAT IS NOT CLEAN RUNS NOTHING -- 212 c, the maintainer's words
+# verbatim: "212 c". See Invoke-OrdinaryGate.ps1. One snapshot before the test pack,
+# under the gate's own prefix; each run still takes its own before and after. A
+# reading it flags as one that must be absent stops the gate with the command that
+# removes it, which the snapshot prints beside the reading.
+& (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$Prefix-before" | Out-Null
+$flagged = @(Get-Content -LiteralPath (Join-Path $root '.work' 'clearance' "$Prefix-before.txt") | Where-Object { $_ -match '<<< MUST BE ABSENT|^\s+remove with: ' })
+if ($flagged.Count -gt 0) {
+    Write-Host "=== CLEARANCE BEFORE $Prefix FLAGS WHAT MUST BE ABSENT - NOTHING RUNS ==="
+    $flagged | Write-Host
+    & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Release -HolderPid $PID | Out-Null
+    Write-Host 'RELEASE-PS-REFUSED-ON-CLEARANCE'
+    exit 1
+}
+
 # ⚠️ THE SUITE'S INSTALLER, PACKED FROM THIS TREE UNDER THE LOCK AND BEFORE THE
 # FIRST RUN -- Q287, the maintainer's words verbatim: "Q287 a". The real-installer
 # arms install Releases\test-pack, which only a release cut used to write, so

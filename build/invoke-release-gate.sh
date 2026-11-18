@@ -85,6 +85,18 @@ export BROWSERAI_INSTALLER_LOCK_HELD="$token"
 trap 'pwsh -NoProfile -File "$windows\\build\\InstallerLock.ps1" -Release -HolderPid "$winpid" >/dev/null 2>&1' EXIT
 echo "installer lock held: $token"
 
+# A MACHINE THAT IS NOT CLEAN RUNS NOTHING -- 212 c, the maintainer's words verbatim:
+# "212 c". See Invoke-OrdinaryGate.ps1. One snapshot before the test pack, under the
+# gate's own prefix; each run still takes its own before and after. A reading it flags
+# as one that must be absent stops the gate with the command that removes it.
+pwsh -NoProfile -File "$windows\\build\\Get-ClearanceSnapshot.ps1" -Tag "$prefix-before" >/dev/null
+if grep -q -E '<<< MUST BE ABSENT|^[[:space:]]+remove with: ' ".work/clearance/$prefix-before.txt"; then
+  echo "=== CLEARANCE BEFORE $prefix FLAGS WHAT MUST BE ABSENT - NOTHING RUNS ==="
+  grep -E '<<< MUST BE ABSENT|^[[:space:]]+remove with: ' ".work/clearance/$prefix-before.txt"
+  echo 'RELEASE-BASH-REFUSED-ON-CLEARANCE'
+  exit 1
+fi
+
 # THE SUITE'S INSTALLER, PACKED FROM THIS TREE UNDER THE LOCK AND BEFORE THE FIRST
 # RUN -- Q287, the maintainer's words verbatim: "Q287 a". See
 # Invoke-OrdinaryGate.ps1: New-Release.ps1 -TestPackOnly packs Releases/test-pack

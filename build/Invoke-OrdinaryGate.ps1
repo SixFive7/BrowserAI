@@ -180,6 +180,23 @@ if ($LASTEXITCODE -ne 0) {
 $env:BROWSERAI_INSTALLER_LOCK_HELD = $token
 Write-Host "installer lock held: $token"
 
+# ⚠️ A MACHINE THAT IS NOT CLEAN RUNS NOTHING -- 212 c, the maintainer's words
+# verbatim: "212 c". The two snapshots either side of a run are compared, and a
+# reading flagged on both sides compares equal: on 2026-11-18 a gate's driver called
+# its clearance clean while both of its snapshots flagged browserai-test. So the
+# before snapshot is taken here, before the test pack, and a reading it flags as one
+# that must be absent stops the gate with the command that removes it, which the
+# snapshot prints beside the reading.
+& (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$Tag-before" | Out-Null
+$flagged = @(Get-Content -LiteralPath (Join-Path $root '.work' 'clearance' "$Tag-before.txt") | Where-Object { $_ -match '<<< MUST BE ABSENT|^\s+remove with: ' })
+if ($flagged.Count -gt 0) {
+    Write-Host "=== CLEARANCE BEFORE $Tag FLAGS WHAT MUST BE ABSENT - NOTHING RUNS ==="
+    $flagged | Write-Host
+    & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Release -HolderPid $PID | Out-Null
+    Write-Host 'ORDINARY-PS-REFUSED-ON-CLEARANCE'
+    exit 1
+}
+
 # ⚠️ THE SUITE'S INSTALLER, PACKED FROM THIS TREE UNDER THE LOCK AND BEFORE THE
 # FIRST RUN -- Q287, the maintainer's words verbatim: "Q287 a". The real-installer
 # arms install Releases\test-pack, which only a release cut used to write, so
@@ -206,8 +223,6 @@ Get-Content -LiteralPath $packLog | Where-Object { $_ -match '^vpk pack of .* to
 $outcome = 'ORDINARY-PS-DONE'
 
 try {
-    & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$Tag-before" | Out-Null
-
     # ⚠️ WAIT FOR THE RIG TREE TO BE RELEASED, NOT FOR THE PREVIOUS RUN TO REPORT. A
     # test host that has printed its summary has not necessarily let go of its
     # handles: on the 2026-09-15 release gate 137 rig directories were still held

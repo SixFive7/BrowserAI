@@ -2065,8 +2065,8 @@ internal sealed partial class SuiteCoverageTests
         const string Shipping = @"C:\Users\someone\AppData\Local\BrowserAI.app";
         var program = Path.Combine(Install, "current", "BrowserAI.exe");
 
-        (string Real, string Test) left;
-        (string Real, string Test) gone;
+        (string Real, string Test, string? Removal) left;
+        (string Real, string Test, string? Removal) gone;
 
         try
         {
@@ -2096,12 +2096,18 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(left.Test).IsEqualTo($"  browserai-test: PRESENT <<< MUST BE ABSENT (starts=\"{program}\" --link \"%1\")");
         await Assert.That(gone.Real).IsEqualTo(real);
         await Assert.That(gone.Test).IsEqualTo("  browserai-test: ABSENT");
+
+        // 212 c, 2026-11-18, the maintainer's words verbatim: "212 c". The line after a
+        // reading that must be absent is the command that removes it, which a driver prints
+        // when its before snapshot is not clean; a reading that is absent has none.
+        await Assert.That(left.Removal).IsEqualTo($@"  remove with: Remove-Item -LiteralPath 'HKCU:\{key}\browserai-test' -Recurse");
+        await Assert.That(gone.Removal).IsNull();
     }
 
     /// <summary>Runs the clearance script over a classes key and returns its two scheme lines.</summary>
     /// <param name="classesKey">The key under HKCU the script reads in place of the user's own classes.</param>
     /// <returns>The shipping scheme's line and the test pack's.</returns>
-    private static async Task<(string Real, string Test)> SchemeReadingAsync(string classesKey)
+    private static async Task<(string Real, string Test, string? Removal)> SchemeReadingAsync(string classesKey)
     {
         var tag = $"suite-scheme-{Guid.NewGuid():N}";
         var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
@@ -2112,7 +2118,10 @@ internal sealed partial class SuiteCoverageTests
         {
             var lines = await File.ReadAllLinesAsync(snapshot);
 
-            return (lines.Single(line => line.StartsWith("  browserai: ", StringComparison.Ordinal)), lines.Single(line => line.StartsWith("  browserai-test: ", StringComparison.Ordinal)));
+            var test = Array.FindIndex(lines, line => line.StartsWith("  browserai-test: ", StringComparison.Ordinal));
+            var removal = test + 1 < lines.Length && lines[test + 1].StartsWith("  remove with: ", StringComparison.Ordinal) ? lines[test + 1] : null;
+
+            return (lines.Single(line => line.StartsWith("  browserai: ", StringComparison.Ordinal)), lines[test], removal);
         }
         finally
         {

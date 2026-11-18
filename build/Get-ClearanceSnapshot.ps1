@@ -105,6 +105,11 @@
     ⚠️ IT READS AND NEVER REPAIRS. A snapshot that fixed what it found would
     destroy the evidence of the run that broke it. On a difference the gate
     stops and a human looks; TESTING.md says how to clear a dangling key.
+    ⚠️ AND IT NAMES THE COMMAND THAT DOES -- 212 c, the maintainer's words
+    verbatim: "212 c". Every reading flagged as one that must be absent is
+    followed by a line `  remove with: <command>`, the PowerShell or `reg` line
+    that clears it, which the four drivers print when their before snapshot
+    flags anything and they refuse to start. Printed, never run.
 
 .PARAMETER Tag
     Names the snapshot file under `.work/clearance/`.
@@ -133,6 +138,9 @@ param(
 $ErrorActionPreference = 'Continue'
 $PSStyle.OutputRendering = 'PlainText'
 
+# A path in a printed command, single-quoted the way PowerShell reads it back.
+function Quote([string] $text) { "'" + $text.Replace("'", "''") + "'" }
+
 $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $out = @()
 
@@ -151,6 +159,9 @@ else {
 
 $test = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("$uninstall\BrowserAI.app.test")
 $out += ('ARP BrowserAI.app.test: ' + $(if ($test) { 'PRESENT <<< MUST BE ABSENT' } else { 'ABSENT' }))
+if ($test) {
+    $out += ('  remove with: reg delete "HKCU\{0}\BrowserAI.app.test" /f, once its InstallLocation, {1}, is under %LocalAppData%\BrowserAI-test-scratch and gone' -f $uninstall, $test.GetValue('InstallLocation', '<none>'))
+}
 
 # 3. The registration, out of the client's own file and never by starting the
 # client (Q281 a). Opened for reading with every sharing mode, so a client
@@ -191,6 +202,9 @@ else {
 
 $staging = Join-Path $env:TEMP 'velopack_BrowserAI.app'
 $out += ('TEMP velopack_BrowserAI.app: ' + $(if (Test-Path $staging) { 'PRESENT <<< MUST BE ABSENT' } else { 'ABSENT' }))
+if (Test-Path $staging) {
+    $out += ('  remove with: Remove-Item -LiteralPath {0} -Recurse -Force, once no BrowserAI update is being applied' -f (Quote $staging))
+}
 
 $shortcut = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\BrowserAI.lnk'
 if (Test-Path $shortcut) {
@@ -321,6 +335,9 @@ try {
     }
     $testTasks = @($all | Where-Object { $_.Name -like 'BrowserAI.app.test *' } | Sort-Object Name)
     $out += '  BrowserAI.app.test tasks: ' + $(if ($testTasks.Count -gt 0) { ($testTasks.Name -join ' | ') + ' <<< MUST BE ABSENT' } else { 'none' })
+    foreach ($task in $testTasks) {
+        $out += ('  remove with: Unregister-ScheduledTask -TaskPath ''\'' -TaskName {0} -Confirm:$false' -f (Quote $task.Name))
+    }
 }
 catch {
     $out += "  UNREADABLE: $($_.Exception.Message)"
@@ -383,6 +400,16 @@ try {
         else {
             'ABSENT'
         }))
+    if ($testActivator.Present) {
+        $removal = @()
+        if ($null -ne [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("$ClassesKey\CLSID\$($testActivator.Class)")) {
+            $removal += 'Remove-Item -LiteralPath {0} -Recurse' -f (Quote "HKCU:\$ClassesKey\CLSID\$($testActivator.Class)")
+        }
+        if ($null -ne $testActivator.Value) {
+            $removal += 'Remove-ItemProperty -LiteralPath {0} -Name CustomActivator' -f (Quote "HKCU:\$ClassesKey\AppUserModelId\velopack.BrowserAI.app.test")
+        }
+        $out += '  remove with: ' + ($removal -join '; ')
+    }
 }
 catch {
     $out += "  UNREADABLE: $($_.Exception.Message)"
@@ -413,6 +440,9 @@ try {
     $out += ('  browserai: {0}' -f $(if ($realScheme.Present) { 'starts=' + $(if ($null -ne $realScheme.Command) { $realScheme.Command } else { 'ABSENT' }) } else { 'ABSENT' }))
     $testScheme = Get-SchemeReading 'browserai-test'
     $out += ('  browserai-test: {0}' -f $(if ($testScheme.Present) { 'PRESENT <<< MUST BE ABSENT (starts=' + $(if ($null -ne $testScheme.Command) { $testScheme.Command } else { 'ABSENT' }) + ')' } else { 'ABSENT' }))
+    if ($testScheme.Present) {
+        $out += ('  remove with: Remove-Item -LiteralPath {0} -Recurse' -f (Quote "HKCU:\$ClassesKey\browserai-test"))
+    }
 }
 catch {
     $out += "  UNREADABLE: $($_.Exception.Message)"
@@ -444,6 +474,9 @@ try {
             } | ForEach-Object { $_.Name } | Sort-Object)
     }
     $out += '  keyed by a test host: ' + $(if ($left.Count -gt 0) { ($left -join ' | ') + ' <<< MUST BE ABSENT' } else { 'none' })
+    foreach ($name in $left) {
+        $out += ('  remove with: Remove-Item -LiteralPath {0}' -f (Quote (Join-Path $records $name)))
+    }
 }
 catch {
     $out += "  UNREADABLE: $($_.Exception.Message)"
