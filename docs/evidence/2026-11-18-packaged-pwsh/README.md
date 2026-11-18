@@ -49,9 +49,13 @@ bytes as this repository stores them.**
   environment block of the rig's own; the third read the reports of every arm and every
   launcher-dies run out of one folder, so a report was read across runs. Their outputs stay in
   `.work/deps-scratch` on the machine that took them, which is not a record.
-- **Nothing the reporters wrote is left on the machine**: the rig read each `HKCU` value and
-  `%LOCALAPPDATA%\Temp` file back from outside and deleted it, and every survivor of an arm was
-  ended by its pid and creation time after it was read.
+- **Nothing the reporters wrote is left on the machine**, and the rig is not what removed all of
+  it. The rig deleted each `HKCU` value and `%LOCALAPPDATA%\Temp` file it read back, and ended
+  every survivor of an arm by its pid and creation time. What it did not read, the writes of the
+  launcher-dies runs and of reporters that wrote after their arm was read, came to 14 values
+  under `HKCU\Software\SixFive7-pkgjob2-probe` and 14 files across the four runs, deleted by
+  hand on 2026-11-18 after the last run. *Corrected 2026-11-18 (previously "the rig read each
+  `HKCU` value and `%LOCALAPPDATA%\Temp` file back from outside and deleted it")*.
 
 ## How to run it again
 
