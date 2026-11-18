@@ -2947,6 +2947,44 @@ junction as the control that the tag is read.
 build and run it, at below-normal priority and with nothing on the screen; the two arms above
 hold the shipped launch on every run of the suite.
 
+## A caller ended inside CreateProcessW leaves its child suspended for good -- measured 2026-11-18
+
+**Measured 2026-11-18 on Windows 11 Pro 10.0.26300**, after the final gate on `e3cc3a4f` left a
+`codex.exe mcp add browserai -- ...` behind in its PowerShell half: pid 97312, created 05:38:39Z,
+its parent gone, its one thread suspended and no CPU time. A rig put the payload's RegisterAI
+0.3.0 in a job object of its own, with a completion port, and ended RegisterAI by its own handle
+the moment the job reported the client RegisterAI was starting, which is what BrowserAI's
+`RegisterAiTool` does to RegisterAI at its wait. RegisterAI starts a client with `Process.Start`
+(`ProcessRunner.RunAsync`, `src/RegisterAI/Runner.cs` at `v0.3.0`), so `CreateProcessW` with no
+suspended start asked for. The client was a copy of `whoami.exe` named as Codex with
+`--client-exe`; every process ran at below-normal priority.
+
+| Trials | RegisterAI ended | The client, 3 s later |
+|---|---|---|
+| 10 armed | 0.24 to 1.36 ms after the job reported the client | **Running, its one thread `Wait`/`Suspended`, 0 ms of CPU, 10 of 10**, and it never made its console host |
+| 2 controls | Not ended | Ran and exited, 46.9 ms of CPU each; its console host came 422 and 570 ms after it |
+| 5 late | 101 to 116 ms after the job reported the client | Ran and exited, 46.9 to 78.1 ms of CPU, 0 of 5 left |
+
+**So the call holds its child's first thread suspended until it returns, and a caller that ends
+inside the call leaves a child that never runs.** Nothing in the child's tree ends it either: it
+waits suspended, holding its image, its working directory and every handle it inherited, until
+something ends it by hand or the session ends. `[FLOATS]` for the Windows build. The hazard
+index's row on the frozen child that held a gate driver's pipe said the same of `CreateProcess`
+on 2026-10-11, read and not measured; the row on the packaged start measured a longer window of
+the same kind for a suspended start that is assigned to a job after the call.
+
+**What it costs BrowserAI.** `RegisterAiTool` ends RegisterAI by its handle when its wait runs
+out, and RegisterAI and the clients it starts are in no job of BrowserAI's, by design, so a
+client's own updater survives them. A wait that runs out while RegisterAI is starting a client
+leaves that client suspended for good, as in the gate on `e3cc3a4f`, where the Codex arm's
+registration was answered *"gave no answer: it did not finish in time and was stopped"*. See
+[the hazard index](../../HAZARDS.md#hazard-index).
+
+**How to re-establish it:** the rig and its runs are in
+[the evidence batch](../../docs/evidence/2026-11-18-registerai-orphan/README.md), which says how to
+run it again at below-normal priority, with nothing on the screen and nothing outside the rig's
+own job acted on.
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

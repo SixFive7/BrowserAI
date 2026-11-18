@@ -1,0 +1,14 @@
+armed-01    commit 86,9 %  RegisterAI exit 1    killed at    280,8 ms  client pid 130828 new at   279,44 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-02    commit 87,1 %  RegisterAI exit 1    killed at   285,29 ms  client pid 14868  new at   284,31 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-03    commit 87,3 %  RegisterAI exit 1    killed at    84,54 ms  client pid 30628  new at    84,12 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-04    commit 87,5 %  RegisterAI exit 1    killed at    387,3 ms  client pid 97800  new at   387,04 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-05    commit 87,0 %  RegisterAI exit 1    killed at   266,61 ms  client pid 114096 new at   266,37 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-06    commit 86,9 %  RegisterAI exit 1    killed at   273,55 ms  client pid 102772 new at   273,24 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-07    commit 87,0 %  RegisterAI exit 1    killed at    84,23 ms  client pid 109876 new at    83,96 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-08    commit 88,8 %  RegisterAI exit 1    killed at  1957,73 ms  client pid 123460 new at  1957,41 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-09    commit 88,8 %  RegisterAI exit 1    killed at   300,13 ms  client pid 119220 new at   299,89 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+armed-10    commit 88,7 %  RegisterAI exit 1    killed at   131,35 ms  client pid 20172  new at   130,78 ms  running after 3 s True  cpu      0 ms  threads [Wait/Suspended]  left suspended True  job ended True, still running 0
+control-01  commit 88,5 %  RegisterAI exit 4    killed at       -1 ms  client pid 61864  new at   784,24 ms  running after 3 s False cpu   46,9 ms  threads []  left suspended False  job ended True, still running 0
+control-02  commit 88,3 %  RegisterAI exit 4    killed at       -1 ms  client pid 41280  new at   440,63 ms  running after 3 s False cpu   46,9 ms  threads []  left suspended False  job ended True, still running 0
+armed trials whose client was left suspended: 10 of 10
+control trials whose client was left suspended: 0 of 2

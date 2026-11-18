@@ -1,0 +1,133 @@
+#Requires -Version 7
+# The forced order behind the suspended codex.exe of the final gate on e3cc3a4f: RegisterAI
+# 0.3.0, the payload's own, is ended by its handle the moment its job reports the client it
+# is starting, the way BrowserAI's RegisterAiTool ends it at its wait. The client is a copy
+# of whoami.exe named as Codex with RegisterAI's own --client-exe, so no client runs and no
+# configuration is read or written; CODEX_HOME and CLAUDE_CONFIG_DIR point at scratch all
+# the same. An armed trial kills at the client's creation; a control trial does not. After
+# each, every process of the rig's job is read by the handle opened at its creation, and
+# what is left is ended through the job the rig created, and nothing else.
+param(
+    [int] $Armed = 10,
+    [int] $Controls = 2,
+    [int] $Late = 0,
+    [int] $LateDelayMs = 100,
+    [string] $RegisterAi = 'C:\Source\SixFive7\BrowserAI\.work\wt\clients174\payload\registerai\RegisterAI.exe',
+    [string] $Out = 'C:\Source\SixFive7\BrowserAI\.work\clients-scratch\suspended\runs'
+)
+
+$ErrorActionPreference = 'Stop'
+Add-Type -Path (Join-Path $PSScriptRoot 'KillAtChild.cs')
+
+New-Item -ItemType Directory -Force -Path $Out | Out-Null
+$standInDir = Join-Path $Out 'standin'
+New-Item -ItemType Directory -Force -Path $standInDir | Out-Null
+$standIn = Join-Path $standInDir 'codex-standin.exe'
+if (-not (Test-Path -LiteralPath $standIn)) { Copy-Item -LiteralPath (Join-Path $env:SystemRoot 'System32\whoami.exe') -Destination $standIn }
+$codexHome = Join-Path $Out 'codex-home'
+$claudeConfig = Join-Path $Out 'claude-config'
+New-Item -ItemType Directory -Force -Path $codexHome, $claudeConfig | Out-Null
+
+function Commit-Charge {
+    $c = (Get-Counter '\Memory\% Committed Bytes In Use' -ErrorAction SilentlyContinue).CounterSamples
+    if ($c) { '{0:F1} %' -f $c[0].CookedValue } else { 'unread' }
+}
+
+$results = [System.Collections.Generic.List[object]]::new()
+$trials = @()
+for ($i = 1; $i -le $Armed; $i++) { $trials += [pscustomobject]@{ Name = ('armed-{0:D2}' -f $i); Armed = $true } }
+for ($i = 1; $i -le $Controls; $i++) { $trials += [pscustomobject]@{ Name = ('control-{0:D2}' -f $i); Armed = $false } }
+for ($i = 1; $i -le $Late; $i++) { $trials += [pscustomobject]@{ Name = ('late-{0:D2}' -f $i); Armed = $true; Delay = $LateDelayMs } }
+
+foreach ($trial in $trials) {
+    $start = [System.Diagnostics.ProcessStartInfo]::new($RegisterAi)
+    foreach ($argument in @('status', '--name', 'browserai', '--client', 'codex', '--scope', 'user', '--client-exe', "codex=$standIn", '--timeout', '30')) { $start.ArgumentList.Add($argument) }
+    $start.WorkingDirectory = Split-Path -Parent $RegisterAi
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    $start.RedirectStandardInput = $true
+    $start.RedirectStandardOutput = $true
+    $start.RedirectStandardError = $true
+    foreach ($name in @($start.Environment.Keys)) {
+        if ($name -match '^(CLAUDE|ANTHROPIC|ELECTRON_|VSCODE_|MCP_|CODEX|OPENAI)') { [void]$start.Environment.Remove($name) }
+    }
+    $start.Environment['CODEX_HOME'] = $codexHome
+    $start.Environment['CLAUDE_CONFIG_DIR'] = $claudeConfig
+
+    $commitBefore = Commit-Charge
+    $clock = [System.Diagnostics.Stopwatch]::new()
+    $rig = [KillAtChild]::new($clock, $standIn)
+    $rig.Armed = $trial.Armed
+    if ($trial.PSObject.Properties['Delay']) { $rig.DelayMs = $trial.Delay }
+    $clock.Start()
+    $process = [System.Diagnostics.Process]::Start($start)
+    $rig.Adopt($process.Handle, [uint32]$process.Id)
+    $process.StandardInput.Close()
+    $outTask = $process.StandardOutput.ReadToEndAsync()
+    $errTask = $process.StandardError.ReadToEndAsync()
+    $ended = $process.WaitForExit(30000)
+    $endedAtMs = $clock.Elapsed.TotalMilliseconds
+    $launcherExit = if ($ended) { $process.ExitCode } else { $null }
+
+    # Long enough for a client that runs to have run: whoami ends in milliseconds.
+    Start-Sleep -Seconds 3
+
+    $rows = foreach ($seen in @($rig.Processes)) {
+        $threads = ''
+        if ($rig.IsRunning($seen)) {
+            try {
+                $p = [System.Diagnostics.Process]::GetProcessById([int]$seen.Pid)
+                $threads = (@($p.Threads) | ForEach-Object { '{0}/{1}' -f $_.ThreadState, $(if ($_.ThreadState -eq 'Wait') { $_.WaitReason } else { '-' }) }) -join ' '
+                $p.Dispose()
+            } catch { $threads = 'unread: ' + $_.Exception.Message }
+        }
+        [ordered]@{
+            pid = $seen.Pid
+            image = $seen.Image
+            newAtMs = [math]::Round($seen.NewAtMs, 2)
+            runningAfter3s = $rig.IsRunning($seen)
+            cpuMs = [math]::Round($rig.CpuMs($seen), 1)
+            threads = $threads
+        }
+    }
+
+    $client = @($rows | Where-Object { $_.image -ieq $standIn }) | Select-Object -First 1
+    $endedJob = $rig.EndTheJob()
+    Start-Sleep -Milliseconds 500
+    $leftAfterEnd = @($rig.Processes | Where-Object { $rig.IsRunning($_) }).Count
+    $null = [System.Threading.Tasks.Task]::WaitAll(@($outTask, $errTask), 5000)
+    $rig.Dispose()
+
+    $row = [ordered]@{
+        trial = $trial.Name
+        armed = $trial.Armed
+        commitChargeBefore = $commitBefore
+        registerAiPid = $process.Id
+        registerAiEnded = $ended
+        registerAiExit = $launcherExit
+        registerAiEndedAtMs = [math]::Round($endedAtMs, 1)
+        killedAtMs = [math]::Round($rig.KilledAtMs, 2)
+        killedOnPid = $rig.KilledOnPid
+        clientLeftSuspended = [bool]($client -and $client.runningAfter3s -and $client.cpuMs -eq 0)
+        client = $client
+        processes = @($rows)
+        events = @($rig.Events)
+        jobEnded = $endedJob
+        stillRunningAfterJobEnd = $leftAfterEnd
+        registerAiStdout = $(if ($outTask.IsCompleted) { $outTask.Result } else { '<not read>' })
+    }
+    $results.Add($row)
+    $process.Dispose()
+
+    $c = $row.client
+    "{0,-11} commit {1,-7} RegisterAI exit {2,-4} killed at {3,8} ms  client pid {4,-6} new at {5,8} ms  running after 3 s {6,-5} cpu {7,6} ms  threads [{8}]  left suspended {9}  job ended {10}, still running {11}" -f `
+        $row.trial, $row.commitChargeBefore, $row.registerAiExit, $row.killedAtMs, $c.pid, $c.newAtMs, $c.runningAfter3s, $c.cpuMs, $c.threads, $row.clientLeftSuspended, $row.jobEnded, $row.stillRunningAfterJobEnd
+}
+
+$results | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $Out 'trials.json') -Encoding utf8NoBOM
+$armedRows = @($results | Where-Object { $_.armed -and $_.trial -like 'armed-*' })
+$lateRows = @($results | Where-Object { $_.trial -like 'late-*' })
+$controlRows = @($results | Where-Object { -not $_.armed })
+'armed trials whose client was left suspended: {0} of {1}' -f @($armedRows | Where-Object { $_.clientLeftSuspended }).Count, $armedRows.Count
+'control trials whose client was left suspended: {0} of {1}' -f @($controlRows | Where-Object { $_.clientLeftSuspended }).Count, $controlRows.Count
+'late trials whose client was left suspended: {0} of {1}' -f @($lateRows | Where-Object { $_.clientLeftSuspended }).Count, $lateRows.Count

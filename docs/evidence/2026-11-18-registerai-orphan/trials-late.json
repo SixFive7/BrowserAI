@@ -1,0 +1,332 @@
+[
+  {
+    "trial": "late-01",
+    "armed": true,
+    "commitChargeBefore": "85,1 %",
+    "registerAiPid": 63788,
+    "registerAiEnded": true,
+    "registerAiExit": 1,
+    "registerAiEndedAtMs": 851.3,
+    "killedAtMs": 801.86,
+    "killedOnPid": 59276,
+    "clientLeftSuspended": false,
+    "client": {
+      "pid": 59276,
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "newAtMs": 685.87,
+      "runningAfter3s": false,
+      "cpuMs": 78.1,
+      "threads": ""
+    },
+    "processes": [
+      {
+        "pid": 63788,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+        "newAtMs": 429.05,
+        "runningAfter3s": false,
+        "cpuMs": 62.5,
+        "threads": ""
+      },
+      {
+        "pid": 59276,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+        "newAtMs": 685.87,
+        "runningAfter3s": false,
+        "cpuMs": 78.1,
+        "threads": ""
+      },
+      {
+        "pid": 126620,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "newAtMs": 801.99,
+        "runningAfter3s": false,
+        "cpuMs": 15.6,
+        "threads": ""
+      }
+    ],
+    "events": [
+      "429.05 msg=6 pid=63788 C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+      "685.87 msg=6 pid=59276 C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "801.99 msg=6 pid=126620 C:\\Windows\\System32\\conhost.exe",
+      "829.68 msg=7 pid=63788",
+      "880.04 msg=7 pid=59276",
+      "894.42 msg=7 pid=126620",
+      "897.60 msg=4 pid=0"
+    ],
+    "jobEnded": true,
+    "stillRunningAfterJobEnd": 0,
+    "registerAiStdout": ""
+  },
+  {
+    "trial": "late-02",
+    "armed": true,
+    "commitChargeBefore": "85,3 %",
+    "registerAiPid": 125048,
+    "registerAiEnded": true,
+    "registerAiExit": 1,
+    "registerAiEndedAtMs": 343.3,
+    "killedAtMs": 321.58,
+    "killedOnPid": 116408,
+    "clientLeftSuspended": false,
+    "client": {
+      "pid": 116408,
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "newAtMs": 214.04,
+      "runningAfter3s": false,
+      "cpuMs": 46.9,
+      "threads": ""
+    },
+    "processes": [
+      {
+        "pid": 125048,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+        "newAtMs": 99.57,
+        "runningAfter3s": false,
+        "cpuMs": 62.5,
+        "threads": ""
+      },
+      {
+        "pid": 107116,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "newAtMs": 104.7,
+        "runningAfter3s": false,
+        "cpuMs": 62.5,
+        "threads": ""
+      },
+      {
+        "pid": 116408,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+        "newAtMs": 214.04,
+        "runningAfter3s": false,
+        "cpuMs": 46.9,
+        "threads": ""
+      },
+      {
+        "pid": 65376,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "newAtMs": 321.7,
+        "runningAfter3s": false,
+        "cpuMs": 46.9,
+        "threads": ""
+      }
+    ],
+    "events": [
+      "99.57 msg=6 pid=125048 C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+      "104.70 msg=6 pid=107116 C:\\Windows\\System32\\conhost.exe",
+      "214.04 msg=6 pid=116408 C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "321.70 msg=6 pid=65376 C:\\Windows\\System32\\conhost.exe",
+      "333.30 msg=7 pid=125048",
+      "343.79 msg=7 pid=107116",
+      "359.56 msg=7 pid=116408",
+      "364.47 msg=7 pid=65376",
+      "366.48 msg=4 pid=0"
+    ],
+    "jobEnded": true,
+    "stillRunningAfterJobEnd": 0,
+    "registerAiStdout": ""
+  },
+  {
+    "trial": "late-03",
+    "armed": true,
+    "commitChargeBefore": "89,7 %",
+    "registerAiPid": 134056,
+    "registerAiEnded": true,
+    "registerAiExit": 1,
+    "registerAiEndedAtMs": 256.2,
+    "killedAtMs": 247.48,
+    "killedOnPid": 137000,
+    "clientLeftSuspended": false,
+    "client": {
+      "pid": 137000,
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "newAtMs": 132.72,
+      "runningAfter3s": false,
+      "cpuMs": 78.1,
+      "threads": ""
+    },
+    "processes": [
+      {
+        "pid": 134056,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+        "newAtMs": 11.28,
+        "runningAfter3s": false,
+        "cpuMs": 46.9,
+        "threads": ""
+      },
+      {
+        "pid": 101908,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "newAtMs": 41.15,
+        "runningAfter3s": false,
+        "cpuMs": 15.6,
+        "threads": ""
+      },
+      {
+        "pid": 137000,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+        "newAtMs": 132.72,
+        "runningAfter3s": false,
+        "cpuMs": 78.1,
+        "threads": ""
+      },
+      {
+        "pid": 47096,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "newAtMs": 247.53,
+        "runningAfter3s": false,
+        "cpuMs": 15.6,
+        "threads": ""
+      }
+    ],
+    "events": [
+      "11.28 msg=6 pid=134056 C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+      "41.15 msg=6 pid=101908 C:\\Windows\\System32\\conhost.exe",
+      "132.72 msg=6 pid=137000 C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "247.53 msg=6 pid=47096 C:\\Windows\\System32\\conhost.exe",
+      "251.95 msg=7 pid=134056",
+      "252.12 msg=7 pid=137000",
+      "257.33 msg=7 pid=101908",
+      "257.36 msg=7 pid=47096",
+      "258.95 msg=4 pid=0"
+    ],
+    "jobEnded": true,
+    "stillRunningAfterJobEnd": 0,
+    "registerAiStdout": ""
+  },
+  {
+    "trial": "late-04",
+    "armed": true,
+    "commitChargeBefore": "89,9 %",
+    "registerAiPid": 131272,
+    "registerAiEnded": true,
+    "registerAiExit": 1,
+    "registerAiEndedAtMs": 472.5,
+    "killedAtMs": 455.95,
+    "killedOnPid": 118244,
+    "clientLeftSuspended": false,
+    "client": {
+      "pid": 118244,
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "newAtMs": 352.93,
+      "runningAfter3s": false,
+      "cpuMs": 46.9,
+      "threads": ""
+    },
+    "processes": [
+      {
+        "pid": 131272,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+        "newAtMs": 12.72,
+        "runningAfter3s": false,
+        "cpuMs": 78.1,
+        "threads": ""
+      },
+      {
+        "pid": 116876,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "newAtMs": 33.1,
+        "runningAfter3s": false,
+        "cpuMs": 46.9,
+        "threads": ""
+      },
+      {
+        "pid": 118244,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+        "newAtMs": 352.93,
+        "runningAfter3s": false,
+        "cpuMs": 46.9,
+        "threads": ""
+      },
+      {
+        "pid": 59632,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "newAtMs": 484.12,
+        "runningAfter3s": false,
+        "cpuMs": 31.2,
+        "threads": ""
+      }
+    ],
+    "events": [
+      "12.72 msg=6 pid=131272 C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+      "33.10 msg=6 pid=116876 C:\\Windows\\System32\\conhost.exe",
+      "352.93 msg=6 pid=118244 C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "467.60 msg=7 pid=131272",
+      "477.98 msg=7 pid=116876",
+      "484.12 msg=6 pid=59632 C:\\Windows\\System32\\conhost.exe",
+      "580.40 msg=7 pid=118244",
+      "591.80 msg=7 pid=59632",
+      "593.97 msg=4 pid=0"
+    ],
+    "jobEnded": true,
+    "stillRunningAfterJobEnd": 0,
+    "registerAiStdout": ""
+  },
+  {
+    "trial": "late-05",
+    "armed": true,
+    "commitChargeBefore": "89,6 %",
+    "registerAiPid": 132192,
+    "registerAiEnded": true,
+    "registerAiExit": 4,
+    "registerAiEndedAtMs": 204.4,
+    "killedAtMs": 199.55,
+    "killedOnPid": 123236,
+    "clientLeftSuspended": false,
+    "client": {
+      "pid": 123236,
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "newAtMs": 98.25,
+      "runningAfter3s": false,
+      "cpuMs": 78.1,
+      "threads": ""
+    },
+    "processes": [
+      {
+        "pid": 132192,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+        "newAtMs": 19.9,
+        "runningAfter3s": false,
+        "cpuMs": 93.8,
+        "threads": ""
+      },
+      {
+        "pid": 87720,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "newAtMs": 25.0,
+        "runningAfter3s": false,
+        "cpuMs": 31.2,
+        "threads": ""
+      },
+      {
+        "pid": 123236,
+        "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+        "newAtMs": 98.25,
+        "runningAfter3s": false,
+        "cpuMs": 78.1,
+        "threads": ""
+      },
+      {
+        "pid": 104024,
+        "image": "",
+        "newAtMs": 199.58,
+        "runningAfter3s": false,
+        "cpuMs": -1.0,
+        "threads": ""
+      }
+    ],
+    "events": [
+      "19.90 msg=6 pid=132192 C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\clients174\\payload\\registerai\\RegisterAI.exe",
+      "25.00 msg=6 pid=87720 C:\\Windows\\System32\\conhost.exe",
+      "98.25 msg=6 pid=123236 C:\\Source\\SixFive7\\BrowserAI\\.work\\clients-scratch\\suspended\\runs-late\\standin\\codex-standin.exe",
+      "199.58 msg=6 pid=104024 ",
+      "199.61 msg=7 pid=123236",
+      "199.61 msg=7 pid=104024",
+      "199.72 msg=7 pid=132192",
+      "205.37 msg=7 pid=87720",
+      "206.91 msg=4 pid=0"
+    ],
+    "jobEnded": true,
+    "stillRunningAfterJobEnd": 0,
+    "registerAiStdout": "{\n  \"tool\": \"registerai\",\n  \"version\": \"0.3.0\",\n  \"schema\": 1,\n  \"verb\": \"status\",\n  \"dryRun\": false,\n  \"exitCode\": 4,\n  \"error\": null,\n  \"server\": {\n    \"name\": \"browserai\",\n    \"command\": null,\n    \"args\": [],\n    \"env\": []\n  },\n  \"results\": [\n    {\n      \"client\": \"codex\",\n      \"scope\": \"user\",\n      \"project\": null,\n      \"clientPath\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\clients-scratch\\\\suspended\\\\runs-late\\\\standin\\\\codex-standin.exe\",\n      \"config\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\clients-scratch\\\\suspended\\\\runs-late\\\\codex-home\\\\config.toml\",\n      \"state\": \"unreadable\",\n      \"command\": null,\n      \"args\": [],\n      \"env\": [],\n      \"resolvesTo\": null,\n      \"advice\": [],\n      \"error\": \"'codex mcp list --json' exited 1, so what Codex has registered is not known.\"\n    }\n  ],\n  \"path\": {\n    \"where\": \"HKEY_CURRENT_USER\\\\Environment\\\\Path\",\n    \"folder\": null,\n    \"action\": null,\n    \"announced\": null,\n    \"dead\": [\n      {\n        \"entry\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI-test-scratch\\\\real-scheduler-disabled-1d4c77964b4f4c20a262859bf747bdd7\\\\current\",\n        \"command\": \"registerai path remove 'C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI-test-scratch\\\\real-scheduler-disabled-1d4c77964b4f4c20a262859bf747bdd7\\\\current'\"\n      }\n    ],\n    \"error\": null\n  }\n}\n"
+  }
+]

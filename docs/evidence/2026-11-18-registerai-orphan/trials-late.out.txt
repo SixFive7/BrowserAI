@@ -1,0 +1,8 @@
+late-01     commit 85,1 %  RegisterAI exit 1    killed at   801,86 ms  client pid 59276  new at   685,87 ms  running after 3 s False cpu   78,1 ms  threads []  left suspended False  job ended True, still running 0
+late-02     commit 85,3 %  RegisterAI exit 1    killed at   321,58 ms  client pid 116408 new at   214,04 ms  running after 3 s False cpu   46,9 ms  threads []  left suspended False  job ended True, still running 0
+late-03     commit 89,7 %  RegisterAI exit 1    killed at   247,48 ms  client pid 137000 new at   132,72 ms  running after 3 s False cpu   78,1 ms  threads []  left suspended False  job ended True, still running 0
+late-04     commit 89,9 %  RegisterAI exit 1    killed at   455,95 ms  client pid 118244 new at   352,93 ms  running after 3 s False cpu   46,9 ms  threads []  left suspended False  job ended True, still running 0
+late-05     commit 89,6 %  RegisterAI exit 4    killed at   199,55 ms  client pid 123236 new at    98,25 ms  running after 3 s False cpu   78,1 ms  threads []  left suspended False  job ended True, still running 0
+armed trials whose client was left suspended: 0 of 0
+control trials whose client was left suspended: 0 of 0
+late trials whose client was left suspended: 0 of 5

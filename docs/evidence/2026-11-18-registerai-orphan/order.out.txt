@@ -1,0 +1,17 @@
+armed-01 kill=280.8 :: 106.25 m6 92868 RegisterAI.exe | 279.44 m6 130828 codex-standin.exe | 288.84 m7 92868  | 3484.76 m4 0 
+armed-02 kill=285.29 :: 135.94 m6 95280 RegisterAI.exe | 284.31 m6 14868 codex-standin.exe | 289.89 m7 95280  | 3349.20 m4 0 
+armed-03 kill=84.54 :: 8.50 m6 70464 RegisterAI.exe | 13.99 m6 61008 conhost.exe | 84.12 m6 30628 codex-standin.exe | 87.64 m7 70464  | 101.15 m7 61008  | 3189.23 m4 0 
+armed-04 kill=387.3 :: 12.28 m6 132640 RegisterAI.exe | 37.98 m6 129304 conhost.exe | 387.04 m6 97800 codex-standin.exe | 402.32 m7 132640  | 406.35 m7 129304  | 3462.73 m4 0 
+armed-05 kill=266.61 :: 14.60 m6 64440 RegisterAI.exe | 21.56 m6 125716 conhost.exe | 266.37 m6 114096 codex-standin.exe | 271.57 m7 64440  | 276.81 m7 125716  | 3335.64 m4 0 
+armed-06 kill=273.55 :: 8.70 m6 21372 RegisterAI.exe | 18.78 m6 104388 conhost.exe | 273.24 m6 102772 codex-standin.exe | 286.62 m7 21372  | 296.96 m7 104388  | 3382.67 m4 0 
+armed-07 kill=84.23 :: 11.11 m6 15192 RegisterAI.exe | 18.85 m6 101948 conhost.exe | 83.96 m6 109876 codex-standin.exe | 87.58 m7 15192  | 90.61 m7 101948  | 3175.97 m4 0 
+armed-08 kill=1957.73 :: 1158.12 m6 116724 RegisterAI.exe | 1735.59 m6 23768 conhost.exe | 1957.41 m6 123460 codex-standin.exe | 1967.39 m7 116724  | 2019.21 m7 23768  | 5013.52 m4 0 
+armed-09 kill=300.13 :: 136.83 m6 16220 RegisterAI.exe | 160.50 m6 14424 conhost.exe | 299.89 m6 119220 codex-standin.exe | 313.95 m7 16220  | 333.40 m7 14424  | 3444.08 m4 0 
+armed-10 kill=131.35 :: 14.31 m6 113840 RegisterAI.exe | 20.87 m6 79376 conhost.exe | 130.78 m6 20172 codex-standin.exe | 145.64 m7 113840  | 152.05 m7 79376  | 3195.18 m4 0 
+control-01 kill=-1.0 :: 128.76 m6 129772 RegisterAI.exe | 339.75 m6 14600 conhost.exe | 784.24 m6 61864 codex-standin.exe | 1206.80 m6 114332 conhost.exe | 1275.85 m7 61864  | 1281.67 m7 114332  | 1286.55 m7 129772  | 1291.41 m7 14600  | 1293.91 m4 0 
+control-02 kill=-1.0 :: 9.78 m6 110232 RegisterAI.exe | 16.13 m6 82216 conhost.exe | 440.63 m6 41280 codex-standin.exe | 1010.66 m6 99172 conhost.exe | 1097.80 m7 41280  | 1104.97 m7 99172  | 1127.13 m7 110232  | 1133.84 m7 82216  | 1139.11 m4 0 
+late-01 kill=801.86 :: 429.05 m6 63788 RegisterAI.exe | 685.87 m6 59276 codex-standin.exe | 801.99 m6 126620 conhost.exe | 829.68 m7 63788  | 880.04 m7 59276  | 894.42 m7 126620  | 897.60 m4 0 
+late-02 kill=321.58 :: 99.57 m6 125048 RegisterAI.exe | 104.70 m6 107116 conhost.exe | 214.04 m6 116408 codex-standin.exe | 321.70 m6 65376 conhost.exe | 333.30 m7 125048  | 343.79 m7 107116  | 359.56 m7 116408  | 364.47 m7 65376  | 366.48 m4 0 
+late-03 kill=247.48 :: 11.28 m6 134056 RegisterAI.exe | 41.15 m6 101908 conhost.exe | 132.72 m6 137000 codex-standin.exe | 247.53 m6 47096 conhost.exe | 251.95 m7 134056  | 252.12 m7 137000  | 257.33 m7 101908  | 257.36 m7 47096  | 258.95 m4 0 
+late-04 kill=455.95 :: 12.72 m6 131272 RegisterAI.exe | 33.10 m6 116876 conhost.exe | 352.93 m6 118244 codex-standin.exe | 467.60 m7 131272  | 477.98 m7 116876  | 484.12 m6 59632 conhost.exe | 580.40 m7 118244  | 591.80 m7 59632  | 593.97 m4 0 
+late-05 kill=199.55 :: 19.90 m6 132192 RegisterAI.exe | 25.00 m6 87720 conhost.exe | 98.25 m6 123236 codex-standin.exe | 199.58 m6 104024  | 199.61 m7 123236  | 199.61 m7 104024  | 199.72 m7 132192  | 205.37 m7 87720  | 206.91 m4 0 

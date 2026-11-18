@@ -1,0 +1,12 @@
+import json, ntpath, sys
+
+for path in sys.argv[1:]:
+    trials = json.load(open(path, encoding='utf-8-sig'))
+    for trial in trials:
+        parts = []
+        for event in trial['events']:
+            at, message, rest = event.split(' ', 2)
+            pid = rest.split(' ', 1)[0].replace('pid=', '')
+            image = ntpath.basename(rest.split(' ', 1)[1]) if ' ' in rest else ''
+            parts.append('%s %s %s %s' % (at, message.replace('msg=', 'm'), pid, image))
+        sys.stdout.write('%s kill=%s :: %s\n' % (trial['trial'], trial['killedAtMs'], ' | '.join(parts)))
