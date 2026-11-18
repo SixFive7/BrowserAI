@@ -114,16 +114,68 @@ internal static class ProcessBounds
     public static TimeSpan ScheduledTasksCallBound { get; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    /// The budget RegisterAI is handed for one run, as its <c>--timeout</c>: 12 s. The
-    /// value of <c>McpRegistrar.ToolTimeout</c>.
+    /// The budget RegisterAI is handed for one run where nothing outside BrowserAI limits
+    /// the wait, as its <c>--timeout</c>: 30 s, RegisterAI's own default. The page's
+    /// buttons, the status read, a folder link's project registration and the
+    /// background's pass after an update use it. The value of
+    /// <c>McpRegistrar.ToolTimeout</c>.
     /// </summary>
-    public static TimeSpan RegisterAiTimeout { get; } = TimeSpan.FromSeconds(12);
+    public static TimeSpan RegisterAiTimeout { get; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// How long BrowserAI waits for that run, the tool's own budget and a margin: 14 s.
+    /// How long BrowserAI waits for that run, the tool's own budget and a margin: 32 s.
     /// The value of <c>McpRegistrar.ToolBudget</c>.
     /// </summary>
-    public static TimeSpan RegisterAiBudget { get; } = TimeSpan.FromSeconds(14);
+    public static TimeSpan RegisterAiBudget { get; } = TimeSpan.FromSeconds(32);
+
+    /// <summary>
+    /// The budget RegisterAI is handed in the install hook, as its <c>--timeout</c>: 20 s,
+    /// sized so that the wait below and the sign-in task fit Velopack's 30 s for that hook.
+    /// </summary>
+    public static TimeSpan RegisterAiInstallTimeout { get; } = TimeSpan.FromSeconds(20);
+
+    /// <summary>
+    /// How long the install hook waits for that run, the output's drain included: 22 s.
+    /// </summary>
+    public static TimeSpan RegisterAiInstallBudget { get; } = TimeSpan.FromSeconds(22);
+
+    /// <summary>
+    /// The least budget RegisterAI is handed in the uninstall hook, as its <c>--timeout</c>:
+    /// 5 s, what is left once the background's stop has taken its whole bound. A stop that
+    /// ends sooner leaves more, up to <see cref="RegisterAiTimeout"/>.
+    /// </summary>
+    public static TimeSpan RegisterAiUninstallTimeout { get; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// How long the uninstall hook waits for that run at the least, the output's drain
+    /// included: 7 s, so that the background's stop, this wait and the sign-in task's removal
+    /// fit Velopack's 60 s for that hook with <see cref="HookMargin"/> to spare.
+    /// </summary>
+    public static TimeSpan RegisterAiUninstallBudget { get; } = TimeSpan.FromSeconds(7);
+
+    /// <summary>
+    /// How long Velopack lets the install hook run before it kills it: 30 s, a literal in
+    /// its <c>install.rs</c> with no option to change it.
+    /// </summary>
+    public static TimeSpan VelopackInstallHookLimit { get; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// How long Velopack lets the update hook run before it kills it: 15 s, a literal in
+    /// its <c>apply_windows_impl.rs</c> with no option to change it.
+    /// </summary>
+    public static TimeSpan VelopackUpdateHookLimit { get; } = TimeSpan.FromSeconds(15);
+
+    /// <summary>
+    /// How long Velopack lets the uninstall hook run before it kills it: 60 s, a literal
+    /// in its <c>uninstall.rs</c> with no option to change it.
+    /// </summary>
+    public static TimeSpan VelopackUninstallHookLimit { get; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// What every hook's longest path leaves unspent of Velopack's limit, for the steps that
+    /// take milliseconds and for starting and ending the process: 3 s.
+    /// </summary>
+    public static TimeSpan HookMargin { get; } = TimeSpan.FromSeconds(3);
 
     /// <summary>
     /// How long BrowserAI waits for RegisterAI's two output pipes to drain once the run

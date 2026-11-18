@@ -433,6 +433,16 @@ internal static partial class Program
         server.Start();
         await updates.StartAsync().ConfigureAwait(false);
 
+        // ⚠️ THE UPDATE'S REGISTRATION PASS -- 174, 2026-11-18, the maintainer's words verbatim:
+        // "174 rec - also explain to me why velopack even has this limit and cehck if we cannot
+        // disable or increase that limit". The update hook runs no pass since that day, because
+        // Velopack kills it at 15 s, and the first start after the update runs it here, with
+        // RegisterAI's own budget, while the background already serves.
+        if (RegistersAfterStarting(startedBy))
+        {
+            AfterUpdateRegistration.StartInBackground(Environment.ProcessPath, tool, paths.RootAppDir, BuildVersion.Current, InstallLocation.AppId, log.Factory.CreateLogger("BrowserAI.Registration"));
+        }
+
         // The background's loop: it awaits the page's wake, and the stop cancels it.
         try
         {
@@ -466,6 +476,11 @@ internal static partial class Program
 
         return 0;
     }
+
+    /// <summary>Whether a background started this way runs the registration pass the update hook ran until 2026-11-18.</summary>
+    /// <param name="startedBy">What <c>--started-by</c> carried, or <see langword="null"/>.</param>
+    /// <returns>Whether it does: the start after an update, and no other (the maintainer's 174).</returns>
+    internal static bool RegistersAfterStarting(string? startedBy) => startedBy is PersonStart.StartedAfterAnUpdate;
 
     /// <summary>What the task's <c>$(Arg0)</c> is at sign-in, where the Task Scheduler leaves it unexpanded.</summary>
     private const string SignInPlaceholder = "$(Arg0)";

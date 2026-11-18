@@ -115,6 +115,66 @@ internal sealed record RegistrationReport(RegistrationStatus Status, string Deta
 }
 
 /// <summary>
+/// What one run of RegisterAI may take: the <c>--timeout</c> it is handed, which bounds
+/// every client call of the run, and how long BrowserAI waits for it, the drain of its
+/// output included.
+/// </summary>
+/// <param name="Timeout">RegisterAI's own budget for the run.</param>
+/// <param name="Wait">How long BrowserAI waits for the run before it stops RegisterAI.</param>
+/// <remarks>
+/// <b>One per caller since 2026-11-18, the maintainer's 174, in his words verbatim:</b>
+/// <i>"174 rec - also explain to me why velopack even has this limit and cehck if we cannot
+/// disable or increase that limit"</i>. Until then every run had 12 s and a 14 s wait,
+/// sized against the update hook's 15 s, which the update hook no longer spends on
+/// registration at all. Each budget is sized against what bounds its caller: Velopack's
+/// limit for a hook, and RegisterAI's own default where nothing outside BrowserAI does.
+/// </remarks>
+internal sealed record RegistrationBudget(TimeSpan Timeout, TimeSpan Wait)
+{
+    /// <summary>Where nothing outside BrowserAI limits the wait: the page, the status read, a folder link and the background's pass after an update.</summary>
+    public static RegistrationBudget Unbounded { get; } = new(ProcessBounds.RegisterAiTimeout, ProcessBounds.RegisterAiBudget);
+
+    /// <summary>The install hook, inside Velopack's 30 s with the sign-in task after it.</summary>
+    public static RegistrationBudget Install { get; } = new(ProcessBounds.RegisterAiInstallTimeout, ProcessBounds.RegisterAiInstallBudget);
+
+    /// <summary>The least the uninstall hook gives a run: what is left once the background's stop has taken its whole bound.</summary>
+    public static RegistrationBudget Uninstall { get; } = new(ProcessBounds.RegisterAiUninstallTimeout, ProcessBounds.RegisterAiUninstallBudget);
+
+    /// <summary>
+    /// What the uninstall hook gives a run once the background's stop has taken
+    /// <paramref name="elapsed"/> of Velopack's 60 s: what is left after the sign-in task's
+    /// removal and <see cref="ProcessBounds.HookMargin"/>, never less than
+    /// <see cref="Uninstall"/> and never more than <see cref="Unbounded"/>.
+    /// </summary>
+    /// <param name="elapsed">How long the hook has run when the registration starts.</param>
+    /// <returns>The budget.</returns>
+    /// <remarks>
+    /// <b>By the time left, the way the drain is since the same day</b>: the stop takes
+    /// nothing when no background runs and up to <see cref="ProcessBounds.BackgroundStopBound"/>
+    /// when one is slow to close its sessions, so a fixed budget would have to be the
+    /// least one in every uninstall. RegisterAI's own <c>--timeout</c> is kept the same
+    /// whole seconds short of the wait that <see cref="Unbounded"/> keeps it, for it to
+    /// stop its clients and answer.
+    /// </remarks>
+    public static RegistrationBudget ForUninstallAfter(TimeSpan elapsed)
+    {
+        var left = ProcessBounds.VelopackUninstallHookLimit - elapsed - ProcessBounds.ScheduledTasksCallBound - ProcessBounds.HookMargin;
+
+        if (left >= Unbounded.Wait)
+        {
+            return Unbounded;
+        }
+
+        if (left <= Uninstall.Wait)
+        {
+            return Uninstall;
+        }
+
+        return new(TimeSpan.FromSeconds(Math.Floor((left - (Unbounded.Wait - Unbounded.Timeout)).TotalSeconds)), left);
+    }
+}
+
+/// <summary>
 /// The registrar over RegisterAI: when to register and what to say about it are
 /// BrowserAI's, and the registering is RegisterAI's.
 /// </summary>
@@ -132,7 +192,9 @@ internal sealed record RegistrationReport(RegistrationStatus Status, string Deta
 /// <b>One run per hook, both clients in it.</b> RegisterAI is given
 /// <see cref="ToolTimeout"/> for the whole run, which bounds both clients together;
 /// two client calls of ten seconds each used to be able to outlast the fifteen the
-/// update hook gets.
+/// update hook gets. ⚠️ <i>Since 2026-11-18, the maintainer's 174</i>: a caller passes its
+/// own <see cref="RegistrationBudget"/>, a hook one sized against Velopack's limit for it,
+/// and the update hook runs no pass at all (<see cref="AfterUpdateRegistration"/>).
 /// </para>
 /// <para>
 /// ⚠️ <b>One behaviour changed with the switch, by the maintainer's decision Q347,
@@ -152,8 +214,12 @@ internal static class McpRegistrar
     /// every read and every write.
     /// </summary>
     /// <remarks>
-    /// Sized against the tightest hook, <c>--veloapp-updated</c>'s fifteen seconds, and
-    /// not against the measurement: a pass took 1 to 2 s in the 2026-10-01 survey.
+    /// <i>Corrected 2026-11-18 (previously "Sized against the tightest hook,
+    /// <c>--veloapp-updated</c>'s fifteen seconds, and not against the measurement: a pass
+    /// took 1 to 2 s in the 2026-10-01 survey")</i>, the maintainer's 174: this is the
+    /// budget where nothing outside BrowserAI limits the wait, RegisterAI's own default;
+    /// each hook passes its own <see cref="RegistrationBudget"/>, and the update hook no
+    /// longer registers.
     /// </remarks>
     public static TimeSpan ToolTimeout { get; } = ProcessBounds.RegisterAiTimeout;
 
@@ -168,6 +234,7 @@ internal static class McpRegistrar
     /// <param name="logger">Where the pass reports.</param>
     /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
     /// <param name="commandArguments">The arguments the command is registered with, or <see langword="null"/> for the target's own, <c>--mcp</c>.</param>
+    /// <param name="budget">What the run may take, or <see langword="null"/> for <see cref="RegistrationBudget.Unbounded"/>.</param>
     /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
     public static async Task<RegistrationReport> ApplyAsync(
         RegistrationClient who,
@@ -176,11 +243,12 @@ internal static class McpRegistrar
         IRegisterAi tool,
         ILogger logger,
         bool replace = false,
-        IReadOnlyList<string>? commandArguments = null)
+        IReadOnlyList<string>? commandArguments = null,
+        RegistrationBudget? budget = null)
     {
         ArgumentNullException.ThrowIfNull(who);
 
-        return (await ApplyAsync([who], intent, imagePath, tool, logger, replace, commandArguments).ConfigureAwait(false))[0].Report;
+        return (await ApplyAsync([who], intent, imagePath, tool, logger, replace, commandArguments, budget).ConfigureAwait(false))[0].Report;
     }
 
     /// <summary>Runs one user-scope pass for several clients, with one run of RegisterAI.</summary>
@@ -191,6 +259,7 @@ internal static class McpRegistrar
     /// <param name="logger">Where the pass reports.</param>
     /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
     /// <param name="commandArguments">The arguments the command is registered with, or <see langword="null"/> for the target's own, <c>--mcp</c>.</param>
+    /// <param name="budget">What the run may take, or <see langword="null"/> for <see cref="RegistrationBudget.Unbounded"/>.</param>
     /// <returns>One pass per client, in the order given. Never throws.</returns>
     public static async Task<IReadOnlyList<ClientRegistration>> ApplyAsync(
         IReadOnlyList<RegistrationClient> clients,
@@ -199,8 +268,11 @@ internal static class McpRegistrar
         IRegisterAi tool,
         ILogger logger,
         bool replace = false,
-        IReadOnlyList<string>? commandArguments = null)
+        IReadOnlyList<string>? commandArguments = null,
+        RegistrationBudget? budget = null)
     {
+        var limit = budget ?? RegistrationBudget.Unbounded;
+
         ArgumentNullException.ThrowIfNull(clients);
         ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(logger);
@@ -228,8 +300,8 @@ internal static class McpRegistrar
             var arguments = commandArguments ?? target.Arguments;
             var verb = intent is RegistrationIntent.Uninstall ? "unregister" : "register";
             var run = await tool.RunAsync(
-                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command, arguments),
-                ToolBudget).ConfigureAwait(false);
+                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command, arguments, limit.Timeout),
+                limit.Wait).ConfigureAwait(false);
 
             if (!ToolDocuments.TryRead(run, out var document, out var problem))
             {
@@ -360,6 +432,7 @@ internal static class McpRegistrar
     /// What the command is started with, after it: <see cref="RegistrationTarget.Arguments"/>
     /// when registering, since 2026-10-08 (D7 a, <c>--mcp</c>), and nothing for a read.
     /// </param>
+    /// <param name="timeout">RegisterAI's <c>--timeout</c>, or <see langword="null"/> for <see cref="ToolTimeout"/>.</param>
     /// <returns>The arguments, one element each.</returns>
     internal static List<string> Arguments(
         string verb,
@@ -370,7 +443,8 @@ internal static class McpRegistrar
         bool replace,
         string? pathFolder,
         string? command,
-        IReadOnlyList<string>? commandArguments = null)
+        IReadOnlyList<string>? commandArguments = null,
+        TimeSpan? timeout = null)
     {
         ArgumentNullException.ThrowIfNull(clients);
 
@@ -410,7 +484,7 @@ internal static class McpRegistrar
             arguments.AddRange(["--path-folder", pathFolder]);
         }
 
-        arguments.AddRange(["--timeout", ToolTimeout.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)]);
+        arguments.AddRange(["--timeout", (timeout ?? ToolTimeout).TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)]);
 
         if (command is { Length: > 0 })
         {

@@ -350,14 +350,27 @@ internal sealed class SignInTaskTests
         await Assert.That(RegisteredCommand(tool)).IsEqualTo($"{image} | {Program.McpArgument} | {Program.DataRootArgument} | {Root}");
         await Assert.That(ActionOf(tasks.Registered[name])).IsEqualTo(SignInTask.ArgumentsFor(Root, Source));
 
+        // ⚠️ The update hook registers nothing since 2026-11-18, the maintainer's 174, and the
+        // background's first start after the update reads the settings back from what the
+        // install's hook saved.
+        var afterUpdate = new FakeRegisterAi();
+
+        _ = await AfterUpdateRegistration.RunAsync(image, afterUpdate, data.Path, "9.9.9", ScratchLogonTasks.AppId, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+
+        await Assert.That(RegisteredCommand(afterUpdate)).IsEqualTo($"{image} | {Program.McpArgument} | {Program.DataRootArgument} | {Root}");
+
         // Named nothing: the defaults alone, in both.
         var plainTool = new FakeRegisterAi();
         var plainTasks = new ScratchLogonTasks();
 
         _ = await HookAsync(RegistrationIntent.Update, image, data.Path, plainTasks, plainTool, RegistrationClient.All, settings: null);
 
-        await Assert.That(RegisteredCommand(plainTool)).IsEqualTo($"{image} | {Program.McpArgument}");
+        await Assert.That(plainTool.Calls).IsEmpty();
         await Assert.That(ActionOf(plainTasks.Registered[name])).IsEqualTo(SignInTask.Arguments);
+
+        _ = await AfterUpdateRegistration.RunAsync(image, plainTool, data.Path, "9.9.9", ScratchLogonTasks.AppId, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+
+        await Assert.That(RegisteredCommand(plainTool)).IsEqualTo($"{image} | {Program.McpArgument}");
     }
 
     /// <summary>

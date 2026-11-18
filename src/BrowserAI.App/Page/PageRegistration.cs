@@ -54,7 +54,7 @@ internal interface IPageRegistration
 /// <remarks>
 /// <para>
 /// <b>Every call is the one the configuration window made, moved off a click
-/// handler.</b> <see cref="McpRegistrar.ApplyAsync(RegistrationClient, RegistrationIntent, string?, IRegisterAi, ILogger, bool, IReadOnlyList{string}?)"/>
+/// handler.</b> <see cref="McpRegistrar.ApplyAsync(RegistrationClient, RegistrationIntent, string?, IRegisterAi, ILogger, bool, IReadOnlyList{string}?, RegistrationBudget?)"/>
 /// and <see cref="McpRegistrar.ApplyToProjectAsync(RegistrationClient, bool, string, string?, IRegisterAi, ILogger, string?)"/>
 /// start RegisterAI and wait for it within <see cref="McpRegistrar.ToolBudget"/>, and
 /// each is awaited, so no request thread of Kestrel's that the page is waiting on
@@ -125,10 +125,7 @@ internal sealed class RegisterAiPageRegistration(IRegisterAi tool, string? image
     /// hooks saved, never from a variable.
     /// </remarks>
     /// <returns>The arguments.</returns>
-    private async Task<IReadOnlyList<string>> RelayArgumentsAsync() =>
-        (await RegistrationTarget.ResolveAsync(imagePath).ConfigureAwait(false)).Target is { } target
-            ? (await InstallerSettings.SavedForAsync(target.InstallRoot, InstallLocation.AppId).ConfigureAwait(false)).RelayArguments
-            : InstallerSettings.None.RelayArguments;
+    private Task<IReadOnlyList<string>> RelayArgumentsAsync() => InstallerSettings.RelayArgumentsForAsync(imagePath, InstallLocation.AppId);
 }
 
 /// <summary>What the page says after a registration action, Q309 b.</summary>

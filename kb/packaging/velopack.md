@@ -1329,6 +1329,42 @@ and the library's own comment says 30 s too. The 60 s this article already recor
 the uninstall hook's and the wait for the calling program's exit, never the update
 hook's.
 
+### Why every hook has a limit, and nothing changes it -- read 2026-11-18
+
+`[FLOATS]` on Velopack **1.2.161**, tag `1.2.161`, commit `92d6a1c9`, and on `develop` at
+`309654501fce6327f75be3a9372bf01bca424179`, its newest commit on 2026-11-16, read on GitHub on
+2026-11-18 for the maintainer's 174, in his words verbatim: *"174 rec - also explain to me why
+velopack even has this limit and cehck if we cannot disable or increase that limit"*.
+
+**Each limit is a number at the call, and nothing reaches it.** `run_hook(locator, hook_name,
+timeout_secs)`, `src/bins/src/windows/util.rs:19`, waits the seconds its caller passes and then
+kills the hook (`:38` and `:51`), and every caller passes a literal: `--veloapp-install` 30
+(`install.rs:245`), `--veloapp-updated` 15 and `--veloapp-obsolete` 15
+(`apply_windows_impl.rs:219` and `:153` at the tag, `:186` and `:164` on `develop`), and
+`--veloapp-uninstall` 60 (`uninstall.rs:24`). No `vpk` flag, manifest field, environment
+variable or library call is read on that path, at the tag or on `develop`. The documentation
+says it in its own words, *"If your application receives one of these arguments and does not
+exit within the alloted time, it will be killed."* ([hooks](https://docs.velopack.io/integrating/hooks),
+read the same day), and still gives the uninstall hook 30 s against the code's 60.
+
+**Why, in the words of Velopack's maintainer.**
+[velopack/velopack#303](https://github.com/velopack/velopack/issues/303), *"Responsive Hooks"*,
+opened by caesay on 2024-10-23 and open on 2026-11-18: *"Elongating or removing the hook timeouts
+will not work, because there is no progress response to the user - or worse, if the program has
+not implemented hooks or is hung, it will also hang the install/update/uninstall processes."*
+What it proposes is a pipe the hook pings and reports progress over, under a hard limit of about
+five minutes; asked for news on 2025-08-21, he answered *"This issue is something we want to do
+but is not currently prioritised so I can't give you an idea on when it is coming."*
+[#297](https://github.com/velopack/velopack/issues/297), which asked for a pack option to extend
+the timeouts, was closed the day #303 was opened, *"Closing for #303"*.
+
+**So a hook does only what fits its limit with a margin, and the rest moves to where nothing
+outside BrowserAI waits.** Since 2026-11-18 the update hook registers with no client, and the
+background's first start after the update runs that pass with RegisterAI's own 30 s; the install
+hook's registration waits 22 s of its 30; the uninstall hook's waits what the background's stop
+has left of its 60, and at least 7 s (`RegistrationBudget`, [the numbers](../numbers.md)). Re-read
+`run_hook`'s callers at the tag the build pins, and #303's state.
+
 ### The download changes the install before any apply, and Velopack checks nothing by itself
 
 The download step overwrites `Update.exe` and deletes the installed version's own

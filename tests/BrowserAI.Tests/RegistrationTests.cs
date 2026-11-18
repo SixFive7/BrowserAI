@@ -516,7 +516,7 @@ internal sealed class RegistrationTests
         await Assert.That(FakeRegisterAi.Option(call, "--client")).IsEqualTo("all");
         await Assert.That(FakeRegisterAi.Option(call, "--scope")).IsEqualTo("user");
         await Assert.That(FakeRegisterAi.Option(call, "--owned-root")).IsEqualTo(install.Path);
-        await Assert.That(FakeRegisterAi.Option(call, "--timeout")).IsEqualTo("12");
+        await Assert.That(FakeRegisterAi.Option(call, "--timeout")).IsEqualTo("20");
         await Assert.That(FakeRegisterAi.Command(call)).IsEqualTo(InstalledLayout.ServerIn(install.Path));
 
         // The whole pass is what was asked for, which is the one aggregate the

@@ -280,6 +280,15 @@ more* link to its detail; nothing else depends on it.
   beside the browser it leaves running now says that, by a session or by another program. It
   is in the sweep's result, which the suite reads; no log line carries it, before or after.
 
+- 🔧 **An update registers BrowserAI with the clients once it is installed, outside Velopack's 15 seconds.**
+  Velopack stops the program it runs during an update after 15 seconds, and a client slowed by a
+  busy machine could take BrowserAI's registration past that, which cut off the steps after it:
+  the PATH entry, the sign-in task, what a click on a notification opens and the dashboard's folder
+  links. The background now registers when it first starts after the update, with RegisterAI's own
+  30 seconds. An install gives the registration 22 of its 30 seconds, the dashboard's buttons and
+  its status page wait 30 seconds, and an uninstall gives it what stopping the background has left
+  of its 60. [`DECISIONS.md`](DECISIONS.md) has the decision, the maintainer's 174.
+
 ### Removed
 
 - 🗑️ **BrowserAI no longer sets Firefox's safe-mode variable, because Playwright sets it itself.**

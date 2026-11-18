@@ -267,6 +267,9 @@ internal static class HookRegistration
         ArgumentNullException.ThrowIfNull(userPath);
         ArgumentNullException.ThrowIfNull(tasks);
 
+        // What the hook has spent of Velopack's limit, which the uninstall's registration
+        // is given the rest of (174). The process's start before this is in the margin.
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
         var who = clients ?? RegistrationClient.All;
 
         // ⚠️ A SHIPPING COPY OUTSIDE THE STANDARD FOLDER SETS NOTHING UP -- 21, 2026-10-10,
@@ -326,9 +329,25 @@ internal static class HookRegistration
                 // the relay a client starts finds the background for that root.
                 var installed = settings ?? InstallerSettings.None;
 
-                passes = await McpRegistrar.ApplyAsync(who, intent, imagePath, tool, logger, commandArguments: installed.RelayArguments).ConfigureAwait(false);
+                // ⚠️ THE UPDATE HOOK REGISTERS NOTHING -- 174, 2026-11-18, the maintainer's words
+                // verbatim: "174 rec - also explain to me why velopack even has this limit and
+                // cehck if we cannot disable or increase that limit". Velopack kills this hook at
+                // 15 s and offers no way to change that, and a slow client could take the whole
+                // run past it, cutting off every step below. The background's first start after
+                // the update runs the pass with RegisterAI's own budget and writes the record
+                // (AfterUpdateRegistration); the install and the uninstall keep theirs here, each
+                // with a budget sized against Velopack's limit for that hook, the uninstall's by
+                // what the background's stop above has left of it.
+                if (intent is not RegistrationIntent.Update)
+                {
+                    var budget = intent is RegistrationIntent.Install
+                        ? RegistrationBudget.Install
+                        : RegistrationBudget.ForUninstallAfter(System.Diagnostics.Stopwatch.GetElapsedTime(started));
 
-                await WriteRecordAsync(paths.RootAppDir, passes, intent, version, logger).ConfigureAwait(false);
+                    passes = await McpRegistrar.ApplyAsync(who, intent, imagePath, tool, logger, commandArguments: installed.RelayArguments, budget: budget).ConfigureAwait(false);
+
+                    await WriteRecordAsync(paths.RootAppDir, passes, intent, version, logger).ConfigureAwait(false);
+                }
 
                 // ⚠️ THE INSTALL'S FOLDER ON THE USER'S PATH -- Q294 b, 2026-09-24. A
                 // Codex project entry names `BrowserAI.exe --mcp` alone (since
@@ -508,7 +527,19 @@ internal static class HookRegistration
         return report;
     }
 
-    private static async Task WriteRecordAsync(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version, ILogger logger)
+    /// <summary>Writes the record of a pass into the data root, and says so in the log.</summary>
+    /// <param name="root">The data root.</param>
+    /// <param name="passes">One pass per client.</param>
+    /// <param name="intent">Which hook, or which start after an update, ran the pass.</param>
+    /// <param name="version">The version that ran it.</param>
+    /// <param name="logger">Where the outcome is said.</param>
+    /// <returns>The write. Never throws: a record that cannot be written is a line in the log.</returns>
+    /// <remarks>
+    /// <b>Internal since 2026-11-18</b>, the maintainer's 174: the background's first start
+    /// after an update writes the record the update hook wrote until that day
+    /// (<see cref="AfterUpdateRegistration"/>).
+    /// </remarks>
+    internal static async Task WriteRecordAsync(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version, ILogger logger)
     {
         var path = RegistrationRecord.PathFor(root);
 

@@ -57,6 +57,9 @@ internal sealed class FakeRegisterAi : IRegisterAi
     /// <summary>Every command line, in order.</summary>
     public List<IReadOnlyList<string>> Calls { get; } = [];
 
+    /// <summary>How long the caller would have waited for each run, in the order of <see cref="Calls"/>.</summary>
+    public List<TimeSpan> Waits { get; } = [];
+
     /// <summary>The verb of each call.</summary>
     public List<string> Verbs => [.. Calls.Select(call => call[0])];
 
@@ -108,7 +111,11 @@ internal sealed class FakeRegisterAi : IRegisterAi
     }
 
     /// <inheritdoc/>
-    public Task<ToolRun> RunAsync(IReadOnlyList<string> arguments, TimeSpan budget) => AnsweredAsync(arguments);
+    public Task<ToolRun> RunAsync(IReadOnlyList<string> arguments, TimeSpan budget)
+    {
+        Waits.Add(budget);
+        return AnsweredAsync(arguments);
+    }
 
     /// <summary>What a run answers, decided the way RegisterAI decides.</summary>
     /// <param name="arguments">The command line.</param>

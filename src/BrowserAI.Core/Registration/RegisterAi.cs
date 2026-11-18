@@ -129,6 +129,7 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
         }
 
         LaunchedProcess? process = null;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
 
         try
         {
@@ -169,8 +170,10 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
             }
 
             // A child that kept the pipes open would hold them for ever, so the wait is
-            // bounded, and shared by the two.
-            using var drain = new CancellationTokenSource(ProcessBounds.RegisterAiOutputDrain);
+            // bounded, and shared by the two. ⚠️ By what is left of the budget since
+            // 2026-11-18, the maintainer's 174 (previously a fixed 5 s on top of it, which took
+            // a stopped run to 19 s inside the update hook's 15).
+            using var drain = new CancellationTokenSource(DrainFor(budget, clock.Elapsed));
             var said = await output.WithinAsync(drain.Token).ConfigureAwait(false);
             var complained = await error.WithinAsync(drain.Token).ConfigureAwait(false);
 
@@ -182,6 +185,22 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
         {
             process?.Dispose();
         }
+    }
+
+    /// <summary>How long the two pipes may still be drained once the run is over or stopped.</summary>
+    /// <param name="budget">What the caller gave the whole run.</param>
+    /// <param name="elapsed">How long the run has taken so far.</param>
+    /// <returns><see cref="ProcessBounds.RegisterAiOutputDrain"/>, or what is left of the budget when that is less, and never less than nothing.</returns>
+    /// <remarks>
+    /// <b>Added 2026-11-18, the maintainer's 174.</b> A run stopped at its budget has nothing
+    /// left, so what its pipes had delivered by then is what is read; a run that ended early
+    /// keeps the full drain for a client that still holds a pipe.
+    /// </remarks>
+    internal static TimeSpan DrainFor(TimeSpan budget, TimeSpan elapsed)
+    {
+        var left = budget - elapsed;
+
+        return left <= TimeSpan.Zero ? TimeSpan.Zero : left < ProcessBounds.RegisterAiOutputDrain ? left : ProcessBounds.RegisterAiOutputDrain;
     }
 
     /// <summary>One pipe, read to its end without a thread, its text kept as it arrives.</summary>

@@ -94,12 +94,17 @@ namespace BrowserAI.Updates;
 /// <c>--veloapp-uninstall</c> 60 s
 /// ([kb](../../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)) -- and
 /// anything slow or interactive in one is a broken install. The registration
-/// is one run of RegisterAI for both clients, bounded at
-/// <see cref="Registration.McpRegistrar.ToolTimeout"/> for the whole run, and it can
+/// is one run of RegisterAI for both clients, bounded for the whole run, and it can
 /// neither prompt nor block: see <see cref="Registration.McpRegistrar"/>.
 /// <i>Corrected 2026-10-03 (previously "The registration call is measured at 613-645
 /// ms with a 10 s budget of its own"), which described one client's own command,
-/// run by BrowserAI.</i>
+/// run by BrowserAI.</i> ⚠️ <i>Corrected 2026-11-18 (previously "bounded at
+/// <c>McpRegistrar.ToolTimeout</c> for the whole run" in every hook)</i>, the maintainer's
+/// 174: each hook's budget is sized against Velopack's limit for it
+/// (<see cref="Registration.RegistrationBudget"/>), and <c>--veloapp-updated</c> runs no
+/// registration at all, because Velopack kills it at 15 s and offers no way to change that;
+/// the background's first start after the update runs the pass
+/// (<see cref="Registration.AfterUpdateRegistration"/>).
 /// </para>
 /// <para>
 /// <b><c>OnBeforeUpdate</c> deliberately registers nothing.</b> It runs as the
@@ -477,6 +482,14 @@ internal static class VelopackStartup
                 // "{Status}. " and "{Change}. ", before a detail that already says it).
                 $"BrowserAI {version} -- MCP registration with {pass.DisplayName} ({intent}): {pass.Report.Detail}",
                 null);
+        }
+
+        // ⚠️ AN UPDATE'S REGISTRATION RUNS AFTER THE HOOK -- 174, 2026-11-18. The line says
+        // where, so a log with no client's line for an update is not read as one that
+        // skipped the clients.
+        if (intent is RegistrationIntent.Update && outcome.NotSetUp is null)
+        {
+            log(VelopackLogLevel.Information, $"BrowserAI {version} -- MCP registration ({intent}): left to the background's first start after this update, which runs it with RegisterAI's own budget and writes the record.", null);
         }
 
         // The install's folder on the user's PATH (Q294 b), in the installer's own

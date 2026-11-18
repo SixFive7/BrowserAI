@@ -59,6 +59,20 @@ internal sealed record InstallerSettings(string? DataRoot, string? UpdateSource)
         return new(StandardLocation.DataRootFor(packId, SignInTask.DataRootIn(saved)), SignInTask.UpdateSourceIn(saved));
     }
 
+    /// <summary>The arguments the install an image belongs to registers its relay with, as its hooks saved them.</summary>
+    /// <remarks>
+    /// <b>Shared since 2026-11-18</b> by the dashboard's Register and Repair, which had it to
+    /// themselves from 2026-10-10, and the background's first start after an update, which
+    /// writes the entry the update hook wrote until that day (the maintainer's 174).
+    /// </remarks>
+    /// <param name="imagePath">The running image.</param>
+    /// <param name="packId">The pack id the install came from.</param>
+    /// <returns>The arguments: <c>--mcp</c> alone for an image that is not an install.</returns>
+    public static async Task<IReadOnlyList<string>> RelayArgumentsForAsync(string? imagePath, string? packId) =>
+        (await RegistrationTarget.ResolveAsync(imagePath).ConfigureAwait(false)).Target is { } target
+            ? (await SavedForAsync(target.InstallRoot, packId).ConfigureAwait(false)).RelayArguments
+            : None.RelayArguments;
+
     /// <summary>
     /// The hooks' one read of the installer's environment, and for a setting it does
     /// not name, the value the install wrote into its task.
