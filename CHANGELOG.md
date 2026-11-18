@@ -252,6 +252,14 @@ more* link to its detail; nothing else depends on it.
   [`TODO.md`](TODO.md) watches the issue reported upstream.
   [`DECISIONS.md`](DECISIONS.md) has the decision, the maintainer's 208.
 
+- ✅ **The gate-driver arms run under the Store's PowerShell, and what it starts stays in their job.**
+  Windows refuses to start a packaged app such as the Store's PowerShell 7.7 inside a job, so
+  the four arms that run the PowerShell gate drivers were red on a machine whose PowerShell came
+  from the Store. BrowserAI's launcher now starts such an app suspended, with the Windows policy
+  that keeps every process it starts inside, puts it in its job and then lets it run. Without
+  that policy what PowerShell started was created outside the job and outlived it. BrowserAI
+  itself starts no packaged app, and its own launches are unchanged.
+
 ### Removed
 
 - 🗑️ **BrowserAI no longer sets Firefox's safe-mode variable, because Playwright sets it itself.**

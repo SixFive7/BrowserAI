@@ -1,0 +1,4 @@
+f0875af73fc1261f5c686a21ed4b13a247efab4a86fa159fcc65e8a68b5dc58d  pkgjob2.cs -> pkgjob2.cs.txt  (stored with .txt appended, as a record and not a source file)
+6ea7ad94cd3f4e069b49387371935bcb412e2a39af9ab32872bd723238af8649  run4.sh -> run4.sh.txt  (stored with .txt appended, as a record and not a source file)
+3da7d6fcb92ce616ef5cb5acb67424ec2b5b58d79ac07fe6b618e462cacb466d  below.ps1 -> below.ps1.txt  (stored with .txt appended, as a record and not a source file)
+35caf67aac39ee82c7a3bf92f77c99d49cf5c095310bacd578b8b61b4bd4f6c5  run4.out -> run4.out.txt  (its line ends made LF, as the repository stores text, and .txt appended)

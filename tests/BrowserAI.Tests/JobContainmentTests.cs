@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO.Pipes;
 using System.Text.Json.Nodes;
+using BrowserAI.Interop;
 using BrowserAI.TestProbe;
 using BrowserAI.Tests.Harness;
 
@@ -337,6 +338,100 @@ internal sealed class JobContainmentTests
         var node = RepositoryPayload.Layout.NodeExecutable;
 
         _ = await RunAsync("job-node-tree", node, ["-e", NodeTreeScript, "{ready}"], expectedMinimumProcesses: 3);
+    }
+
+    /// <summary>
+    /// The PowerShell the gate drivers run under, the Microsoft Store's packaged one
+    /// included, is in the job with everything it starts, and nothing it started survives
+    /// the launcher.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The maintainer's 188 a, 2026-11-18, in his words verbatim:</b> <i>"188 a - only
+    /// surface this question again after you have verified if that solution works."</i>
+    /// The Store's PowerShell 7.7 is an app execution alias, for which Windows refuses the
+    /// job list, so <c>JobLauncher</c> starts it suspended with the desktop-app policy that
+    /// keeps its descendants in its package's environment, assigns it and resumes it.
+    /// Without the policy the process PowerShell starts is created outside the job and
+    /// outlives it, measured 2026-11-18
+    /// ([kb](../../kb/windows/processes.md#a-packaged-executable-is-refused-a-job-list-and-what-it-starts-leaves-the-job-unless-the-desktop-app-policy-keeps-it----measured-2026-11-18)).
+    /// </para>
+    /// <para>
+    /// <b>Both ways a driver starts a child</b>: <c>Process.Start</c> with
+    /// <c>UseShellExecute</c> off, and <c>Start-Process -NoNewWindow</c>. The child is the
+    /// test probe's holder, which outlives the arm's patience, and PowerShell writes its pid
+    /// to the ready file. The arm requires that pid in the walk of the job's tree, whose
+    /// every row is held to be in the job and gone after the launcher, so a child the walk
+    /// could not reach fails the arm and never passes it vacuously.
+    /// </para>
+    /// <para>
+    /// <b>Whatever PowerShell the search path names</b>, the way <c>GateDriverTests</c> runs
+    /// the drivers: where that PowerShell is not packaged the launch is an ordinary one, held
+    /// to the same claim.
+    /// </para>
+    /// </remarks>
+    /// <param name="how">How PowerShell starts its child.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments("process-start")]
+    [Arguments("start-process")]
+    public async Task ThePowerShellOfTheGateDriversAndEverythingItStartsAreContained(string how)
+    {
+        ArgumentNullException.ThrowIfNull(how);
+
+        var shell = Shells.PowerShell;
+
+        await Assert.That(shell).IsNotNull().Because("no pwsh.exe is on the search path, and every PowerShell driver runs under it");
+
+        var hold = (TestDefaults.ProcessHang * 2).TotalSeconds.ToString("F0", CultureInfo.InvariantCulture);
+        var start = how is "process-start"
+            ? $"$psi = [System.Diagnostics.ProcessStartInfo]::new('{ProbePath}'); $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $psi.ArgumentList.Add('registerai-holder'); $psi.ArgumentList.Add('{hold}'); $p = [System.Diagnostics.Process]::Start($psi)"
+            : $"$p = Start-Process -FilePath '{ProbePath}' -ArgumentList 'registerai-holder','{hold}' -NoNewWindow -PassThru";
+        var script = $"{start}; @{{ pwshPid = $PID; childPid = $p.Id }} | ConvertTo-Json -Compress | Set-Content -LiteralPath '{{ready}}' -NoNewline; $p.WaitForExit()";
+
+        var report = await RunAsync($"job-pwsh-{how}", shell!, ["-NoProfile", "-NonInteractive", "-Command", script], expectedMinimumProcesses: 3);
+        var child = report["childReport"]!;
+
+        await Assert.That((int)child["pwshPid"]!).IsEqualTo((int)report["rootChildPid"]!).Because(report.ToJsonString());
+        await Assert.That(report["walk"]!.AsArray().Select(row => (int)row!["pid"]!)).Contains((int)child["childPid"]!)
+            .Because($"the process PowerShell started is not in the walk of the job's tree, so it was outside the job. The launcher reported: {report.ToJsonString()}");
+    }
+
+    /// <summary>
+    /// Only an app execution alias takes the packaged launch: an ordinary executable, a
+    /// directory junction, a directory and a path that does not exist take the job list.
+    /// </summary>
+    /// <remarks>
+    /// <b>The positive half is the PowerShell the search path names</b>, an alias exactly
+    /// when it is under <c>%LOCALAPPDATA%\Microsoft\WindowsApps</c>, where Windows puts the
+    /// aliases of packaged apps. The junction is the control that the reparse tag is read
+    /// and not only the reparse-point attribute, because a junction has that attribute too.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task OnlyAnAppExecutionAliasTakesThePackagedLaunch()
+    {
+        var shell = Shells.PowerShell;
+
+        await Assert.That(shell).IsNotNull().Because("no pwsh.exe is on the search path, and every PowerShell driver runs under it");
+
+        var aliases = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps") + Path.DirectorySeparatorChar;
+        var isAlias = shell!.StartsWith(aliases, StringComparison.OrdinalIgnoreCase);
+
+        await Assert.That(JobLauncher.IsAppExecutionAlias(shell)).IsEqualTo(isAlias).Because($"'{shell}' is {(isAlias ? string.Empty : "not ")}under '{aliases}'");
+        await Assert.That(JobLauncher.IsAppExecutionAlias(ProbePath)).IsFalse();
+        await Assert.That(JobLauncher.IsAppExecutionAlias(Path.Combine(Environment.SystemDirectory, "cmd.exe"))).IsFalse();
+
+        using var scratch = await ScratchDirectory.CreateAsync("alias-check");
+
+        var target = Directory.CreateDirectory(Path.Combine(scratch.Path, "target")).FullName;
+        var link = Path.Combine(scratch.Path, "link");
+
+        await PathAliases.JunctionAsync(link, target);
+
+        await Assert.That(JobLauncher.IsAppExecutionAlias(link)).IsFalse().Because("a junction is a reparse point and not an app execution alias");
+        await Assert.That(JobLauncher.IsAppExecutionAlias(target)).IsFalse();
+        await Assert.That(JobLauncher.IsAppExecutionAlias(Path.Combine(scratch.Path, "absent.exe"))).IsFalse();
     }
 
     /// <summary>

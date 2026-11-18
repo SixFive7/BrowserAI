@@ -1649,6 +1649,12 @@ nothing else, assigned at creation through `PROC_THREAD_ATTRIBUTE_JOB_LIST`, hel
 for the child's whole life. **Closing the handle is the only kill path** -- there
 is no `Process.Kill(entireProcessTree)` anywhere in the tree, and the analyzer
 refuses one.
+⚠️ *Added 2026-11-18 by addition, the maintainer's 188 a:* **one launch is assigned just
+after creation, and it is a packaged app's.** Windows refuses the job list for an app execution
+alias, so `JobLauncher.Start` creates one suspended, with the desktop-app policy that keeps
+everything it starts inside, assigns it and resumes it. The product starts no packaged app; the
+suite's PowerShell gate-driver arms do, under the Microsoft Store's PowerShell
+([kb](kb/windows/processes.md#a-packaged-executable-is-refused-a-job-list-and-what-it-starts-leaves-the-job-unless-the-desktop-app-policy-keeps-it----measured-2026-11-18)).
 
 **stdout is the protocol channel and one type owns it.** Nothing anywhere in the
 process may call `Console.WriteLine`, including inside a `catch`; the rule extends

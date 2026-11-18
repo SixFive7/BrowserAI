@@ -28,6 +28,23 @@ namespace BrowserAI.Interop;
 /// mid-sequence.
 /// </para>
 /// <para>
+/// ⚠️ <b>One launch takes that shape anyway: an app execution alias</b>, the file a
+/// packaged (MSIX) app such as the Microsoft Store's PowerShell puts on the search path
+/// -- <i>added 2026-11-18 by addition</i>, the maintainer's 188 a, in his words verbatim:
+/// <i>"188 a - only surface this question again after you have verified if that solution
+/// works."</i> Windows refuses <c>PROC_THREAD_ATTRIBUTE_JOB_LIST</c> for such a launch
+/// with <c>ERROR_ACCESS_DENIED</c>, with or without a desktop-app policy beside it, and
+/// a packaged process started by a process already in the job, or with one as its
+/// <c>PROC_THREAD_ATTRIBUTE_PARENT_PROCESS</c>, is not in the job at all. So an alias is
+/// started suspended with <c>PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY</c> set to
+/// <c>PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE</c>, assigned and then
+/// resumed. Without the policy what it starts is created outside the job and survives
+/// its close; with it every descendant was in the job and gone at the close and when the
+/// launcher was ended
+/// ([kb](../../../kb/windows/processes.md#a-packaged-executable-is-refused-a-job-list-and-what-it-starts-leaves-the-job-unless-the-desktop-app-policy-keeps-it----measured-2026-11-18)).
+/// Every other launch is unchanged and takes the job list.
+/// </para>
+/// <para>
 /// <b>The command line is a <see cref="char"/> buffer, not a string.</b>
 /// <c>CreateProcessW</c> mutates the buffer it is given, so passing a managed
 /// string is undefined behaviour, and <c>[LibraryImport]</c> does not support
@@ -78,7 +95,18 @@ internal static partial class JobLauncher
 {
     private const uint CreateUnicodeEnvironment = 0x00000400;
     private const uint CreateNoWindow = 0x08000000;
+    private const uint CreateSuspended = 0x00000004;
     private const uint ExtendedStartupInfoPresent = 0x00080000;
+    private const uint DesktopAppBreakawayDisableProcessTree = 0x00000002;
+    private const uint FileAttributeReparsePoint = 0x00000400;
+    private const uint InvalidFileAttributes = 0xFFFFFFFF;
+    private const uint IoReparseTagAppExecLink = 0x8000001B;
+    private const uint FileReadAttributes = 0x00000080;
+    private const uint FileShareAll = 0x00000007;
+    private const uint OpenExisting = 3;
+    private const uint FileFlagOpenReparsePoint = 0x00200000;
+    private const uint FileFlagBackupSemantics = 0x02000000;
+    private const int FileAttributeTagInformation = 9;
     private const uint StartFUseStdHandles = 0x00000100;
     private const uint StartFUseShowWindow = 0x00000001;
     private const ushort ShowNoActivate = 4;
@@ -92,6 +120,10 @@ internal static partial class JobLauncher
     // the inherited set EXACT and not "every inheritable handle in the
     // process", which is what bInheritHandles alone means.
     private static readonly nuint ProcThreadAttributeHandleList = 0x00020002;
+
+    // ProcThreadAttributeDesktopAppPolicy = 18, same encoding: 18 | 0x00020000. Set on an
+    // app execution alias only, and see the class remarks for why.
+    private static readonly nuint ProcThreadAttributeDesktopAppPolicy = 0x00020012;
 
     /// <summary>
     /// Starts <paramref name="command"/> inside <paramref name="job"/>.
@@ -172,6 +204,11 @@ internal static partial class JobLauncher
         ArgumentNullException.ThrowIfNull(workingDirectory);
         ArgumentNullException.ThrowIfNull(environment);
 
+        // An app execution alias cannot be given the job list, so it is started
+        // suspended, kept with its descendants in its package's environment, and
+        // assigned below: see the class remarks. Asked only for a launch into a job.
+        var packaged = job is not null && IsAppExecutionAlias(command);
+
         var pipes = ChildPipes.Create();
 
         // Native, because STARTUPINFO carries a pointer and CreateProcessW reads it
@@ -184,8 +221,9 @@ internal static partial class JobLauncher
             // three named here are the three the STARTUPINFO below points at,
             // which the handle-list attribute requires.
             using var attributes = ProcessAttributeList.For(
-                job,
-                [pipes.ChildStandardInput, pipes.ChildStandardOutput, pipes.ChildStandardError]);
+                packaged ? null : job,
+                [pipes.ChildStandardInput, pipes.ChildStandardOutput, pipes.ChildStandardError],
+                keepDescendantsInThePackage: packaged);
 
             var commandLine = BuildCommandLine(command, arguments);
             var environmentBlock = BuildEnvironmentBlock(environment);
@@ -290,7 +328,7 @@ internal static partial class JobLauncher
                     nint.Zero,
                     nint.Zero,
                     bInheritHandles: true,
-                    ExtendedStartupInfoPresent | CreateUnicodeEnvironment | CreateNoWindow,
+                    ExtendedStartupInfoPresent | CreateUnicodeEnvironment | CreateNoWindow | (packaged ? CreateSuspended : 0u),
                     environmentBlock,
                     workingDirectory,
                     ref startupInfo,
@@ -311,6 +349,13 @@ internal static partial class JobLauncher
             // makes the object holding it safe, and the two are different
             // problems.
             GC.KeepAlive(job);
+
+            if (packaged)
+            {
+                // Into the job before its first instruction runs, so nothing it
+                // starts can be created before the assignment.
+                JoinAndResume(job!, information, command);
+            }
 
             // The thread handle is of no use to anyone: the child is running,
             // not suspended, so there is nothing to resume.
@@ -339,6 +384,97 @@ internal static partial class JobLauncher
                 Marshal.FreeHGlobal(desktopName);
             }
         }
+    }
+
+    /// <summary>
+    /// Whether <paramref name="path"/> is an app execution alias: the reparse point a
+    /// packaged (MSIX) app puts on the search path, such as the Microsoft Store's
+    /// PowerShell under <c>%LOCALAPPDATA%\Microsoft\WindowsApps</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Read from the file's own reparse tag, and never from where it is.</b> A path
+    /// that is not a reparse point at all costs one attribute query and answers
+    /// <see langword="false"/>, which is every launch the product makes: its payload's
+    /// <c>node.exe</c>, the browsers and RegisterAI are ordinary files. A reparse point
+    /// is opened for its attributes alone, through the point and not to its target, and
+    /// answers <see langword="true"/> only for <c>IO_REPARSE_TAG_APPEXECLINK</c>, so a
+    /// junction or a symbolic link is not mistaken for one.
+    /// </para>
+    /// <para>
+    /// <b>Anything it cannot read answers <see langword="false"/></b>, and the launch
+    /// then goes the ordinary way and fails, if it fails, with the error
+    /// <c>CreateProcessW</c> gives it today.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The executable's absolute path.</param>
+    /// <returns>Whether the launch has to take the packaged shape.</returns>
+    internal static bool IsAppExecutionAlias(string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+
+        var attributes = GetFileAttributesW(path);
+
+        if (attributes == InvalidFileAttributes || (attributes & FileAttributeReparsePoint) == 0)
+        {
+            return false;
+        }
+
+        using var handle = CreateFileW(
+            path,
+            FileReadAttributes,
+            FileShareAll,
+            nint.Zero,
+            OpenExisting,
+            FileFlagOpenReparsePoint | FileFlagBackupSemantics,
+            nint.Zero);
+
+        return !handle.IsInvalid
+            && GetFileInformationByHandleEx(handle, FileAttributeTagInformation, out var tag, (uint)Unsafe.SizeOf<FileAttributeTagInfo>())
+            && (tag.FileAttributes & FileAttributeReparsePoint) != 0
+            && tag.ReparseTag == IoReparseTagAppExecLink;
+    }
+
+    /// <summary>
+    /// Puts a suspended packaged child in its job and lets its first thread run, or ends
+    /// it before it ran when either step is refused.
+    /// </summary>
+    /// <remarks>
+    /// <b>The window this shape has and the job list does not</b>, measured 2026-11-18 on
+    /// this machine: the process exists inside <c>CreateProcessW</c>, whose packaged
+    /// launch took 88 ms to 3.2 s, and outside every job of ours until the assignment,
+    /// which took 72 µs to 44 ms. A parent ended inside that window leaves a suspended
+    /// child behind, which has run nothing and started nothing. After the assignment the
+    /// child and everything it starts end with the job.
+    /// </remarks>
+    /// <param name="job">The job it joins.</param>
+    /// <param name="information">What <c>CreateProcessW</c> answered.</param>
+    /// <param name="command">The executable, for the message.</param>
+    /// <exception cref="Win32Exception">Windows refused the assignment or the resume; the child was ended.</exception>
+    private static void JoinAndResume(JobObject job, ProcessInformation information, string command)
+    {
+        if (!AssignProcessToJobObject(job.Handle, information.Process))
+        {
+            var error = Marshal.GetLastPInvokeError();
+            EndBeforeItRan(information);
+            throw new Win32Exception(error, $"AssignProcessToJobObject could not put '{command}' in its job, so it was ended before it ran.");
+        }
+
+        if (ResumeThread(information.Thread) == uint.MaxValue)
+        {
+            var error = Marshal.GetLastPInvokeError();
+            EndBeforeItRan(information);
+            throw new Win32Exception(error, $"ResumeThread could not start '{command}' after it joined its job, so it was ended.");
+        }
+    }
+
+    /// <summary>Ends a child this launch created and closes both of its handles.</summary>
+    /// <param name="information">What <c>CreateProcessW</c> answered.</param>
+    private static void EndBeforeItRan(ProcessInformation information)
+    {
+        _ = TerminateProcess(information.Process, 1);
+        _ = CloseHandle(information.Thread);
+        _ = CloseHandle(information.Process);
     }
 
     /// <summary>
@@ -675,6 +811,13 @@ internal static partial class JobLauncher
         public uint ThreadId;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FileAttributeTagInfo
+    {
+        public uint FileAttributes;
+        public uint ReparseTag;
+    }
+
 #pragma warning restore CS0649
 
     /// <summary>
@@ -718,28 +861,24 @@ internal static partial class JobLauncher
     /// </remarks>
     private sealed class ProcessAttributeList : IDisposable
     {
-        /// <summary>The job, then the handle list when there is one.</summary>
-        private const int AttributeCount = 2;
-
-        /// <summary>The job alone, for a launch that inherits nothing.</summary>
-        private const int JobOnly = 1;
-
         private readonly SafeJobHandle? _job;
         private readonly nint _jobHandleStorage;
         private readonly nint _handleListStorage;
+        private readonly nint _policyStorage;
 
-        private ProcessAttributeList(nint list, SafeJobHandle? job, nint jobHandleStorage, nint handleListStorage)
+        private ProcessAttributeList(nint list, SafeJobHandle? job, nint jobHandleStorage, nint handleListStorage, nint policyStorage)
         {
             Pointer = list;
             _job = job;
             _jobHandleStorage = jobHandleStorage;
             _handleListStorage = handleListStorage;
+            _policyStorage = policyStorage;
         }
 
         /// <summary>The attribute list, for the one call that reads it.</summary>
         public nint Pointer { get; }
 
-        public static ProcessAttributeList For(JobObject? job, IReadOnlyList<nint> inheritable)
+        public static ProcessAttributeList For(JobObject? job, IReadOnlyList<nint> inheritable, bool keepDescendantsInThePackage = false)
         {
             // ⚠️ NO HANDLE LIST WHEN NOTHING IS INHERITED -- added 2026-10-03 with
             // StartInJob. The list is the exact set a launch with bInheritHandles
@@ -749,7 +888,12 @@ internal static partial class JobLauncher
             // ⚠️ AND NO JOB FOR A LAUNCH OUTSIDE ANY JOB -- added 2026-10-11 with
             // StartOutsideAnyJob, whose child keeps what it starts running after it
             // has gone, as a process started without a job always has.
-            var attributes = (job is null ? 0 : JobOnly) + (inheritable.Count is 0 ? 0 : AttributeCount - JobOnly);
+            //
+            // ⚠️ AND THE DESKTOP-APP POLICY FOR AN APP EXECUTION ALIAS ALONE -- added
+            // 2026-11-18 with 188 a. Such a launch is given no job here, because Windows
+            // refuses the job list for it, and is assigned after CreateProcessW returns;
+            // the policy is what keeps everything it starts in the job it joins.
+            var attributes = (job is null ? 0 : 1) + (keepDescendantsInThePackage ? 1 : 0) + (inheritable.Count is 0 ? 0 : 1);
 
             // The documented two-call shape: the first call fails with
             // ERROR_INSUFFICIENT_BUFFER and reports the size.
@@ -770,6 +914,7 @@ internal static partial class JobLauncher
             var list = Marshal.AllocHGlobal((nint)size);
             var jobStorage = nint.Zero;
             var handleStorage = nint.Zero;
+            var policyStorage = nint.Zero;
             var counted = false;
 
             try
@@ -807,9 +952,21 @@ internal static partial class JobLauncher
                     }
                 }
 
+                if (keepDescendantsInThePackage)
+                {
+                    // A DWORD, on the native heap for the reason the job's storage is.
+                    policyStorage = Marshal.AllocHGlobal(sizeof(uint));
+                    Marshal.WriteInt32(policyStorage, (int)DesktopAppBreakawayDisableProcessTree);
+
+                    if (!UpdateProcThreadAttribute(list, 0, ProcThreadAttributeDesktopAppPolicy, policyStorage, sizeof(uint), nint.Zero, nint.Zero))
+                    {
+                        throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not put the desktop-app policy on the process attribute list.");
+                    }
+                }
+
                 if (inheritable.Count is 0)
                 {
-                    return new ProcessAttributeList(list, job?.Handle, jobStorage, handleStorage);
+                    return new ProcessAttributeList(list, job?.Handle, jobStorage, handleStorage, policyStorage);
                 }
 
                 var handleListBytes = nint.Size * inheritable.Count;
@@ -827,7 +984,7 @@ internal static partial class JobLauncher
                         "Could not restrict the child's inherited handles to this launch's own three. Every handle in the list must be inheritable and valid.");
                 }
 
-                return new ProcessAttributeList(list, job?.Handle, jobStorage, handleStorage);
+                return new ProcessAttributeList(list, job?.Handle, jobStorage, handleStorage, policyStorage);
             }
             catch
             {
@@ -838,6 +995,7 @@ internal static partial class JobLauncher
 
                 Free(jobStorage);
                 Free(handleStorage);
+                Free(policyStorage);
                 DeleteProcThreadAttributeList(list);
                 Marshal.FreeHGlobal(list);
                 throw;
@@ -850,6 +1008,7 @@ internal static partial class JobLauncher
             Marshal.FreeHGlobal(Pointer);
             Free(_jobHandleStorage);
             Free(_handleListStorage);
+            Free(_policyStorage);
 
             // The other half of the DangerousAddRef in For, and the reason this
             // type holds the SafeHandle and not only the number it named:
@@ -1000,6 +1159,44 @@ internal static partial class JobLauncher
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CloseHandle(nint hObject);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool AssignProcessToJobObject(SafeJobHandle hJob, nint hProcess);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint ResumeThread(nint hThread);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool TerminateProcess(nint hProcess, uint uExitCode);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial uint GetFileAttributesW(string lpFileName);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial SafeFileHandle CreateFileW(
+        string lpFileName,
+        uint dwDesiredAccess,
+        uint dwShareMode,
+        nint lpSecurityAttributes,
+        uint dwCreationDisposition,
+        uint dwFlagsAndAttributes,
+        nint hTemplateFile);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetFileInformationByHandleEx(
+        SafeFileHandle hFile,
+        int fileInformationClass,
+        out FileAttributeTagInfo lpFileInformation,
+        uint dwBufferSize);
 }
 
 /// <summary>

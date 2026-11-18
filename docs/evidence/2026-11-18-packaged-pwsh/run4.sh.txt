@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# The fourth run of the probe, clean: every arm and every die run in a folder of its own, the
+# environment block sorted as JobLauncher sorts it, the teardown polled for up to 30 s.
+here=/c/Source/SixFive7/BrowserAI/.work/deps-scratch/probes/pkgjob2
+below="$(cygpath -w /c/Source/SixFive7/BrowserAI/.work/deps-scratch/scripts/below.ps1)"
+alias='C:\Users\jori\AppData\Local\Microsoft\WindowsApps\pwsh.exe'
+cd "$here" || exit 9
+mkdir -p run4
+scratch="$(cygpath -w "$here/run4")"
+run() { powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$below" "$1"; }
+echo "RUN4 START $(date -u +%FT%TZ)"
+run "bin\\pkgjob2.exe run $scratch $alias E0 E2 E6 A0 A2 A6 N0 N2 P0 P2 H"
+for arm in E2 E0; do
+  for variant in process-start start-process; do
+    pids="$scratch\\die-$arm-$variant.pids"
+    run "bin\\pkgjob2.exe die $scratch $alias $arm $variant $pids"
+    echo "launcher of $arm $variant exited with $?"
+    sleep 5
+    run "bin\\pkgjob2.exe check $pids"
+  done
+done
+echo "RUN4 DONE $(date -u +%FT%TZ)"

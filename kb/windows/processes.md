@@ -2882,6 +2882,71 @@ opens, and under the suite's lock, since it runs browsers from the shared browse
 Compare each table here with that run's `summary.txt`; the exploration is
 `shared-probe.ps1` beside it.
 
+## A packaged executable is refused a job list, and what it starts leaves the job unless the desktop-app policy keeps it -- measured 2026-11-18
+
+**Measured 2026-11-18 on Windows 11 Pro 10.0.26300 with the Microsoft Store's PowerShell
+7.7.0.0**, `Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe`, installed 2026-11-13 and started
+through its app execution alias `%LOCALAPPDATA%\Microsoft\WindowsApps\pwsh.exe`, for the
+maintainer's 188. The launcher was an unpackaged .NET 11.0.0 process at below-normal priority,
+in no job itself, with a kill-on-close job of its own for every arm. In each arm PowerShell
+started a reporter both ways the gate drivers start a child, `Process.Start` with
+`UseShellExecute` off and `Start-Process -NoNewWindow`, and the reporter started `cmd.exe`,
+which started `ping`. Every pid was read back by its creation time.
+
+| Arms | How PowerShell was started | What happened |
+|---|---|---|
+| A0, A2, A6 | `PROC_THREAD_ATTRIBUTE_JOB_LIST`, the way `JobLauncher` starts every child, with no desktop-app policy, with `PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE`, and with that and `OVERRIDE` | **`CreateProcessW` refused all three with `ERROR_ACCESS_DENIED`**, both ways |
+| E0 | Suspended outside any job, `AssignProcessToJobObject`, `ResumeThread`, with no policy | PowerShell in the job. **The reporter, its `cmd.exe`, their console host and `ping` were outside every job**, with no package identity, and all four were alive 30 s after the job's close and after the launcher was ended, both ways |
+| E2 | The same, with `PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY` set to `DISABLE_PROCESS_TREE` | **PowerShell and every process it started in the job**, 5 to 7 members, all gone 0.3 to 5.8 s after the close; with the launcher ended instead, all 6 were gone, both ways |
+| E6 | The same, with `DISABLE_PROCESS_TREE` and `OVERRIDE` | As E2: 6 and 7 members, all gone 0.3 and 2.2 s after the close |
+| P0, P2 | A suspended `cmd.exe` in the job named through `PROC_THREAD_ATTRIBUTE_PARENT_PROCESS`, with and without the policy | PowerShell started and was **not** in the job, nor was anything it started, and all of them outlived the close |
+| N0, N2 | An unpackaged helper started with the job list starts PowerShell with a plain `CreateProcessW`, with and without the policy | The helper in the job; **PowerShell in a job that is not ours**, and everything it started outside ours, alive after the close |
+| H | The control: `cmd.exe` starting `ping`, with the job list | All three in the job and gone at the close |
+
+Microsoft documents the policy under
+[`UpdateProcThreadAttribute`](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute):
+with no policy set, a desktop app *"will create any child processes outside of the desktop app
+runtime environment"*, and `DISABLE_PROCESS_TREE` creates them inside it and *"is inherited by
+the descendant processes"*. `[FLOATS]` for the Windows build and the PowerShell package: the
+refusal and the escape are what Windows does with a packaged app.
+
+**What the policy changes for what PowerShell starts**, read on the reporter in E2 and E6, both
+ways:
+
+- **It runs with PowerShell's package identity.** `GetCurrentPackageFullName` answered
+  `Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe`, where E0's reporter answered none.
+- **Its writes are not redirected.** A file in the arm's folder, a file under
+  `%LOCALAPPDATA%\Temp` and an `HKCU` value it wrote were each read back at their real place by
+  the unpackaged launcher. The package says the same: its manifest declares
+  `desktop6:FileSystemWriteVirtualization` and `desktop6:RegistryWriteVirtualization` disabled,
+  with the `unvirtualizedResources` capability, and the package has no `VFS` folder.
+- **The environment block and the working directory the launcher passed arrive**: a marker
+  variable reached PowerShell and the reporter, and PowerShell's working directory was the
+  folder named.
+- **Redirected output still works**: PowerShell's standard output, a pipe, carried PowerShell's
+  own lines and the reporter's, which inherited it.
+- **Below-normal priority reached the reporter.**
+
+**The window this launch has and the job list does not.** The packaged `CreateProcessW` took 88
+ms to 3.2 s on this machine and `AssignProcessToJobObject` 72 µs to 44 ms. The process exists
+inside the first call and is outside every job of ours until the second returns, so a launcher
+ended in that window leaves a suspended PowerShell behind that has run nothing and started
+nothing. The launcher-dies runs ended the launcher after the assignment.
+
+**What BrowserAI does with it**, the maintainer's 188 a: `JobLauncher.Start` takes an app
+execution alias, recognised by its reparse tag in `JobLauncher.IsAppExecutionAlias`, through
+the E2 shape, and every other launch through the job list as before. The four `GateDriverTests`
+arms that run the PowerShell drivers run under the Store's PowerShell since,
+`JobContainmentTests.ThePowerShellOfTheGateDriversAndEverythingItStartsAreContained` holds both
+ways of starting a child against an ended launcher, and
+`JobContainmentTests.OnlyAnAppExecutionAliasTakesThePackagedLaunch` holds the recognition, with a
+junction as the control that the tag is read.
+
+**How to re-establish it:** the rig and its run are in
+[the evidence batch](../../docs/evidence/2026-11-18-packaged-pwsh/README.md), which says how to
+build and run it, at below-normal priority and with nothing on the screen; the two arms above
+hold the shipped launch on every run of the suite.
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

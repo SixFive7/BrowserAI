@@ -1,0 +1,808 @@
+#:property TargetFramework=net11.0-windows
+#:property Nullable=enable
+#:property AllowUnsafeBlocks=true
+
+// Can a kill-on-close job hold the Store (MSIX) pwsh AND everything it starts, and end all of
+// it at its close, also when the process holding the job dies? One arm per way of starting pwsh,
+// a fresh job per arm, from this unpackaged process. In every arm pwsh starts this program again
+// as a reporter, through Process.Start with UseShellExecute false or through Start-Process
+// -NoNewWindow; the reporter writes who it is (pid, creation time, package identity, whether it
+// is in a job), writes a file in the scratch folder, one under LocalAppData's Temp and one HKCU
+// value, starts cmd, which starts ping, and waits. pwsh's three streams are pipes whose output is
+// read back, as JobLauncher's are. The job's member list is read, the job is closed, and every
+// pid is read back by its creation time. Nothing here shows a window.
+//
+// Usage: pkgjob2 run <scratch> <alias> [arm ...]     the arms, from this process
+//        pkgjob2 die <scratch> <alias> <arm> <variant> <pidfile>   one arm, then this process
+//                                                    ends itself with the job still open
+//        pkgjob2 report <scratch> <tag>             the reporter pwsh starts
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+using Microsoft.Win32;
+
+const uint KillOnJobClose = 0x00002000;
+
+if (args.Length > 0 && args[0] == "report")
+{
+    return Reporter.Run(args[1], args[2]);
+}
+
+if (args.Length > 0 && args[0] == "nest")
+{
+    return Native.Nest(uint.Parse(args[1]), args[2], Encoding.UTF8.GetString(Convert.FromBase64String(args[3])));
+}
+
+if (args.Length > 0 && args[0] == "check")
+{
+    // Every pid a 'die' run wrote, read back by its creation time, and ended if still alive.
+    var alive = 0;
+    foreach (var row in File.ReadAllLines(args[1]).Where(l => l.Length > 0))
+    {
+        var parts = row.Split(' ');
+        var ident = new Native.Ident(int.Parse(parts[0]), long.Parse(parts[1]), parts[2]);
+        var still = Native.StillAlive(ident);
+        Console.WriteLine($"CHECK {ident} alive {still}");
+        if (still)
+        {
+            alive++;
+            Native.TerminateIdentity(ident);
+        }
+    }
+
+    Console.WriteLine($"CHECK alive after the launcher died: {alive}");
+    return 0;
+}
+
+var mode = args[0];
+var scratch = args[1];
+var alias = args[2];
+Directory.CreateDirectory(scratch);
+var self = Environment.ProcessPath!;
+Console.WriteLine($"runtime {RuntimeInformation.FrameworkDescription}, os {Environment.OSVersion.Version}, launcher pid {Environment.ProcessId}, launcher in a job {Native.SelfInAnyJob()}, priority {Process.GetCurrentProcess().PriorityClass}");
+Console.WriteLine($"alias {alias}");
+
+if (mode == "die")
+{
+    var arm = Arms.All.Single(a => a.Name == args[3]);
+    var variant = args[4];
+    scratch = Path.Combine(scratch, $"die-{arm.Name}-{variant}");
+    Directory.CreateDirectory(scratch);
+    var pidFile = args[5];
+    var job = Native.CreateJob(KillOnJobClose);
+    var started = Arms.Start(arm, alias, self, scratch, variant, job);
+    _ = Reporter.WaitForReport(scratch, $"{arm.Name}-{variant}", 30);
+    var members = Native.Members(job).Select(Native.Identity).ToList();
+    var reported = Reporter.Read(scratch, $"{arm.Name}-{variant}").SelectMany(r => r.Pids).ToList();
+    var everyone = members.Concat(reported).Append(Native.Identity(started.Pid)).DistinctBy(i => (i.Pid, i.Created)).ToList();
+    File.WriteAllLines(pidFile, everyone.Select(m => $"{m.Pid} {m.Created} {m.Image}"));
+    Console.WriteLine($"DIE arm {arm.Name} {variant}: {members.Count} members, {reported.Count} reported, {everyone.Count} written; reported in the job: {string.Join("; ", reported.Select(p => $"{p.Image}:{p.Pid} {Native.InJobByPid(p.Pid, job)}"))}; ending this process with the job open");
+    Console.Out.Flush();
+    Native.TerminateSelf();
+    return 0;
+}
+
+var wanted = args.Skip(3).ToHashSet();
+foreach (var arm in Arms.All.Where(a => wanted.Count == 0 || wanted.Contains(a.Name)))
+{
+    foreach (var variant in new[] { "process-start", "start-process" })
+    {
+        if (arm.IsControl && variant == "start-process")
+        {
+            continue;
+        }
+
+        Arms.RunOne(arm, alias, self, scratch, variant);
+    }
+}
+
+return 0;
+
+internal sealed record Arm(string Name, string What, bool Suspend, bool JobList, uint? Policy, bool AnchorParent, bool IsControl = false, bool Pipes = true, bool Nest = false);
+
+internal static class Arms
+{
+    public static readonly Arm[] All =
+    [
+        new("E0", "suspended outside any job, assigned, resumed; no policy (2026-11-17's E, the escape's control)", true, false, null, false),
+        new("E2", "suspended outside any job, assigned, resumed; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE", true, false, 0x2, false),
+        new("E6", "suspended outside any job, assigned, resumed; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE | OVERRIDE", true, false, 0x6, false),
+        new("A0", "job list, kill-on-close; no policy (JobLauncher's way, 2026-11-17's A)", false, true, null, false),
+        new("A2", "job list, kill-on-close; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE", false, true, 0x2, false),
+        new("A6", "job list, kill-on-close; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE | OVERRIDE", false, true, 0x6, false),
+        new("P0", "born in the job through PARENT_PROCESS, a suspended anchor in the job; no policy", false, false, null, true, Pipes: false),
+        new("P2", "born in the job through PARENT_PROCESS, a suspended anchor in the job; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE", false, false, 0x2, true, Pipes: false),
+        new("N0", "born in the job: an unpackaged helper started with the job list starts pwsh by a plain CreateProcess; no policy", false, true, null, false, Nest: true),
+        new("N2", "born in the job: an unpackaged helper started with the job list starts pwsh by a plain CreateProcess; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE on pwsh", false, true, 0x2, false, Nest: true),
+        new("H", "control: cmd.exe starting ping, job list, kill-on-close", false, true, null, false, IsControl: true),
+    ];
+
+    public static Native.Started Start(Arm arm, string alias, string self, string scratch, string variant, nint job)
+    {
+        if (arm.IsControl)
+        {
+            return Native.Start(Path.Combine(Environment.SystemDirectory, "cmd.exe"), "/d /c ping -n 40 127.0.0.1 > nul", job, arm, scratch);
+        }
+
+        var tag = $"{arm.Name}-{variant}";
+        var reporter = $"\"{self}\" report \"{scratch}\" {tag}";
+        var start = variant == "process-start"
+            ? "$psi = [System.Diagnostics.ProcessStartInfo]::new('" + self + "', 'report \"" + scratch + "\" " + tag + "'); $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $p = [System.Diagnostics.Process]::Start($psi); "
+            : "$p = Start-Process -FilePath '" + self + "' -ArgumentList 'report','\"" + scratch + "\"','" + tag + "' -NoNewWindow -PassThru; ";
+        var script = "[Console]::Out.WriteLine('PWSH-SAID ' + $PID); [Console]::Out.WriteLine('PWSH-ENV ' + $env:PKGJOB2_MARK); [Console]::Out.WriteLine('PWSH-CWD ' + (Get-Location).Path); [Console]::Error.WriteLine('PWSH-ERR ' + $PID); " + start
+            + "[Console]::Out.WriteLine('PWSH-STARTED ' + $p.Id); $p.WaitForExit()";
+        var arguments = "-NoProfile -NonInteractive -EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+        _ = reporter;
+        if (arm.Nest)
+        {
+            var helperArguments = $"nest {arm.Policy ?? 0} \"{alias}\" {Convert.ToBase64String(Encoding.UTF8.GetBytes(arguments))}";
+            return Native.Start(self, helperArguments, job, arm with { Policy = null }, scratch);
+        }
+
+        return Native.Start(alias, arguments, job, arm, scratch);
+    }
+
+    public static void RunOne(Arm arm, string alias, string self, string scratchRoot, string variant)
+    {
+        var scratch = Path.Combine(scratchRoot, $"{arm.Name}-{variant}");
+        Directory.CreateDirectory(scratch);
+        var job = Native.CreateJob(0x00002000);
+        var name = $"{arm.Name} [{variant}] {arm.What}";
+        try
+        {
+            var started = Start(arm, alias, self, scratch, variant, job);
+            var waited = Reporter.WaitForReport(scratch, $"{arm.Name}-{variant}", arm.IsControl ? 5 : 30);
+            var inJob = Native.InJob(started.Process, job);
+            var members = Native.Members(job).Select(Native.Identity).ToList();
+            var reports = Reporter.Read(scratch, $"{arm.Name}-{variant}");
+            var reported = reports.SelectMany(r => r.Pids).ToList();
+            var reportedInJob = reported.Select(p => $"{p.Image}:{p.Pid} in-job={Native.InJobByPid(p.Pid, job)}").ToList();
+            var said = started.Output is null ? "(no pipes)" : started.Output.Snapshot();
+            var pwshPid = System.Text.RegularExpressions.Regex.Match(said, @"PWSH-SAID (\d+)");
+            var pwshInJob = pwshPid.Success ? Native.InJobByPid(int.Parse(pwshPid.Groups[1].Value), job) : "pwsh pid not said";
+            Native.Close(job);
+            var teardown = Stopwatch.StartNew();
+            List<Native.Ident> aliveMembers, aliveReported;
+            bool rootGone;
+            do
+            {
+                Thread.Sleep(250);
+                aliveMembers = members.Where(Native.StillAlive).ToList();
+                aliveReported = reported.Where(Native.StillAlive).ToList();
+                rootGone = Native.WaitGone(started.Process, 0);
+            }
+            while ((aliveMembers.Count > 0 || aliveReported.Count > 0 || !rootGone) && teardown.Elapsed.TotalSeconds < 30);
+            Console.WriteLine($"   teardown read for {teardown.Elapsed.TotalSeconds:F1}s");
+            Console.WriteLine($"{name}: STARTED pid {started.Pid} (in the job {inJob}); pwsh {(pwshPid.Success ? pwshPid.Groups[1].Value : "?")} in the job {pwshInJob}; report after {waited}; job members {members.Count} [{string.Join(", ", members.Select(m => m.Image))}]");
+            foreach (var r in reports)
+            {
+                Console.WriteLine($"   reporter {r.Line}");
+            }
+
+            Console.WriteLine($"   reported processes: {string.Join("; ", reportedInJob)}");
+            Console.WriteLine($"   pwsh said: {said.Replace("\r", "").Replace("\n", " | ")}");
+            Console.WriteLine($"   after the close: started process gone {rootGone}; members alive {aliveMembers.Count} {string.Join(" ", aliveMembers)}; reported alive {aliveReported.Count} {string.Join(" ", aliveReported)}");
+            Reporter.CheckWrites(scratch, $"{arm.Name}-{variant}", reports);
+            foreach (var survivor in aliveMembers.Concat(aliveReported).Distinct())
+            {
+                Native.TerminateIdentity(survivor);
+            }
+
+            if (!rootGone)
+            {
+                Native.Terminate(started.Process);
+            }
+        }
+        catch (Win32Exception failure)
+        {
+            Console.WriteLine($"{name}: FAILED Win32 {failure.NativeErrorCode} (0x{failure.NativeErrorCode:X}) at {failure.Message}");
+            Native.Close(job);
+        }
+    }
+}
+
+internal sealed record Report(string Line, List<Native.Ident> Pids, string? FileWritten, string? TempWritten, string? Registry);
+
+internal static class Reporter
+{
+    public static int Run(string scratch, string tag)
+    {
+        var me = Process.GetCurrentProcess();
+        var created = Native.Identity(Environment.ProcessId).Created;
+        var package = Native.PackageFullName();
+        var inJob = Native.SelfInAnyJob();
+        var file = Path.Combine(scratch, $"wrote-{tag}-{Environment.ProcessId}.txt");
+        var fileResult = Try(() => File.WriteAllText(file, "written by the reporter"));
+        var temp = Path.Combine(Path.GetTempPath(), $"pkgjob2-{tag}-{Environment.ProcessId}.txt");
+        var tempResult = Try(() => File.WriteAllText(temp, "written by the reporter"));
+        var registry = $@"Software\SixFive7-pkgjob2-probe\{tag}-{Environment.ProcessId}";
+        var registryResult = Try(() =>
+        {
+            using var key = Registry.CurrentUser.CreateSubKey(registry);
+            key.SetValue("written", "by the reporter");
+        });
+        var psi = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), "/d /c ping -n 40 127.0.0.1 > nul") { UseShellExecute = false, CreateNoWindow = true };
+        using var cmd = Process.Start(psi)!;
+        Thread.Sleep(1500);
+        var cmdIdent = Native.Identity(cmd.Id);
+        var line = $"pid {Environment.ProcessId} created {created} package {package} in-a-job {inJob} priority {me.PriorityClass} file {fileResult} temp {tempResult} registry {registryResult} mark {Environment.GetEnvironmentVariable("PKGJOB2_MARK") ?? "absent"} cmd {cmd.Id} {cmdIdent.Created}";
+        Console.Out.WriteLine("REPORTER-SAID " + Environment.ProcessId);
+        File.WriteAllText(Path.Combine(scratch, $"report-{tag}-{Environment.ProcessId}.txt"), line + "\n" + file + "\n" + temp + "\n" + registry + "\n");
+        cmd.WaitForExit();
+        return 0;
+    }
+
+    private static string Try(Action action)
+    {
+        try
+        {
+            action();
+            return "ok";
+        }
+        catch (Exception failure)
+        {
+            return "FAILED:" + failure.GetType().Name;
+        }
+    }
+
+    public static string WaitForReport(string scratch, string tag, int seconds)
+    {
+        var clock = Stopwatch.StartNew();
+        while (clock.Elapsed.TotalSeconds < seconds)
+        {
+            if (Directory.GetFiles(scratch, $"report-{tag}-*.txt").Length > 0)
+            {
+                Thread.Sleep(2500);
+                return $"{clock.Elapsed.TotalSeconds:F1}s";
+            }
+
+            Thread.Sleep(250);
+        }
+
+        return $"none within {seconds}s";
+    }
+
+    public static List<Report> Read(string scratch, string tag)
+    {
+        var list = new List<Report>();
+        foreach (var path in Directory.GetFiles(scratch, $"report-{tag}-*.txt"))
+        {
+            var lines = File.ReadAllLines(path);
+            var parts = lines[0].Split(' ');
+            var pid = int.Parse(parts[1]);
+            var created = long.Parse(parts[3]);
+            var cmdAt = Array.IndexOf(parts, "cmd");
+            var cmdPid = int.Parse(parts[cmdAt + 1]);
+            var cmdCreated = long.Parse(parts[cmdAt + 2]);
+            var pids = new List<Native.Ident> { new(pid, created, "reporter"), new(cmdPid, cmdCreated, "cmd.exe") };
+            pids.AddRange(Native.ChildrenOf(cmdPid, cmdCreated));
+            list.Add(new Report(lines[0], pids, lines[1], lines[2], lines[3]));
+        }
+
+        return list;
+    }
+
+    public static void CheckWrites(string scratch, string tag, List<Report> reports)
+    {
+        foreach (var r in reports)
+        {
+            var fileThere = r.FileWritten is not null && File.Exists(r.FileWritten);
+            var tempThere = r.TempWritten is not null && File.Exists(r.TempWritten);
+            string registryThere;
+            using (var key = Registry.CurrentUser.OpenSubKey(r.Registry!))
+            {
+                registryThere = key?.GetValue("written") as string ?? "absent";
+            }
+
+            Console.WriteLine($"   writes read back from outside: scratch file {fileThere}, LocalAppData temp file {tempThere}, HKCU value {registryThere}");
+            if (r.TempWritten is not null && tempThere)
+            {
+                File.Delete(r.TempWritten);
+            }
+
+            Registry.CurrentUser.DeleteSubKeyTree(r.Registry!, throwOnMissingSubKey: false);
+        }
+
+        using var parent = Registry.CurrentUser.OpenSubKey(@"Software\SixFive7-pkgjob2-probe");
+        if (parent is not null && parent.SubKeyCount == 0)
+        {
+            parent.Dispose();
+            Registry.CurrentUser.DeleteSubKey(@"Software\SixFive7-pkgjob2-probe", throwOnMissingSubKey: false);
+        }
+    }
+}
+
+internal sealed class Drain
+{
+    private readonly StringBuilder _text = new();
+
+    public Drain(SafeHandle handle)
+    {
+        var stream = new FileStream(new Microsoft.Win32.SafeHandles.SafeFileHandle(handle.DangerousGetHandle(), ownsHandle: false), FileAccess.Read, 1, false);
+        _ = Task.Run(() =>
+        {
+            var buffer = new byte[4096];
+            try
+            {
+                int read;
+                while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    lock (_text) { _text.Append(Encoding.UTF8.GetString(buffer, 0, read)); }
+                }
+            }
+            catch (IOException)
+            {
+            }
+        });
+    }
+
+    public string Snapshot()
+    {
+        lock (_text) { return _text.ToString(); }
+    }
+}
+
+internal static unsafe partial class Native
+{
+    internal sealed record Started(nint Process, int Pid, Drain? Output);
+
+    internal sealed record Ident(int Pid, long Created, string Image)
+    {
+        public override string ToString() => $"{Image}:{Pid}";
+    }
+
+    private sealed class OwnedHandle : SafeHandle
+    {
+        public OwnedHandle(nint value) : base(0, true) { SetHandle(value); }
+        public override bool IsInvalid => handle == 0;
+        protected override bool ReleaseHandle() => CloseHandle(handle);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BasicLimits
+    {
+        public long PerProcessUserTimeLimit, PerJobUserTimeLimit;
+        public uint LimitFlags;
+        public nuint MinimumWorkingSetSize, MaximumWorkingSetSize;
+        public uint ActiveProcessLimit;
+        public nuint Affinity;
+        public uint PriorityClass, SchedulingClass;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct IoCounters { public ulong a, b, c, d, e, f; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ExtendedLimits
+    {
+        public BasicLimits Basic;
+        public IoCounters Io;
+        public nuint ProcessMemoryLimit, JobMemoryLimit, PeakProcessMemoryUsed, PeakJobMemoryUsed;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct StartupInfo
+    {
+        public int cb; public nint lpReserved, lpDesktop, lpTitle;
+        public int dwX, dwY, dwXSize, dwYSize, dwXCountChars, dwYCountChars, dwFillAttribute, dwFlags;
+        public short wShowWindow, cbReserved2; public nint lpReserved2, hStdInput, hStdOutput, hStdError;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct StartupInfoEx { public StartupInfo StartupInfo; public nint lpAttributeList; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcessInformation { public nint hProcess, hThread; public int dwProcessId, dwThreadId; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SecurityAttributes { public int nLength; public nint lpSecurityDescriptor; public int bInheritHandle; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcessEntry32
+    {
+        public uint dwSize, cntUsage, th32ProcessID; public nuint th32DefaultHeapID; public uint th32ModuleID, cntThreads, th32ParentProcessID; public int pcPriClassBase; public uint dwFlags;
+        public fixed char szExeFile[260];
+    }
+
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial nint CreateJobObjectW(nint attributes, string? name);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetInformationJobObject(nint job, int infoClass, void* info, int length);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool QueryInformationJobObject(nint job, int infoClass, void* info, int length, out int returned);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool AssignProcessToJobObject(nint job, nint process);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsProcessInJob(nint process, nint job, [MarshalAs(UnmanagedType.Bool)] out bool result);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool InitializeProcThreadAttributeList(nint list, int count, int flags, ref nuint size);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool UpdateProcThreadAttribute(nint list, uint flags, nint attribute, void* value, nuint size, nint previous, nint returned);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial void DeleteProcThreadAttributeList(nint list);
+
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CreateProcessW(string app, char* commandLine, nint pa, nint ta, [MarshalAs(UnmanagedType.Bool)] bool inherit,
+        uint flags, nint environment, string? directory, ref StartupInfoEx startup, out ProcessInformation information);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CreatePipe(out nint read, out nint write, ref SecurityAttributes attributes, int size);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetHandleInformation(nint handle, uint mask, uint flags);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint ResumeThread(nint thread);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseHandle(nint handle);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint WaitForSingleObject(nint handle, uint milliseconds);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool TerminateProcess(nint process, uint code);
+
+    [LibraryImport("kernel32.dll")]
+    private static partial nint GetCurrentProcess();
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial nint OpenProcess(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, int pid);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetProcessTimes(nint process, out long creation, out long exit, out long kernel, out long user);
+
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool QueryFullProcessImageNameW(nint process, int flags, char* buffer, ref int size);
+
+    [LibraryImport("kernel32.dll")]
+    private static partial int GetCurrentPackageFullName(ref int length, char* buffer);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial nint CreateToolhelp32Snapshot(uint flags, int pid);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool Process32FirstW(nint snapshot, ref ProcessEntry32 entry);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool Process32NextW(nint snapshot, ref ProcessEntry32 entry);
+
+    public static string PackageFullName()
+    {
+        var length = 0;
+        var result = GetCurrentPackageFullName(ref length, null);
+        if (result == 15700) { return "none"; }
+        var buffer = stackalloc char[length];
+        result = GetCurrentPackageFullName(ref length, buffer);
+        return result == 0 ? new string(buffer, 0, length - 1) : "error" + result;
+    }
+
+    public static bool SelfInAnyJob() => IsProcessInJob(GetCurrentProcess(), 0, out var result) && result;
+
+    public static void TerminateSelf() => TerminateProcess(GetCurrentProcess(), 9);
+
+    public static nint CreateJob(uint limits)
+    {
+        var job = CreateJobObjectW(0, null);
+        if (job == 0) { throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreateJobObjectW"); }
+        var info = default(ExtendedLimits);
+        info.Basic.LimitFlags = limits;
+        if (!SetInformationJobObject(job, 9, &info, sizeof(ExtendedLimits)))
+        {
+            throw new Win32Exception(Marshal.GetLastPInvokeError(), "SetInformationJobObject");
+        }
+
+        return job;
+    }
+
+    public static Started Start(string app, string arguments, nint job, Arm arm, string scratch)
+    {
+        // CREATE_NO_WINDOW | EXTENDED_STARTUPINFO_PRESENT | CREATE_UNICODE_ENVIRONMENT
+        var flags = 0x08000000u | 0x00080000u;
+        nint anchorProcess = 0;
+        if (arm.AnchorParent)
+        {
+            // A suspended cmd.exe born in the job, whose only use is to be pwsh's parent.
+            var anchor = Start(Path.Combine(Environment.SystemDirectory, "cmd.exe"), "/d /c exit 0", job, new Arm("anchor", "anchor", true, true, null, false, Pipes: false), scratch);
+            anchorProcess = anchor.Process;
+        }
+
+        nint childIn = 0, childOut = 0, childErr = 0, parentOut = 0, parentErr = 0, parentIn = 0;
+        Drain? drain = null;
+        if (arm.Pipes)
+        {
+            var sa = new SecurityAttributes { nLength = sizeof(SecurityAttributes), bInheritHandle = 1 };
+            if (!CreatePipe(out childIn, out parentIn, ref sa, 0) || !CreatePipe(out parentOut, out childOut, ref sa, 0) || !CreatePipe(out parentErr, out childErr, ref sa, 0))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreatePipe");
+            }
+
+            SetHandleInformation(parentIn, 1, 0);
+            SetHandleInformation(parentOut, 1, 0);
+            SetHandleInformation(parentErr, 1, 0);
+        }
+
+        var count = (arm.JobList ? 1 : 0) + (arm.Policy is null ? 0 : 1) + (arm.AnchorParent ? 1 : 0) + (arm.Pipes ? 1 : 0);
+        nuint size = 0;
+        InitializeProcThreadAttributeList(0, Math.Max(count, 1), 0, ref size);
+        var list = Marshal.AllocHGlobal((nint)size);
+        var jobSlot = (nint*)Marshal.AllocHGlobal(sizeof(nint));
+        var policySlot = (uint*)Marshal.AllocHGlobal(sizeof(uint));
+        var parentSlot = (nint*)Marshal.AllocHGlobal(sizeof(nint));
+        var handleSlot = (nint*)Marshal.AllocHGlobal(3 * sizeof(nint));
+        jobSlot[0] = job;
+        parentSlot[0] = anchorProcess;
+        handleSlot[0] = childIn; handleSlot[1] = childOut; handleSlot[2] = childErr;
+        try
+        {
+            if (!InitializeProcThreadAttributeList(list, Math.Max(count, 1), 0, ref size))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "InitializeProcThreadAttributeList");
+            }
+
+            if (arm.JobList && !UpdateProcThreadAttribute(list, 0, 0x0002000D, jobSlot, (nuint)sizeof(nint), 0, 0))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "UpdateProcThreadAttribute job list");
+            }
+
+            if (arm.Policy is { } policy)
+            {
+                policySlot[0] = policy;
+                if (!UpdateProcThreadAttribute(list, 0, 0x00020012, policySlot, sizeof(uint), 0, 0))
+                {
+                    throw new Win32Exception(Marshal.GetLastPInvokeError(), "UpdateProcThreadAttribute desktop app policy");
+                }
+            }
+
+            if (arm.AnchorParent && !UpdateProcThreadAttribute(list, 0, 0x00020000, parentSlot, (nuint)sizeof(nint), 0, 0))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "UpdateProcThreadAttribute parent process");
+            }
+
+            if (arm.Pipes && !UpdateProcThreadAttribute(list, 0, 0x00020002, handleSlot, (nuint)(3 * sizeof(nint)), 0, 0))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "UpdateProcThreadAttribute handle list");
+            }
+
+            if (arm.Suspend)
+            {
+                flags |= 0x00000004;
+            }
+
+            var startup = default(StartupInfoEx);
+            startup.StartupInfo.cb = sizeof(StartupInfoEx);
+            startup.lpAttributeList = list;
+            if (arm.Pipes)
+            {
+                startup.StartupInfo.dwFlags = 0x00000100; // STARTF_USESTDHANDLES
+                startup.StartupInfo.hStdInput = childIn;
+                startup.StartupInfo.hStdOutput = childOut;
+                startup.StartupInfo.hStdError = childErr;
+            }
+
+            var line = ("\"" + app + "\" " + arguments + "\0").ToCharArray();
+            var block = new StringBuilder();
+            foreach (var pair in Environment.GetEnvironmentVariables().Cast<System.Collections.DictionaryEntry>().OrderBy(e => (string)e.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                if ((string)pair.Key != "PKGJOB2_MARK") { block.Append((string)pair.Key).Append('=').Append((string)pair.Value!).Append('\0'); }
+            }
+
+            block.Append("PKGJOB2_MARK=marked-" + Environment.ProcessId).Append('\0').Append('\0');
+            var environment = block.ToString().ToCharArray();
+            flags |= 0x00000400u;
+            fixed (char* commandLine = line)
+            fixed (char* environmentBlock = environment)
+            {
+                var beforeCreate = Stopwatch.GetTimestamp();
+                if (!CreateProcessW(app, commandLine, 0, 0, arm.Pipes, flags, (nint)environmentBlock, scratch, ref startup, out var information))
+                {
+                    throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreateProcessW");
+                }
+
+                if (arm.Suspend && arm.Name != "anchor")
+                {
+                    var window = Stopwatch.GetTimestamp();
+                    var assigned = AssignProcessToJobObject(job, information.hProcess);
+                    Console.WriteLine($"   suspended outside every job: CreateProcessW took {Stopwatch.GetElapsedTime(beforeCreate, window).TotalMicroseconds:F0} us and AssignProcessToJobObject {Stopwatch.GetElapsedTime(window).TotalMicroseconds:F0} us");
+                    if (!assigned)
+                    {
+                        var error = Marshal.GetLastPInvokeError();
+                        TerminateProcess(information.hProcess, 1);
+                        CloseHandle(information.hThread);
+                        CloseHandle(information.hProcess);
+                        throw new Win32Exception(error, "AssignProcessToJobObject");
+                    }
+
+                    ResumeThread(information.hThread);
+                }
+
+                CloseHandle(information.hThread);
+                if (arm.Pipes)
+                {
+                    CloseHandle(childIn); CloseHandle(childOut); CloseHandle(childErr);
+                    CloseHandle(parentIn);
+                    drain = new Drain(new OwnedHandle(parentOut));
+                    _ = new Drain(new OwnedHandle(parentErr));
+                }
+
+                if (anchorProcess != 0)
+                {
+                    TerminateProcess(anchorProcess, 0);
+                    CloseHandle(anchorProcess);
+                }
+
+                return new Started(information.hProcess, information.dwProcessId, drain);
+            }
+        }
+        finally
+        {
+            DeleteProcThreadAttributeList(list);
+            Marshal.FreeHGlobal(list);
+            Marshal.FreeHGlobal((nint)jobSlot);
+            Marshal.FreeHGlobal((nint)policySlot);
+            Marshal.FreeHGlobal((nint)parentSlot);
+            Marshal.FreeHGlobal((nint)handleSlot);
+        }
+    }
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial nint GetStdHandle(int which);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetExitCodeProcess(nint process, out uint code);
+
+    // The helper of the N arms: started in the job, it starts pwsh with a plain CreateProcess,
+    // inheriting exactly its own three standard handles, waits for it and answers its exit code.
+    public static int Nest(uint policy, string alias, string arguments)
+    {
+        var handles = (nint*)Marshal.AllocHGlobal(3 * sizeof(nint));
+        handles[0] = GetStdHandle(-10);
+        handles[1] = GetStdHandle(-11);
+        handles[2] = GetStdHandle(-12);
+        var count = policy == 0 ? 1 : 2;
+        nuint size = 0;
+        InitializeProcThreadAttributeList(0, count, 0, ref size);
+        var list = Marshal.AllocHGlobal((nint)size);
+        var policySlot = (uint*)Marshal.AllocHGlobal(sizeof(uint));
+        policySlot[0] = policy;
+        if (!InitializeProcThreadAttributeList(list, count, 0, ref size)
+            || !UpdateProcThreadAttribute(list, 0, 0x00020002, handles, (nuint)(3 * sizeof(nint)), 0, 0)
+            || (policy != 0 && !UpdateProcThreadAttribute(list, 0, 0x00020012, policySlot, sizeof(uint), 0, 0)))
+        {
+            Console.Out.WriteLine("NEST-FAILED attributes " + Marshal.GetLastPInvokeError());
+            return 2;
+        }
+
+        var startup = default(StartupInfoEx);
+        startup.StartupInfo.cb = sizeof(StartupInfoEx);
+        startup.StartupInfo.dwFlags = 0x00000100;
+        startup.StartupInfo.hStdInput = handles[0];
+        startup.StartupInfo.hStdOutput = handles[1];
+        startup.StartupInfo.hStdError = handles[2];
+        startup.lpAttributeList = list;
+        var line = ('\"' + alias + '\"' + " " + arguments + "\0").ToCharArray();
+        fixed (char* commandLine = line)
+        {
+            if (!CreateProcessW(alias, commandLine, 0, 0, true, 0x08000000u | 0x00080000u, 0, null, ref startup, out var information))
+            {
+                Console.Out.WriteLine("NEST-FAILED CreateProcessW " + Marshal.GetLastPInvokeError());
+                return 3;
+            }
+
+            Console.Out.WriteLine("NEST-STARTED " + information.dwProcessId + " in-a-job " + (IsProcessInJob(information.hProcess, 0, out var any) && any));
+            Console.Out.Flush();
+            CloseHandle(information.hThread);
+            WaitForSingleObject(information.hProcess, 0xFFFFFFFF);
+            GetExitCodeProcess(information.hProcess, out var code);
+            return (int)code;
+        }
+    }
+
+    public static bool InJob(nint process, nint job) => IsProcessInJob(process, job, out var result) && result;
+
+    public static string InJobByPid(int pid, nint job)
+    {
+        var handle = OpenProcess(0x1000, false, pid);
+        if (handle == 0) { return "unopenable" + Marshal.GetLastPInvokeError(); }
+        try { return InJob(handle, job).ToString(); }
+        finally { CloseHandle(handle); }
+    }
+
+    public static List<int> Members(nint job)
+    {
+        var buffer = stackalloc byte[16 + 8 * 512];
+        if (!QueryInformationJobObject(job, 3, buffer, 16 + 8 * 512, out _))
+        {
+            return [];
+        }
+
+        var count = *(int*)(buffer + 4);
+        var list = new List<int>();
+        for (var i = 0; i < count; i++) { list.Add((int)*(nuint*)(buffer + 8 + i * 8)); }
+        return list;
+    }
+
+    // The children of one process, by the parent pid toolhelp records and the parent's creation
+    // time read against each child's, so a recycled pid is never taken for a child. Read-only.
+    public static List<Ident> ChildrenOf(int parent, long parentCreated)
+    {
+        var found = new List<Ident>();
+        var snapshot = CreateToolhelp32Snapshot(0x2, 0);
+        if (snapshot == -1) { return found; }
+        try
+        {
+            var entry = new ProcessEntry32 { dwSize = (uint)sizeof(ProcessEntry32) };
+            for (var more = Process32FirstW(snapshot, ref entry); more; more = Process32NextW(snapshot, ref entry))
+            {
+                if ((int)entry.th32ParentProcessID != parent) { continue; }
+                var child = Identity((int)entry.th32ProcessID);
+                if (child.Created >= parentCreated) { found.Add(child); }
+            }
+        }
+        finally { CloseHandle(snapshot); }
+        return found;
+    }
+
+    public static Ident Identity(int pid)
+    {
+        var handle = OpenProcess(0x1000 | 0x00100000, false, pid);
+        if (handle == 0) { return new Ident(pid, 0, "?"); }
+        GetProcessTimes(handle, out var created, out _, out _, out _);
+        var name = stackalloc char[1024];
+        var length = 1024;
+        var image = QueryFullProcessImageNameW(handle, 0, name, ref length) ? Path.GetFileName(new string(name, 0, length)) : "?";
+        CloseHandle(handle);
+        return new Ident(pid, created, image);
+    }
+
+    public static bool StillAlive(Ident identity)
+    {
+        var handle = OpenProcess(0x1000 | 0x00100000, false, identity.Pid);
+        if (handle == 0) { return false; }
+        try
+        {
+            GetProcessTimes(handle, out var created, out _, out _, out _);
+            return created == identity.Created && WaitForSingleObject(handle, 0) != 0;
+        }
+        finally { CloseHandle(handle); }
+    }
+
+    public static void TerminateIdentity(Ident identity)
+    {
+        var handle = OpenProcess(0x0001 | 0x1000, false, identity.Pid);
+        if (handle == 0) { return; }
+        GetProcessTimes(handle, out var created, out _, out _, out _);
+        if (created == identity.Created) { TerminateProcess(handle, 1); }
+        CloseHandle(handle);
+    }
+
+    public static bool WaitGone(nint process, uint ms) => WaitForSingleObject(process, ms) == 0;
+
+    public static void Terminate(nint process) => TerminateProcess(process, 1);
+
+    public static void Close(nint handle) => CloseHandle(handle);
+}

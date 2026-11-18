@@ -400,6 +400,20 @@ above are still the 2026-08-23 shape**, and a run started by hand that way can
 still be held by such a child, which is one more reason the drivers are the way to
 run a gate.
 
+⚠️ *Added 2026-11-18 by addition, the maintainer's 188 a, in his words verbatim: "188 a -
+only surface this question again after you have verified if that solution works."* **The
+PowerShell arms run the drivers under whatever `pwsh.exe` the search path names, the Microsoft
+Store's packaged one included.** That PowerShell is an app execution alias, for which Windows
+refuses the job list, so `JobLauncher` starts it suspended with the desktop-app policy that keeps
+what it starts in the arm's job, assigns it and resumes it ([the hazard
+index](HAZARDS.md#hazard-index),
+[kb](kb/windows/processes.md#a-packaged-executable-is-refused-a-job-list-and-what-it-starts-leaves-the-job-unless-the-desktop-app-policy-keeps-it----measured-2026-11-18)).
+The four arms were red under the Store's PowerShell 7.7.0.0 until that day.
+`JobContainmentTests.ThePowerShellOfTheGateDriversAndEverythingItStartsAreContained` holds, both
+ways a driver starts a child, that the child is in the job and gone after the launcher is ended,
+and `JobContainmentTests.OnlyAnAppExecutionAliasTakesThePackagedLaunch` that only an alias takes
+that launch.
+
 ⚠️ **Between two runs, wait for `.work\test-scratch` to be released, not
 for the first run to report.** *Added 2026-09-15.* A test host that has printed
 its summary has not necessarily let go: on the 2026-09-15 release gate, **137

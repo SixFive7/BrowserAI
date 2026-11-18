@@ -1,0 +1,162 @@
+RUN4 START 2026-11-18T03:26:04Z
+runtime .NET 11.0.0, os 10.0.26300.0, launcher pid 53196, launcher in a job False, priority BelowNormal
+alias C:\Users\jori\AppData\Local\Microsoft\WindowsApps\pwsh.exe
+   suspended outside every job: CreateProcessW took 932304 us and AssignProcessToJobObject 19819 us
+   teardown read for 9,4s
+E0 [process-start] suspended outside any job, assigned, resumed; no policy (2026-11-17's E, the escape's control): STARTED pid 101272 (in the job True); pwsh 101272 in the job True; report after none within 30s; job members 1 [pwsh.exe]
+   reported processes: 
+   pwsh said: PWSH-SAID 101272 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\E0-process-start | PWSH-STARTED 122404 | 
+   after the close: started process gone True; members alive 0 ; reported alive 0 
+   suspended outside every job: CreateProcessW took 143006 us and AssignProcessToJobObject 93 us
+   teardown read for 30,0s
+E0 [start-process] suspended outside any job, assigned, resumed; no policy (2026-11-17's E, the escape's control): STARTED pid 51888 (in the job True); pwsh 51888 in the job True; report after 25,5s; job members 1 [pwsh.exe]
+   reporter pid 63464 created 134394460217025292 package none in-a-job False priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 44832 134394460299782007
+   reported processes: reporter:63464 in-job=False; cmd.exe:44832 in-job=False; conhost.exe:101920 in-job=False; PING.EXE:91968 in-job=False
+   pwsh said: PWSH-SAID 51888 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\E0-start-process | PWSH-STARTED 63464 | REPORTER-SAID 63464 | 
+   after the close: started process gone True; members alive 0 ; reported alive 4 reporter:63464 cmd.exe:44832 conhost.exe:101920 PING.EXE:91968
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   suspended outside every job: CreateProcessW took 1573351 us and AssignProcessToJobObject 78 us
+   teardown read for 5,8s
+E2 [process-start] suspended outside any job, assigned, resumed; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE: STARTED pid 59232 (in the job True); pwsh 59232 in the job True; report after none within 30s; job members 5 [pwsh.exe, conhost.exe, pkgjob2.exe, conhost.exe, cmd.exe]
+   reported processes: 
+   pwsh said: PWSH-SAID 59232 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\E2-process-start | PWSH-STARTED 66720 | 
+   after the close: started process gone True; members alive 0 ; reported alive 0 
+   suspended outside every job: CreateProcessW took 88330 us and AssignProcessToJobObject 72 us
+   teardown read for 0,3s
+E2 [start-process] suspended outside any job, assigned, resumed; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE: STARTED pid 120060 (in the job True); pwsh 120060 in the job True; report after 9,4s; job members 6 [pwsh.exe, conhost.exe, pkgjob2.exe, cmd.exe, conhost.exe, PING.EXE]
+   reporter pid 127640 created 134394461069377305 package Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe in-a-job True priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 100188 134394461080927905
+   reported processes: reporter:127640 in-job=True; cmd.exe:100188 in-job=True; conhost.exe:26368 in-job=True; PING.EXE:26880 in-job=True
+   pwsh said: PWSH-SAID 120060 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\E2-start-process | PWSH-STARTED 127640 | REPORTER-SAID 127640 | 
+   after the close: started process gone True; members alive 0 ; reported alive 0 
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   suspended outside every job: CreateProcessW took 1572752 us and AssignProcessToJobObject 72 us
+   teardown read for 2,2s
+E6 [process-start] suspended outside any job, assigned, resumed; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE | OVERRIDE: STARTED pid 46480 (in the job True); pwsh 46480 in the job True; report after 18,0s; job members 7 [pwsh.exe, conhost.exe, pkgjob2.exe, conhost.exe, cmd.exe, conhost.exe, PING.EXE]
+   reporter pid 17904 created 134394461275516325 package Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe in-a-job True priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 131056 134394461282789772
+   reported processes: reporter:17904 in-job=True; cmd.exe:131056 in-job=True; conhost.exe:80660 in-job=True; PING.EXE:46436 in-job=True
+   pwsh said: PWSH-SAID 46480 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\E6-process-start | PWSH-STARTED 17904 | REPORTER-SAID 17904 | 
+   after the close: started process gone True; members alive 0 ; reported alive 0 
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   suspended outside every job: CreateProcessW took 383704 us and AssignProcessToJobObject 90 us
+   teardown read for 0,3s
+E6 [start-process] suspended outside any job, assigned, resumed; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE | OVERRIDE: STARTED pid 100464 (in the job True); pwsh 100464 in the job True; report after 6,4s; job members 6 [pwsh.exe, conhost.exe, pkgjob2.exe, cmd.exe, conhost.exe, PING.EXE]
+   reporter pid 5228 created 134394461368143030 package Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe in-a-job True priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 107868 134394461374000224
+   reported processes: reporter:5228 in-job=True; cmd.exe:107868 in-job=True; conhost.exe:71408 in-job=True; PING.EXE:88900 in-job=True
+   pwsh said: PWSH-SAID 100464 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\E6-start-process | PWSH-STARTED 5228 | REPORTER-SAID 5228 | 
+   after the close: started process gone True; members alive 0 ; reported alive 0 
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+A0 [process-start] job list, kill-on-close; no policy (JobLauncher's way, 2026-11-17's A): FAILED Win32 5 (0x5) at CreateProcessW
+A0 [start-process] job list, kill-on-close; no policy (JobLauncher's way, 2026-11-17's A): FAILED Win32 5 (0x5) at CreateProcessW
+A2 [process-start] job list, kill-on-close; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE: FAILED Win32 5 (0x5) at CreateProcessW
+A2 [start-process] job list, kill-on-close; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE: FAILED Win32 5 (0x5) at CreateProcessW
+A6 [process-start] job list, kill-on-close; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE | OVERRIDE: FAILED Win32 5 (0x5) at CreateProcessW
+A6 [start-process] job list, kill-on-close; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE | OVERRIDE: FAILED Win32 5 (0x5) at CreateProcessW
+   teardown read for 30,2s
+P0 [process-start] born in the job through PARENT_PROCESS, a suspended anchor in the job; no policy: STARTED pid 14924 (in the job False); pwsh ? in the job pwsh pid not said; report after 9,0s; job members 0 []
+   reporter pid 133236 created 134394461459432902 package none in-a-job False priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 84732 134394461473847744
+   reported processes: reporter:133236 in-job=False; cmd.exe:84732 in-job=False; conhost.exe:89564 in-job=False; PING.EXE:46024 in-job=False
+   pwsh said: (no pipes)
+   after the close: started process gone False; members alive 0 ; reported alive 4 reporter:133236 cmd.exe:84732 conhost.exe:89564 PING.EXE:46024
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   teardown read for 30,1s
+P0 [start-process] born in the job through PARENT_PROCESS, a suspended anchor in the job; no policy: STARTED pid 103784 (in the job False); pwsh ? in the job pwsh pid not said; report after 16,0s; job members 0 []
+   reporter pid 74516 created 134394461962396772 package none in-a-job False priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 62444 134394461969507810
+   reported processes: reporter:74516 in-job=False; cmd.exe:62444 in-job=False; conhost.exe:110228 in-job=False; PING.EXE:115316 in-job=False
+   pwsh said: (no pipes)
+   after the close: started process gone False; members alive 0 ; reported alive 4 reporter:74516 cmd.exe:62444 conhost.exe:110228 PING.EXE:115316
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   teardown read for 30,1s
+P2 [process-start] born in the job through PARENT_PROCESS, a suspended anchor in the job; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE: STARTED pid 58528 (in the job False); pwsh ? in the job pwsh pid not said; report after 29,7s; job members 0 []
+   reporter pid 12068 created 134394462529150438 package Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe in-a-job True priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 128284 134394462571017312
+   reported processes: reporter:12068 in-job=False; cmd.exe:128284 in-job=False; conhost.exe:87480 in-job=False; PING.EXE:44640 in-job=False
+   pwsh said: (no pipes)
+   after the close: started process gone False; members alive 0 ; reported alive 4 reporter:12068 cmd.exe:128284 conhost.exe:87480 PING.EXE:44640
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   teardown read for 30,1s
+P2 [start-process] born in the job through PARENT_PROCESS, a suspended anchor in the job; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE: STARTED pid 113348 (in the job False); pwsh ? in the job pwsh pid not said; report after 13,2s; job members 0 []
+   reporter pid 76404 created 134394463012983398 package Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe in-a-job True priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 100664 134394463016812180
+   reported processes: reporter:76404 in-job=False; cmd.exe:100664 in-job=False; conhost.exe:36028 in-job=False; PING.EXE:123288 in-job=False
+   pwsh said: (no pipes)
+   after the close: started process gone False; members alive 0 ; reported alive 4 reporter:76404 cmd.exe:100664 conhost.exe:36028 PING.EXE:123288
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   teardown read for 30,5s
+N0 [process-start] born in the job: an unpackaged helper started with the job list starts pwsh by a plain CreateProcess; no policy: STARTED pid 24480 (in the job True); pwsh 135828 in the job False; report after 10,4s; job members 2 [pkgjob2.exe, conhost.exe]
+   reporter pid 114632 created 134394463410713509 package none in-a-job False priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 133360 134394463424666668
+   reported processes: reporter:114632 in-job=False; cmd.exe:133360 in-job=False; conhost.exe:97996 in-job=False; PING.EXE:10988 in-job=False
+   pwsh said: NEST-STARTED 135828 in-a-job True | PWSH-SAID 135828 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\N0-process-start | PWSH-STARTED 114632 | REPORTER-SAID 114632 | 
+   after the close: started process gone True; members alive 0 ; reported alive 4 reporter:114632 cmd.exe:133360 conhost.exe:97996 PING.EXE:10988
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   teardown read for 30,1s
+N0 [start-process] born in the job: an unpackaged helper started with the job list starts pwsh by a plain CreateProcess; no policy: STARTED pid 132340 (in the job True); pwsh 132740 in the job False; report after 12,1s; job members 2 [pkgjob2.exe, conhost.exe]
+   reporter pid 114836 created 134394463849694152 package none in-a-job False priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 129424 134394463854447942
+   reported processes: reporter:114836 in-job=False; cmd.exe:129424 in-job=False; conhost.exe:132856 in-job=False; PING.EXE:122180 in-job=False
+   pwsh said: NEST-STARTED 132740 in-a-job True | PWSH-SAID 132740 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\N0-start-process | PWSH-STARTED 114836 | REPORTER-SAID 114836 | 
+   after the close: started process gone True; members alive 0 ; reported alive 4 reporter:114836 cmd.exe:129424 conhost.exe:132856 PING.EXE:122180
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   teardown read for 30,1s
+N2 [process-start] born in the job: an unpackaged helper started with the job list starts pwsh by a plain CreateProcess; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE on pwsh: STARTED pid 124196 (in the job True); pwsh 134824 in the job False; report after 25,5s; job members 2 [pkgjob2.exe, conhost.exe]
+   reporter pid 108920 created 134394464344493489 package Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe in-a-job True priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 26352 134394464400037386
+   reported processes: reporter:108920 in-job=False; cmd.exe:26352 in-job=False; conhost.exe:79968 in-job=False; PING.EXE:102552 in-job=False
+   pwsh said: NEST-STARTED 134824 in-a-job True | PWSH-SAID 134824 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\N2-process-start | PWSH-STARTED 108920 | REPORTER-SAID 108920 | 
+   after the close: started process gone True; members alive 0 ; reported alive 4 reporter:108920 cmd.exe:26352 conhost.exe:79968 PING.EXE:102552
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   teardown read for 30,2s
+N2 [start-process] born in the job: an unpackaged helper started with the job list starts pwsh by a plain CreateProcess; DESKTOP_APP_POLICY DISABLE_PROCESS_TREE on pwsh: STARTED pid 80920 (in the job True); pwsh 62084 in the job False; report after 12,0s; job members 2 [pkgjob2.exe, conhost.exe]
+   reporter pid 73772 created 134394464823382987 package Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe in-a-job True priority BelowNormal file ok temp ok registry ok mark marked-53196 cmd 71748 134394464855374808
+   reported processes: reporter:73772 in-job=False; cmd.exe:71748 in-job=False; conhost.exe:81864 in-job=False; PING.EXE:21444 in-job=False
+   pwsh said: NEST-STARTED 62084 in-a-job True | PWSH-SAID 62084 | PWSH-ENV marked-53196 | PWSH-CWD C:\Source\SixFive7\BrowserAI\.work\deps-scratch\probes\pkgjob2\run4\N2-start-process | PWSH-STARTED 73772 | REPORTER-SAID 73772 | 
+   after the close: started process gone True; members alive 0 ; reported alive 4 reporter:73772 cmd.exe:71748 conhost.exe:81864 PING.EXE:21444
+   writes read back from outside: scratch file True, LocalAppData temp file True, HKCU value by the reporter
+   teardown read for 0,3s
+H [process-start] control: cmd.exe starting ping, job list, kill-on-close: STARTED pid 76216 (in the job True); pwsh ? in the job pwsh pid not said; report after none within 5s; job members 3 [cmd.exe, conhost.exe, PING.EXE]
+   reported processes: 
+   pwsh said: 
+   after the close: started process gone True; members alive 0 ; reported alive 0 
+runtime .NET 11.0.0, os 10.0.26300.0, launcher pid 121068, launcher in a job False, priority BelowNormal
+alias C:\Users\jori\AppData\Local\Microsoft\WindowsApps\pwsh.exe
+   suspended outside every job: CreateProcessW took 230085 us and AssignProcessToJobObject 17567 us
+DIE arm E2 process-start: 6 members, 3 reported, 6 written; reported in the job: reporter:15168 True; cmd.exe:127704 True; conhost.exe:120092 True; ending this process with the job open
+launcher of E2 process-start exited with 9
+CHECK pwsh.exe:125876 alive False
+CHECK conhost.exe:90712 alive False
+CHECK pkgjob2.exe:15168 alive False
+CHECK conhost.exe:131980 alive False
+CHECK cmd.exe:127704 alive False
+CHECK conhost.exe:120092 alive False
+CHECK alive after the launcher died: 0
+runtime .NET 11.0.0, os 10.0.26300.0, launcher pid 82836, launcher in a job False, priority BelowNormal
+alias C:\Users\jori\AppData\Local\Microsoft\WindowsApps\pwsh.exe
+   suspended outside every job: CreateProcessW took 146388 us and AssignProcessToJobObject 44335 us
+DIE arm E2 start-process: 6 members, 4 reported, 6 written; reported in the job: reporter:15404 True; cmd.exe:105936 True; conhost.exe:57576 True; PING.EXE:44952 True; ending this process with the job open
+launcher of E2 start-process exited with 9
+CHECK pwsh.exe:97820 alive False
+CHECK conhost.exe:93024 alive False
+CHECK pkgjob2.exe:15404 alive False
+CHECK cmd.exe:105936 alive False
+CHECK conhost.exe:57576 alive False
+CHECK PING.EXE:44952 alive False
+CHECK alive after the launcher died: 0
+runtime .NET 11.0.0, os 10.0.26300.0, launcher pid 111080, launcher in a job False, priority BelowNormal
+alias C:\Users\jori\AppData\Local\Microsoft\WindowsApps\pwsh.exe
+   suspended outside every job: CreateProcessW took 456967 us and AssignProcessToJobObject 24204 us
+DIE arm E0 process-start: 1 members, 4 reported, 5 written; reported in the job: reporter:99128 False; cmd.exe:94360 False; conhost.exe:80284 False; PING.EXE:127824 False; ending this process with the job open
+launcher of E0 process-start exited with 9
+CHECK pwsh.exe:81068 alive False
+CHECK reporter:99128 alive True
+CHECK cmd.exe:94360 alive True
+CHECK conhost.exe:80284 alive True
+CHECK PING.EXE:127824 alive True
+CHECK alive after the launcher died: 4
+runtime .NET 11.0.0, os 10.0.26300.0, launcher pid 57868, launcher in a job False, priority BelowNormal
+alias C:\Users\jori\AppData\Local\Microsoft\WindowsApps\pwsh.exe
+   suspended outside every job: CreateProcessW took 3235466 us and AssignProcessToJobObject 37060 us
+DIE arm E0 start-process: 1 members, 4 reported, 5 written; reported in the job: reporter:100144 False; cmd.exe:50492 False; conhost.exe:114752 False; PING.EXE:115444 False; ending this process with the job open
+launcher of E0 start-process exited with 9
+CHECK pwsh.exe:123308 alive False
+CHECK reporter:100144 alive True
+CHECK cmd.exe:50492 alive True
+CHECK conhost.exe:114752 alive True
+CHECK PING.EXE:115444 alive True
+CHECK alive after the launcher died: 4
+RUN4 DONE 2026-11-18T03:37:47Z
+exit 0

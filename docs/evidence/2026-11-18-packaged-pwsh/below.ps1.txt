@@ -1,0 +1,6 @@
+# Runs one command line at below-normal priority: this Windows PowerShell 5.1 process lowers its
+# own priority class first, and cmd.exe and everything it starts take BELOW_NORMAL from it.
+param([Parameter(Mandatory = $true)] [string] $CommandLine)
+[System.Diagnostics.Process]::GetCurrentProcess().PriorityClass = 'BelowNormal'
+& cmd.exe /d /c $CommandLine
+exit $LASTEXITCODE

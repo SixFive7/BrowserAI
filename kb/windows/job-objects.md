@@ -379,6 +379,13 @@ support and was closed as not planned. The hand-rolled surface is ~60 lines.
 *Read 2026-11-17*: #126273 is still closed as not planned and locked, unchanged since
 2026-07-30, and .NET 11 ships no job-object API either. `[FLOATS]`
 
+**A packaged executable is refused the job list, and what it starts leaves the job unless the
+desktop-app policy keeps it**, measured 2026-11-18 with the Microsoft Store's PowerShell
+7.7.0.0 for the maintainer's 188. The measurement, what the policy changes for what the
+packaged process starts, and the launch BrowserAI takes for an app execution alias since are
+in [Processes](processes.md#a-packaged-executable-is-refused-a-job-list-and-what-it-starts-leaves-the-job-unless-the-desktop-app-policy-keeps-it----measured-2026-11-18),
+with the other launch shapes.
+
 **A job's I/O counters count a write to a pipe exactly as a write to a file**, so
 `JOBOBJECT_BASIC_AND_IO_ACCOUNTING_INFORMATION` measures what a tree's
 processes handed to write calls, and not what reached a disk. Microsoft
