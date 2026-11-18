@@ -935,7 +935,7 @@ internal sealed class SessionLock : IAsyncDisposable
                 }
                 catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
                 {
-                    return ($"'{location.FullPath}' is held by a live session", null);
+                    return (GuardOpenInAModeTheSweepCannotShare(location), null);
                 }
                 catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
                 {
@@ -961,6 +961,37 @@ internal sealed class SessionLock : IAsyncDisposable
         {
             gate?.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Why <see cref="TryHoldUnownedAsync"/> left a directory alone when the open of its guard
+    /// was refused with a sharing violation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The maintainer's 207, 2026-11-18, in his words verbatim: <i>"207 rec"</i></b>,
+    /// the recommendation for his question 198. <b>The kernel does not say whose handle refused
+    /// the open</b>: the session holding the directory refuses it for as long as it lives, and so
+    /// does any other program with the file open for write or delete, or open without sharing
+    /// read and write. Measured 2026-11-18 (kb/windows/detection.md): a reader in the sweep's own
+    /// process sharing only read, and a second process sharing nothing, each turned a pass into
+    /// this refusal after the session had let the directory go. So the sentence names both and
+    /// claims neither. <i>Corrected 2026-11-18 (previously "'&lt;directory&gt;' is held by a live
+    /// session")</i>.
+    /// </para>
+    /// <para>
+    /// <b>A member and not a literal at the refusal</b>, so that the suite tells this refusal
+    /// from the pass's others by the product's own sentence:
+    /// <c>StraySweepTests</c> waits out this one and no other.
+    /// </para>
+    /// </remarks>
+    /// <param name="location">The session directory whose guard was refused.</param>
+    /// <returns>The reason, as the sweep records it beside the browser it spared.</returns>
+    internal static string GuardOpenInAModeTheSweepCannotShare(SessionPath location)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+
+        return $"'{location.LockFile}' is open in a mode the sweep cannot share: a session holds '{location.FullPath}', or another program has the file open";
     }
 
     /// <summary>Reads a session's record without taking it.</summary>

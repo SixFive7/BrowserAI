@@ -17,15 +17,23 @@ namespace BrowserAI.Sessions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Designed for ~100 concurrent BrowserAI processes, not for one.</b> Eight
-/// editor windows with a dozen agent sessions each is a normal working day and
-/// every session spawns its own server, so a sweep that is merely <i>correct</i>
-/// for a single process is wrong here: ninety-six of them sweeping at startup is
-/// a thundering herd, and ninety-six racing to kill the same stray is a
-/// correctness problem. One machine-wide mutex at <b>zero timeout</b> answers
-/// both -- one process sweeps and the rest pay a mutex acquire and leave. A
-/// skipped sweep is not a missed sweep: whoever holds the mutex is looking at
-/// the same machine.
+/// <b>One pass when a background starts, and one for <c>--sweep</c>.</b> A
+/// client's process is a relay and never sweeps; the product's only pass is
+/// <c>StartInBackground</c>'s, made once by a background as it starts, at sign-in
+/// or after an update, and <c>BrowserAI.exe --sweep</c> makes one for a
+/// measurement (<c>Program.Background.cs</c> and <c>Program.cs</c>, read
+/// 2026-11-18). Two passes can still meet: two installs' backgrounds, a
+/// <c>--sweep</c> beside a background, and the suite's own passes. One
+/// machine-wide mutex at <b>zero timeout</b> answers that -- one process sweeps
+/// and the rest pay a mutex acquire and leave. A skipped sweep is not a missed
+/// sweep: whoever holds the mutex is looking at the same machine.
+/// <i>Corrected 2026-11-18 (previously "Designed for ~100 concurrent BrowserAI
+/// processes, not for one. Eight editor windows with a dozen agent sessions each
+/// is a normal working day and every session spawns its own server, so a sweep
+/// that is merely correct for a single process is wrong here: ninety-six of them
+/// sweeping at startup is a thundering herd, and ninety-six racing to kill the
+/// same stray is a correctness problem.")</i>: since the one-binary design of
+/// 2026-10-08 the servers a client starts are relays, and none of them sweeps.
 /// </para>
 /// <para>
 /// <b>Detection decides and is fully documented; attribution may fail and must
@@ -48,9 +56,11 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>Nothing here may reach <c>stdout</c>, be awaited, or gate anything.</b> It
-/// runs on a background thread with a catch-all at the boundary; a sweep failure
-/// is a log line, never a crash and never a protocol error. A BrowserAI that
-/// cannot sweep is degraded; a BrowserAI that will not start is broken.
+/// runs as a pool work item nothing awaits, with a catch-all at the boundary; a
+/// sweep failure is a log line, never a crash and never a protocol error. A
+/// BrowserAI that cannot sweep is degraded; a BrowserAI that will not start is
+/// broken. <i>Corrected 2026-11-18 (previously "It runs on a background thread"),
+/// as <see cref="StartInBackground"/> says since 2026-10-11.</i>
 /// </para>
 /// </remarks>
 internal sealed class StraySweep
@@ -192,19 +202,26 @@ internal sealed class StraySweep
     /// <para>
     /// ⚠️ <b>The overload exists for the suite, and what it buys is
     /// serialisation, not luck.</b> The machine-wide gate is held for a
-    /// few milliseconds by every BrowserAI that starts, this suite starts a
-    /// great many of them in parallel, and an arm that needs its own pass to
+    /// pass by every background that starts, this suite starts a great many of
+    /// them in parallel, and an arm that needs its own pass to
     /// have <i>run</i> was therefore losing a coin toss roughly once in five
     /// full runs -- <c>ASweepWithNoAppPathsReportsNoMarkerPassAtAll</c>, 2026-08-26.
     /// The fix is to queue on the same kernel object the winner holds, which is
     /// what a mutex is for; asking again in a loop is the same coin tossed more
-    /// often.
+    /// often. <i>Corrected 2026-11-18 (previously "held for a few milliseconds by
+    /// every BrowserAI that starts"): a relay never takes it, and a background's
+    /// pass holds it for the pass, 79.3 ms and 151.6 ms for the two the machine's
+    /// process log recorded at the start of the run of 2026-11-17.</i>
     /// </para>
     /// <para>
     /// <b>Nothing in the product may call this</b>, and that is a scan and
-    /// not a sentence: a waiting sweep at startup would put every one of ~100
-    /// peers into a queue behind the first, which is the thundering herd the
-    /// zero timeout exists to prevent.
+    /// not a sentence: a pass that waited would queue behind any other holder of
+    /// the gate for work that holder is already doing, which is what the zero
+    /// timeout exists to prevent. <i>Corrected 2026-11-18 (previously "a waiting
+    /// sweep at startup would put every one of ~100 peers into a queue behind the
+    /// first, which is the thundering herd the zero timeout exists to prevent"):
+    /// only a background sweeps at its start, so there are no hundred peers; see
+    /// this type's remarks.</i>
     /// </para>
     /// </remarks>
     /// <param name="gatePatience">How long to wait for <see cref="LockScopes.Sweep"/>.</param>

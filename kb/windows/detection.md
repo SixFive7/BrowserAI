@@ -1535,6 +1535,67 @@ fraction of the walk's cheapest reading, and the argument above holds. `[MACHINE
 > would be timed as the held arm and would report the free arm's cost under the
 > wrong name.
 
+## The sweep decides with one open of the guard, and another program's handle on a let-go guard refuses it -- measured 2026-11-18
+
+**A pass decides whether a session has let its directory go with one open of
+`browserai.lock`, `FileAccess.ReadWrite, FileShare.Read`, through
+`SessionLock.TryHoldUnownedAsync`, and spares the browser on any sharing violation.**
+The kernel refuses that open for any other handle on the file that holds write or
+delete access, or that does not share read and write, whichever process holds it
+(the two-way share check, kb/windows/processes.md, measured 2026-08-30). Measured
+2026-11-18 at 00:34Z on Windows 11 Pro 26300, .NET 11.0.0 and TUnit 1.86.0, against
+`869409fa`, for the maintainer's question 198: a probe publishing the session's
+profile as its message window, the session taken and swept (spared, as it must be),
+let go, a handle planted on the guard, and the second pass. `[STABLE]`
+
+| Handle opened on the let-go guard | The second pass |
+|---|---|
+| none | ended the probe |
+| `FileAccess.Read, FileShare.Read`, in the test host | spared it, the guard refused; the Restart Manager named the test host |
+| `FileAccess.ReadWrite, FileShare.None`, the probe's `hold-file` in a second process | spared it, the guard refused; the Restart Manager named that process, `BrowserAI.TestProbe` |
+| `FileAccess.Read`, sharing read, write and delete, in the test host | ended the probe |
+| none, and the probe ended before the pass | did not find it; the arm's assertion failed with the same message as the planted reds |
+
+**While the session holds the guard no handle that could refuse the sweep can be
+opened, and one opened before the hold either refused the session's own acquisition or
+was waited out by its hold**, because the hold asks for the same access in the same share
+mode as the sweep's open, and `SessionLock.TryAcquireAsync` answers a sharing violation in
+front of its write as a held directory and waits one out behind it for
+`RenameWindow.Budget`. So once a session has its guard, a guard refused to a pass after the
+session let it go was opened by somebody else after the release, inside one process scan.
+Derived from the share check above and the code at `869409fa`, not measured on its own.
+`[STABLE]`
+
+**200 releases, each followed at once by the sweep's own call, met no foreign
+handle.** Measured 2026-11-18 from 00:34:39Z to 00:35:47Z, 68.6 s, in a Debug test host
+at below-normal priority with other sessions at work, the commit charge at 68.7 % of
+141,229 MiB at the start of the run and 81.7 % at its end: each round made a session
+directory, took it again, held it 150 ms, let it go and called
+`SessionLock.TryHoldUnownedAsync` with nothing between, and none was refused. The red it
+was looking for, `StraySweepTests.ASweepLeavesABrowserAloneWhileALiveSessionHoldsItsDirectory`
+at its second pass on 2026-11-17 at 19:19:57Z, came at 86.9 % in a full run, and what
+that run kept cannot say which branch of the pass fired, so **the holder of that day is
+not identified**, and neither is any foreign holder of a let-go guard on this machine.
+Windows Defender's real-time protection was on (`Get-MpComputerStatus`, read
+2026-11-18); nothing shows it to be one. `[MACHINE]`
+
+**The assertion's message cannot tell the pass's branches apart, and the pass's own
+account can.** The planted refusals and the ended probe each failed with *"Expected to
+contain &lt;pid&gt; but the item was not found in the collection"*; the account beside
+each said, line by line, the census, the probe's spared reason or none, whether it was
+unattributed and whether it was alive, the guard's `LockFile.Probe` state and the
+Restart Manager's holders: spared, alive, `Held` and a holder for the plants, and not
+spared, not alive, `Released` and no holder for the ended probe. `[STABLE]`
+
+Re-establish with `StraySweepTests.TheSecondHalfWaitsOutAReaderOnTheLetGoGuardAndRecordsWhoHeldIt`,
+`.TheSecondHalfWaitsOutAnotherProgramOnTheLetGoGuardAndNamesThatProgram`,
+`.AReaderSharingReadWriteAndDeleteOnTheLetGoGuardDoesNotHoldUpTheSecondHalf` and
+`.ASecondHalfWhoseProbeIsGoneStopsAtItsFirstPassAndSaysSo`, which hold each row of the
+table, and the arm's second half, which waits out the guard's refusal and writes each one
+it waited out to the process log as `BrowserAI.Tests.SweepGuardRefusal[1]`. The 200-round
+measurement is not kept as an arm, because it measures the machine and asserts nothing
+about the product; its procedure is the paragraph above.
+
 ## Two users and one install root -- what spans users and what does not -- measured 2026-08-20
 
 ⚠️ **Re-scoped 2026-09-15: the data root is a constant now, so the installer's

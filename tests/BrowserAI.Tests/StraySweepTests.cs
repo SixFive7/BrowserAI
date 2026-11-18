@@ -126,7 +126,7 @@ namespace BrowserAI.Tests;
 /// here.
 /// </para>
 /// </remarks>
-internal sealed class StraySweepTests
+internal sealed partial class StraySweepTests
 {
     private const string SweepGroup = "stray-sweep";
 
@@ -164,6 +164,23 @@ internal sealed class StraySweepTests
     /// <summary>
     /// R1, the half that matters: a live session's browser is never touched.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The second half waits out the guard's sharing violation, and nothing
+    /// else, since 2026-11-18</b>, the maintainer's 207, in his words verbatim:
+    /// <i>"207 rec"</i>. The arm went red once, on 2026-11-17 at 19:19:57Z, at the
+    /// assertion below as it stood, a single second pass. That pass decides with one
+    /// open of <c>browserai.lock</c>, and any other program holding the file in a mode
+    /// the open cannot share makes it spare the probe; the plants of 2026-11-18 did
+    /// exactly that, and which branch of the pass fired on 2026-11-17 was never
+    /// established.
+    /// See <see cref="TheSecondHalfAsync"/>, and <c>StraySweepTests.GuardRefusals.cs</c>
+    /// for the arms that hold the wait and the account it gives.
+    /// <i>Corrected 2026-11-18 (previously the first half asserted the reason
+    /// contained "held by a live session"): that reason claimed what the kernel does
+    /// not say.</i>
+    /// </para>
+    /// </remarks>
     [Test]
     [NotInParallel(SweepGroup)]
     public async Task ASweepLeavesABrowserAloneWhileALiveSessionHoldsItsDirectory()
@@ -185,18 +202,25 @@ internal sealed class StraySweepTests
         await using (held.Acquired)
         {
             var refused = await SweepAsync();
+            var why = refused.Spared.Single(entry => entry.ProcessId == pid).Why;
 
             await Assert.That(refused.Terminated).IsEmpty();
-            await Assert.That(refused.Spared.Single(entry => entry.ProcessId == pid).Why).Contains("held by a live session");
+            await Assert.That(why).IsEqualTo(SessionLock.GuardOpenInAModeTheSweepCannotShare(SessionPath.For(session)));
+
+            // The words, and not only the member: the reason says what the kernel
+            // said and both handles that can say it, and claims no live session.
+            await Assert.That(why).Contains("is open in a mode the sweep cannot share");
+            await Assert.That(why).Contains("or another program has the file open");
+            await Assert.That(why).DoesNotContain("live session");
             await Assert.That(ProcessIdentity.IsAlive(pid, created)).IsTrue();
         }
 
         // AND THE SAME SWEEP ENDS IT ONCE NOTHING HOLDS THE DIRECTORY. Without
         // this half, a sweep that never terminated anything at all would pass
         // the assertions above.
-        var second = await SweepAsync();
+        var second = await TheSecondHalfAsync(pid, created, session);
 
-        await Assert.That(second.Terminated.Select(entry => entry.ProcessId)).Contains(pid);
+        await Assert.That(second.LastPass.Terminated.Select(entry => entry.ProcessId)).Contains(pid).Because(second.Account);
         await WaitUntilGoneAsync(pid, created);
     }
 

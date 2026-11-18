@@ -260,6 +260,26 @@ more* link to its detail; nothing else depends on it.
   that policy what PowerShell started was created outside the job and outlived it. BrowserAI
   itself starts no packaged app, and its own launches are unchanged.
 
+- ✅ **The stray sweep arm waits out another program's handle on a session's lock file, and names it.**
+  On 2026-11-17 `StraySweepTests.ASweepLeavesABrowserAloneWhileALiveSessionHoldsItsDirectory`
+  went red once at its second pass, which decides whether the session has let its folder go
+  with one open of `browserai.lock`, and nothing it kept said why. Plants on 2026-11-18 showed
+  that any other handle on that file in a mode the open cannot share, from the test's own
+  process or another, makes the pass leave the browser running. The arm now makes the pass again
+  while that refusal is the only reason it spared the browser, for the 30 seconds BrowserAI
+  waits out such a handle on the same file when it takes a folder, counted over its passes
+  and the pauses between them, and puts each refusal it waited out in the machine's process
+  log with the programs the Windows Restart Manager names as holding the file. Any other
+  outcome stops it at once, and its failure says
+  what the pass did. [`DECISIONS.md`](DECISIONS.md) has the decision, the maintainer's 207.
+
+- 🔧 **The stray sweep's reason for sparing a browser no longer claims a live session holds its folder.**
+  When the sweep cannot open a session folder's `browserai.lock`, Windows says only that the
+  file is open in a way that excludes the sweep, which is true while the session holds the
+  folder and equally true while another program has the file open. The reason the sweep keeps
+  beside the browser it leaves running now says that, by a session or by another program. It
+  is in the sweep's result, which the suite reads; no log line carries it, before or after.
+
 ### Removed
 
 - 🗑️ **BrowserAI no longer sets Firefox's safe-mode variable, because Playwright sets it itself.**
