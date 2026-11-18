@@ -1357,7 +1357,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       ✅ **CLOSED 2026-11-17 by the maintainer's 197 b**, in his words verbatim: *"197 b"*.
       `MOZ_DISABLE_SAFE_MODE_KEY` left `ChildEnvironment.Forced`, the arm that held it is
       deleted, `SafeModeKeyTests.AgainstARealFirefoxASessionsBrowserStartsWithItsSafeModeKeySwitchedOff` reads the started Firefox's own
-      environment and is planted red against the payload of 0.0.83, and `AGENTS.md`'s second
+      environment and is planted red, with BrowserAI forcing the variable empty (*corrected 2026-11-18, previously "against the payload of 0.0.83": a binary built for 0.0.85 refuses a session child with the tool list of 0.0.83*), and `AGENTS.md`'s second
       exception is retired. The forced-restart probe was not run: the decision rests on the
       variable in the browser's environment, not on a stall.
 - [ ] **WATCH our comment on

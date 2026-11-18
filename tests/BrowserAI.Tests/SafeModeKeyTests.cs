@@ -34,9 +34,14 @@ namespace BrowserAI.Tests;
 /// fail on the other for the wrong reason.
 /// </para>
 /// <para>
-/// <b>Planted red the way 197 b asked</b>: with BrowserAI's copy gone, the payload of
-/// <c>@playwright/mcp</c> 0.0.83, whose Playwright does not set the variable, must turn this
-/// arm red, and the adopted payload green. <c>SafeModeWatch</c> stays beside it, because the
+/// <b>Planted red on 2026-11-18</b>, with BrowserAI forcing the variable onto every child with
+/// the empty value, which Playwright keeps over its own <c>1</c> and Firefox counts as unset:
+/// the arm was red on the missing <c>MOZ_DISABLE_SAFE_MODE_KEY=1</c>, with the variable listed
+/// in the browser's environment, and green with the plant taken out. <i>Corrected 2026-11-18
+/// (previously "Planted red the way 197 b asked: with BrowserAI's copy gone, the payload of
+/// @playwright/mcp 0.0.83, whose Playwright does not set the variable, must turn this arm red,
+/// and the adopted payload green"): a binary built for 0.0.85 refuses a session child whose
+/// tool list differs from the one compiled into it, and the list of 0.0.83 does.</i> <c>SafeModeWatch</c> stays beside it, because the
 /// variable covers the key and nothing else: a Firefox the suite starts in safe mode by any
 /// other route still fails the run.
 /// </para>

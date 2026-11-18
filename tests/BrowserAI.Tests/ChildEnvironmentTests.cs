@@ -250,7 +250,9 @@ egistry");
     // hold Shift down at a browser's start. The maintainer's 197 b of 2026-11-17, in his words
     // verbatim: "197 b", took BrowserAI's copy out once Playwright set the variable itself, and
     // SafeModeKeyTests reads the started Firefox's own environment in its place, which a run can
-    // plant red: the payload of @playwright/mcp 0.0.83 does not set it.
+    // plant red. (Corrected 2026-11-18, previously "plant red: the payload of @playwright/mcp
+    // 0.0.83 does not set it": a binary built for 0.0.85 refuses a session child whose tool list
+    // differs from the one compiled into it, so the plant forced the variable empty instead.)
 
     [Test]
     public async Task ARefusedVariableCannotBeAddedByACaller()
