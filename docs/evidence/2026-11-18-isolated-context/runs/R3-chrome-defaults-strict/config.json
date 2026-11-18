@@ -1,0 +1,12 @@
+{
+  "browser": {
+    "launchOptions": {
+      "headless": true
+    },
+    "contextOptions": {
+      "recordHar": {
+        "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R3-chrome-defaults-strict\\output\\network.har"
+      }
+    }
+  }
+}

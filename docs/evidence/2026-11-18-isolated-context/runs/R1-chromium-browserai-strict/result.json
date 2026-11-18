@@ -1,0 +1,421 @@
+{
+  "run": "R1-chromium-browserai-strict",
+  "family": "chromium",
+  "style": "browserai",
+  "mode": "persistent",
+  "server": "strict",
+  "hook": true,
+  "flow": "full",
+  "contexts": [
+    "iso",
+    "iso2"
+  ],
+  "versions": {
+    "node": "v26.13.1",
+    "playwrightMcp": "0.0.85",
+    "playwrightCore": "1.66.0-alpha-2026-11-09"
+  },
+  "base": "http://127.0.0.1:60897",
+  "harPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+  "configPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\config.json",
+  "priority": {
+    "driver": 10,
+    "child": 10
+  },
+  "startedUtc": "2026-11-17T23:06:52.751Z",
+  "serverInfo": {
+    "name": "Playwright",
+    "version": "1.66.0-alpha-2026-11-09"
+  },
+  "harBeforeClose": {
+    "exists": false
+  },
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 10490
+  },
+  "steps": [
+    {
+      "label": "S1 default tab -> page-a",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:60897/page-a"
+      },
+      "startedMs": 327,
+      "endedMs": 1037,
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:60897/page-a\n- Page Title: page a\n- Console: 1 errors, 0 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\page-2026-11-17T23-06-53-783Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\console-2026-11-17T23-06-53-668Z.log#L1"
+    },
+    {
+      "label": "S2 default tab after page-a: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 2544,
+      "endedMs": 2548,
+      "isError": false,
+      "text": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "S2 default tab after page-a: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 2548,
+      "endedMs": 3202,
+      "isError": false,
+      "text": "### Result\n\"cookie_a=a\""
+    },
+    {
+      "label": "S3.0 new tab in \"iso\", no url",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "isolatedContext": "iso"
+      },
+      "startedMs": 3202,
+      "endedMs": 3733,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:60897/page-a)\n- 1: (current) [](about:blank) [isolatedContext: iso]"
+    },
+    {
+      "label": "S4.0 \"iso\" tab before any request: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 3733,
+      "endedMs": 3737,
+      "isError": false,
+      "text": "### Result\nNo cookies found"
+    },
+    {
+      "label": "S5.0 \"iso\" tab -> page-b",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:60897/page-b"
+      },
+      "startedMs": 3737,
+      "endedMs": 4054,
+      "isError": false,
+      "text": "### Open tabs\n- 0: [page a](http://127.0.0.1:60897/page-a)\n- 1: (current) [page b](http://127.0.0.1:60897/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:60897/page-b\n- Page Title: page b\n- Isolated context: iso\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\page-2026-11-17T23-06-56-798Z.yml)"
+    },
+    {
+      "label": "S6.0 \"iso\" tab after page-b: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 5558,
+      "endedMs": 5563,
+      "isError": false,
+      "text": "### Result\ncookie_b=b (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "S6.0 \"iso\" tab after page-b: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 5563,
+      "endedMs": 6077,
+      "isError": false,
+      "text": "### Result\n\"cookie_b=b\""
+    },
+    {
+      "label": "S3.1 new tab in \"iso2\", no url",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "isolatedContext": "iso2"
+      },
+      "startedMs": 6077,
+      "endedMs": 6203,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:60897/page-a)\n- 1: [page b](http://127.0.0.1:60897/page-b) [isolatedContext: iso]\n- 2: (current) [](about:blank) [isolatedContext: iso2]"
+    },
+    {
+      "label": "S4.1 \"iso2\" tab before any request: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 6203,
+      "endedMs": 6207,
+      "isError": false,
+      "text": "### Result\nNo cookies found"
+    },
+    {
+      "label": "S5.1 \"iso2\" tab -> page-c",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:60897/page-c"
+      },
+      "startedMs": 6207,
+      "endedMs": 6257,
+      "isError": false,
+      "text": "### Open tabs\n- 0: [page a](http://127.0.0.1:60897/page-a)\n- 1: [page b](http://127.0.0.1:60897/page-b) [isolatedContext: iso]\n- 2: (current) [page c](http://127.0.0.1:60897/page-c) [isolatedContext: iso2]\n### Page\n- Page URL: http://127.0.0.1:60897/page-c\n- Page Title: page c\n- Isolated context: iso2\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\page-2026-11-17T23-06-59-006Z.yml)"
+    },
+    {
+      "label": "S6.1 \"iso2\" tab after page-c: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 7759,
+      "endedMs": 7763,
+      "isError": false,
+      "text": "### Result\ncookie_c=c (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "S6.1 \"iso2\" tab after page-c: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 7763,
+      "endedMs": 8276,
+      "isError": false,
+      "text": "### Result\n\"cookie_c=c\""
+    },
+    {
+      "label": "S7 tab list",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "startedMs": 8276,
+      "endedMs": 8282,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:60897/page-a)\n- 1: [page b](http://127.0.0.1:60897/page-b) [isolatedContext: iso]\n- 2: (current) [page c](http://127.0.0.1:60897/page-c) [isolatedContext: iso2]"
+    },
+    {
+      "label": "S8 select the default tab",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "startedMs": 8282,
+      "endedMs": 8290,
+      "isError": false,
+      "text": "### Result\n- 0: (current) [page a](http://127.0.0.1:60897/page-a)\n- 1: [page b](http://127.0.0.1:60897/page-b) [isolatedContext: iso]\n- 2: [page c](http://127.0.0.1:60897/page-c) [isolatedContext: iso2]"
+    },
+    {
+      "label": "S9 default tab -> page-a again",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:60897/page-a?again=1"
+      },
+      "startedMs": 8290,
+      "endedMs": 8356,
+      "isError": false,
+      "text": "### Open tabs\n- 0: (current) [page a](http://127.0.0.1:60897/page-a?again=1)\n- 1: [page b](http://127.0.0.1:60897/page-b) [isolatedContext: iso]\n- 2: [page c](http://127.0.0.1:60897/page-c) [isolatedContext: iso2]\n### Page\n- Page URL: http://127.0.0.1:60897/page-a?again=1\n- Page Title: page a\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\page-2026-11-17T23-07-01-105Z.yml)"
+    },
+    {
+      "label": "S10 default tab at the end: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 9367,
+      "endedMs": 9371,
+      "isError": false,
+      "text": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "S10 default tab at the end: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 9371,
+      "endedMs": 9886,
+      "isError": false,
+      "text": "### Result\n\"cookie_a=a\""
+    },
+    {
+      "label": "S11 close",
+      "tool": "browser_close",
+      "args": {},
+      "startedMs": 9886,
+      "endedMs": 10469,
+      "isError": false,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+    }
+  ],
+  "serverLog": [
+    {
+      "ms": 933,
+      "step": "S1 default tab -> page-a",
+      "method": "GET",
+      "url": "/page-a",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 987,
+      "step": "S1 default tab -> page-a",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "image",
+      "status": 404,
+      "setCookie": null
+    },
+    {
+      "ms": 3796,
+      "step": "S5.0 \"iso\" tab -> page-b",
+      "method": "GET",
+      "url": "/page-b",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_b=b; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 6217,
+      "step": "S5.1 \"iso2\" tab -> page-c",
+      "method": "GET",
+      "url": "/page-c",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_c=c; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 8305,
+      "step": "S9 default tab -> page-a again",
+      "method": "GET",
+      "url": "/page-a?again=1",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    }
+  ],
+  "serverMessages": [
+    {
+      "ms": 911,
+      "notification": "notifications/tools/list_changed"
+    }
+  ],
+  "outputFiles": [
+    "console-2026-11-17T23-06-53-668Z.log",
+    "network-20261117-230652762.har",
+    "network-20261117-230652762.har.v1.json",
+    "network-20261117-230652762.har.v2.json",
+    "network-20261117-230652762.har.v3.json",
+    "page-2026-11-17T23-06-53-783Z.yml",
+    "page-2026-11-17T23-06-56-798Z.yml",
+    "page-2026-11-17T23-06-59-006Z.yml",
+    "page-2026-11-17T23-07-01-105Z.yml"
+  ],
+  "finalHar": {
+    "exists": true,
+    "creator": {
+      "name": "Playwright",
+      "version": "1.66.0-alpha-2026-11-09"
+    },
+    "browser": {
+      "name": "chromium",
+      "version": "158.0.8127.18"
+    },
+    "pages": [
+      "page a"
+    ],
+    "entries": [
+      {
+        "url": "chrome://resources/cr_components/searchbox/icons/google_logo.svg",
+        "requestCookie": null,
+        "status": 200
+      },
+      {
+        "url": "/page-a",
+        "requestCookie": null,
+        "status": 200
+      },
+      {
+        "url": "/page-a?again=1",
+        "requestCookie": "cookie_a=a",
+        "status": 200
+      }
+    ]
+  },
+  "harWrites": [
+    {
+      "t": "2026-11-17T23:06:52.835Z",
+      "op": "hook-loaded",
+      "pid": 127144
+    },
+    {
+      "t": "2026-11-17T23:07:02.646Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "bytes": 0,
+      "truncates": true
+    },
+    {
+      "t": "2026-11-17T23:07:02.647Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "bytes": 0,
+      "truncates": true
+    },
+    {
+      "t": "2026-11-17T23:07:02.647Z",
+      "op": "appendFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "bytes": 2415,
+      "closesDocument": true
+    },
+    {
+      "t": "2026-11-17T23:07:02.660Z",
+      "op": "version-unreadable",
+      "n": 1,
+      "why": "appendFile closing the document",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "error": "Unexpected non-whitespace character after JSON at position 2415 (line 1 column 2416)"
+    },
+    {
+      "t": "2026-11-17T23:07:02.661Z",
+      "op": "appendFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "bytes": 2413,
+      "closesDocument": true
+    },
+    {
+      "t": "2026-11-17T23:07:02.663Z",
+      "op": "version-unreadable",
+      "n": 2,
+      "why": "appendFile closing the document",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "error": "Unexpected non-whitespace character after JSON at position 2415 (line 1 column 2416)"
+    },
+    {
+      "t": "2026-11-17T23:07:02.684Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "bytes": 0,
+      "truncates": true
+    },
+    {
+      "t": "2026-11-17T23:07:02.685Z",
+      "op": "appendFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "bytes": 7858,
+      "closesDocument": true
+    },
+    {
+      "t": "2026-11-17T23:07:02.696Z",
+      "op": "version",
+      "n": 3,
+      "why": "appendFile closing the document",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har",
+      "copy": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\output\\network-20261117-230652762.har.v3.json",
+      "bytes": 7858,
+      "pages": [
+        "page a"
+      ],
+      "urls": [
+        "chrome://resources/cr_components/searchbox/icons/google_logo.svg",
+        "/page-a",
+        "/page-a?again=1"
+      ]
+    }
+  ],
+  "endedUtc": "2026-11-17T23:07:03.242Z"
+}

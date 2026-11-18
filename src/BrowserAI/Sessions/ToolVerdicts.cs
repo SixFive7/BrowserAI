@@ -3,6 +3,7 @@
 
 using System.Collections.Frozen;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BrowserAI.Sessions;
 
@@ -44,7 +45,82 @@ internal enum ToolVerdictKind
 /// maintainer's rewrite b of the instructions, which moved the advice for one
 /// tool onto that tool.
 /// </param>
-internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Why, string? Since, string? Note = null);
+/// <param name="Refusals">
+/// On an <see cref="ToolVerdictKind.Allow"/>, the calls of the tool BrowserAI refuses in
+/// a session whose own settings make them unsafe, each an argument and a per-run switch;
+/// <see langword="null"/> when there is none. Added 2026-11-18 with the maintainer's
+/// 208 b, see <see cref="ArgumentRefusal"/>.
+/// </param>
+internal sealed record ToolVerdict(
+    string Name,
+    ToolVerdictKind Kind,
+    string? Why,
+    string? Since,
+    string? Note = null,
+    IReadOnlyList<ArgumentRefusal>? Refusals = null)
+{
+    /// <summary>The refusal that answers one call of this tool, or <see langword="null"/> when the call may pass.</summary>
+    /// <param name="arguments">The caller's arguments, as they arrived.</param>
+    /// <param name="isOn">Whether a per-run switch is on in the session the call named.</param>
+    /// <returns>The first refusal whose argument and switch the call meets.</returns>
+    public ArgumentRefusal? RefusalFor(JsonObject? arguments, Func<string, bool> isOn) =>
+        Refusals?.FirstOrDefault(refusal => refusal.Applies(arguments, isOn));
+}
+
+/// <summary>
+/// One argument of an allowed tool that BrowserAI refuses while one of the session's own
+/// per-run switches is on.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>The maintainer's 208 b, 2026-11-18, in his words verbatim:</b> <i>"208 a + b (until
+/// the upstream fix comes in)"</i>. The first rule BrowserAI keeps about a call's arguments
+/// and not its tool, and it is data beside the verdict, as a note is: the row says which
+/// argument, which switch, the words a caller reads, why and until when, and the code that
+/// applies it names no tool. The one row is <c>browser_tabs</c>' <c>isolatedContext</c> in a
+/// session with <c>captureNetwork</c> on, because Playwright writes every context's HTTP
+/// Archive to the one path the session gave it and the default context's write, made last,
+/// erases what an isolated context recorded. The row goes when a Playwright release fixes
+/// that, which <c>TODO.md</c> watches.
+/// </para>
+/// <para>
+/// <b>An argument names something when its value is a string that is neither empty nor one
+/// of <see cref="Exempt"/></b>, which are upstream's own spellings of the case that is not
+/// the hazard: <c>"default"</c> is the default context, and so is an empty or absent
+/// name. A value of another type is upstream's to refuse, by its own schema.
+/// </para>
+/// </remarks>
+/// <param name="Argument">The argument, as the tool's own schema spells it.</param>
+/// <param name="Exempt">Values of it that do not turn the refusal on: the JSON member <c>except</c>.</param>
+/// <param name="Setting">The per-run switch that must be on, one of <see cref="SessionRunSettings.Switches"/>: the JSON member <c>while</c>.</param>
+/// <param name="Refusal">What a caller reads after BrowserAI's own first sentence: why, and what to do instead.</param>
+/// <param name="Why">The record of the judgement.</param>
+/// <param name="Since">The ISO date it was judged.</param>
+/// <param name="Until">What ends it.</param>
+internal sealed record ArgumentRefusal(
+    string Argument,
+    IReadOnlyList<string> Exempt,
+    string Setting,
+    string Refusal,
+    string Why,
+    string Since,
+    string Until)
+{
+    /// <summary>Whether a call with these arguments, in a session with these switches, is refused.</summary>
+    /// <param name="arguments">The caller's arguments.</param>
+    /// <param name="isOn">Whether a per-run switch is on.</param>
+    /// <returns>Whether the refusal applies.</returns>
+    public bool Applies(JsonObject? arguments, Func<string, bool> isOn)
+    {
+        ArgumentNullException.ThrowIfNull(isOn);
+
+        return arguments?[Argument] is JsonValue value
+            && value.TryGetValue<string>(out var named)
+            && named.Length > 0
+            && !Exempt.Contains(named, StringComparer.Ordinal)
+            && isOn(Setting);
+    }
+}
 
 /// <summary>
 /// Every tool BrowserAI knows of, read from the <c>tool-verdicts.json</c> compiled
@@ -144,7 +220,16 @@ internal sealed class ToolVerdicts
     private const string WhyMember = "why";
     private const string SinceMember = "since";
     private const string NoteMember = "note";
+    private const string RefuseMember = "refuse";
+    private const string ArgumentMember = "argument";
+    private const string ExceptMember = "except";
+    private const string WhileMember = "while";
+    private const string RefusalMember = "refusal";
+    private const string UntilMember = "until";
     private const string SchemaVersionMember = "schemaVersion";
+
+    /// <summary>Every member an argument refusal has, in the order the file writes them.</summary>
+    private static readonly string[] RefusalMembers = [ArgumentMember, ExceptMember, WhileMember, RefusalMember, WhyMember, SinceMember, UntilMember];
     private const string JudgedAgainstMember = "judgedAgainst";
 
     private readonly FrozenDictionary<string, ToolVerdict> _rows;
@@ -508,10 +593,11 @@ internal sealed class ToolVerdicts
         var why = Optional(row.Value, WhyMember);
         var since = Optional(row.Value, SinceMember);
         var note = Note(origin, member, row, kind);
+        var refusals = Refusals(origin, member, row, kind);
 
         if (kind is not ToolVerdictKind.Deny)
         {
-            return new ToolVerdict(row.Name, kind, why, since, note);
+            return new ToolVerdict(row.Name, kind, why, since, note, refusals);
         }
 
         // A denial with no reason is the shape this whole file exists to
@@ -561,6 +647,109 @@ internal sealed class ToolVerdicts
         return kind is ToolVerdictKind.Allow
             ? text
             : throw Unreadable(origin, $"'{member}.{row.Name}' carries a '{NoteMember}' and its verdict is not 'allow'. A note is appended to the description of a tool BrowserAI forwards, and only an allowed tool has one a model is shown");
+    }
+
+    /// <summary>
+    /// A row's argument refusals, or <see langword="null"/> when it has none.
+    /// </summary>
+    /// <remarks>
+    /// <b>On an <c>allow</c> row only, and every member required but <c>except</c></b>,
+    /// because a refusal narrows a tool BrowserAI forwards and is a judgement somebody
+    /// has to be able to re-examine and end: its words, its reason, its date and what
+    /// ends it. A member this build does not know is refused by name, so a misspelt
+    /// <c>while</c> cannot load as a refusal that is never on. Added 2026-11-18 with the
+    /// maintainer's 208 b.
+    /// </remarks>
+    /// <param name="origin">What to call the file in a failure message.</param>
+    /// <param name="member">Which half the row is in.</param>
+    /// <param name="row">The row.</param>
+    /// <param name="kind">Its verdict.</param>
+    /// <returns>The refusals, or <see langword="null"/>.</returns>
+    private static List<ArgumentRefusal>? Refusals(string origin, string member, JsonProperty row, ToolVerdictKind kind)
+    {
+        if (!row.Value.TryGetProperty(RefuseMember, out var refuse))
+        {
+            return null;
+        }
+
+        var at = $"'{member}.{row.Name}.{RefuseMember}'";
+
+        if (kind is not ToolVerdictKind.Allow)
+        {
+            throw Unreadable(origin, $"'{member}.{row.Name}' carries a '{RefuseMember}' and its verdict is not 'allow'. An argument refusal narrows the calls of a tool BrowserAI forwards, and a tool it does not forward has no call to narrow");
+        }
+
+        if (refuse.ValueKind is not JsonValueKind.Array || refuse.GetArrayLength() is 0)
+        {
+            throw Unreadable(origin, $"{at} is not a non-empty array of argument refusals");
+        }
+
+        var refusals = new List<ArgumentRefusal>();
+
+        foreach (var rule in refuse.EnumerateArray())
+        {
+            var where = $"{at}[{refusals.Count}]";
+
+            if (rule.ValueKind is not JsonValueKind.Object)
+            {
+                throw Unreadable(origin, $"{where} is {rule.ValueKind}, not an object");
+            }
+
+            foreach (var field in rule.EnumerateObject())
+            {
+                if (!RefusalMembers.Contains(field.Name, StringComparer.Ordinal))
+                {
+                    throw Unreadable(origin, $"{where} carries '{field.Name}', and an argument refusal has exactly these members: {string.Join(", ", RefusalMembers)}");
+                }
+            }
+
+            var setting = Required(origin, where, rule, WhileMember);
+
+            if (!SessionRunSettings.Switches.Contains(setting, StringComparer.Ordinal))
+            {
+                throw Unreadable(origin, $"{where}.{WhileMember} is '{setting}', and a refusal is turned on by one of the per-run settings that are on or off: {string.Join(", ", SessionRunSettings.Switches)}");
+            }
+
+            refusals.Add(new ArgumentRefusal(
+                Required(origin, where, rule, ArgumentMember),
+                Values(origin, where, rule),
+                setting,
+                Required(origin, where, rule, RefusalMember),
+                Required(origin, where, rule, WhyMember),
+                Required(origin, where, rule, SinceMember),
+                Required(origin, where, rule, UntilMember)));
+        }
+
+        return refusals;
+    }
+
+    private static string Required(string origin, string where, JsonElement rule, string member) =>
+        rule.TryGetProperty(member, out var value) && value.ValueKind is JsonValueKind.String && value.GetString() is { Length: > 0 } text
+            ? text
+            : throw Unreadable(origin, $"{where} carries no '{member}' as a non-empty string");
+
+    private static List<string> Values(string origin, string where, JsonElement rule)
+    {
+        if (!rule.TryGetProperty(ExceptMember, out var except))
+        {
+            return [];
+        }
+
+        if (except.ValueKind is not JsonValueKind.Array)
+        {
+            throw Unreadable(origin, $"{where}.{ExceptMember} is not an array of the values that do not turn the refusal on");
+        }
+
+        var values = new List<string>();
+
+        foreach (var value in except.EnumerateArray())
+        {
+            values.Add(value.ValueKind is JsonValueKind.String && value.GetString() is { } text
+                ? text
+                : throw Unreadable(origin, $"{where}.{ExceptMember} holds {value.ValueKind}, and every value in it is a string"));
+        }
+
+        return values;
     }
 
     private static string? Optional(JsonElement row, string member) =>

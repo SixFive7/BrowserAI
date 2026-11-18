@@ -1,0 +1,37 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\eof\\profile",
+    "launchOptions": {
+      "channel": "chrome-for-testing",
+      "args": [
+        "--enable-automation",
+        "--disable-blink-features=AutomationControlled",
+        "--restore-last-session",
+        "--enable-aggressive-domstorage-flushing",
+        "--hide-crash-restore-bubble",
+        "--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies"
+      ],
+      "ignoreDefaultArgs": [
+        "about:blank"
+      ],
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\eof\\downloads"
+    },
+    "contextOptions": {
+      "serviceWorkers": "block",
+      "recordHar": {
+        "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\eof\\output\\network.har",
+        "mode": "full",
+        "content": "embed"
+      }
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\eof\\output",
+  "saveSession": false,
+  "allowUnrestrictedFileAccess": false,
+  "filePaths": "absolute",
+  "timeouts": {
+    "idle": 0
+  }
+}

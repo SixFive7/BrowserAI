@@ -1,0 +1,399 @@
+// ctx202, 2026-11-18: what browser_tabs' isolatedContext does to the network capture and to cookies,
+// reproduced on the payload's own @playwright/mcp 0.0.85 (playwright-core 1.66.0-alpha-2026-11-09)
+// and node, with no BrowserAI process involved. It starts a loopback HTTP server that logs every
+// request with the Cookie header it carried, starts the payload's cli.js with a generated config,
+// drives it over stdio as a bare MCP client, and records every tool answer, every request the
+// server saw, every HAR the run left behind and, with --hook 1, every write the child made to a
+// .har path (har-watch.cjs). Headless, one browser, below-normal priority. Scratch, never committed.
+//
+// Usage: node repro.mjs --name <run> [--family chromium|firefox] [--style browserai|defaults]
+//          [--mode persistent|isolated] [--server strict|catchall] [--hook 0|1]
+//          [--flow full|replica|explicit-close|resume-iso] [--contexts iso[,iso2]] [--channel <channel>]
+//          [--profile <userDataDir an earlier run left>] [--storage-state <file>, defaults style only]
+//
+// --style browserai  the config BrowserAI's BrowserConfiguration.Generate writes for a session with
+//                    the network capture on (read on lane/pw at 869409fa), plus its --sandbox flag.
+// --style defaults   upstream's defaults plus contextOptions.recordHar.path and headless, nothing else.
+// --server strict    /page-<x> answers "page <x>" and sets cookie_<x>=<x>; any other path is a 404
+//                    that sets nothing.
+// --server catchall  the 2026-11-17 rig's server verbatim: a path without "page-b" in it answers
+//                    "page a" and sets cookie_a=a, whatever the path.
+// --flow replica     the 2026-11-17 rig's call sequence verbatim (isolated.mjs, first child).
+// --flow resume-iso  a second launch on --profile: the cookies the profile kept, then a new
+//                    isolated tab, before and after its first request.
+import { spawn } from 'node:child_process';
+import http from 'node:http';
+import os from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, existsSync, copyFileSync, createWriteStream } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+os.setPriority(0, os.constants.priority.PRIORITY_BELOW_NORMAL);
+
+const here = dirname(fileURLToPath(import.meta.url));
+const argv = process.argv.slice(2);
+const opt = {};
+for (let i = 0; i < argv.length; i += 2)
+  opt[argv[i].replace(/^--/, '')] = argv[i + 1];
+const name = opt.name;
+if (!name)
+  throw new Error('--name is required');
+const family = opt.family ?? 'chromium';
+const style = opt.style ?? 'browserai';
+const mode = opt.mode ?? 'persistent';
+const serverKind = opt.server ?? 'strict';
+const hook = opt.hook === '1';
+const flow = opt.flow ?? 'full';
+const contexts = (opt.contexts ?? 'iso').split(',');
+const payload = opt.payload ?? join(here, '..', 'payload-0.0.85-registerai-0.3.0');
+const browsersRoot = join(process.env.LOCALAPPDATA, 'BrowserAI', 'browsers');
+
+const out = join(here, 'runs', name);
+rmSync(out, { recursive: true, force: true });
+for (const d of ['profile', 'output', 'downloads', 'temp', 'localappdata'])
+  mkdirSync(join(out, d), { recursive: true });
+
+const t0 = Date.now();
+const ms = () => Date.now() - t0;
+let currentStep = 'setup';
+const sleep = (duration, label) => { currentStep = label ?? currentStep; return new Promise((r) => setTimeout(r, duration)); };
+
+// The server.
+const serverLog = [];
+const server = http.createServer((req, res) => {
+  let status = 404;
+  let letter = null;
+  if (serverKind === 'catchall') {
+    status = 200;
+    letter = req.url.includes('page-b') ? 'b' : 'a';
+  } else {
+    const match = /^\/page-([a-z])(?:[?#].*)?$/.exec(req.url);
+    if (match) {
+      status = 200;
+      letter = match[1];
+    }
+  }
+  const setCookie = letter ? `cookie_${letter}=${letter}; Max-Age=3600; Path=/` : null;
+  serverLog.push({
+    ms: ms(), step: currentStep, method: req.method, url: req.url,
+    cookieHeader: req.headers.cookie ?? null,
+    secFetchDest: req.headers['sec-fetch-dest'] ?? null,
+    status, setCookie,
+  });
+  const headers = { 'content-type': 'text/html' };
+  if (setCookie)
+    headers['set-cookie'] = setCookie;
+  res.writeHead(status, headers);
+  res.end(letter ? `<title>page ${letter}</title><p>page ${letter}</p>` : 'not found');
+});
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const base = `http://127.0.0.1:${server.address().port}`;
+
+// The config.
+const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').replace(/\.(\d{3})Z$/, '$1');
+const harPath = style === 'browserai' ? join(out, 'output', `network-${stamp}.har`) : join(out, 'output', 'network.har');
+
+function browseraiConfig() {
+  const launchOptions = {};
+  if (family === 'firefox') {
+    launchOptions.firefoxUserPrefs = {
+      'toolkit.winRegisterApplicationRestart': false,
+      'signon.rememberSignons': false,
+      'browser.sessionstore.resume_session_once': true,
+      'browser.sessionstore.restore_on_demand': false,
+      'browser.sessionstore.restore_tabs_lazily': false,
+      'dom.modelcontext.enabled': true,
+      'dom.modelcontext.testing.enabled': true,
+    };
+  } else {
+    const userAgent = readFileSync(join(browsersRoot, 'chromium-1254', 'browserai-user-agent.txt'), 'utf8').split(/\r?\n/)[1].trim();
+    launchOptions.channel = 'chrome-for-testing';
+    launchOptions.args = [
+      '--enable-automation',
+      '--disable-blink-features=AutomationControlled',
+      '--restore-last-session',
+      '--enable-aggressive-domstorage-flushing',
+      '--hide-crash-restore-bubble',
+      '--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies',
+      `--user-agent=${userAgent}`,
+    ];
+  }
+  launchOptions.ignoreDefaultArgs = family === 'firefox' ? [] : ['about:blank'];
+  launchOptions.headless = true;
+  launchOptions.downloadsPath = join(out, 'downloads');
+  const contextOptions = { viewport: { width: 1920, height: 1080 }, locale: 'en-US', ignoreHTTPSErrors: false };
+  if (family !== 'firefox')
+    contextOptions.permissions = ['clipboard-read'];
+  contextOptions.serviceWorkers = 'block';
+  contextOptions.recordHar = { path: harPath, mode: 'full', content: 'embed' };
+  const browser = { browserName: family };
+  if (mode === 'persistent')
+    browser.userDataDir = opt.profile ?? join(out, 'profile');
+  else
+    browser.isolated = true;
+  browser.launchOptions = launchOptions;
+  browser.contextOptions = contextOptions;
+  return {
+    browser,
+    capabilities: ['config', 'vision', 'devtools', 'storage', 'network', 'pdf', 'testing'],
+    outputDir: join(out, 'output'),
+    saveSession: false,
+    allowUnrestrictedFileAccess: false,
+    console: { level: 'debug' },
+    snapshot: { boxes: false },
+    codegen: 'none',
+    filePaths: 'absolute',
+    timeouts: { idle: 0 },
+  };
+}
+
+function defaultsConfig() {
+  const browser = {};
+  if (family === 'firefox')
+    browser.browserName = 'firefox';
+  if (mode === 'isolated')
+    browser.isolated = true;
+  browser.launchOptions = { headless: true };
+  if (opt.channel)
+    browser.launchOptions.channel = opt.channel;
+  browser.contextOptions = { recordHar: { path: harPath } };
+  if (opt['storage-state'])
+    browser.contextOptions.storageState = opt['storage-state'];
+  return { browser };
+}
+
+const config = style === 'browserai' ? browseraiConfig() : defaultsConfig();
+const configPath = join(out, 'config.json');
+writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+// The child.
+const env = { ...process.env };
+for (const key of Object.keys(env)) {
+  if (key.startsWith('PLAYWRIGHT_') || key === 'DEBUG' || key === 'NODE_OPTIONS')
+    delete env[key];
+}
+Object.assign(env, {
+  PLAYWRIGHT_BROWSERS_PATH: browsersRoot,
+  PLAYWRIGHT_SKIP_BROWSER_GC: '1',
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1',
+  TEMP: join(out, 'temp'),
+  TMP: join(out, 'temp'),
+  LOCALAPPDATA: join(out, 'localappdata'),
+});
+if (hook)
+  env.HARWATCH_LOG = join(out, 'harwatch.jsonl');
+const nodeExe = join(payload, 'node', 'node.exe');
+const cli = join(payload, 'mcp', 'node_modules', '@playwright', 'mcp', 'cli.js');
+const childArgs = [];
+if (hook)
+  childArgs.push('--require', join(here, 'har-watch.cjs'));
+childArgs.push(cli, '--config', configPath);
+if (style === 'browserai')
+  childArgs.push('--sandbox');
+const childCwd = style === 'browserai' ? join(out, 'output') : out;
+const child = spawn(nodeExe, childArgs, { cwd: childCwd, env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+const exited = new Promise((resolve) => child.on('exit', (code, signal) => resolve({ code, signal, ms: ms() })));
+child.stderr.pipe(createWriteStream(join(out, 'child-stderr.log')));
+
+let buffer = '';
+let nextId = 0;
+const waiters = new Map();
+const serverMessages = [];
+child.stdout.setEncoding('utf8');
+child.stdout.on('data', (chunk) => {
+  buffer += chunk;
+  for (let end = buffer.indexOf('\n'); end >= 0; end = buffer.indexOf('\n')) {
+    const line = buffer.slice(0, end).trim();
+    buffer = buffer.slice(end + 1);
+    if (!line)
+      continue;
+    let message;
+    try {
+      message = JSON.parse(line);
+    } catch {
+      serverMessages.push({ ms: ms(), unparsed: line.slice(0, 300) });
+      continue;
+    }
+    if (message.id !== undefined && message.method === undefined) {
+      const waiter = waiters.get(message.id);
+      if (waiter) {
+        waiters.delete(message.id);
+        waiter(message);
+      }
+    } else if (message.method !== undefined && message.id !== undefined) {
+      const result = message.method === 'roots/list' ? { roots: [] } : message.method === 'ping' ? {} : undefined;
+      serverMessages.push({ ms: ms(), request: message.method });
+      child.stdin.write(JSON.stringify(result ? { jsonrpc: '2.0', id: message.id, result } : { jsonrpc: '2.0', id: message.id, error: { code: -32601, message: 'not answered by the rig' } }) + '\n');
+    } else {
+      serverMessages.push({ ms: ms(), notification: message.method });
+    }
+  }
+});
+
+const call = (method, params, timeout = 90000) => new Promise((resolve) => {
+  const id = ++nextId;
+  const timer = setTimeout(() => { waiters.delete(id); resolve({ timedOut: true }); }, timeout);
+  waiters.set(id, (message) => { clearTimeout(timer); resolve(message); });
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+});
+
+const steps = [];
+async function tool(label, toolName, args) {
+  currentStep = label;
+  const startedMs = ms();
+  const message = await call('tools/call', { name: toolName, arguments: args });
+  const text = message.timedOut ? 'TIMED OUT after 90 s'
+    : message.error ? `JSON-RPC error ${JSON.stringify(message.error)}`
+      : (message.result?.content ?? []).map((c) => c.text ?? `[${c.type}]`).join('\n');
+  steps.push({ label, tool: toolName, args, startedMs, endedMs: ms(), isError: !!message.result?.isError, text: text.length > 1500 ? text.slice(0, 1500) + ' [cut]' : text });
+  return text;
+}
+
+const hasStorageTools = style === 'browserai';
+async function readCookies(label, { onBlank = false } = {}) {
+  if (hasStorageTools)
+    await tool(`${label}: browser_cookie_list`, 'browser_cookie_list', {});
+  if (!onBlank)
+    await tool(`${label}: document.cookie`, 'browser_evaluate', { function: '() => document.cookie' });
+}
+
+function readHar(path) {
+  if (!existsSync(path))
+    return { exists: false };
+  try {
+    const har = JSON.parse(readFileSync(path, 'utf8'));
+    return {
+      exists: true,
+      creator: har.log.creator,
+      browser: har.log.browser,
+      pages: (har.log.pages ?? []).map((p) => p.title),
+      entries: (har.log.entries ?? []).map((e) => ({
+        url: e.request.url.replace(base, ''),
+        requestCookie: (e.request.headers ?? []).find((h) => h.name.toLowerCase() === 'cookie')?.value ?? null,
+        status: e.response?.status,
+      })),
+    };
+  } catch (e) {
+    return { exists: true, unreadable: String(e.message) };
+  }
+}
+
+const result = {
+  run: name, family, style, mode, server: serverKind, hook, flow, contexts,
+  versions: {
+    node: (await new Promise((r) => { const p = spawn(nodeExe, ['--version'], { windowsHide: true }); let s = ''; p.stdout.on('data', (d) => s += d); p.on('exit', () => r(s.trim())); })),
+    playwrightMcp: JSON.parse(readFileSync(join(payload, 'mcp', 'node_modules', '@playwright', 'mcp', 'package.json'), 'utf8')).version,
+    playwrightCore: JSON.parse(readFileSync(join(payload, 'mcp', 'node_modules', 'playwright-core', 'package.json'), 'utf8')).version,
+  },
+  base, harPath, configPath,
+  priority: { driver: os.getPriority(0), child: (() => { try { return os.getPriority(child.pid); } catch (e) { return String(e.message); } })() },
+  startedUtc: new Date(t0).toISOString(),
+};
+
+const overall = setTimeout(() => { result.overallTimeout = true; try { child.kill(); } catch { } }, 240000);
+
+try {
+  currentStep = 'initialize';
+  const init = await call('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'ctx202-rig', version: '1' } });
+  result.serverInfo = init.result?.serverInfo ?? init;
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+
+  if (flow === 'replica') {
+    // isolated.mjs of 2026-11-17, first child, call for call.
+    await tool('R1 navigate page-a', 'browser_navigate', { url: `${base}/page-a` });
+    await tool('R2 new tab, url page-b, isolatedContext iso', 'browser_tabs', { action: 'new', url: `${base}/page-b`, isolatedContext: 'iso' });
+    await tool('R3 cookies on isolated tab', 'browser_cookie_list', {});
+    await tool('R4 tab list', 'browser_tabs', { action: 'list' });
+    await tool('R5 select default tab', 'browser_tabs', { action: 'select', index: 0 });
+    await tool('R6 cookies on default tab', 'browser_cookie_list', {});
+    await tool('R7 close', 'browser_close', {});
+  } else if (flow === 'resume-iso') {
+    // A second launch on a profile an earlier run left cookies in (--profile), the shape of a
+    // BrowserAI resume of a session holding a login.
+    await tool('P1 default tab before any request', 'browser_tabs', { action: 'list' });
+    await tool('P2 default tab before any request: browser_cookie_list', 'browser_cookie_list', {});
+    await tool('P3 new tab in "iso", no url', 'browser_tabs', { action: 'new', isolatedContext: 'iso' });
+    await tool('P4 "iso" tab before any request: browser_cookie_list', 'browser_cookie_list', {});
+    await tool('P5 "iso" tab -> page-b', 'browser_navigate', { url: `${base}/page-b` });
+    await sleep(1500, 'P5 settle');
+    await readCookies('P6 "iso" tab after page-b');
+    await tool('P7 select the default tab', 'browser_tabs', { action: 'select', index: 0 });
+    await tool('P8 default tab -> page-a', 'browser_navigate', { url: `${base}/page-a?resumed=1` });
+    await sleep(1000, 'P8 settle');
+    await readCookies('P9 default tab at the end');
+    await tool('P10 close', 'browser_close', {});
+  } else if (flow === 'explicit-close') {
+    await tool('E1 default tab -> page-a', 'browser_navigate', { url: `${base}/page-a` });
+    await sleep(1500, 'E1 settle');
+    await tool('E2 new tab in iso -> page-b', 'browser_tabs', { action: 'new', url: `${base}/page-b`, isolatedContext: 'iso' });
+    await sleep(1500, 'E2 settle');
+    result.harBeforeAnyClose = readHar(harPath);
+    await tool('E3 close the iso tab\'s own context from the iso tab', 'browser_run_code_unsafe', { code: 'async (page) => { await page.context().close(); return "iso context closed"; }' });
+    await sleep(1000, 'E3 settle');
+    result.harAfterIsoContextClose = readHar(harPath);
+    if (existsSync(harPath))
+      copyFileSync(harPath, join(out, 'after-iso-context-close.har.json'));
+    await tool('E4 tab list', 'browser_tabs', { action: 'list' });
+    await tool('E5 close', 'browser_close', {});
+  } else {
+    await tool('S1 default tab -> page-a', 'browser_navigate', { url: `${base}/page-a` });
+    await sleep(1500, 'S1 settle');
+    await readCookies('S2 default tab after page-a');
+    for (const [i, contextName] of contexts.entries()) {
+      const page = i === 0 ? 'page-b' : 'page-c';
+      await tool(`S3.${i} new tab in "${contextName}", no url`, 'browser_tabs', { action: 'new', isolatedContext: contextName });
+      await readCookies(`S4.${i} "${contextName}" tab before any request`, { onBlank: true });
+      await tool(`S5.${i} "${contextName}" tab -> ${page}`, 'browser_navigate', { url: `${base}/${page}` });
+      await sleep(1500, `S5.${i} settle`);
+      await readCookies(`S6.${i} "${contextName}" tab after ${page}`);
+    }
+    await tool('S7 tab list', 'browser_tabs', { action: 'list' });
+    await tool('S8 select the default tab', 'browser_tabs', { action: 'select', index: 0 });
+    await tool('S9 default tab -> page-a again', 'browser_navigate', { url: `${base}/page-a?again=1` });
+    await sleep(1000, 'S9 settle');
+    await readCookies('S10 default tab at the end');
+    result.harBeforeClose = readHar(harPath);
+    await tool('S11 close', 'browser_close', {});
+  }
+} catch (e) {
+  result.driverError = String(e && e.stack || e);
+}
+
+currentStep = 'end of input';
+child.stdin.end();
+result.exit = await Promise.race([exited, sleep(60000).then(() => 'no exit within 60 s')]);
+if (typeof result.exit === 'string') {
+  try { child.kill(); } catch { }
+  result.exit = { killed: true, after: await exited };
+}
+clearTimeout(overall);
+server.close();
+
+result.steps = steps;
+result.serverLog = serverLog;
+result.serverMessages = serverMessages;
+result.outputFiles = readdirSync(join(out, 'output')).sort();
+result.finalHar = readHar(harPath);
+if (hook && existsSync(join(out, 'harwatch.jsonl')))
+  result.harWrites = readFileSync(join(out, 'harwatch.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l)).map((r) => {
+    if (r.urls)
+      r.urls = r.urls.map((u) => u.replace(base, ''));
+    return r;
+  });
+result.endedUtc = new Date().toISOString();
+writeFileSync(join(out, 'result.json'), JSON.stringify(result, null, 2));
+
+// A one-screen summary.
+const summary = {
+  run: name,
+  exit: result.exit,
+  requests: serverLog.map((r) => `${r.ms}ms [${r.step}] ${r.method} ${r.url} cookie=${JSON.stringify(r.cookieHeader)} dest=${r.secFetchDest} -> ${r.status}${r.setCookie ? ' set ' + r.setCookie.split(';')[0] : ''}`),
+  cookieAnswers: steps.filter((s) => /cookie/.test(s.label)).map((s) => `${s.label}: ${s.text.replace(/\n/g, ' | ')}`),
+  finalHar: result.finalHar.exists ? { pages: result.finalHar.pages, urls: result.finalHar.entries?.map((e) => e.url) } : result.finalHar,
+  harVersions: result.harWrites?.filter((w) => w.op === 'version' || w.op === 'writeFile').map((w) => w.op === 'version' ? `v${w.n} (${w.why}) pages=${JSON.stringify(w.pages)} urls=${JSON.stringify(w.urls)}` : `${w.t} writeFile bytes=${w.bytes}`),
+  afterIsoContextClose: result.harAfterIsoContextClose ? { pages: result.harAfterIsoContextClose.pages, urls: result.harAfterIsoContextClose.entries?.map((e) => e.url) } : undefined,
+  errors: steps.filter((s) => s.isError).map((s) => `${s.label}: ${s.text.slice(0, 300)}`),
+  driverError: result.driverError,
+};
+console.log(JSON.stringify(summary, null, 2));
+process.exit(0);

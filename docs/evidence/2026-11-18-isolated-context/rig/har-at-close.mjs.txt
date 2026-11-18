@@ -1,0 +1,141 @@
+// pw lane, 2026-11-18: when the payload's own child writes the HTTP Archive BrowserAI configures
+// for a capture run, and what a child stopped without a close leaves. One session per mode, in
+// BrowserAI's configuration for a Chromium capture run, against a page on 127.0.0.1:
+//   close  browser_close, then the end of input: the close the agent's browserai_close makes
+//   eof    the end of input alone, the way a session's child is let go
+//   kill   the child's whole process tree ended by its pid with taskkill /T /F, after the page
+//          loaded, the way a child is ended when nothing closes it
+// The archive is read before anything closes and after the child has gone. This process runs at
+// below-normal priority and everything it starts inherits the class; the browser is headless.
+// Usage: node har-at-close.mjs <run root> <mode>. A new file.
+import { spawn, spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import http from 'node:http';
+import os from 'node:os';
+import path from 'node:path';
+
+os.setPriority(0, os.constants.priority.PRIORITY_BELOW_NORMAL);
+
+const [root, mode] = process.argv.slice(2);
+const payload = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\payload-0.0.85-registerai-0.3.0';
+const browsers = path.join(process.env.LOCALAPPDATA, 'BrowserAI', 'browsers');
+const run = path.join(root, mode);
+fs.mkdirSync(run, { recursive: true });
+for (const folder of ['profile', 'output', 'downloads', 'temp', 'localappdata']) fs.mkdirSync(path.join(run, folder), { recursive: true });
+
+const har = path.join(run, 'output', 'network.har');
+const config = {
+  browser: {
+    browserName: 'chromium',
+    userDataDir: path.join(run, 'profile'),
+    launchOptions: {
+      channel: 'chrome-for-testing',
+      args: ['--enable-automation', '--disable-blink-features=AutomationControlled', '--restore-last-session', '--enable-aggressive-domstorage-flushing', '--hide-crash-restore-bubble', '--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies'],
+      ignoreDefaultArgs: ['about:blank'],
+      headless: true,
+      downloadsPath: path.join(run, 'downloads'),
+    },
+    contextOptions: { serviceWorkers: 'block', recordHar: { path: har, mode: 'full', content: 'embed' } },
+  },
+  outputDir: path.join(run, 'output'),
+  saveSession: false,
+  allowUnrestrictedFileAccess: false,
+  filePaths: 'absolute',
+  timeouts: { idle: 0 },
+};
+fs.writeFileSync(path.join(run, 'config.json'), JSON.stringify(config, null, 2));
+
+const served = [];
+const server = http.createServer((request, response) => {
+  served.push(request.url);
+  response.setHeader('content-type', 'text/html');
+  response.end(`<title>${request.url}</title><p>${request.url}</p>`);
+});
+await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+const base = `http://127.0.0.1:${server.address().port}`;
+
+const result = { mode, startedUtc: new Date().toISOString(), base, har, steps: [] };
+const archive = () => {
+  if (!fs.existsSync(har)) return { exists: false };
+  const text = fs.readFileSync(har, 'utf8');
+  try {
+    return { exists: true, bytes: text.length, urls: JSON.parse(text).log.entries.map((entry) => entry.request.url.replace(base, '')) };
+  } catch (error) {
+    return { exists: true, bytes: text.length, unreadable: String(error) };
+  }
+};
+
+const environment = {
+  ...process.env,
+  PLAYWRIGHT_BROWSERS_PATH: browsers,
+  PLAYWRIGHT_SKIP_BROWSER_GC: '1',
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1',
+  TEMP: path.join(run, 'temp'),
+  TMP: path.join(run, 'temp'),
+  LOCALAPPDATA: path.join(run, 'localappdata'),
+};
+const child = spawn(path.join(payload, 'node', 'node.exe'), [path.join(payload, 'mcp', 'node_modules', '@playwright', 'mcp', 'cli.js'), '--config', path.join(run, 'config.json')], {
+  cwd: path.join(run, 'output'),
+  env: environment,
+  stdio: ['pipe', 'pipe', 'pipe'],
+  windowsHide: true,
+});
+result.childPid = child.pid;
+let stderr = '';
+child.stderr.on('data', (chunk) => { stderr += chunk; });
+const exited = new Promise((resolve) => child.on('exit', (code, signal) => resolve({ code, signal, utc: new Date().toISOString() })));
+
+let buffer = '';
+let id = 0;
+const waiting = new Map();
+child.stdout.on('data', (chunk) => {
+  buffer += chunk;
+  let end;
+  while ((end = buffer.indexOf('\n')) >= 0) {
+    const line = buffer.slice(0, end);
+    buffer = buffer.slice(end + 1);
+    try {
+      const message = JSON.parse(line);
+      waiting.get(message.id)?.(message);
+    } catch {
+      // not a JSON-RPC line
+    }
+  }
+});
+const call = (method, params) => new Promise((resolve) => {
+  waiting.set(++id, resolve);
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+});
+const tool = async (name, args) => {
+  const started = Date.now();
+  const answer = await call('tools/call', { name, arguments: args });
+  result.steps.push({ tool: name, args, ms: Date.now() - started, isError: answer.result?.isError ?? Boolean(answer.error), text: (answer.result?.content?.[0]?.text ?? JSON.stringify(answer.error ?? null)).slice(0, 300) });
+  return answer;
+};
+
+await call('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'har-at-close', version: '1' } });
+child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+await tool('browser_navigate', { url: `${base}/page-a` });
+await new Promise((resolve) => setTimeout(resolve, 1000));
+result.archiveBeforeAnyClose = archive();
+
+if (mode === 'close') {
+  await tool('browser_close', {});
+  result.archiveAfterTheClose = archive();
+  child.stdin.end();
+} else if (mode === 'eof') {
+  child.stdin.end();
+} else if (mode === 'kill') {
+  const killed = spawnSync('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { encoding: 'utf8', windowsHide: true });
+  result.taskkill = { status: killed.status, stdout: killed.stdout.trim(), stderr: killed.stderr.trim() };
+}
+
+result.exit = await exited;
+await new Promise((resolve) => setTimeout(resolve, 2000));
+result.archiveAfterTheChildHadGone = archive();
+result.served = served;
+result.stderr = stderr.slice(0, 2000);
+result.endedUtc = new Date().toISOString();
+fs.writeFileSync(path.join(run, 'result.json'), JSON.stringify(result, null, 2));
+server.close();
+console.log(JSON.stringify({ mode, before: result.archiveBeforeAnyClose, afterClose: result.archiveAfterTheClose, after: result.archiveAfterTheChildHadGone, exit: result.exit, taskkill: result.taskkill }));

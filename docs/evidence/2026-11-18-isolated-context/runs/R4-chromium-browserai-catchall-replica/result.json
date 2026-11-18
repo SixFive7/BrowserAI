@@ -1,0 +1,190 @@
+{
+  "run": "R4-chromium-browserai-catchall-replica",
+  "family": "chromium",
+  "style": "browserai",
+  "mode": "persistent",
+  "server": "catchall",
+  "hook": false,
+  "flow": "replica",
+  "contexts": [
+    "iso"
+  ],
+  "versions": {
+    "node": "v26.13.1",
+    "playwrightMcp": "0.0.85",
+    "playwrightCore": "1.66.0-alpha-2026-11-09"
+  },
+  "base": "http://127.0.0.1:61925",
+  "harPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R4-chromium-browserai-catchall-replica\\output\\network-20261117-230805794.har",
+  "configPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R4-chromium-browserai-catchall-replica\\config.json",
+  "priority": {
+    "driver": 10,
+    "child": 10
+  },
+  "startedUtc": "2026-11-17T23:08:05.786Z",
+  "serverInfo": {
+    "name": "Playwright",
+    "version": "1.66.0-alpha-2026-11-09"
+  },
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 1310
+  },
+  "steps": [
+    {
+      "label": "R1 navigate page-a",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:61925/page-a"
+      },
+      "startedMs": 300,
+      "endedMs": 914,
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:61925/page-a\n- Page Title: page a\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R4-chromium-browserai-catchall-replica\\output\\page-2026-11-17T23-08-06-697Z.yml)"
+    },
+    {
+      "label": "R2 new tab, url page-b, isolatedContext iso",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:61925/page-b",
+        "isolatedContext": "iso"
+      },
+      "startedMs": 914,
+      "endedMs": 1097,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:61925/page-a)\n- 1: (current) [page b](http://127.0.0.1:61925/page-b) [isolatedContext: iso]\n### Open tabs\n- 0: [page a](http://127.0.0.1:61925/page-a)\n- 1: (current) [page b](http://127.0.0.1:61925/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:61925/page-b\n- Page Title: page b\n- Isolated context: iso\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R4-chromium-browserai-catchall-replica\\output\\page-2026-11-17T23-08-06-882Z.yml)"
+    },
+    {
+      "label": "R3 cookies on isolated tab",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 1097,
+      "endedMs": 1100,
+      "isError": false,
+      "text": "### Result\ncookie_b=b (domain: 127.0.0.1, path: /)\ncookie_a=a (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "R4 tab list",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "startedMs": 1100,
+      "endedMs": 1104,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:61925/page-a)\n- 1: (current) [page b](http://127.0.0.1:61925/page-b) [isolatedContext: iso]"
+    },
+    {
+      "label": "R5 select default tab",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "startedMs": 1104,
+      "endedMs": 1112,
+      "isError": false,
+      "text": "### Result\n- 0: (current) [page a](http://127.0.0.1:61925/page-a)\n- 1: [page b](http://127.0.0.1:61925/page-b) [isolatedContext: iso]"
+    },
+    {
+      "label": "R6 cookies on default tab",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 1112,
+      "endedMs": 1115,
+      "isError": false,
+      "text": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "R7 close",
+      "tool": "browser_close",
+      "args": {},
+      "startedMs": 1115,
+      "endedMs": 1294,
+      "isError": false,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+    }
+  ],
+  "serverLog": [
+    {
+      "ms": 855,
+      "step": "R1 navigate page-a",
+      "method": "GET",
+      "url": "/page-a",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 881,
+      "step": "R1 navigate page-a",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "image",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 1051,
+      "step": "R2 new tab, url page-b, isolatedContext iso",
+      "method": "GET",
+      "url": "/page-b",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_b=b; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 1074,
+      "step": "R2 new tab, url page-b, isolatedContext iso",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_b=b",
+      "secFetchDest": "image",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    }
+  ],
+  "serverMessages": [
+    {
+      "ms": 833,
+      "notification": "notifications/tools/list_changed"
+    }
+  ],
+  "outputFiles": [
+    "network-20261117-230805794.har",
+    "page-2026-11-17T23-08-06-697Z.yml",
+    "page-2026-11-17T23-08-06-882Z.yml"
+  ],
+  "finalHar": {
+    "exists": true,
+    "creator": {
+      "name": "Playwright",
+      "version": "1.66.0-alpha-2026-11-09"
+    },
+    "browser": {
+      "name": "chromium",
+      "version": "158.0.8127.18"
+    },
+    "pages": [
+      "page a"
+    ],
+    "entries": [
+      {
+        "url": "chrome://resources/cr_components/searchbox/icons/google_logo.svg",
+        "requestCookie": null,
+        "status": 200
+      },
+      {
+        "url": "/page-a",
+        "requestCookie": null,
+        "status": 200
+      }
+    ]
+  },
+  "endedUtc": "2026-11-17T23:08:07.097Z"
+}

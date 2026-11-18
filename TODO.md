@@ -1360,7 +1360,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       environment and is planted red, with BrowserAI forcing the variable empty (*corrected 2026-11-18, previously "against the payload of 0.0.83": a binary built for 0.0.85 refuses a session child with the tool list of 0.0.83*), and `AGENTS.md`'s second
       exception is retired. The forced-restart probe was not run: the decision rests on the
       variable in the browser's environment, not on a stall.
-- [ ] **WATCH our comment on
+- [x] **WATCH our comment on
       [microsoft/playwright#23047](https://github.com/microsoft/playwright/issues/23047),
       closed shadow roots.** Posted 2026-10-03 under SixFive7 on the maintainer's
       word (Q313 and Q357) as
@@ -1389,6 +1389,29 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       a page has no open root mode for testing. **So no reply is left to watch for
       here.** Whether a new issue goes out is the maintainer's to decide, because
       it goes out under his name; the item stays open until he does.
+      ✅ **CLOSED 2026-11-18 by the maintainer's 194 a**, in his words verbatim: *"194 I'd
+      like to say option a. But is there any code or assumption that does anything with
+      this?"* Nothing in `src` or `tests` names #23047 or a closed shadow root, read that
+      day, which was his condition for a. No new issue goes out, and re-verification row
+      174 still re-checks the snapshot at a roll, because the gap is upstream's.
+- [ ] **WATCH [microsoft/playwright#44199](https://github.com/microsoft/playwright/issues/44199),
+      a tab in an isolated context missing from the HTTP Archive.** Posted
+      2026-11-18T03:21:32Z under SixFive7 on the maintainer's 209 a. With
+      `contextOptions.recordHar` set, `playwright-core` 1.66 records every isolated context
+      into the one path and the default context's write at the close erases them
+      ([kb](kb/playwright/tools-and-artifacts.md#a-tab-in-an-isolated-context-is-missing-from-the-sessions-http-archive----measured-2026-11-18)).
+      Until upstream fixes it BrowserAI refuses `browser_tabs` with `isolatedContext` in a
+      session with `captureNetwork` on, by the maintainer's 208 a and b, in his words
+      verbatim: *"208 a + b (until the upstream fix comes in)"*.
+      **What to do:** check it at least once a week for replies, and bring any question to
+      the maintainer. **It ends** with a Playwright release that gives each isolated
+      context an archive of its own, or documents that `recordHar` covers the default
+      context alone, measured with the issue's own reproduction, kept as
+      `runs/U2-upstream-final/repro.mjs.txt` in
+      [the evidence](docs/evidence/2026-11-18-isolated-context/README.md). On a fix, the
+      `refuse` member of `browser_tabs`' row in `tool-verdicts.json` goes, with the note's
+      first sentence, the sentence in `captureNetwork`'s description and the hazard row's
+      refusal; on documentation alone, the question goes back to the maintainer.
 - [x] **WATCH https://github.com/anthropics/claude-code/issues/99238, the
       Windows stdio MCP tree-kill.** On Windows, Claude Code tree-kills a stdio
       MCP server before its stdin is closed. Posted 2026-10-03. Watch for a

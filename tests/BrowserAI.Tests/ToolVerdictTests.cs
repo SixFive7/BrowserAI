@@ -444,6 +444,7 @@ internal sealed class ToolVerdictTests
                 "browser_mouse_move_xy",
                 "browser_network_state_set",
                 "browser_route",
+                "browser_tabs",
                 "browser_take_screenshot",
             ]);
 
@@ -455,6 +456,91 @@ internal sealed class ToolVerdictTests
             "the-committed-file.json");
 
         await Assert.That(loaded.Find("browser_take_screenshot")!.Note).IsNotNull();
+    }
+
+    /// <summary>
+    /// Every argument refusal names an argument its tool's schema has, is dated and says
+    /// what ends it, and a model is told of it twice: on the tool and on the switch.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 208 a and b, 2026-11-18, in his words verbatim:</b> <i>"208 a + b
+    /// (until the upstream fix comes in)"</i>. b is the refusal, a row of the file; a is
+    /// that the model is told, in <c>browser_tabs</c>' note and in one sentence of
+    /// <c>captureNetwork</c>'s description. A refusal the tool list never mentions is a
+    /// call a model makes, is refused for, and has no way to have known about, so the arm
+    /// holds the two together for every refusal the file will ever carry.
+    /// </para>
+    /// <para>
+    /// <b>The rows are listed by name, as the notes are</b>, so a refusal taken out of the
+    /// file is a red build and not a check that passes over nothing. The argument is read
+    /// off the committed snapshot, so an upstream rename of it is a red build here too.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryArgumentRefusalIsAnArgumentOfItsToolAndIsToldOnTheToolAndOnItsSwitch()
+    {
+        var refused = RepositoryVerdicts.Committed.Upstream
+            .SelectMany(row => (row.Refusals ?? []).Select(refusal => (Row: row, Refusal: refusal)))
+            .ToList();
+
+        await Assert.That(refused.Select(pair => $"{pair.Row.Name}.{pair.Refusal.Argument} while {pair.Refusal.Setting}"))
+            .IsEquivalentTo((string[])["browser_tabs.isolatedContext while captureNetwork"]);
+
+        var carriers = await UpstreamSurface.ToolsCarryingParameterAsync();
+        var described = SwitchDescriptions();
+        var faults = new List<string>();
+
+        foreach (var (row, refusal) in refused)
+        {
+            if (!carriers.TryGetValue(refusal.Argument, out var tools) || !tools.Contains(row.Name, StringComparer.Ordinal))
+            {
+                faults.Add($"'{row.Name}' refuses '{refusal.Argument}', which upstream-snapshots/tools-list.json does not give it as an argument, so the refusal can never be met");
+            }
+
+            if (row.Note is not { } note
+                || !note.Contains(refusal.Argument, StringComparison.Ordinal)
+                || !note.Contains(refusal.Setting, StringComparison.Ordinal))
+            {
+                faults.Add($"'{row.Name}' refuses '{refusal.Argument}' while '{refusal.Setting}' is on, and its note does not name both, so a model reading the tool is not told");
+            }
+
+            if (!described.TryGetValue(refusal.Setting, out var description) || !description.Contains(refusal.Argument, StringComparison.Ordinal))
+            {
+                faults.Add($"'{refusal.Setting}' turns on the refusal of '{row.Name}' with '{refusal.Argument}', and its description on {SessionToolSurface.Init} does not name the argument, so a model choosing the setting is not told");
+            }
+
+            if (!DateOnly.TryParseExact(refusal.Since, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+            {
+                faults.Add($"'{row.Name}' refuses '{refusal.Argument}' since '{refusal.Since}', which is not an ISO yyyy-MM-dd date");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, faults)).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL, with the same row from a doctored file: an argument no
+        // schema has is caught, so the snapshot reading above can find something.
+        var document = await RepositoryVerdicts.DocumentAsync();
+        document["upstream"]!["browser_tabs"]!["refuse"]![0]!["argument"] = "anArgumentNoSchemaHas";
+
+        var doctored = ToolVerdicts.Parse(Encoding.UTF8.GetBytes(document.ToJsonString()), "the-doctored-file.json");
+        var argument = doctored.Find("browser_tabs")!.Refusals!.Single().Argument;
+
+        await Assert.That(carriers.ContainsKey(argument)).IsFalse();
+    }
+
+    /// <summary>Each per-run switch's description, as <c>browserai_init</c> gives it to a model.</summary>
+    /// <returns>Setting name to description.</returns>
+    private static Dictionary<string, string> SwitchDescriptions()
+    {
+        var surface = SessionToolSurface.Rewrite(new JsonObject { ["tools"] = new JsonArray() }, RepositoryVerdicts.Committed);
+        var init = surface["tools"]!.AsArray().Single(tool => (string?)tool!["name"] == SessionToolSurface.Init)!;
+        var properties = init["inputSchema"]!["properties"]!.AsObject();
+
+        return SessionRunSettings.Switches
+            .Where(setting => properties[setting]?["description"] is not null)
+            .ToDictionary(setting => setting, setting => (string)properties[setting]!["description"]!, StringComparer.Ordinal);
     }
 
     [Test]
@@ -669,7 +755,63 @@ internal sealed class ToolVerdictTests
         (
             "an empty note",
             file => file["upstream"]![NeverATool] = new JsonObject { ["verdict"] = "allow", ["note"] = string.Empty }),
+
+        // ⚠️ THE ARGUMENT REFUSAL, ADDED 2026-11-18 with the field, the maintainer's 208 b: on
+        // an `allow` row only, a non-empty array of objects with exactly the seven members,
+        // every one a non-empty string but `except`, which is an array of strings, and a
+        // `while` that is one of the per-run switches.
+        (
+            "an argument refusal on a denied tool",
+            file => file["upstream"]![NeverATool] = new JsonObject { ["verdict"] = "deny", ["why"] = "because", ["since"] = "2026-11-18", ["refuse"] = new JsonArray(ARefusal()) }),
+        ("argument refusals that are not an array", file => Refusing(file, new JsonObject())),
+        ("an empty array of argument refusals", file => Refusing(file, new JsonArray())),
+        ("an argument refusal that is not an object", file => Refusing(file, new JsonArray("isolatedContext"))),
+        ("an argument refusal with a member nobody defined", file => Refusing(file, new JsonArray(ARefusal("whilst", "captureNetwork")))),
+        ("an argument refusal with no argument", file => Refusing(file, new JsonArray(ARefusal("argument", null)))),
+        ("an argument refusal turned on by a setting that is not a switch", file => Refusing(file, new JsonArray(ARefusal("while", "viewport")))),
+        ("an argument refusal with no words for the caller", file => Refusing(file, new JsonArray(ARefusal("refusal", string.Empty)))),
+        ("an argument refusal with no date", file => Refusing(file, new JsonArray(ARefusal("since", null)))),
+        ("an argument refusal that says nothing of what ends it", file => Refusing(file, new JsonArray(ARefusal("until", null)))),
+        ("an argument refusal whose exceptions are not strings", file => Refusing(file, new JsonArray(ARefusal("except", new JsonArray(5))))),
     ];
+
+    /// <summary>A refusal the loader takes, with one member changed, or taken out when its value is null.</summary>
+    /// <param name="member">The member to change, or <see langword="null"/> for none.</param>
+    /// <param name="value">Its value, or <see langword="null"/> to take it out.</param>
+    /// <returns>The refusal.</returns>
+    private static JsonObject ARefusal(string? member = null, JsonNode? value = null)
+    {
+        var refusal = new JsonObject
+        {
+            ["argument"] = "isolatedContext",
+            ["except"] = new JsonArray("default"),
+            ["while"] = "captureNetwork",
+            ["refusal"] = "Do it another way.",
+            ["why"] = "because",
+            ["since"] = "2026-11-18",
+            ["until"] = "a fix",
+        };
+
+        if (member is not null)
+        {
+            if (value is null)
+            {
+                _ = refusal.Remove(member);
+            }
+            else
+            {
+                refusal[member] = value;
+            }
+        }
+
+        return refusal;
+    }
+
+    /// <summary>Gives the synthetic allowed tool the refusals given.</summary>
+    /// <param name="file">The file.</param>
+    /// <param name="refusals">What its <c>refuse</c> member holds.</param>
+    private static void Refusing(JsonObject file, JsonNode refusals) =>
+        file["upstream"]![NeverATool] = new JsonObject { ["verdict"] = "allow", ["refuse"] = refusals };
 
     private static async Task<IReadOnlyList<string>> SnapshotAsync() =>
         [.. (await UpstreamSurface.SnapshotDescriptionsAsync()).Select(entry => entry.Name)];

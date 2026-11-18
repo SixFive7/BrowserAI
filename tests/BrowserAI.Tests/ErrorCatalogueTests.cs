@@ -611,6 +611,93 @@ internal sealed partial class ErrorCatalogueTests
             SessionErrors.UnrecognisedArguments("browser_navigate", ["notAnArgument"], listed.Find("browser_navigate")!));
     }
 
+    /// <summary>
+    /// The argument refusal row, provoked by a tab in an isolated context in a session that
+    /// captures its network traffic, with the two calls it does not refuse beside it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 208 b, 2026-11-18, in his words verbatim:</b> <i>"208 a + b (until
+    /// the upstream fix comes in)"</i>. The row's own words are read from the committed
+    /// verdicts file, so what is compared is what ships, and the rig answers with the
+    /// committed snapshot, so the argument is one the tool's real schema has.
+    /// </para>
+    /// <para>
+    /// <b>And the refusal is narrow.</b> The default context's own name in the same session,
+    /// and the same isolated context in a session that does not capture, both reach the
+    /// child: a refusal of every <c>browser_tabs</c> call would pass the first half alone.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheArgumentRefusalRowIsEmittedByAnIsolatedTabInASessionThatCapturesItsTraffic()
+    {
+        const string Tabs = "browser_tabs";
+        const string Answer = "the double's tab list";
+
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
+            child => child.Tools[Tabs] = new FakeToolBehaviour { RawResult = $$"""{"content":[{"type":"text","text":"{{Answer}}"}]}""" },
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var capturing = await openAsync("capturing", captureNetwork: true);
+        var plain = await openAsync("plain", captureNetwork: false);
+
+        var refused = await tabsAsync(capturing, "alice");
+
+        await Assert.That((bool?)refused["isError"]).IsTrue().Because($"the call was answered: {TextOf(refused)}");
+        await Assert.That(tabsCalls()).IsEqualTo(0);
+
+        // Read after the refusal is held, so a file with no refusal is red on the refusal and
+        // not on the row it would have been compared with.
+        var row = RepositoryVerdicts.Committed.Find(Tabs)!.Refusals!.Single();
+
+        Match(
+            TextOf(refused),
+            nameof(SessionErrors.ArgumentRefusedWhileOn),
+            SessionErrors.ArgumentRefusedWhileOn(Tabs, row.Argument, row.Setting, row.Refusal));
+
+        var defaulted = await tabsAsync(capturing, "default");
+        var elsewhere = await tabsAsync(plain, "alice");
+
+        await Assert.That((bool?)defaulted["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(defaulted)).Contains(Answer);
+        await Assert.That((bool?)elsewhere["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(elsewhere)).Contains(Answer);
+        await Assert.That(tabsCalls()).IsEqualTo(2);
+
+        async Task<string> openAsync(string name, bool captureNetwork)
+        {
+            var directory = Path.Combine(sessions.Root, name);
+
+            var opened = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = directory,
+                ["purpose"] = "a session whose browser_tabs calls the suite makes",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = captureNetwork,
+                ["idleMinutes"] = 10,
+            });
+
+            await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
+
+            return directory;
+        }
+
+        async Task<JsonObject> tabsAsync(string directory, string context) =>
+            await CallAsync(rig, Tabs, new JsonObject
+            {
+                ["session"] = directory,
+                ["why"] = "the suite opening a tab in a browser context",
+                ["action"] = "new",
+                ["isolatedContext"] = context,
+            });
+
+        int tabsCalls() =>
+            sessions.SessionChildren.Sum(child => child.ToolCallsReceived.Count(tool => string.Equals(tool, Tabs, StringComparison.Ordinal)));
+    }
+
     [Test]
     public async Task TheLockRowsAreEmittedByRealLockConditions()
     {
@@ -2092,6 +2179,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(ThePageToolRowsAreEmittedByACallAgainstATabThatReallyOffersPageTools))]
     [DependsOn(nameof(ThePageCouldNotBeEstablishedRowIsEmittedByATabListingNothingCanRead))]
     [DependsOn(nameof(ThePageToolAbandonmentRowIsEmittedByAPageToolThatNeverAnswers))]
+    [DependsOn(nameof(TheArgumentRefusalRowIsEmittedByAnIsolatedTabInASessionThatCapturesItsTraffic))]
     public async Task EveryRowInTheCatalogueWasTriggeredBySomethingAbove()
     {
         // The census, and the reason the catalogue is a type and not a set of
@@ -2358,7 +2446,13 @@ internal sealed partial class ErrorCatalogueTests
         // session whose browser download had failed was answered as a browser
         // runtime that did not start, with advice to delete the directory, when the
         // session was open and only the browser was missing.
-        await Assert.That(rows.Count).IsEqualTo(43);
+        //
+        // ⚠️ **Corrected 2026-11-18, to 44 (previously 43)**, the maintainer's 208 b, in his
+        // words verbatim: "208 a + b (until the upstream fix comes in)".
+        // `ArgumentRefusedWhileOn` arrived: a call carrying an argument its verdict refuses
+        // while one of the session's per-run switches is on, which today is browser_tabs'
+        // isolatedContext in a session that captures its network traffic.
+        await Assert.That(rows.Count).IsEqualTo(44);
     }
 
     /// <summary>

@@ -89,6 +89,18 @@ default context's page and none of the isolated one's, the isolated tab's cookie
 showed the default context's cookie beside its own, the default tab's showed only its
 own, and after a relaunch on the profile only the default context's cookie was there.
 
+⚠️ *Corrected 2026-11-18 by addition (previously "and its cookie list starts with the default
+context's cookies" in the line above, and "the isolated tab's cookie list showed the default
+context's cookie beside its own")*, the maintainer's 210 a, in his words verbatim: *"210 a"*.
+The archive half stands and the cookie half does not. This rig's server, `rig/isolated.mjs.txt`,
+set the default context's cookie on every path that did not name page B, the browser's own
+`favicon.ico` request among them, so the isolated tab was handed that cookie by its own icon
+request after its first request had gone out with no cookie at all. With a server that sets each
+cookie on its own page only, an isolated tab starts with no cookies: nine tabs in seven runs,
+two of them resumes of a profile that held a cookie, in
+[`2026-11-18-isolated-context`](../2026-11-18-isolated-context/README.md), whose runs R4 and R5
+replay this rig's server and show where the cookie came from.
+
 **A page's tools reach the child only through the browser's own WebMCP, launched on.** On
 0.0.85 a Chromium launched without `--enable-features=WebMCP`, or a Firefox without both
 `dom.modelcontext.enabled` and `dom.modelcontext.testing.enabled`, made Playwright throw

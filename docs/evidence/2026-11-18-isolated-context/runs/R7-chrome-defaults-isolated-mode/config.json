@@ -1,0 +1,13 @@
+{
+  "browser": {
+    "isolated": true,
+    "launchOptions": {
+      "headless": true
+    },
+    "contextOptions": {
+      "recordHar": {
+        "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har"
+      }
+    }
+  }
+}

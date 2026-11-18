@@ -1,0 +1,63 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R1-chromium-browserai-strict\\profile",
+    "launchOptions": {
+      "channel": "chrome-for-testing",
+      "args": [
+        "--enable-automation",
+        "--disable-blink-features=AutomationControlled",
+        "--restore-last-session",
+        "--enable-aggressive-domstorage-flushing",
+        "--hide-crash-restore-bubble",
+        "--enable-features=WebMCP,CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies",
+        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36"
+      ],
+      "ignoreDefaultArgs": [
+        "about:blank"
+      ],
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R8-chromium-browserai-resume\\downloads"
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "locale": "en-US",
+      "ignoreHTTPSErrors": false,
+      "permissions": [
+        "clipboard-read"
+      ],
+      "serviceWorkers": "block",
+      "recordHar": {
+        "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R8-chromium-browserai-resume\\output\\network-20261117-230941195.har",
+        "mode": "full",
+        "content": "embed"
+      }
+    }
+  },
+  "capabilities": [
+    "config",
+    "vision",
+    "devtools",
+    "storage",
+    "network",
+    "pdf",
+    "testing"
+  ],
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R8-chromium-browserai-resume\\output",
+  "saveSession": false,
+  "allowUnrestrictedFileAccess": false,
+  "console": {
+    "level": "debug"
+  },
+  "snapshot": {
+    "boxes": false
+  },
+  "codegen": "none",
+  "filePaths": "absolute",
+  "timeouts": {
+    "idle": 0
+  }
+}

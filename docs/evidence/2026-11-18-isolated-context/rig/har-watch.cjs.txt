@@ -1,0 +1,63 @@
+// ctx202, 2026-11-18: an observation-only preload for the @playwright/mcp child, loaded with
+// `node --require har-watch.cjs cli.js ...`. It wraps fs.promises.writeFile and
+// fs.promises.appendFile, which are the two calls playwright-core 1.66.0-alpha-2026-11-09 writes a
+// HAR with (SerializedFS for a local connection, harUnzip for a remote one). For a target whose
+// name ends in .har it appends one JSON line per call to the file HARWATCH_LOG names, and each
+// time a call leaves a whole HAR document at that path (a writeFile with content, or an
+// appendFile whose text closes the document with "}}") it copies the file aside as
+// <path>.v<N>.json and records which page titles and request URLs that version holds. Every
+// argument and every result passes through unchanged; the copy is made after the write it
+// follows has finished. Scratch, never committed.
+'use strict';
+const fs = require('fs');
+
+const LOG = process.env.HARWATCH_LOG;
+if (LOG) {
+  let version = 0;
+  const isHar = (p) => typeof p === 'string' && /\.har$/i.test(p);
+  const log = (record) => fs.appendFileSync(LOG, JSON.stringify({ t: new Date().toISOString(), ...record }) + '\n');
+  const snapshot = (file, why) => {
+    version++;
+    const copy = `${file}.v${version}.json`;
+    try {
+      fs.copyFileSync(file, copy);
+      const har = JSON.parse(fs.readFileSync(copy, 'utf8'));
+      log({
+        op: 'version', n: version, why, file, copy,
+        bytes: fs.statSync(copy).size,
+        pages: (har.log.pages || []).map((p) => p.title),
+        urls: (har.log.entries || []).map((e) => e.request.url),
+      });
+    } catch (e) {
+      log({ op: 'version-unreadable', n: version, why, file, error: String(e && e.message) });
+    }
+  };
+
+  const originalWriteFile = fs.promises.writeFile;
+  const originalAppendFile = fs.promises.appendFile;
+
+  fs.promises.writeFile = async function (file, data, options) {
+    const result = await originalWriteFile.call(this, file, data, options);
+    if (isHar(file)) {
+      const bytes = data == null ? 0 : (typeof data === 'string' ? Buffer.byteLength(data) : data.length);
+      log({ op: 'writeFile', file, bytes, truncates: bytes === 0 });
+      if (bytes > 0)
+        snapshot(file, 'writeFile');
+    }
+    return result;
+  };
+
+  fs.promises.appendFile = async function (file, data, options) {
+    const result = await originalAppendFile.call(this, file, data, options);
+    if (isHar(file)) {
+      const text = typeof data === 'string' ? data : String(data);
+      const closesDocument = text.endsWith('}}');
+      log({ op: 'appendFile', file, bytes: Buffer.byteLength(text), closesDocument });
+      if (closesDocument)
+        snapshot(file, 'appendFile closing the document');
+    }
+    return result;
+  };
+
+  log({ op: 'hook-loaded', pid: process.pid });
+}

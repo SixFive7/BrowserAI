@@ -1,0 +1,40 @@
+{
+  "mode": "kill",
+  "startedUtc": "2026-11-18T03:50:10.315Z",
+  "base": "http://127.0.0.1:64503",
+  "har": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\kill\\output\\network.har",
+  "steps": [
+    {
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:64503/page-a"
+      },
+      "ms": 24559,
+      "isError": false,
+      "text": "### Ran Playwright code\n```js\nawait page.goto('http://127.0.0.1:64503/page-a');\n```\n### Page\n- Page URL: http://127.0.0.1:64503/page-a\n- Page Title: /page-a\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\kill\\output\\page-2026-11-18T03-50-37-027Z.yml)"
+    }
+  ],
+  "childPid": 80540,
+  "archiveBeforeAnyClose": {
+    "exists": false
+  },
+  "taskkill": {
+    "status": 0,
+    "stdout": "SUCCESS: The process with PID 82288 (child process of PID 106312) has been terminated.\r\nSUCCESS: The process with PID 134792 (child process of PID 106312) has been terminated.\r\nSUCCESS: The process with PID 59460 (child process of PID 106312) has been terminated.\r\nSUCCESS: The process with PID 94420 (child process of PID 106312) has been terminated.\r\nSUCCESS: The process with PID 14872 (child process of PID 106312) has been terminated.\r\nSUCCESS: The process with PID 108036 (child process of PID 106312) has been terminated.\r\nSUCCESS: The process with PID 113132 (child process of PID 106312) has been terminated.\r\nSUCCESS: The process with PID 55472 (child process of PID 106312) has been terminated.\r\nSUCCESS: The process with PID 98844 (child process of PID 80540) has been terminated.\r\nSUCCESS: The process with PID 106312 (child process of PID 80540) has been terminated.\r\nSUCCESS: The process with PID 80540 (child process of PID 111680) has been terminated.",
+    "stderr": ""
+  },
+  "exit": {
+    "code": 1,
+    "signal": null,
+    "utc": "2026-11-18T03:50:43.298Z"
+  },
+  "archiveAfterTheChildHadGone": {
+    "exists": false
+  },
+  "served": [
+    "/page-a",
+    "/favicon.ico"
+  ],
+  "stderr": "",
+  "endedUtc": "2026-11-18T03:50:45.370Z"
+}

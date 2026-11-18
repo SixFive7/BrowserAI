@@ -1,0 +1,35 @@
+{
+  "run": "R3-chrome-defaults-strict",
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 7157
+  },
+  "requests": [
+    "1029ms [S1 default tab -> page-a] GET /page-a cookie=null dest=document -> 200 set cookie_a=a",
+    "1054ms [S1 default tab -> page-a] GET /favicon.ico cookie=\"cookie_a=a\" dest=image -> 404",
+    "3264ms [S5.0 \"iso\" tab -> page-b] GET /page-b cookie=null dest=document -> 200 set cookie_b=b",
+    "5345ms [S9 default tab -> page-a again] GET /page-a?again=1 cookie=\"cookie_a=a\" dest=document -> 200 set cookie_a=a"
+  ],
+  "cookieAnswers": [
+    "S2 default tab after page-a: document.cookie: ### Result | \"cookie_a=a\" | ### Ran Playwright code | ```js | await page.evaluate('() => document.cookie'); | ```",
+    "S6.0 \"iso\" tab after page-b: document.cookie: ### Result | \"cookie_b=b\" | ### Ran Playwright code | ```js | await page.evaluate('() => document.cookie'); | ```",
+    "S10 default tab at the end: document.cookie: ### Result | \"cookie_a=a\" | ### Ran Playwright code | ```js | await page.evaluate('() => document.cookie'); | ```"
+  ],
+  "finalHar": {
+    "pages": [
+      "page a"
+    ],
+    "urls": [
+      "/page-a",
+      "/page-a?again=1"
+    ]
+  },
+  "harVersions": [
+    "2026-11-17T23:07:57.605Z writeFile bytes=0",
+    "v1 (appendFile closing the document) pages=[\"page b\"] urls=[\"/page-b\"]",
+    "2026-11-17T23:07:57.632Z writeFile bytes=0",
+    "v2 (appendFile closing the document) pages=[\"page a\"] urls=[\"/page-a\",\"/page-a?again=1\"]"
+  ],
+  "errors": []
+}

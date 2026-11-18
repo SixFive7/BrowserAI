@@ -1,0 +1,21 @@
+# ctx202, 2026-11-18: snapshot or clean HKCU\Software\Mozilla\Firefox\Launcher around this
+# research's Firefox runs, the way the 2026-11-17 pw rigs did (launcher-key.ps1 there). 'snapshot'
+# writes the value names present now; 'clean' removes only the values present now and absent from
+# that snapshot, and names each one. Scratch, never committed.
+param(
+    [Parameter(Mandatory)] [ValidateSet('snapshot', 'clean')] [string] $Mode,
+    [string] $File = 'C:\Source\SixFive7\BrowserAI\.work\ctx202\launcher-snapshot.json'
+)
+$ErrorActionPreference = 'Stop'
+$key = 'HKCU:\Software\Mozilla\Firefox\Launcher'
+$names = if (Test-Path $key) { @((Get-Item $key).GetValueNames()) } else { @() }
+if ($Mode -eq 'snapshot') {
+    ConvertTo-Json -InputObject @($names) | Set-Content -LiteralPath $File -Encoding utf8NoBOM
+    "SNAPSHOT $($names.Count) values at $([DateTimeOffset]::UtcNow.ToString('o'))"
+}
+else {
+    $before = @(Get-Content -LiteralPath $File -Raw | ConvertFrom-Json)
+    $added = @($names | Where-Object { $before -notcontains $_ })
+    foreach ($name in $added) { Remove-ItemProperty -Path $key -Name $name; "REMOVED $name" }
+    "CLEAN removed $($added.Count) of $($names.Count) values at $([DateTimeOffset]::UtcNow.ToString('o'))"
+}

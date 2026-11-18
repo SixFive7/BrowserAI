@@ -1,0 +1,14 @@
+{
+  "browser": {
+    "isolated": true,
+    "launchOptions": {
+      "headless": true
+    },
+    "contextOptions": {
+      "recordHar": {
+        "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R10-chrome-defaults-isolated-storage-state\\output\\network.har"
+      },
+      "storageState": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\seed-state.json"
+    }
+  }
+}

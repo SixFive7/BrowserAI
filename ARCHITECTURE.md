@@ -964,6 +964,7 @@ a constant could not.
 | The door, and the advertised list | `BrowserProxy.AnswerToolsCallAsync`, `SessionToolSurface.Rewrite` |
 | That it agrees with the golden snapshot, both directions | `ToolVerdictTests` |
 | A BrowserAI note appended to an allowed tool's description, *added 2026-10-04* | `ToolVerdicts`, `SessionToolSurface.Rewrite` |
+| An argument an allowed tool's row refuses while one of the session's per-run switches is on, *added 2026-11-18, the maintainer's 208 b* | `tool-verdicts.json`'s `refuse` member, read by `ToolVerdicts` into `ArgumentRefusal`, applied in `BrowserProxy.AnswerToolsCallAsync` against `SessionRunSettings.IsOn`, answered with `SessionErrors.ArgumentRefusedWhileOn` |
 | A name no list carries, and an argument a schema does not have, refused before anything runs, *added 2026-10-04* | `BrowserProxy.AnswerToolsCallAsync`, `src/BrowserAI/Sessions/ToolSignatures.cs`, `SessionErrors.ToolDoesNotExist`, `SessionErrors.UnrecognisedArguments` -- *added 2026-10-10 by addition: `ToolDoesNotExist` takes the tool list as a required argument, and a `deny` verdict is `ToolDecision.Withheld`, a judgement with no words of its own, which the proxy answers with that refusal* |
 
 **Three verdicts.** `allow` forwards the call to the child of the session it
@@ -983,6 +984,14 @@ may carry a `note`**, BrowserAI's advice about that one tool, appended at run ti
 after upstream's own description behind `BrowserAI note: `; upstream's text and
 schema still come from the child, and a note on a `deny` or `answer` row stops the
 server at startup naming the file.
+⚠️ *Added 2026-11-18 by addition, the maintainer's 208 b, in his words verbatim: "208 a + b
+(until the upstream fix comes in)"*: **an `allow` row may carry `refuse`**, an argument of the
+tool's own schema that BrowserAI refuses at its door while one of the session's per-run
+switches is on, with the words the caller reads, why, since and until. The first is
+`browser_tabs`' `isolatedContext` while `captureNetwork` is on, because Playwright erases an
+isolated context's traffic from the session's HTTP Archive at the close; it goes when a
+Playwright release keeps it. A refusal on any other row stops the server at startup naming
+the file, as a misplaced note does.
 `answer` is one of BrowserAI's own eight. ⚠️ *Corrected 2026-09-21
 (previously "`answer` is one of BrowserAI's own seven, which never had a child to
 reach").* Seven of the eight never had one and

@@ -1,0 +1,187 @@
+{
+  "run": "R5-firefox-browserai-catchall-replica",
+  "family": "firefox",
+  "style": "browserai",
+  "mode": "persistent",
+  "server": "catchall",
+  "hook": false,
+  "flow": "replica",
+  "contexts": [
+    "iso"
+  ],
+  "versions": {
+    "node": "v26.13.1",
+    "playwrightMcp": "0.0.85",
+    "playwrightCore": "1.66.0-alpha-2026-11-09"
+  },
+  "base": "http://127.0.0.1:61931",
+  "harPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R5-firefox-browserai-catchall-replica\\output\\network-20261117-230807624.har",
+  "configPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R5-firefox-browserai-catchall-replica\\config.json",
+  "priority": {
+    "driver": 10,
+    "child": 10
+  },
+  "startedUtc": "2026-11-17T23:08:07.616Z",
+  "serverInfo": {
+    "name": "Playwright",
+    "version": "1.66.0-alpha-2026-11-09"
+  },
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 4328
+  },
+  "steps": [
+    {
+      "label": "R1 navigate page-a",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:61931/page-a"
+      },
+      "startedMs": 303,
+      "endedMs": 2465,
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:61931/page-a\n- Page Title: page a\n- Console: 0 errors, 1 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R5-firefox-browserai-catchall-replica\\output\\page-2026-11-17T23-08-10-075Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R5-firefox-browserai-catchall-replica\\output\\console-2026-11-17T23-08-09-728Z.log#L1"
+    },
+    {
+      "label": "R2 new tab, url page-b, isolatedContext iso",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:61931/page-b",
+        "isolatedContext": "iso"
+      },
+      "startedMs": 2465,
+      "endedMs": 2994,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:61931/page-a)\n- 1: (current) [page b](http://127.0.0.1:61931/page-b) [isolatedContext: iso]\n### Open tabs\n- 0: [page a](http://127.0.0.1:61931/page-a)\n- 1: (current) [page b](http://127.0.0.1:61931/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:61931/page-b\n- Page Title: page b\n- Isolated context: iso\n- Console: 0 errors, 1 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R5-firefox-browserai-catchall-replica\\output\\page-2026-11-17T23-08-10-607Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R5-firefox-browserai-catchall-replica\\output\\console-2026-11-17T23-08-10-373Z.log#L1"
+    },
+    {
+      "label": "R3 cookies on isolated tab",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 2994,
+      "endedMs": 3000,
+      "isError": false,
+      "text": "### Result\ncookie_b=b (domain: 127.0.0.1, path: /)\ncookie_a=a (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "R4 tab list",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "startedMs": 3000,
+      "endedMs": 3006,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:61931/page-a)\n- 1: (current) [page b](http://127.0.0.1:61931/page-b) [isolatedContext: iso]"
+    },
+    {
+      "label": "R5 select default tab",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "startedMs": 3006,
+      "endedMs": 3033,
+      "isError": false,
+      "text": "### Result\n- 0: (current) [page a](http://127.0.0.1:61931/page-a)\n- 1: [page b](http://127.0.0.1:61931/page-b) [isolatedContext: iso]"
+    },
+    {
+      "label": "R6 cookies on default tab",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 3033,
+      "endedMs": 3042,
+      "isError": false,
+      "text": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "R7 close",
+      "tool": "browser_close",
+      "args": {},
+      "startedMs": 3042,
+      "endedMs": 4311,
+      "isError": false,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+    }
+  ],
+  "serverLog": [
+    {
+      "ms": 2273,
+      "step": "R1 navigate page-a",
+      "method": "GET",
+      "url": "/page-a",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 2361,
+      "step": "R1 navigate page-a",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "image",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 2775,
+      "step": "R2 new tab, url page-b, isolatedContext iso",
+      "method": "GET",
+      "url": "/page-b",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_b=b; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 2943,
+      "step": "R2 new tab, url page-b, isolatedContext iso",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_b=b",
+      "secFetchDest": "image",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    }
+  ],
+  "serverMessages": [
+    {
+      "ms": 2111,
+      "notification": "notifications/tools/list_changed"
+    }
+  ],
+  "outputFiles": [
+    "console-2026-11-17T23-08-09-728Z.log",
+    "console-2026-11-17T23-08-10-373Z.log",
+    "network-20261117-230807624.har",
+    "page-2026-11-17T23-08-10-075Z.yml",
+    "page-2026-11-17T23-08-10-607Z.yml"
+  ],
+  "finalHar": {
+    "exists": true,
+    "creator": {
+      "name": "Playwright",
+      "version": "1.66.0-alpha-2026-11-09"
+    },
+    "browser": {
+      "name": "firefox",
+      "version": "159.0"
+    },
+    "pages": [
+      "page a"
+    ],
+    "entries": [
+      {
+        "url": "/page-a",
+        "requestCookie": null,
+        "status": 200
+      }
+    ]
+  },
+  "endedUtc": "2026-11-17T23:08:11.946Z"
+}

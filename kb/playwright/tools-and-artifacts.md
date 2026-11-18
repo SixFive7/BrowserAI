@@ -1788,6 +1788,12 @@ reply to the comment, in a sweep that closed every issue labelled
 `P3-collecting-feedback` and retired the label
 ([#43813](https://github.com/microsoft/playwright/issues/43813)). Nothing here was
 measured again, and the TODO item that watched the comment says what is left.
+⚠️ *Added 2026-11-18 by addition, the maintainer's 194 a, in his words verbatim: "194 I'd
+like to say option a. But is there any code or assumption that does anything with
+this?"*: the watch on the comment is closed, and no new issue goes out. Nothing in `src`
+or `tests` names #23047 or a closed shadow root, read that day, which was his condition for
+a. The gap is still upstream's, so the fact above still floats with Playwright and
+re-verification row 174 still re-checks it at a roll.
 
 **Re-establish** with `shadow-probe.cjs` and `shadow-exact.cjs` from the rig,
 which serve the page and print what each reader returned.
@@ -2465,6 +2471,81 @@ UTF-16). The snapshot was a test's golden file and was never shipped.
 payload, as the batch's `part3/c0/*.tools.json` were compared. At run time the
 one-binary design compares the built-in list with each session's child, and
 `UpstreamSnapshotTests` holds the snapshot against the payload on every build.
+
+## A tab in an isolated context is missing from the session's HTTP Archive -- measured 2026-11-18
+
+`[FLOATS]` `@playwright/mcp` **0.0.85**, `playwright-core` **1.66.0-alpha-2026-11-09** (npm
+gitHead `84e2bdc`), node **v26.13.1**, Chrome for Testing **158.0.8127.18** (`chromium-1254`),
+Firefox **159.0** (`firefox-1573`) and Google Chrome **157.0.8103.79**, upstream's default
+channel; the payload's own child, headless, one browser at a time, at below-normal priority
+([evidence](../../docs/evidence/2026-11-18-isolated-context/README.md)).
+
+**`browser_tabs` with `{ "action": "new", "isolatedContext": "<name>" }` opens the tab in a
+browser context of its own, and with `recordHar` set that context's traffic is gone from the
+archive after the close.** In 1.66 the child creates the context with the session's own
+`contextOptions` (`tools/backend/context.ts:500`, `_createIsolatedContext`), `recordHar.path`
+included, so every context records into the one path BrowserAI gives a capture run
+(`BrowserConfiguration.ForSession`). Nothing is written before a close: `HarRecorder._flush`
+empties the path and writes the whole log when its context closes
+(`server/har/harRecorder.ts:116`), and the close runs `Context.dispose()`, which closes every
+isolated context first (`context.ts:173`, `browserBackend.ts:85-86`), and then closes the default
+context (`mcp/program.ts:192`), whose write replaces the file. With two isolated contexts both
+empty the path within a millisecond of each other and then append their logs, and for the 23 ms
+(Chromium) or 48 ms (Firefox) between the second append and the default context's write the
+path holds two JSON documents back to back, which does not parse.
+
+| Run | Browser and configuration | What the one path held |
+|---|---|---|
+| R1 | Chrome for Testing, BrowserAI's configuration, two isolated contexts | both isolated contexts' logs concatenated, then the default context's page only |
+| R2 | Firefox, the same | the same |
+| R3 | Google Chrome, upstream's defaults and `recordHar.path` | the isolated context's page, then 26 ms later the default context's only |
+| R6 | Chrome for Testing, BrowserAI's configuration | no file before any close; the isolated context's page after that context alone was closed; the default context's page after `browser_close` |
+| R7 | Google Chrome, upstream's defaults, `--isolated` | the default context's page at the end |
+| U1, U2 | upstream's own reproduction, the script the issue carries | the default context's page; the isolated context's while only it had closed |
+
+**The archive is written by a context's close and by nothing else.** Three runs of one capture
+session each, with no isolated context (`har-at-close` in the batch): `browser_close` wrote it;
+the end of the child's input alone, which closes the browser gracefully since 0.0.85, wrote
+none, and the child exited 0; and the child's whole process tree ended by its pid wrote none. So
+a child that ends without a close leaves no archive of its run at all. BrowserAI's own closes,
+`browserai_close`, an idle close and a shutdown, send `browser_close` first and wait for its
+answer, so they write it.
+
+**Tracing does not collide**: the change that added the parameter, microsoft/playwright#43087,
+names an isolated context's trace `trace-<n>-<name>` (`context.ts:334`). No upstream document
+says the archive covers the default context only, and upstream's `main` at `cb59312a`
+(2026-11-17T21:53Z) reads the same. Reported upstream on 2026-11-18 as
+[microsoft/playwright#44199](https://github.com/microsoft/playwright/issues/44199), after a search
+for an existing report found none.
+
+**An isolated context starts with no cookies, and keeps nothing in the session's profile.**
+With a server that sets each cookie on its own page only, the first request of every new
+isolated tab carried no cookie, nine tabs in seven runs (R1 to R3 and R6 to R9), in all three
+browsers, under BrowserAI's configuration and under upstream's defaults, and after a resume of
+a profile holding a cookie (R8, R9). Where a run listed the cookies (R1, R2, R8, R9) a new
+isolated tab listed none, and after the resumes the profile held the default context's cookie
+only. A configuration that
+seeds every context from a storage state seeds an isolated one too (R10), and BrowserAI writes
+no `storageState`. ⚠️ *Corrected 2026-11-18 by addition (previously, in the adoption batch of
+2026-11-17, "its cookie list starts with the default context's cookies")*: that rig's server
+set the default context's cookie on every path it did not know, the browser's own
+`favicon.ico` request among them, so the isolated tab was handed the cookie by its own icon
+request; R4 and R5 replay that server and show it, request by request.
+
+**What BrowserAI does since 2026-11-18**, the maintainer's 208 a and b, in his words verbatim:
+*"208 a + b (until the upstream fix comes in)"*. `browser_tabs` carries a note saying both
+halves, `captureNetwork`'s description says it in one sentence, and in a session with
+`captureNetwork` on a call naming an isolated context is refused at BrowserAI's door, by the
+`refuse` member of `browser_tabs`' row in `tool-verdicts.json` (`ToolVerdicts`,
+`ArgumentRefusal`). `"default"`, an empty name and no name are the default context and are not
+refused. The refusal goes when a Playwright release gives each isolated context an archive of
+its own; re-verification row 228 is the check at a roll, and `TODO.md` watches the issue.
+
+**Re-establish** with the evidence batch's `rig/repro.mjs.txt`, saved as `repro.mjs`, for runs
+R1 to R10, `runs/U2-upstream-final/repro.mjs.txt`, the issue's own script, and
+`rig/har-at-close.mjs.txt` for the three closes, against the new payload; each run's
+`result.json` holds every tool answer, every request the server saw and every reading of the
+archive.
 
 ## Artifacts and output-directory behaviour
 

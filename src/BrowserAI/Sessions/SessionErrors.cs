@@ -682,6 +682,25 @@ internal static class SessionErrors
         return $"Syntax error: '{tool}' has no argument named {named}, so nothing ran and nothing changed. {again}\n\n{signature.Rendered()}";
     }
 
+    /// <summary>
+    /// A call carried an argument its tool's verdict refuses while one of the session's
+    /// own per-run switches is on.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 208 b, 2026-11-18, in his words verbatim:</b> <i>"208 a + b
+    /// (until the upstream fix comes in)"</i>. The first sentence is BrowserAI's and names
+    /// the tool, the argument and the switch; the rest is the verdict row's own words, why
+    /// and what to do instead, because the row is where the judgement is kept and it goes
+    /// with the row (<see cref="ArgumentRefusal"/>).
+    /// </remarks>
+    /// <param name="tool">The tool the call named.</param>
+    /// <param name="argument">The argument whose value turned the refusal on.</param>
+    /// <param name="setting">The per-run switch that is on in this session.</param>
+    /// <param name="refusal">The verdict row's own words.</param>
+    /// <returns>The refusal.</returns>
+    public static string ArgumentRefusedWhileOn(string tool, string argument, string setting, string refusal) =>
+        $"'{tool}' with '{argument}' is refused in this session because its '{setting}' is on, so nothing ran and nothing changed. {refusal}";
+
     /// <summary>A list in a sentence: commas, and the given word before the last.</summary>
     /// <param name="items">What to list.</param>
     /// <param name="last">The word before the last item.</param>

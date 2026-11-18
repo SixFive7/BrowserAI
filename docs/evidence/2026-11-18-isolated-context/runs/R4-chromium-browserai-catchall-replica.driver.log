@@ -1,0 +1,28 @@
+{
+  "run": "R4-chromium-browserai-catchall-replica",
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 1310
+  },
+  "requests": [
+    "855ms [R1 navigate page-a] GET /page-a cookie=null dest=document -> 200 set cookie_a=a",
+    "881ms [R1 navigate page-a] GET /favicon.ico cookie=\"cookie_a=a\" dest=image -> 200 set cookie_a=a",
+    "1051ms [R2 new tab, url page-b, isolatedContext iso] GET /page-b cookie=null dest=document -> 200 set cookie_b=b",
+    "1074ms [R2 new tab, url page-b, isolatedContext iso] GET /favicon.ico cookie=\"cookie_b=b\" dest=image -> 200 set cookie_a=a"
+  ],
+  "cookieAnswers": [
+    "R3 cookies on isolated tab: ### Result | cookie_b=b (domain: 127.0.0.1, path: /) | cookie_a=a (domain: 127.0.0.1, path: /)",
+    "R6 cookies on default tab: ### Result | cookie_a=a (domain: 127.0.0.1, path: /)"
+  ],
+  "finalHar": {
+    "pages": [
+      "page a"
+    ],
+    "urls": [
+      "chrome://resources/cr_components/searchbox/icons/google_logo.svg",
+      "/page-a"
+    ]
+  },
+  "errors": []
+}

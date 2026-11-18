@@ -701,9 +701,15 @@ internal static class SessionToolSurface
     // capitals, "so without blocking them the capture is silently incomplete in exactly
     // the direction you are looking" and "a PLAINTEXT CREDENTIAL DUMP"): the three facts
     // stay, one sentence each, and the name is fixed per run.
+    //
+    // ⚠️ 2026-11-18, by addition, the maintainer's 208 a, in his words verbatim: "208 a + b
+    // (until the upstream fix comes in)". One sentence on browser_tabs' isolatedContext,
+    // which BrowserAI refuses while this is on, because Playwright's close erases an
+    // isolated context's traffic from the archive; the refusal is the verdict file's.
     private const string CaptureNetworkDescription =
         "Record every request and response this run makes into an HTTP Archive in the session's 'output' folder, one file per run with the time it started in its name. True or false, required on every call. "
         + "While it is on, service workers are blocked, because what a worker serves from its cache never reaches the network layer the archive is written from; a site that works offline or caches its API behaves differently. "
+        + "While it is on, browser_tabs refuses isolatedContext too, because Playwright leaves a tab in an isolated context out of the archive. "
         + "It starts at the next browser launch and captures nothing from before: a resume that turns it on while the browser is up is held back once, and the same call sent again closes the browser and opens it with capture on. "
         + "The file holds every header of every request and response in plain text, every bearer token and session cookie that crossed the wire among them, and anything that can read the directory can read it. Delete it when you are done; browserai_catch_up names any archive it finds.";
 

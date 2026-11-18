@@ -1,0 +1,35 @@
+{
+  "mode": "eof",
+  "startedUtc": "2026-11-18T03:49:15.667Z",
+  "base": "http://127.0.0.1:53533",
+  "har": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\eof\\output\\network.har",
+  "steps": [
+    {
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:53533/page-a"
+      },
+      "ms": 11175,
+      "isError": false,
+      "text": "### Ran Playwright code\n```js\nawait page.goto('http://127.0.0.1:53533/page-a');\n```\n### Page\n- Page URL: http://127.0.0.1:53533/page-a\n- Page Title: /page-a\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\eof\\output\\page-2026-11-18T03-49-32-965Z.yml)"
+    }
+  ],
+  "childPid": 107480,
+  "archiveBeforeAnyClose": {
+    "exists": false
+  },
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "utc": "2026-11-18T03:50:04.858Z"
+  },
+  "archiveAfterTheChildHadGone": {
+    "exists": false
+  },
+  "served": [
+    "/page-a",
+    "/favicon.ico"
+  ],
+  "stderr": "",
+  "endedUtc": "2026-11-18T03:50:06.891Z"
+}

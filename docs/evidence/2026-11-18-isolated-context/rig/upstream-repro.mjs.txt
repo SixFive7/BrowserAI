@@ -1,0 +1,66 @@
+// npm i @playwright/mcp@0.0.85 && node repro.mjs
+import { spawn } from 'node:child_process';
+import http from 'node:http';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const cli = process.argv[2] ?? path.resolve('node_modules/@playwright/mcp/cli.js');
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'isolated-har-'));
+const har = path.join(dir, 'network.har');
+fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
+  browser: { launchOptions: { headless: true }, contextOptions: { recordHar: { path: har } } },
+}));
+
+const server = http.createServer((req, res) => res.end(`<title>${req.url}</title>`));
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const base = `http://127.0.0.1:${server.address().port}`;
+const urlsInHar = () => fs.existsSync(har)
+  ? JSON.parse(fs.readFileSync(har, 'utf8')).log.entries.map((e) => e.request.url.replace(base, ''))
+  : 'no file yet';
+
+async function session(steps) {
+  fs.rmSync(har, { force: true });
+  const child = spawn(process.execPath, [cli, '--config', path.join(dir, 'config.json')], { cwd: dir, stdio: ['pipe', 'pipe', 'inherit'] });
+  let buffer = '', id = 0;
+  const waiters = new Map();
+  child.stdout.on('data', (chunk) => {
+    buffer += chunk;
+    let end;
+    while ((end = buffer.indexOf('\n')) >= 0) {
+      const message = JSON.parse(buffer.slice(0, end));
+      buffer = buffer.slice(end + 1);
+      waiters.get(message.id)?.(message);
+    }
+  });
+  const call = (method, params) => new Promise((resolve) => {
+    waiters.set(++id, resolve);
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+  });
+  await call('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'repro', version: '1' } });
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+  await steps((name, args) => call('tools/call', { name, arguments: args }));
+  child.stdin.end();
+  await new Promise((r) => child.on('exit', r));
+}
+
+// 1. A page in the default context and a page in the "alice" context, then browser_close.
+await session(async (tool) => {
+  await tool('browser_navigate', { url: `${base}/default-context-page` });
+  await tool('browser_tabs', { action: 'new', url: `${base}/isolated-context-page`, isolatedContext: 'alice' });
+  await tool('browser_close', {});
+  console.log('1. after browser_close:                 ', urlsInHar());
+});
+
+// 2. The same, but the "alice" context is closed on its own first. It writes its HAR to the
+//    same path. The default context writes the path again on browser_close.
+await session(async (tool) => {
+  await tool('browser_navigate', { url: `${base}/default-context-page` });
+  await tool('browser_tabs', { action: 'new', url: `${base}/isolated-context-page`, isolatedContext: 'alice' });
+  await tool('browser_run_code_unsafe', { code: 'async (page) => { await page.context().close(); }' });
+  console.log('2. after closing the "alice" context:   ', urlsInHar());
+  await tool('browser_close', {});
+  console.log('   after browser_close:                 ', urlsInHar());
+});
+
+server.close();

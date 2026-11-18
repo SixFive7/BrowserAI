@@ -1,0 +1,342 @@
+{
+  "run": "R7-chrome-defaults-isolated-mode",
+  "family": "chromium",
+  "style": "defaults",
+  "mode": "isolated",
+  "server": "strict",
+  "hook": true,
+  "flow": "full",
+  "contexts": [
+    "iso"
+  ],
+  "versions": {
+    "node": "v26.13.1",
+    "playwrightMcp": "0.0.85",
+    "playwrightCore": "1.66.0-alpha-2026-11-09"
+  },
+  "base": "http://127.0.0.1:61973",
+  "harPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+  "configPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\config.json",
+  "priority": {
+    "driver": 10,
+    "child": 10
+  },
+  "startedUtc": "2026-11-17T23:08:36.617Z",
+  "serverInfo": {
+    "name": "Playwright",
+    "version": "1.66.0-alpha-2026-11-09"
+  },
+  "harBeforeClose": {
+    "exists": false
+  },
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 7546
+  },
+  "steps": [
+    {
+      "label": "S1 default tab -> page-a",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:61973/page-a"
+      },
+      "startedMs": 353,
+      "endedMs": 1287,
+      "isError": false,
+      "text": "### Ran Playwright code\n```js\nawait page.goto('http://127.0.0.1:61973/page-a');\n```\n### Page\n- Page URL: http://127.0.0.1:61973/page-a\n- Page Title: page a\n- Console: 1 errors, 0 warnings\n### Snapshot\n- [Snapshot](.playwright-mcp\\page-2026-11-17T23-08-37-897Z.yml)\n### Events\n- New console entries: .playwright-mcp\\console-2026-11-17T23-08-37-795Z.log#L1"
+    },
+    {
+      "label": "S2 default tab after page-a: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 2792,
+      "endedMs": 3306,
+      "isError": false,
+      "text": "### Result\n\"cookie_a=a\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => document.cookie');\n```"
+    },
+    {
+      "label": "S3.0 new tab in \"iso\", no url",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "isolatedContext": "iso"
+      },
+      "startedMs": 3306,
+      "endedMs": 3505,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:61973/page-a)\n- 1: (current) [](about:blank) [isolatedContext: iso]"
+    },
+    {
+      "label": "S5.0 \"iso\" tab -> page-b",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:61973/page-b"
+      },
+      "startedMs": 3505,
+      "endedMs": 3571,
+      "isError": false,
+      "text": "### Ran Playwright code\n```js\nawait page.goto('http://127.0.0.1:61973/page-b');\n```\n### Open tabs\n- 0: [page a](http://127.0.0.1:61973/page-a)\n- 1: (current) [page b](http://127.0.0.1:61973/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:61973/page-b\n- Page Title: page b\n- Isolated context: iso\n### Snapshot\n- [Snapshot](.playwright-mcp\\page-2026-11-17T23-08-40-184Z.yml)"
+    },
+    {
+      "label": "S6.0 \"iso\" tab after page-b: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 5082,
+      "endedMs": 5602,
+      "isError": false,
+      "text": "### Result\n\"cookie_b=b\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => document.cookie');\n```"
+    },
+    {
+      "label": "S7 tab list",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "startedMs": 5602,
+      "endedMs": 5615,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:61973/page-a)\n- 1: (current) [page b](http://127.0.0.1:61973/page-b) [isolatedContext: iso]"
+    },
+    {
+      "label": "S8 select the default tab",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "startedMs": 5615,
+      "endedMs": 5624,
+      "isError": false,
+      "text": "### Result\n- 0: (current) [page a](http://127.0.0.1:61973/page-a)\n- 1: [page b](http://127.0.0.1:61973/page-b) [isolatedContext: iso]"
+    },
+    {
+      "label": "S9 default tab -> page-a again",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:61973/page-a?again=1"
+      },
+      "startedMs": 5624,
+      "endedMs": 5688,
+      "isError": false,
+      "text": "### Ran Playwright code\n```js\nawait page.goto('http://127.0.0.1:61973/page-a?again=1');\n```\n### Open tabs\n- 0: (current) [page a](http://127.0.0.1:61973/page-a?again=1)\n- 1: [page b](http://127.0.0.1:61973/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:61973/page-a?again=1\n- Page Title: page a\n### Snapshot\n- [Snapshot](.playwright-mcp\\page-2026-11-17T23-08-42-302Z.yml)"
+    },
+    {
+      "label": "S10 default tab at the end: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 6700,
+      "endedMs": 7217,
+      "isError": false,
+      "text": "### Result\n\"cookie_a=a\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => document.cookie');\n```"
+    },
+    {
+      "label": "S11 close",
+      "tool": "browser_close",
+      "args": {},
+      "startedMs": 7217,
+      "endedMs": 7527,
+      "isError": false,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one.\n### Ran Playwright code\n```js\nawait page.close()\n```"
+    }
+  ],
+  "serverLog": [
+    {
+      "ms": 1195,
+      "step": "S1 default tab -> page-a",
+      "method": "GET",
+      "url": "/page-a",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 1239,
+      "step": "S1 default tab -> page-a",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "image",
+      "status": 404,
+      "setCookie": null
+    },
+    {
+      "ms": 3518,
+      "step": "S5.0 \"iso\" tab -> page-b",
+      "method": "GET",
+      "url": "/page-b",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_b=b; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 5637,
+      "step": "S9 default tab -> page-a again",
+      "method": "GET",
+      "url": "/page-a?again=1",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    }
+  ],
+  "serverMessages": [
+    {
+      "ms": 1173,
+      "notification": "notifications/tools/list_changed"
+    }
+  ],
+  "outputFiles": [
+    "network.har",
+    "network.har.v1.json",
+    "network.har.v2.json",
+    "network.har.v3.json",
+    "network.har.v4.json"
+  ],
+  "finalHar": {
+    "exists": true,
+    "creator": {
+      "name": "Playwright",
+      "version": "1.66.0-alpha-2026-11-09"
+    },
+    "browser": {
+      "name": "chromium",
+      "version": "157.0.8103.79"
+    },
+    "pages": [
+      "page a"
+    ],
+    "entries": [
+      {
+        "url": "/page-a",
+        "requestCookie": null,
+        "status": 200
+      },
+      {
+        "url": "/page-a?again=1",
+        "requestCookie": "cookie_a=a",
+        "status": 200
+      }
+    ]
+  },
+  "harWrites": [
+    {
+      "t": "2026-11-17T23:08:36.705Z",
+      "op": "hook-loaded",
+      "pid": 115408
+    },
+    {
+      "t": "2026-11-17T23:08:43.844Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "bytes": 0,
+      "truncates": true
+    },
+    {
+      "t": "2026-11-17T23:08:43.845Z",
+      "op": "appendFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "bytes": 2471,
+      "closesDocument": true
+    },
+    {
+      "t": "2026-11-17T23:08:43.855Z",
+      "op": "version",
+      "n": 1,
+      "why": "appendFile closing the document",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "copy": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har.v1.json",
+      "bytes": 2471,
+      "pages": [
+        "page b"
+      ],
+      "urls": [
+        "/page-b"
+      ]
+    },
+    {
+      "t": "2026-11-17T23:08:43.877Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "bytes": 2471,
+      "truncates": false
+    },
+    {
+      "t": "2026-11-17T23:08:43.879Z",
+      "op": "version",
+      "n": 2,
+      "why": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "copy": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har.v2.json",
+      "bytes": 2471,
+      "pages": [
+        "page b"
+      ],
+      "urls": [
+        "/page-b"
+      ]
+    },
+    {
+      "t": "2026-11-17T23:08:43.897Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "bytes": 0,
+      "truncates": true
+    },
+    {
+      "t": "2026-11-17T23:08:43.898Z",
+      "op": "appendFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "bytes": 4737,
+      "closesDocument": true
+    },
+    {
+      "t": "2026-11-17T23:08:43.911Z",
+      "op": "version",
+      "n": 3,
+      "why": "appendFile closing the document",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "copy": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har.v3.json",
+      "bytes": 4737,
+      "pages": [
+        "page a"
+      ],
+      "urls": [
+        "/page-a",
+        "/page-a?again=1"
+      ]
+    },
+    {
+      "t": "2026-11-17T23:08:43.925Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "bytes": 4737,
+      "truncates": false
+    },
+    {
+      "t": "2026-11-17T23:08:43.949Z",
+      "op": "version",
+      "n": 4,
+      "why": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har",
+      "copy": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R7-chrome-defaults-isolated-mode\\output\\network.har.v4.json",
+      "bytes": 4737,
+      "pages": [
+        "page a"
+      ],
+      "urls": [
+        "/page-a",
+        "/page-a?again=1"
+      ]
+    }
+  ],
+  "endedUtc": "2026-11-17T23:08:44.164Z"
+}

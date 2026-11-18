@@ -1,0 +1,44 @@
+{
+  "run": "R1-chromium-browserai-strict",
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 10490
+  },
+  "requests": [
+    "933ms [S1 default tab -> page-a] GET /page-a cookie=null dest=document -> 200 set cookie_a=a",
+    "987ms [S1 default tab -> page-a] GET /favicon.ico cookie=\"cookie_a=a\" dest=image -> 404",
+    "3796ms [S5.0 \"iso\" tab -> page-b] GET /page-b cookie=null dest=document -> 200 set cookie_b=b",
+    "6217ms [S5.1 \"iso2\" tab -> page-c] GET /page-c cookie=null dest=document -> 200 set cookie_c=c",
+    "8305ms [S9 default tab -> page-a again] GET /page-a?again=1 cookie=\"cookie_a=a\" dest=document -> 200 set cookie_a=a"
+  ],
+  "cookieAnswers": [
+    "S2 default tab after page-a: browser_cookie_list: ### Result | cookie_a=a (domain: 127.0.0.1, path: /)",
+    "S2 default tab after page-a: document.cookie: ### Result | \"cookie_a=a\"",
+    "S4.0 \"iso\" tab before any request: browser_cookie_list: ### Result | No cookies found",
+    "S6.0 \"iso\" tab after page-b: browser_cookie_list: ### Result | cookie_b=b (domain: 127.0.0.1, path: /)",
+    "S6.0 \"iso\" tab after page-b: document.cookie: ### Result | \"cookie_b=b\"",
+    "S4.1 \"iso2\" tab before any request: browser_cookie_list: ### Result | No cookies found",
+    "S6.1 \"iso2\" tab after page-c: browser_cookie_list: ### Result | cookie_c=c (domain: 127.0.0.1, path: /)",
+    "S6.1 \"iso2\" tab after page-c: document.cookie: ### Result | \"cookie_c=c\"",
+    "S10 default tab at the end: browser_cookie_list: ### Result | cookie_a=a (domain: 127.0.0.1, path: /)",
+    "S10 default tab at the end: document.cookie: ### Result | \"cookie_a=a\""
+  ],
+  "finalHar": {
+    "pages": [
+      "page a"
+    ],
+    "urls": [
+      "chrome://resources/cr_components/searchbox/icons/google_logo.svg",
+      "/page-a",
+      "/page-a?again=1"
+    ]
+  },
+  "harVersions": [
+    "2026-11-17T23:07:02.646Z writeFile bytes=0",
+    "2026-11-17T23:07:02.647Z writeFile bytes=0",
+    "2026-11-17T23:07:02.684Z writeFile bytes=0",
+    "v3 (appendFile closing the document) pages=[\"page a\"] urls=[\"chrome://resources/cr_components/searchbox/icons/google_logo.svg\",\"/page-a\",\"/page-a?again=1\"]"
+  ],
+  "errors": []
+}

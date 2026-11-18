@@ -1,0 +1,55 @@
+{
+  "mode": "close",
+  "startedUtc": "2026-11-18T03:48:45.607Z",
+  "base": "http://127.0.0.1:58344",
+  "har": "C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\close\\output\\network.har",
+  "steps": [
+    {
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:58344/page-a"
+      },
+      "ms": 17466,
+      "isError": false,
+      "text": "### Ran Playwright code\n```js\nawait page.goto('http://127.0.0.1:58344/page-a');\n```\n### Page\n- Page URL: http://127.0.0.1:58344/page-a\n- Page Title: /page-a\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\pw-scratch\\w208\\runs\\har-at-close\\close\\output\\page-2026-11-18T03-49-10-667Z.yml)"
+    },
+    {
+      "tool": "browser_close",
+      "args": {},
+      "ms": 1010,
+      "isError": false,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one.\n### Ran Playwright code\n```js\nawait page.close()\n```"
+    }
+  ],
+  "childPid": 94072,
+  "archiveBeforeAnyClose": {
+    "exists": false
+  },
+  "archiveAfterTheClose": {
+    "exists": true,
+    "bytes": 5517,
+    "urls": [
+      "chrome://resources/cr_components/searchbox/icons/google_logo.svg",
+      "/page-a"
+    ]
+  },
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "utc": "2026-11-18T03:49:12.763Z"
+  },
+  "archiveAfterTheChildHadGone": {
+    "exists": true,
+    "bytes": 5517,
+    "urls": [
+      "chrome://resources/cr_components/searchbox/icons/google_logo.svg",
+      "/page-a"
+    ]
+  },
+  "served": [
+    "/page-a",
+    "/favicon.ico"
+  ],
+  "stderr": "",
+  "endedUtc": "2026-11-18T03:49:14.780Z"
+}

@@ -1,0 +1,181 @@
+{
+  "run": "R6-chromium-browserai-explicit-close",
+  "family": "chromium",
+  "style": "browserai",
+  "mode": "persistent",
+  "server": "strict",
+  "hook": false,
+  "flow": "explicit-close",
+  "contexts": [
+    "iso"
+  ],
+  "versions": {
+    "node": "v26.13.1",
+    "playwrightMcp": "0.0.85",
+    "playwrightCore": "1.66.0-alpha-2026-11-09"
+  },
+  "base": "http://127.0.0.1:61955",
+  "harPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R6-chromium-browserai-explicit-close\\output\\network-20261117-230823079.har",
+  "configPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R6-chromium-browserai-explicit-close\\config.json",
+  "priority": {
+    "driver": 10,
+    "child": 10
+  },
+  "startedUtc": "2026-11-17T23:08:23.070Z",
+  "serverInfo": {
+    "name": "Playwright",
+    "version": "1.66.0-alpha-2026-11-09"
+  },
+  "harBeforeAnyClose": {
+    "exists": false
+  },
+  "harAfterIsoContextClose": {
+    "exists": true,
+    "creator": {
+      "name": "Playwright",
+      "version": "1.66.0-alpha-2026-11-09"
+    },
+    "browser": {
+      "name": "chromium",
+      "version": "158.0.8127.18"
+    },
+    "pages": [
+      "page b"
+    ],
+    "entries": [
+      {
+        "url": "/page-b",
+        "requestCookie": null,
+        "status": 200
+      }
+    ]
+  },
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 6039
+  },
+  "steps": [
+    {
+      "label": "E1 default tab -> page-a",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:61955/page-a"
+      },
+      "startedMs": 307,
+      "endedMs": 981,
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:61955/page-a\n- Page Title: page a\n- Console: 1 errors, 0 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R6-chromium-browserai-explicit-close\\output\\page-2026-11-17T23-08-24-046Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R6-chromium-browserai-explicit-close\\output\\console-2026-11-17T23-08-23-938Z.log#L1"
+    },
+    {
+      "label": "E2 new tab in iso -> page-b",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:61955/page-b",
+        "isolatedContext": "iso"
+      },
+      "startedMs": 2495,
+      "endedMs": 2794,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:61955/page-a)\n- 1: (current) [page b](http://127.0.0.1:61955/page-b) [isolatedContext: iso]\n### Open tabs\n- 0: [page a](http://127.0.0.1:61955/page-a)\n- 1: (current) [page b](http://127.0.0.1:61955/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:61955/page-b\n- Page Title: page b\n- Isolated context: iso\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R6-chromium-browserai-explicit-close\\output\\page-2026-11-17T23-08-25-861Z.yml)"
+    },
+    {
+      "label": "E3 close the iso tab's own context from the iso tab",
+      "tool": "browser_run_code_unsafe",
+      "args": {
+        "code": "async (page) => { await page.context().close(); return \"iso context closed\"; }"
+      },
+      "startedMs": 4299,
+      "endedMs": 4821,
+      "isError": false,
+      "text": "### Result\n\"iso context closed\"\n### Page\n- Page URL: http://127.0.0.1:61955/page-a\n- Page Title: page a\n- Console: 1 errors, 0 warnings"
+    },
+    {
+      "label": "E4 tab list",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "startedMs": 5834,
+      "endedMs": 5838,
+      "isError": false,
+      "text": "### Result\n- 0: (current) [page a](http://127.0.0.1:61955/page-a)"
+    },
+    {
+      "label": "E5 close",
+      "tool": "browser_close",
+      "args": {},
+      "startedMs": 5838,
+      "endedMs": 6022,
+      "isError": false,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+    }
+  ],
+  "serverLog": [
+    {
+      "ms": 879,
+      "step": "E1 default tab -> page-a",
+      "method": "GET",
+      "url": "/page-a",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 923,
+      "step": "E1 default tab -> page-a",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "image",
+      "status": 404,
+      "setCookie": null
+    },
+    {
+      "ms": 2749,
+      "step": "E2 new tab in iso -> page-b",
+      "method": "GET",
+      "url": "/page-b",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_b=b; Max-Age=3600; Path=/"
+    }
+  ],
+  "serverMessages": [
+    {
+      "ms": 862,
+      "notification": "notifications/tools/list_changed"
+    }
+  ],
+  "outputFiles": [
+    "console-2026-11-17T23-08-23-938Z.log",
+    "network-20261117-230823079.har",
+    "page-2026-11-17T23-08-24-046Z.yml",
+    "page-2026-11-17T23-08-25-861Z.yml"
+  ],
+  "finalHar": {
+    "exists": true,
+    "creator": {
+      "name": "Playwright",
+      "version": "1.66.0-alpha-2026-11-09"
+    },
+    "browser": {
+      "name": "chromium",
+      "version": "158.0.8127.18"
+    },
+    "pages": [
+      "page a"
+    ],
+    "entries": [
+      {
+        "url": "/page-a",
+        "requestCookie": null,
+        "status": 200
+      }
+    ]
+  },
+  "endedUtc": "2026-11-17T23:08:29.111Z"
+}

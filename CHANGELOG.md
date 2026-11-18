@@ -242,6 +242,16 @@ more* link to its detail; nothing else depends on it.
   gives up first, and its answer says that the page's code may still be running, that the
   session still answers, and that navigating the tab away releases it.
 
+- 🔧 **A session that captures network traffic refuses a tab in an isolated context, for now.**
+  The Playwright this release carries records a tab opened with `browser_tabs`' `isolatedContext`
+  into the session's one HTTP Archive, and the main context's own write erases it there when the
+  browser closes, so a capture would lose that tab's traffic with nothing saying so. In a session
+  with `captureNetwork` on, BrowserAI now refuses such a call and says why and what to do instead,
+  and the tool and the setting both say so; a session that does not capture opens the tab as
+  before. The refusal goes when Playwright keeps each context's traffic, and
+  [`TODO.md`](TODO.md) watches the issue reported upstream.
+  [`DECISIONS.md`](DECISIONS.md) has the decision, the maintainer's 208.
+
 ### Removed
 
 - 🗑️ **BrowserAI no longer sets Firefox's safe-mode variable, because Playwright sets it itself.**

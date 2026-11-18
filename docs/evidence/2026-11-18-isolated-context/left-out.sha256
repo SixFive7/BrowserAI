@@ -1,0 +1,32 @@
+# runs/R1-chromium-browserai-strict/localappdata/ left out by directory: 1 files, 2026 bytes
+# runs/R1-chromium-browserai-strict/profile/ left out by directory: 192 files, 6192712 bytes
+# runs/R10-chrome-defaults-isolated-storage-state/.playwright-mcp/ left out by directory: 4 files, 225 bytes
+# runs/R2-firefox-browserai-strict/localappdata/ left out by directory: 1 files, 1833 bytes
+# runs/R2-firefox-browserai-strict/profile/ left out by directory: 96 files, 47327764 bytes
+# runs/R3-chrome-defaults-strict/.playwright-mcp/ left out by directory: 4 files, 225 bytes
+# runs/R3-chrome-defaults-strict/localappdata/ left out by directory: 177 files, 9002260 bytes
+# runs/R4-chromium-browserai-catchall-replica/localappdata/ left out by directory: 1 files, 2076 bytes
+# runs/R4-chromium-browserai-catchall-replica/profile/ left out by directory: 152 files, 5129173 bytes
+# runs/R5-firefox-browserai-catchall-replica/localappdata/ left out by directory: 1 files, 1883 bytes
+# runs/R5-firefox-browserai-catchall-replica/profile/ left out by directory: 80 files, 34033975 bytes
+# runs/R6-chromium-browserai-explicit-close/localappdata/ left out by directory: 1 files, 2066 bytes
+# runs/R6-chromium-browserai-explicit-close/profile/ left out by directory: 168 files, 6106191 bytes
+# runs/R7-chrome-defaults-isolated-mode/.playwright-mcp/ left out by directory: 4 files, 225 bytes
+# runs/R8-chromium-browserai-resume/localappdata/ left out by directory: 1 files, 2026 bytes
+# runs/R9-firefox-browserai-resume/localappdata/ left out by directory: 1 files, 1833 bytes
+# runs/U1-upstream-repro/localappdata/ left out by directory: 183 files, 8891051 bytes
+# runs/U1-upstream-repro/temp/ left out by directory: 6 files, 2549 bytes, but for its config.json and network.har, kept as runs/U1-upstream-repro/config.json and runs/U1-upstream-repro/network.har
+# runs/U2-upstream-final/localappdata/ left out by directory: 200 files, 9021084 bytes
+# runs/U2-upstream-final/temp/ left out by directory: 6 files, 2546 bytes, but for its config.json and network.har, kept as runs/U2-upstream-final/config.json and runs/U2-upstream-final/network.har
+93326176eb52571c5c047e13bc3be89f4b32dd4340d53fbcbc7d0b916e5225cd  REPORT-from-notification.md
+75e7c5fb85d66640933249c4614a3d73632af12f8ce1fce554cc331c5295700b  upstream-draft.md
+39c5aebaa7cc5af76b51aa25ae8bab7cef26fe4a6fb0ddd47395c42b15d14172  upstream-final.md
+cacad5cf02d40eee3a3f5d2a787245aea0da0c444edb0e898dd6a31a946d9094  upstream-final-body.md
+# upstream/ left out by directory: 77 files, 2361093 bytes
+# tools/ left out by directory: 2 files, 5803 bytes
+# runs/har-at-close/close/profile/ left out by directory: 151 files, 5137022 bytes
+# runs/har-at-close/close/localappdata/ left out by directory: 1 files, 1780 bytes
+# runs/har-at-close/eof/profile/ left out by directory: 171 files, 11039891 bytes
+# runs/har-at-close/eof/localappdata/ left out by directory: 1 files, 1770 bytes
+# runs/har-at-close/kill/profile/ left out by directory: 168 files, 6879615 bytes
+# runs/har-at-close/kill/localappdata/ left out by directory: 1 files, 1775 bytes

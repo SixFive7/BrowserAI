@@ -1,0 +1,27 @@
+[
+  {
+    "Name": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Image",
+    "Kind": "DWord",
+    "Data": "1793668927"
+  },
+  {
+    "Name": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Blocklist",
+    "Kind": "String",
+    "Data": "C:\\Users\\jori\\AppData\\Roaming\\Mozilla\\Firefox\\blocklist-2ECA17C4B5D6BC30"
+  },
+  {
+    "Name": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Launcher",
+    "Kind": "QWord",
+    "Data": "3812748477250"
+  },
+  {
+    "Name": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Browser",
+    "Kind": "QWord",
+    "Data": "3812750600790"
+  },
+  {
+    "Name": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1573\\firefox\\firefox.exe|Telemetry",
+    "Kind": "DWord",
+    "Data": "0"
+  }
+]

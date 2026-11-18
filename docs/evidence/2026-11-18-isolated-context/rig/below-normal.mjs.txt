@@ -1,0 +1,9 @@
+// ctx202, 2026-11-18: runs a command at below-normal priority, so that it and everything it starts
+// inherit the class. Usage: node below-normal.mjs <exe> [args...]. Scratch, never committed.
+import { spawn } from 'node:child_process';
+import os from 'node:os';
+
+os.setPriority(0, os.constants.priority.PRIORITY_BELOW_NORMAL);
+const [exe, ...args] = process.argv.slice(2);
+const child = spawn(exe, args, { stdio: 'inherit', windowsHide: true });
+child.on('exit', (code) => process.exit(code ?? 1));

@@ -1,0 +1,438 @@
+{
+  "run": "R2-firefox-browserai-strict",
+  "family": "firefox",
+  "style": "browserai",
+  "mode": "persistent",
+  "server": "strict",
+  "hook": true,
+  "flow": "full",
+  "contexts": [
+    "iso",
+    "iso2"
+  ],
+  "versions": {
+    "node": "v26.13.1",
+    "playwrightMcp": "0.0.85",
+    "playwrightCore": "1.66.0-alpha-2026-11-09"
+  },
+  "base": "http://127.0.0.1:60938",
+  "harPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+  "configPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\config.json",
+  "priority": {
+    "driver": 10,
+    "child": 10
+  },
+  "startedUtc": "2026-11-17T23:07:27.904Z",
+  "serverInfo": {
+    "name": "Playwright",
+    "version": "1.66.0-alpha-2026-11-09"
+  },
+  "harBeforeClose": {
+    "exists": false
+  },
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 12628
+  },
+  "steps": [
+    {
+      "label": "S1 default tab -> page-a",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:60938/page-a"
+      },
+      "startedMs": 423,
+      "endedMs": 2890,
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:60938/page-a\n- Page Title: page a\n- Console: 0 errors, 1 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\page-2026-11-17T23-07-30-790Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\console-2026-11-17T23-07-30-407Z.log#L1"
+    },
+    {
+      "label": "S2 default tab after page-a: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 4394,
+      "endedMs": 4400,
+      "isError": false,
+      "text": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "S2 default tab after page-a: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 4400,
+      "endedMs": 4926,
+      "isError": false,
+      "text": "### Result\n\"cookie_a=a\""
+    },
+    {
+      "label": "S3.0 new tab in \"iso\", no url",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "isolatedContext": "iso"
+      },
+      "startedMs": 4926,
+      "endedMs": 5281,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:60938/page-a)\n- 1: (current) [](about:blank) [isolatedContext: iso]"
+    },
+    {
+      "label": "S4.0 \"iso\" tab before any request: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 5281,
+      "endedMs": 5288,
+      "isError": false,
+      "text": "### Result\nNo cookies found"
+    },
+    {
+      "label": "S5.0 \"iso\" tab -> page-b",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:60938/page-b"
+      },
+      "startedMs": 5288,
+      "endedMs": 5498,
+      "isError": false,
+      "text": "### Open tabs\n- 0: [page a](http://127.0.0.1:60938/page-a)\n- 1: (current) [page b](http://127.0.0.1:60938/page-b) [isolatedContext: iso]\n### Page\n- Page URL: http://127.0.0.1:60938/page-b\n- Page Title: page b\n- Isolated context: iso\n- Console: 0 errors, 1 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\page-2026-11-17T23-07-33-399Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\console-2026-11-17T23-07-33-194Z.log#L1"
+    },
+    {
+      "label": "S6.0 \"iso\" tab after page-b: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 7011,
+      "endedMs": 7018,
+      "isError": false,
+      "text": "### Result\ncookie_b=b (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "S6.0 \"iso\" tab after page-b: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 7018,
+      "endedMs": 7528,
+      "isError": false,
+      "text": "### Result\n\"cookie_b=b\""
+    },
+    {
+      "label": "S3.1 new tab in \"iso2\", no url",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "isolatedContext": "iso2"
+      },
+      "startedMs": 7528,
+      "endedMs": 7853,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:60938/page-a)\n- 1: [page b](http://127.0.0.1:60938/page-b) [isolatedContext: iso]\n- 2: (current) [](about:blank) [isolatedContext: iso2]"
+    },
+    {
+      "label": "S4.1 \"iso2\" tab before any request: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 7853,
+      "endedMs": 7862,
+      "isError": false,
+      "text": "### Result\nNo cookies found"
+    },
+    {
+      "label": "S5.1 \"iso2\" tab -> page-c",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:60938/page-c"
+      },
+      "startedMs": 7862,
+      "endedMs": 8202,
+      "isError": false,
+      "text": "### Open tabs\n- 0: [page a](http://127.0.0.1:60938/page-a)\n- 1: [page b](http://127.0.0.1:60938/page-b) [isolatedContext: iso]\n- 2: (current) [page c](http://127.0.0.1:60938/page-c) [isolatedContext: iso2]\n### Page\n- Page URL: http://127.0.0.1:60938/page-c\n- Page Title: page c\n- Isolated context: iso2\n- Console: 0 errors, 1 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\page-2026-11-17T23-07-36-101Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\console-2026-11-17T23-07-35-767Z.log#L1"
+    },
+    {
+      "label": "S6.1 \"iso2\" tab after page-c: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 9711,
+      "endedMs": 9721,
+      "isError": false,
+      "text": "### Result\ncookie_c=c (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "S6.1 \"iso2\" tab after page-c: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 9721,
+      "endedMs": 10244,
+      "isError": false,
+      "text": "### Result\n\"cookie_c=c\""
+    },
+    {
+      "label": "S7 tab list",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "startedMs": 10244,
+      "endedMs": 10250,
+      "isError": false,
+      "text": "### Result\n- 0: [page a](http://127.0.0.1:60938/page-a)\n- 1: [page b](http://127.0.0.1:60938/page-b) [isolatedContext: iso]\n- 2: (current) [page c](http://127.0.0.1:60938/page-c) [isolatedContext: iso2]"
+    },
+    {
+      "label": "S8 select the default tab",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "startedMs": 10250,
+      "endedMs": 10270,
+      "isError": false,
+      "text": "### Result\n- 0: (current) [page a](http://127.0.0.1:60938/page-a)\n- 1: [page b](http://127.0.0.1:60938/page-b) [isolatedContext: iso]\n- 2: [page c](http://127.0.0.1:60938/page-c) [isolatedContext: iso2]"
+    },
+    {
+      "label": "S9 default tab -> page-a again",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:60938/page-a?again=1"
+      },
+      "startedMs": 10270,
+      "endedMs": 10391,
+      "isError": false,
+      "text": "### Open tabs\n- 0: (current) [page a](http://127.0.0.1:60938/page-a?again=1)\n- 1: [page b](http://127.0.0.1:60938/page-b) [isolatedContext: iso]\n- 2: [page c](http://127.0.0.1:60938/page-c) [isolatedContext: iso2]\n### Page\n- Page URL: http://127.0.0.1:60938/page-a?again=1\n- Page Title: page a\n- Console: 0 errors, 1 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\page-2026-11-17T23-07-38-292Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\console-2026-11-17T23-07-38-175Z.log#L1"
+    },
+    {
+      "label": "S10 default tab at the end: browser_cookie_list",
+      "tool": "browser_cookie_list",
+      "args": {},
+      "startedMs": 11395,
+      "endedMs": 11400,
+      "isError": false,
+      "text": "### Result\ncookie_a=a (domain: 127.0.0.1, path: /)"
+    },
+    {
+      "label": "S10 default tab at the end: document.cookie",
+      "tool": "browser_evaluate",
+      "args": {
+        "function": "() => document.cookie"
+      },
+      "startedMs": 11400,
+      "endedMs": 11951,
+      "isError": false,
+      "text": "### Result\n\"cookie_a=a\""
+    },
+    {
+      "label": "S11 close",
+      "tool": "browser_close",
+      "args": {},
+      "startedMs": 11951,
+      "endedMs": 12608,
+      "isError": false,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+    }
+  ],
+  "serverLog": [
+    {
+      "ms": 2680,
+      "step": "S1 default tab -> page-a",
+      "method": "GET",
+      "url": "/page-a",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 2798,
+      "step": "S1 default tab -> page-a",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "image",
+      "status": 404,
+      "setCookie": null
+    },
+    {
+      "ms": 5304,
+      "step": "S5.0 \"iso\" tab -> page-b",
+      "method": "GET",
+      "url": "/page-b",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_b=b; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 5470,
+      "step": "S5.0 \"iso\" tab -> page-b",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_b=b",
+      "secFetchDest": "image",
+      "status": 404,
+      "setCookie": null
+    },
+    {
+      "ms": 7885,
+      "step": "S5.1 \"iso2\" tab -> page-c",
+      "method": "GET",
+      "url": "/page-c",
+      "cookieHeader": null,
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_c=c; Max-Age=3600; Path=/"
+    },
+    {
+      "ms": 8144,
+      "step": "S5.1 \"iso2\" tab -> page-c",
+      "method": "GET",
+      "url": "/favicon.ico",
+      "cookieHeader": "cookie_c=c",
+      "secFetchDest": "image",
+      "status": 404,
+      "setCookie": null
+    },
+    {
+      "ms": 10286,
+      "step": "S9 default tab -> page-a again",
+      "method": "GET",
+      "url": "/page-a?again=1",
+      "cookieHeader": "cookie_a=a",
+      "secFetchDest": "document",
+      "status": 200,
+      "setCookie": "cookie_a=a; Max-Age=3600; Path=/"
+    }
+  ],
+  "serverMessages": [
+    {
+      "ms": 2501,
+      "notification": "notifications/tools/list_changed"
+    }
+  ],
+  "outputFiles": [
+    "console-2026-11-17T23-07-30-407Z.log",
+    "console-2026-11-17T23-07-33-194Z.log",
+    "console-2026-11-17T23-07-35-767Z.log",
+    "console-2026-11-17T23-07-38-175Z.log",
+    "network-20261117-230727912.har",
+    "network-20261117-230727912.har.v1.json",
+    "network-20261117-230727912.har.v2.json",
+    "network-20261117-230727912.har.v3.json",
+    "page-2026-11-17T23-07-30-790Z.yml",
+    "page-2026-11-17T23-07-33-399Z.yml",
+    "page-2026-11-17T23-07-36-101Z.yml",
+    "page-2026-11-17T23-07-38-292Z.yml"
+  ],
+  "finalHar": {
+    "exists": true,
+    "creator": {
+      "name": "Playwright",
+      "version": "1.66.0-alpha-2026-11-09"
+    },
+    "browser": {
+      "name": "firefox",
+      "version": "159.0"
+    },
+    "pages": [
+      "page a"
+    ],
+    "entries": [
+      {
+        "url": "/page-a",
+        "requestCookie": null,
+        "status": 200
+      },
+      {
+        "url": "/page-a?again=1",
+        "requestCookie": "cookie_a=a",
+        "status": 200
+      }
+    ]
+  },
+  "harWrites": [
+    {
+      "t": "2026-11-17T23:07:28.076Z",
+      "op": "hook-loaded",
+      "pid": 82064
+    },
+    {
+      "t": "2026-11-17T23:07:39.893Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "bytes": 0,
+      "truncates": true
+    },
+    {
+      "t": "2026-11-17T23:07:39.893Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "bytes": 0,
+      "truncates": true
+    },
+    {
+      "t": "2026-11-17T23:07:39.894Z",
+      "op": "appendFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "bytes": 2142,
+      "closesDocument": true
+    },
+    {
+      "t": "2026-11-17T23:07:39.907Z",
+      "op": "version-unreadable",
+      "n": 1,
+      "why": "appendFile closing the document",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "error": "Unexpected non-whitespace character after JSON at position 2142 (line 1 column 2143)"
+    },
+    {
+      "t": "2026-11-17T23:07:39.908Z",
+      "op": "appendFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "bytes": 2131,
+      "closesDocument": true
+    },
+    {
+      "t": "2026-11-17T23:07:39.912Z",
+      "op": "version-unreadable",
+      "n": 2,
+      "why": "appendFile closing the document",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "error": "Unexpected non-whitespace character after JSON at position 2142 (line 1 column 2143)"
+    },
+    {
+      "t": "2026-11-17T23:07:39.956Z",
+      "op": "writeFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "bytes": 0,
+      "truncates": true
+    },
+    {
+      "t": "2026-11-17T23:07:39.957Z",
+      "op": "appendFile",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "bytes": 4061,
+      "closesDocument": true
+    },
+    {
+      "t": "2026-11-17T23:07:39.968Z",
+      "op": "version",
+      "n": 3,
+      "why": "appendFile closing the document",
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har",
+      "copy": "C:\\Source\\SixFive7\\BrowserAI\\.work\\ctx202\\runs\\R2-firefox-browserai-strict\\output\\network-20261117-230727912.har.v3.json",
+      "bytes": 4061,
+      "pages": [
+        "page a"
+      ],
+      "urls": [
+        "/page-a",
+        "/page-a?again=1"
+      ]
+    }
+  ],
+  "endedUtc": "2026-11-17T23:07:40.534Z"
+}

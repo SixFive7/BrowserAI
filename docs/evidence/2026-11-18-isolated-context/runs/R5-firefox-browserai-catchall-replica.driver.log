@@ -1,0 +1,27 @@
+{
+  "run": "R5-firefox-browserai-catchall-replica",
+  "exit": {
+    "code": 0,
+    "signal": null,
+    "ms": 4328
+  },
+  "requests": [
+    "2273ms [R1 navigate page-a] GET /page-a cookie=null dest=document -> 200 set cookie_a=a",
+    "2361ms [R1 navigate page-a] GET /favicon.ico cookie=\"cookie_a=a\" dest=image -> 200 set cookie_a=a",
+    "2775ms [R2 new tab, url page-b, isolatedContext iso] GET /page-b cookie=null dest=document -> 200 set cookie_b=b",
+    "2943ms [R2 new tab, url page-b, isolatedContext iso] GET /favicon.ico cookie=\"cookie_b=b\" dest=image -> 200 set cookie_a=a"
+  ],
+  "cookieAnswers": [
+    "R3 cookies on isolated tab: ### Result | cookie_b=b (domain: 127.0.0.1, path: /) | cookie_a=a (domain: 127.0.0.1, path: /)",
+    "R6 cookies on default tab: ### Result | cookie_a=a (domain: 127.0.0.1, path: /)"
+  ],
+  "finalHar": {
+    "pages": [
+      "page a"
+    ],
+    "urls": [
+      "/page-a"
+    ]
+  },
+  "errors": []
+}

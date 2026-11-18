@@ -1008,6 +1008,26 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // ⚠️ AN ARGUMENT THIS SESSION'S OWN SETTINGS MAKE UNSAFE IS REFUSED, since 2026-11-18,
+        // the maintainer's 208 b, in his words verbatim: "208 a + b (until the upstream fix
+        // comes in)". The first rule here about what a call carries and not which tool it
+        // names, and it is data: an `allow` row may carry `refuse`, an argument and a per-run
+        // switch, and nothing below names a tool (ToolVerdicts, ArgumentRefusal). The one row
+        // is browser_tabs' isolatedContext while captureNetwork is on, because Playwright
+        // writes every context's archive to the one path the session gave it and the default
+        // context's write, made last at the close, erases what an isolated context recorded.
+        // Here, before the browser start is waited for, because no browser is involved in
+        // refusing it.
+        if (verdict?.RefusalFor(arguments, live.Settings.IsOn) is { } narrowed)
+        {
+            var refusedHere = SessionErrors.ArgumentRefusedWhileOn(tool, narrowed.Argument, narrowed.Setting, narrowed.Refusal);
+
+            ProxyLog.ArgumentRefused(live.Logger, tool, narrowed.Argument, narrowed.Setting, live.Location.FullPath);
+            await RefusedAsync(live, tool, why, refusedHere).ConfigureAwait(false);
+            await RefuseAsync(caller, request.Id, refusedHere, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         // ⚠️ A RESUMED FIREFOX SESSION'S BROWSER IS STARTED BY ITS RESUME, since 2026-10-13,
         // the maintainer's 161, in his words verbatim: "161 your recommendation". The start
         // closes Playwright's blank page once a reopened tab is up, so a call that reached the
@@ -2134,6 +2154,21 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' arrived with arguments its schema does not have ({Arguments}); the call was refused and nothing ran.")]
     public static partial void UnrecognisedArguments(ILogger logger, string tool, string arguments);
+
+    /// <summary>
+    /// A call carried an argument its verdict refuses while one of the session's per-run
+    /// switches is on (208 b, 2026-11-18).
+    /// </summary>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="argument">The argument whose value turned the refusal on.</param>
+    /// <param name="setting">The switch that is on.</param>
+    /// <param name="session">The session it named.</param>
+    [LoggerMessage(
+        EventId = 30,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' with '{Argument}' was refused in the session at {Session}, whose '{Setting}' is on; nothing was forwarded.")]
+    public static partial void ArgumentRefused(ILogger logger, string tool, string argument, string setting, string session);
 
     // ⚠️ EVENT IDS 10, 11 AND 12 ARE RETIRED AND ARE NOT TO BE REUSED,
     // 2026-08-26. They were `InlineImageRestored`, `FilenameRefused` and

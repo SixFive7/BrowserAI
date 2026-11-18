@@ -2085,6 +2085,30 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 /// </param>
 internal sealed record SessionRunSettings(bool Headed, bool Transcript, bool Debug, RunOptions Run, IdleSetting Idle)
 {
+    /// <summary>The per-run settings that are on or off, as a call names them.</summary>
+    /// <remarks>
+    /// What a verdict's argument refusal may name as the switch that turns it on, added
+    /// 2026-11-18 with the maintainer's 208 b (<see cref="ArgumentRefusal"/>); the loader
+    /// refuses any other name, so <see cref="IsOn"/> is asked about these alone.
+    /// </remarks>
+    public static IReadOnlyList<string> Switches { get; } =
+        [RunSettingNames.Headed, RunSettingNames.Transcript, RunSettingNames.CaptureNetwork, RunSettingNames.IgnoreHttpsErrors, RunSettingNames.Debug];
+
+    /// <summary>Whether one of the <see cref="Switches"/> is on in this run.</summary>
+    /// <param name="setting">The setting, as a call names it.</param>
+    /// <returns>Whether it is on.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="setting"/> is not one of the <see cref="Switches"/>.</exception>
+    public bool IsOn(string setting) =>
+        setting switch
+        {
+            RunSettingNames.Headed => Headed,
+            RunSettingNames.Transcript => Transcript,
+            RunSettingNames.CaptureNetwork => Run.CaptureNetwork,
+            RunSettingNames.IgnoreHttpsErrors => Run.IgnoreHttpsErrors,
+            RunSettingNames.Debug => Debug,
+            _ => throw new ArgumentOutOfRangeException(nameof(setting), setting, "Not a per-run setting that is on or off."),
+        };
+
     /// <summary>The JSON a <c>settings</c> statement carries: every setting, named as a call names it.</summary>
     /// <returns>The value.</returns>
     public string Write() =>
